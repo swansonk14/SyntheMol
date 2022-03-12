@@ -28,3 +28,5 @@ python sdf_to_smiles.py \
 ```
 
 All molecules were successfully converted from SDF to SMILES, and among those 134,609 are unique.
+
+Note: This seems to be because the SMILES are not capturing any stereochemistry information even though it is annotated with the `CFG` tag in the SDF file (although 3D coordinates are missing).
