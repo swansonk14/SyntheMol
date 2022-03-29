@@ -20,18 +20,32 @@ class Args(Tap):
 
 def find_fragments_in_molecules(args: Args) -> None:
     """Finds fragments in molecules."""
-    # Load data
+    # Load fragments
     fragments = pd.read_csv(args.fragment_path)
-    molecules = pd.read_csv(args.molecule_path)
+    fragments = sorted(fragments[args.smiles_column])
+
+    # Map from fragment SMILES to fragment matcher
+    frag_matchers = {}
+    for fragment in tqdm(fragments):
+        frag_matcher = FragmentMatcher()
+        frag_matcher.Init(fragment)
+        frag_matchers[fragment] = frag_matcher
+
+    # Load molecules
+    molecules = pd.read_csv(args.molecule_path, sep='\t')
 
     # Convert SMILES to RDKit molecules
     molecules['mol'] = [Chem.MolFromSmiles(smiles) for smiles in tqdm(molecules[args.smiles_column])]
 
+    # Filter out bad molecules
+    molecules = molecules[~molecules['mol'].isna()]
+
     # Find fragments in molecules
-    for index, fragment in tqdm(enumerate(fragments)):
-        frag_matcher = FragmentMatcher()
-        frag_matcher.Init(fragment)
-        molecules[f'fragment_{index}'] = [frag_matcher.HasMatch(mol) for mol in tqdm(molecules['mol'], leave=False)]
+    for mol in tqdm(molecules['mol']):
+        has_frags = [frag_matchers[fragment].HasMatch(mol) for fragment in fragments]
+        print(sum(has_frags))
+
+    raise NotImplementedError
 
     # Delete RDKit molecules
     del molecules['mol']
