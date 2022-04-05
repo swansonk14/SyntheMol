@@ -22,7 +22,7 @@ def find_fragments_in_molecules(args: Args) -> None:
     """Finds fragments in molecules."""
     # Load fragments
     fragments = pd.read_csv(args.fragment_path)
-    fragments = sorted(fragments[args.smiles_column])
+    fragments = sorted(set(fragments[args.smiles_column]))
 
     # Map from fragment SMILES to fragment matcher
     frag_matchers = {}
