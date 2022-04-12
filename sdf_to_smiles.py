@@ -31,13 +31,22 @@ def sdf_to_smiles(args: Args) -> None:
     print(f'Number of molecules = {len(mols):,}')
     print(f'Number skipped = {num_skipped:,}')
 
-    # Convert Mols to (unique) SMILES
-    smiles = sorted({Chem.MolToSmiles(mol) for mol in tqdm(mols, desc='Mol to SMILES')})
+    # Put data in Pandas DataFrame
+    data = pd.DataFrame(data=[
+        {
+            'Reagent_ID': mol.GetProp('Reagent_ID'),
+            'Catalog_ID': mol.GetProp('Catalog_ID'),
+            'smiles': Chem.MolToSmiles(mol)
+        } for mol in tqdm(mols, desc='Mol to SMILES in DataFrame')
+    ])
 
-    print(f'Number of unique SMILES = {len(smiles):,}')
+    # Print stats
+    print(f'Data size = {len(data):,}')
+    print(f'Number of unique reagent IDs = {data["Reagent_ID"].nunique():,}')
+    print(f'Number of unique catalog IDs = {data["Catalog_ID"].nunique():,}')
+    print(f'Number of unique smiles = {data["smiles"].nunique():,}')
 
     # Save data as CSV
-    data = pd.DataFrame(data={'smiles': smiles})
     data.to_csv(args.save_path, index=False)
 
 
