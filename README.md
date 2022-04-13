@@ -14,9 +14,11 @@ conda activate combinatorial_antibiotics
 
 ## Download Data
 
-Download the REAL Enamine building blocks SDF file from here: https://enamine.net/compound-collections/real-compounds/real-database#
+Download the REAL Enamine building blocks SDF file and CXSMILES database files from here: https://enamine.net/compound-collections/real-compounds/real-database#
 
 The `2021q3-4_Enamine_REAL_reagents_SDF.sdf` contains 138,085 molecules.
+
+The 11 CXSMILES files contain 4,492,114,676 molecules and 170 chemical reactions.
 
 ## Process Data
 
@@ -144,4 +146,19 @@ python train.py \
     --num_folds 10 \
     --save_dir ../combinatorial_antibiotics/ckpt/SA \
     --quiet
+```
+
+## Count REAL reactions
+
+```
+python count_reactions.py \
+    --data_dir ../data/Enamine_REAL_SMILES \
+    --save_path ../data/Enamine_REAL_SMILES/reaction_counts.json
+```
+
+```
+python process_reaction_counts.py \
+    --counts_path ../data/Enamine_REAL_SMILES/reaction_counts.json \
+    --save_table_path ../data/Enamine_REAL_SMILES/reaction_counts.csv \
+    --save_plot_path ../data/Enamine_REAL_SMILES/reaction_counts.pdf
 ```
