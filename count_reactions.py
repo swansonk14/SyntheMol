@@ -19,14 +19,14 @@ class Args(Tap):
 def count_reactions(args: Args) -> None:
     """Count reactions in the REAL database."""
     # Get files
-    paths = args.data_dir.glob('*.cxsmiles')
+    paths = list(args.data_dir.glob('*.cxsmiles'))
 
     # Count reactions
     reaction_counts = Counter()
 
     for path in tqdm(paths):
         reactions = pd.read_csv(path, sep='\t', usecols=['reaction'], dtype={'reaction': int})
-        reaction_counts.update(reactions)
+        reaction_counts.update(reactions['reaction'])
 
     # Count total molecules
     num_molecules = sum(reaction_counts.values())
