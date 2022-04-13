@@ -34,11 +34,13 @@ def process_reaction_counts(args: Args) -> None:
     ])
 
     # Sort data by count from largest to smallest
-    data.sort_values(by='count', reversed=True)
+    data.sort_values(by='count', ascending=False, inplace=True)
 
-    # Add cumulative sum and percent
+    # Add percent, cumulative sum, and cumulative percent
     num_molecules = data['count'].sum()
-    data['cumulative_count'] = np.cumsum(reaction_counts)
+
+    data['percent'] = data['count'] / num_molecules
+    data['cumulative_count'] = np.cumsum(data['count'])
     data['cumulative_percent'] = data['cumulative_count'] / num_molecules
 
     # Save data
