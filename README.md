@@ -153,12 +153,5 @@ python train.py \
 ```
 python count_reactions.py \
     --data_dir ../data/Enamine_REAL_SMILES \
-    --save_path ../data/Enamine_REAL_SMILES/reaction_counts.json
-```
-
-```
-python process_reaction_counts.py \
-    --counts_path ../data/Enamine_REAL_SMILES/reaction_counts.json \
-    --save_table_path ../data/Enamine_REAL_SMILES/reaction_counts.csv \
-    --save_plot_path ../data/Enamine_REAL_SMILES/reaction_counts.pdf
+    --save_dir ../data/Enamine_REAL_counts
 ```
