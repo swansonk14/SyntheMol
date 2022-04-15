@@ -34,6 +34,20 @@ All molecules were successfully converted from SDF to SMILES, and among those 13
 Note: This seems to be because the SMILES are not capturing any stereochemistry information even though it is annotated with the `CFG` tag in the SDF file (although 3D coordinates are missing).
 
 
+## Plot regression values
+
+```
+python plot_regression_values.py \
+    --data_path ../../../chemistry/antibiotic_moa/data/broad_organism.csv \
+    --rep1_column Acinetobacter_baumannii_50uM_R1 \
+    --rep2_column Acinetobacter_baumannii_50uM_R2 \
+    --remove_outliers \
+    --save_dir ../plots/Acinetobacter_baumannii
+```
+
+Repeat for `Acinetobacter_baumannii`, `Escherichia_coli`, `Pseudomonas_aeruginosa`, and `Staphylococcus_aureus`.
+
+
 ## Train chemprop on screening data
 
 The following commands are from [Chemprop](https://github.com/chemprop/chemprop).
@@ -151,7 +165,7 @@ python train.py \
 ## Count REAL reactions
 
 ```
-python count_reactions.py \
+python count_real_database.py \
     --data_dir ../data/Enamine_REAL_SMILES \
     --save_dir ../data/Enamine_REAL_counts
 ```
