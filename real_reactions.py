@@ -3,11 +3,11 @@
 REAL_REACTIONS = {
     1: {
         'reagents': [
-            ''
-            '[OH1][C:4]([*:5])=[O:6]',
-            '[OH1][C:7]([*:8])=[O:9]'
+            '[*:1][NH1:2][$1-9(C)][N:3][*:4][BOC]'  # TODO: figure out carbon chain length and Boc
+            '[OH1][C:5]([*:6])=[O:7]',
+            '[OH1][C:8]([*:9])=[O:10]'
         ],
-        'products': ''
+        'products': '[O:7]=[C:5]([*:6])[*:1][N:2][$1-9(C)][N:3][*:4][C:8]([*:9])=[O:10]'  # TODO: figure out carbon chain
     },
     2: {
         'reagents': [

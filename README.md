@@ -197,6 +197,6 @@ Sample REAL database molecules for quick analysis, testing, and visualization.
 ```
 python sample_real_database.py \
     --data_dir ../data/Enamine_REAL_SMILES \
-    --num_molecules 1000 \
+    --num_molecules 10000 \
     --save_dir ../data/Enamine_REAL_SMILES_sampled
 ```
