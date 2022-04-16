@@ -83,6 +83,8 @@ python train.py \
     --no_features_scaling \
     --split_type cv \
     --num_folds 10 \
+    --metric prc-auc \
+    --extra_metrics auc \
     --save_dir ../combinatorial_antibiotics/ckpt/AB_training \
     --quiet
 ```
@@ -98,6 +100,8 @@ python train.py \
     --no_features_scaling \
     --split_type cv \
     --num_folds 10 \
+    --metric prc-auc \
+    --extra_metrics auc \
     --save_dir ../combinatorial_antibiotics/ckpt/AB+EC+PA+SA \
     --quiet
 ```
@@ -113,6 +117,8 @@ python train.py \
     --no_features_scaling \
     --split_type cv \
     --num_folds 10 \
+    --metric prc-auc \
+    --extra_metrics auc \
     --save_dir ../combinatorial_antibiotics/ckpt/AB \
     --quiet
 ```
@@ -128,6 +134,8 @@ python train.py \
     --no_features_scaling \
     --split_type cv \
     --num_folds 10 \
+    --metric prc-auc \
+    --extra_metrics auc \
     --save_dir ../combinatorial_antibiotics/ckpt/EC \
     --quiet
 ```
@@ -143,6 +151,8 @@ python train.py \
     --no_features_scaling \
     --split_type cv \
     --num_folds 10 \
+    --metric prc-auc \
+    --extra_metrics auc \
     --save_dir ../combinatorial_antibiotics/ckpt/PA \
     --quiet
 ```
@@ -158,14 +168,25 @@ python train.py \
     --no_features_scaling \
     --split_type cv \
     --num_folds 10 \
+    --metric prc-auc \
+    --extra_metrics auc \
     --save_dir ../combinatorial_antibiotics/ckpt/SA \
     --quiet
 ```
 
-## Count REAL reactions
+## Count REAL reactions and reagents
 
+Count all REAL reactions and reagents in the 4.5 billion REAL database.
 ```
 python count_real_database.py \
     --data_dir ../data/Enamine_REAL_SMILES \
     --save_dir ../data/Enamine_REAL_counts
+```
+
+Count the top 10 unique reactions and reagents in the 4.5 billion REAL database. (Note: Reactions 22, 11, 527, and 240690 represent the same reactants + products, so we consider them one reaction.)
+```
+python count_real_database.py \
+    --data_dir ../data/Enamine_REAL_SMILES \
+    --reactions 275592 22 11 527 240690 2430 2708 2230 2718 40 1458 271948 27 \
+    --save_dir ../data/Enamine_REAL_counts_top_10
 ```

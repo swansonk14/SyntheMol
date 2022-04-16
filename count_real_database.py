@@ -2,6 +2,7 @@
 import json
 from collections import Counter, defaultdict
 from pathlib import Path
+from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -12,7 +13,8 @@ from tqdm import tqdm
 
 class Args(Tap):
     data_dir: Path  # Path to directory with CXSMILES files containing the REAL database.
-    save_dir: Path  # Path to dreictoy where results will be saved.
+    reactions: Optional[set[int]] = None  # Set of reactions to count. If None, counts all reactions.
+    save_dir: Path  # Path to directory where results will be saved.
 
     def process_args(self) -> None:
         self.save_dir.mkdir(parents=True, exist_ok=True)
@@ -90,12 +92,16 @@ def count_real_database(args: Args) -> None:
     reagent_counts_by_reaction = defaultdict(Counter)
 
     # Loop through all REAL database files
-    for path in tqdm(list(args.data_dir.glob('*.cxsmiles'))):
+    for path in tqdm(list(args.data_dir.glob('*.cxsmiles')), desc='Counting'):
         # Load REAL data file
         data = pd.read_csv(path, sep='\t', usecols=USECOLS)
 
+        # Optionally, limit the set of reactions that are counted
+        if args.reactions is not None:
+            data = data[data[REACTION_COL].isin(args.reactions)]
+
         # Update reaction counts
-        reaction_counts.update(data['reaction'])
+        reaction_counts.update(data[REACTION_COL])
 
         # Update reagent counts
         for reagent_col in REAGENT_COLS:
@@ -114,7 +120,9 @@ def count_real_database(args: Args) -> None:
     save_counts(counts=dict(reagent_counts), count_name='Reagent', save_dir=args.save_dir)
 
     # Save reagent counts by reaction
-    for reaction, reagent_counts_for_reaction in reagent_counts_by_reaction.items():
+    for reaction, reagent_counts_for_reaction in tqdm(reagent_counts_by_reaction.items(),
+                                                      total=len(reagent_counts_by_reaction),
+                                                      desc='Saving'):
         # Create save directory for this reaction
         save_dir = args.save_dir / 'reagent_counts_by_reaction' / str(reaction)
         save_dir.mkdir(parents=True, exist_ok=True)
