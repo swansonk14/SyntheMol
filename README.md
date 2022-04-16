@@ -190,3 +190,13 @@ python count_real_database.py \
     --reactions 275592 22 11 527 240690 2430 2708 2230 2718 40 1458 271948 27 \
     --save_dir ../data/Enamine_REAL_counts_top_10
 ```
+
+## Sample REAL database molecules
+
+Sample REAL database molecules for quick analysis, testing, and visualization.
+```
+python sample_real_database.py \
+    --data_dir ../data/Enamine_REAL_SMILES \
+    --num_molecules 1000 \
+    --save_dir ../data/Enamine_REAL_SMILES_sampled
+```
