@@ -15,6 +15,25 @@ REAL_REACTIONS = {
             '[OH1][C:4]([*:5])=[O:6]'
         ],
         'product': '[*:5][C:4](=[O:6])[N:2]([*:1])[*:3]'
+    },
+    3: {
+        'reagents': [
+            # TODO: aromatic?
+        ],
+        'product': ''  # TODO: aromatic?
+    },
+    4: {
+        'reagents': [
+            '[*:1][NH2:2]',
+            '[*:3][NH2:4]',
+        ],
+        'product': 'O=C([NH1:2][*:1])[NH1:4][*:3]'
+    },
+    5: {
+        'reagents' [
+
+        ],
+        'product': ''
     }
 }
 
@@ -28,5 +47,8 @@ for reaction in REAL_REACTIONS.values():
 # TODO: check if our reactions map to even more REAL reactions with same reactants/products
 REACTION_ID_TO_REAL_ID = {
     1: {275592},
-    2: {11, 22, 527, 240690}
+    2: {11, 22, 527, 240690},
+    3: {2430},
+    4: {2708},
+    5: {2230}
 }

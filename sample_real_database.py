@@ -33,7 +33,7 @@ def sample_real_database_file(path: Path, num_molecules: int, save_dir: Path) ->
         sample_file.write(header)
 
         # Copy selected rows
-        for index, row in tqdm(enumerate(f), total=num_rows, desc='Saving rows'):
+        for index, row in tqdm(enumerate(full_file), total=num_rows, desc='Saving rows'):
             if index in sampled_row_indices:
                 sample_file.write(row)
 
