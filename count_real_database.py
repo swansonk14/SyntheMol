@@ -93,8 +93,8 @@ def count_real_database(args: Args) -> None:
 
     # Loop through all REAL database files
     for path in tqdm(list(args.data_dir.glob('*.cxsmiles')), desc='Counting'):
-        # Load REAL data file
-        data = pd.read_csv(path, sep='\t', usecols=USECOLS)
+        # Load REAL data file (ensures cols are in the order of USECOLS for itertuples below)
+        data = pd.read_csv(path, sep='\t', usecols=USECOLS)[USECOLS]
 
         # Optionally, limit the set of reactions that are counted
         if args.reactions is not None:
