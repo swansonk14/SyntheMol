@@ -22,11 +22,12 @@ The 11 CXSMILES files contain 4,492,114,676 molecules and 170 chemical reactions
 
 ## Process Data
 
-Convert the building blocks from SDF to (unique) SMILES.
+Convert the building blocks from SDF to (unique) SMILES using the `sdf_to_smiles.py` script from [chem_utils](https://github.com/swansonk14/chem_utils).
 ```
 python sdf_to_smiles.py \
     --data_path ../data/2021q3-4_Enamine_REAL_reagents_SDF.sdf \
-    --save_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES.csv
+    --save_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES.csv \
+    --properties Reagent_ID Catalog_ID
 ```
 
 All molecules were successfully converted from SDF to SMILES, and among those 134,609 are unique.

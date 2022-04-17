@@ -16,11 +16,11 @@ REAL_REACTIONS = {
         ],
         'product': '[*:5][C:4](=[O:6])[N:2]([*:1])[*:3]'
     },
-    3: {
+    3: {  # TODO: Ar?
         'reagents': [
-            # TODO: aromatic?
+
         ],
-        'product': ''  # TODO: aromatic?
+        'product': ''
     },
     4: {
         'reagents': [
@@ -29,8 +29,8 @@ REAL_REACTIONS = {
         ],
         'product': 'O=C([NH1:2][*:1])[NH1:4][*:3]'
     },
-    5: {
-        'reagents' [
+    5: {  # TODO: Alk, Ar, cycle?
+        'reagents': [
 
         ],
         'product': ''
