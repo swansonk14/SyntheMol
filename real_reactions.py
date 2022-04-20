@@ -3,11 +3,11 @@
 REAL_REACTIONS = {
     1: {
         'reagents': [
-            '[*:1][NH1:2][$1-9(C)][N:3][*:4][BOC]'  # TODO: figure out carbon chain length and Boc
+            'CC(C)(C)OC(=O)[N:1]([*:2])C[NH1:3][*:4]'  # TODO: figure out carbon chain length
             '[OH1][C:5]([*:6])=[O:7]',
             '[OH1][C:8]([*:9])=[O:10]'
         ],
-        'products': '[O:7]=[C:5]([*:6])[*:1][N:2][$1-9(C)][N:3][*:4][C:8]([*:9])=[O:10]'  # TODO: figure out carbon chain
+        'products': 'C[N:3]([*:4])[C:5](=[O:7])[*:6].C[N:1]([*:2])[C:8](=[O:10])[*:9]'  # TODO: figure out carbon chain
     },
     2: {
         'reagents': [
@@ -44,7 +44,6 @@ for reaction in REAL_REACTIONS.values():
     reaction['reaction'] = f'{".".join(reaction["reagent"])}>>{reaction["product"]}'
 
 # Dictionary mapping our reaction ID to a set of corresponding REAL reaction IDs
-# TODO: check if our reactions map to even more REAL reactions with same reactants/products
 REACTION_ID_TO_REAL_ID = {
     1: {275592},
     2: {11, 22, 527, 240690},

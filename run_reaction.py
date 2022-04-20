@@ -62,10 +62,10 @@ def run_reaction(args: Args) -> None:
     pairs = list(product(mols_1[:10], mols_2[:100000]))
     # pairs = [(deepcopy(mol_1), deepcopy(mol_2)) for mol_1, mol_2 in tqdm(pairs, desc='copy')]
     # Run reaction with all combinations
-    with Pool() as pool:
-        for products in tqdm(map(run, pairs), total=len(pairs)):
-            if any(len(p) != 1 for p in products):
-                breakpoint()
+    # with Pool() as pool:
+    #     for products in tqdm(map(run, pairs), total=len(pairs)):
+    #         if any(len(p) != 1 for p in products):
+    #             breakpoint()
     #
     # for mol_pair in tqdm(product(mols_1, mols_2), total=num_combinations, desc='Running reaction'):
     #     # print(Chem.MolToSmiles(mol_pair[0]))
@@ -85,16 +85,16 @@ def run_reaction(args: Args) -> None:
         # breakpoint()
 
 
-    # from rdkit.Chem.Draw import rdMolDraw2D
-    # patt = Chem.MolFromSmarts(REAGENT_2)
-    # for i, mol in enumerate(tqdm(mols)):
-    #     match = mol.GetSubstructMatch(patt)
-    #     if len(match) > 0:
-    #         d = rdMolDraw2D.MolDraw2DSVG(500, 500)
-    #         rdMolDraw2D.PrepareAndDrawMolecule(d, mol, highlightAtoms=match)
-    #         d.FinishDrawing()
-    #         with open(f'images/{i}.svg', 'w') as f:
-    #             f.write(d.GetDrawingText())
+    from rdkit.Chem.Draw import rdMolDraw2D
+    patt = Chem.MolFromSmarts(REAGENT_2)
+    for i, mol in enumerate(tqdm(mols)):
+        match = mol.GetSubstructMatch(patt)
+        if len(match) > 0:
+            d = rdMolDraw2D.MolDraw2DSVG(500, 500)
+            rdMolDraw2D.PrepareAndDrawMolecule(d, mol, highlightAtoms=match)
+            d.FinishDrawing()
+            with open(f'images/{i}.svg', 'w') as f:
+                f.write(d.GetDrawingText())
 
 
 

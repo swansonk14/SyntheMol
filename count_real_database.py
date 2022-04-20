@@ -88,7 +88,7 @@ def count_real_database(args: Args) -> None:
     """Count reactions and reagents in the REAL database."""
     # Count reactions and reagents
     reaction_counts = Counter()
-    reagent_counts = Counter()
+    reagent_counts = Counter()  # TODO: should count number of *unique* molecules covered by the reagents b/c double counting
     reagent_counts_by_reaction = defaultdict(Counter)
 
     # Loop through all REAL database files
