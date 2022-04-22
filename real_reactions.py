@@ -1,141 +1,76 @@
 """SMARTS representations of the REAL reactions."""
-from rdkit import Chem
-
-
-class SidechainChecker:
-    matchers = {
-        'alkyl': {
-            'function': lambda atom: atom.GetAtomicNum() == 6 and not atom.GetIsAromatic(),
-            'type': 'all'
-        },
-        'aryl': {
-            'function': lambda atom: atom.GetIsAromatic(),
-            'type': 'any'
-        },
-        'cycle': {
-            'function': lambda atom: atom.IsInRing(),
-            'type': 'any'
-        }
-    }
-
-    def __init__(self, atoms_to_check: dict[int, str]) -> None:
-        self.atoms_to_check = atoms_to_check  # Maps from index in query SMARTS of a side chain to match type
-
-    def __call__(self, mol: Chem.Mol, matched_atoms: list[int]) -> bool:
-        visited_atoms = set(matched_atoms)
-
-        # Loop over the atoms that start the side chains to check
-        for query_index, match_type in self.atoms_to_check.items():
-            # Get the index of the atom in the molecule
-            atom_index = matched_atoms[query_index]
-            atom = mol.GetAtomWithIdx(atom_index)
-
-            # Do a breadth-first search from that atom, checking all of its neighbors that aren't in the query
-            stack = [atom]
-            matcher_function = self.matchers[match_type]['function']
-            matcher_type = self.matchers[match_type]['type']
-            matched = matcher_type == 'all'
-
-            while stack:
-                atom = stack.pop(0)
-
-                if matcher_type == 'all' and not matcher_function(atom):
-                    return False
-                elif matcher_function(atom):
-                    matched = True
-                    break
-
-                visited_atoms.add(atom.GetIdx())
-
-                for neighbor_atom in atom.GetNeighbors():
-                    if neighbor_atom.GetIdx() not in visited_atoms:
-                        stack.append(neighbor_atom)
-
-            if not matched:
-                return False
-
-        return True
-
-
-# Dictionary mapping our reaction ID to SMARTS for the reagents and products
-REAL_REACTIONS = {
-    1: {
+# TODO: other reaction IDs that match
+# TODO: requires Chem.AddHs()
+REAL_REACTIONS = [
+    {
         'reagents': [
-            {
-                'smarts': 'CC(C)(C)OC(=O)[N:1]([*:2])C.C[NH1:3][*:4]',  # TODO: fix C matching
-                'checker': None  # TODO: figure out carbon chain length (note: chain could be non-aromatic ring)
-            },
-            {
-                'smarts': '[OH1][C:5]([*:6])=[O:7]',
-                'checker': None
-            },
-            {
-                'smarts': '[OH1][C:8]([*:9])=[O:10]',
-                'checker': None
-            }
+            'CC(C)(C)OC(=O)[N:1]([*:2])C.C[NH1:3][*:4]',  # TODO: fix C matching
+            '[OH1][C:5]([*:6])=[O:7]',
+            '[OH1][C:8]([*:9])=[O:10]'
         ],
-        'product': {  # TODO: is a checker needed for the product and/or reaction smarts?
-            # TODO: is atom mapping needed
-            'smarts': 'C[N:3]([*:4])[C:5](=[O:7])[*:6].C[N:1]([*:2])[C:8](=[O:10])[*:9]',
-            'checker': None  # TODO: figure out carbon chain
-        }
+        'product': 'C[N:3]([*:4])[C:5](=[O:7])[*:6].C[N:1]([*:2])[C:8](=[O:10])[*:9]',  # TODO: fix C matching
+        'real_ids': {275592}
     },
-    2: {
+    {
         'reagents': [
             '[*:1][NH1:2][*:3]',
             '[OH1][C:4]([*:5])=[O:6]'
         ],
-        'product': '[*:5][C:4](=[O:6])[N:2]([*:1])[*:3]'
+        'product': '[*:5][C:4](=[O:6])[N:2]([*:1])[*:3]',
+        'real_ids': {11, 22, 527, 188690, 240690, 269946, 270006, 270112, 272270, 272430, 273450, 273652, 280130}
     },
-    3: {  # TODO: Ar?
+    {
         'reagents': [
-
+            '[*:1][NH1:2][*:3]',
+            '[*:4][NH1:5][*:6]'
         ],
-        'product': ''
+        'product': 'O=C([N:2]([*:1])[*:3])[N:5]([*:4])[*:6]',
+        'real_ids': {512, 2430, 2554, 2708, 272164, 273390, 273392, 273452, 273454, 273458, 273464, 273574}
     },
-    4: {
+    {
         'reagents': [
-            '[*:1][NH2:2]',
-            '[*:3][NH2:4]',
+            '[*:1][NH1:2][*:3]',
+            '[F,Cl,Br,I:4][*:5]'
         ],
-        'product': 'O=C([NH1:2][*:1])[NH1:4][*:3]'
+        'product': '[*:1][N:2]([*:2])[*:3]',
+        'real_ids': {7, 27, 34, 38, 44, 61, 2230, 269956, 269982, 270122, 270166, 270344, 272692, 272710, 273654}
     },
-    5: {  # TODO: Alk, Ar, cycle?
+    {
         'reagents': [
-
+            '[*:1][O,S:2]',
+            '[F,Cl,Br,I:3][*:4]'
         ],
-        'product': ''
+        'product': '[*:1][O,S:2][*:4]',
+        'real_ids': {7, 34, 272692, 272710, 273654}
     },
-    6: {
+    {
         'reagents': [
-            {
-                'smarts': '[NH2:1][*:2]',
-                'checker': SidechainChecker(atoms_to_check={1: 'aryl'})
-            },
-            {
-                'smarts': '[NH2:3][*:4]',
-                'checker': SidechainChecker(atoms_to_check={1: 'alkyl'})
-            }
+            '[*:1][NH1:2][*:3]',
+            '[*:4][NH1:5][*:6]',
         ],
-        'product': {
-            'smarts': 'O=C([NH1:1][*:2])C(=O)[NH1:3][*:4]',
-            'checker': SidechainChecker(atoms_to_check={3: 'aryl', 7: 'alkyl'})
-        }
+        'product': 'O=C(C(=O)[N:2]([*:1])[*:3])[N:5]([*:4])[*:6]',
+        'real_ids': {2718, 271948, 271949, 273460, 273462, 273492, 273494, 273496, 273498}
+    },
+    {
+        'reagents': [
+            '[*:1][NH1:2][*:3]',
+            '[O:4]=[S:5](=[O:6])([F,Cl,Br,I:7])[*:8]'
+        ],
+        'product': '[O:4]=[S:5](=[O:6])([*:8])[N:2]([*:1])[*:3]',
+        'real_ids': {20, 40, 196680, 232682, 270084, 270188, 271082, 273578, 274078}
+    },
+    {
+        'reagents': [
+            '[O:1]=[C:2]([O:3])[*:4]'
+            '[F,Cl,Br,I:5][*:6]'
+        ],
+        'product': '[O:1]=[C:2]([*:4])[O:3][*:6]',
+        'real_ids': {1458}
     }
-}
+]
 
 # Create reaction SMARTS from reagent and product SMARTS
-for reaction in REAL_REACTIONS.values():
+for reaction in REAL_REACTIONS:
     # TODO: do we need parentheses for the reagents to force them to be separate molecules?
     # reaction = reagent_1.reagent_2...reagent_n>>product
     reaction['reaction'] = f'{".".join(reaction["reagent"])}>>{reaction["product"]}'
-
-# Dictionary mapping our reaction ID to a set of corresponding REAL reaction IDs
-REACTION_ID_TO_REAL_ID = {
-    1: {275592},
-    2: {11, 22, 527, 240690},
-    3: {2430},
-    4: {2708},
-    5: {2230},
-    6: {2718}
-}
