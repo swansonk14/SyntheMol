@@ -1,14 +1,57 @@
 """SMARTS representations of the REAL reactions."""
-# TODO: other reaction IDs that match
+"""
+from collections import deque
+
+from rdkit import Chem
+
+class CarbonChainChecker:
+    def __init__(self, start_atoms: set[int], end_atoms: set[int]) -> None:
+        self.start_atoms = start_atoms  # Atoms that start side chains in one fragment
+        self.end_atoms = end_atoms  # Atoms that end side chains in the other fragment
+
+    def __call__(self, mol: Chem.Mol, matched_atoms: list[int]) -> bool:
+        visited_atoms = set(matched_atoms)
+        start_atom_indices = {matched_atoms[start_atom] for start_atom in self.start_atoms}
+        end_atom_indices = {matched_atoms[end_atom] for end_atom in self.end_atoms}
+
+        # Loop over the atoms that begin side chains
+        for start_atom_index in start_atom_indices:
+            atom = mol.GetAtomWithIdx(start_atom_index)
+
+            # Do a breadth-first search from the start atom to try to find a path with only carbons to an end atom
+            queue = deque([atom])
+            while queue:
+                atom = queue.pop()
+                visited_atoms.add(atom.GetIdx())
+
+                for neighbor_atom in atom.GetNeighbors():
+                    # Check if we've reached an end index
+                    if neighbor_atom.GetIdx() in end_atom_indices:
+                        return True
+
+                    # Add neighbor atom if it is not visited and is a non-aromatic carbon
+                    if (neighbor_atom.GetIdx() not in visited_atoms
+                            and neighbor_atom.GetAtomicNum() == 6
+                            and not neighbor_atom.GetIsAromatic()):
+                        queue.append(neighbor_atom)
+
+        return False  # There is no path from any start index to any end index that is all carbon
+"""
+
 # TODO: requires Chem.AddHs()
 REAL_REACTIONS = [
     {
         'reagents': [
-            'CC(C)(C)OC(=O)[N:1]([*:2])C.C[NH1:3][*:4]',  # TODO: fix C matching
-            '[OH1][C:5]([*:6])=[O:7]',
-            '[OH1][C:8]([*:9])=[O:10]'
+            # reagent_with_carbon_chain := 'CC(C)(C)OC(=O)[N:1]([*:2])[*:3].[*:4][N:5]([H])[*:6]',
+            'CC(C)(C)OC(=O)[N:1]([*:2])[C:3].[C:4][N:5]([H])[*:6]',
+            '[OH1][C:7]([*:8])=[O:9]',
+            '[OH1][C:10]([*:11])=[O:12]'
         ],
-        'product': 'C[N:3]([*:4])[C:5](=[O:7])[*:6].C[N:1]([*:2])[C:8](=[O:10])[*:9]',  # TODO: fix C matching
+        # 'product': '[*:4][N:5]([*:6])[C:7](=[O:9])[*:8].[*:3][N:1]([*:2])[C:10](=[O:12])[*:11]',
+        'product': '[C:4][N:5]([*:6])[C:7](=[O:9])[*:8].[C:3][N:1]([*:2])[C:10](=[O:12])[*:11]',
+        # 'checkers': {  # TODO: maybe check explicitly for carbon chains?
+        #     reagent_with_carbon_chain: CarbonChainChecker(start_atoms={8, 9}, end_atoms={10, 13})
+        # },
         'real_ids': {275592}
     },
     {
