@@ -3,7 +3,6 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 from scipy.special import comb
 
-"""
 from collections import deque
 
 
@@ -14,8 +13,19 @@ class CarbonChainChecker:
 
     def __call__(self, mol: Chem.Mol, matched_atoms: list[int]) -> bool:
         visited_atoms = set(matched_atoms)
-        start_atom_indices = {matched_atoms[start_atom] for start_atom in self.start_atoms}
-        end_atom_indices = {matched_atoms[end_atom] for end_atom in self.end_atoms}
+
+        # Get start and end indices on the two side chains which are carbons
+        start_atom_indices = {
+            atom_index for start_atom in self.start_atoms
+            if mol.GetAtomWithIdx(atom_index := matched_atoms[start_atom]).GetAtomicNum() == 6
+        }
+        end_atom_indices = {
+            atom_index for end_atom in self.end_atoms
+            if mol.GetAtomWithIdx(atom_index := matched_atoms[end_atom]).GetAtomicNum() == 6
+        }
+
+        if len(start_atom_indices) == 0 or len(end_atom_indices) == 0:
+            return False
 
         # Loop over the atoms that begin side chains
         for start_atom_index in start_atom_indices:
@@ -39,7 +49,6 @@ class CarbonChainChecker:
                         queue.append(neighbor_atom)
 
         return False  # There is no path from any start index to any end index that is all carbon
-"""
 
 
 def count_two_different_reagents(num_r1: int, num_r2: int) -> int:
@@ -66,16 +75,16 @@ def count_three_reagents_with_two_same(num_r1: int, num_r2: int, num_r3: int) ->
 REAL_REACTIONS = [
     {
         'reagents': [
-            # reagent_with_carbon_chain := 'CC(C)(C)OC(=O)[N:1]([*:2])[*:3].[*:4][N:5]([H])[*:6]',
-            'CC(C)(C)OC(=O)[N:1]([*:2])[C:3].[C:4][N:5]([H])[*:6]',
+            'CC(C)(C)OC(=O)[N:1]([*:2])[*:3].[*:4][N:5]([H])[*:6]',
+            # 'CC(C)(C)OC(=O)[N:1]([*:2])[C:3].[C:4][N:5]([H])[*:6]',
             '[OH1][C:7]([*:8])=[O:9]',
             '[OH1][C:10]([*:11])=[O:12]'
         ],
-        # 'product': '[*:4][N:5]([*:6])[C:7](=[O:9])[*:8].[*:3][N:1]([*:2])[C:10](=[O:12])[*:11]',
-        'product': '[C:4][N:5]([*:6])[C:7](=[O:9])[*:8].[C:3][N:1]([*:2])[C:10](=[O:12])[*:11]',
-        # 'checkers': {  # TODO: maybe check explicitly for carbon chains?
-        #     reagent_with_carbon_chain: CarbonChainChecker(start_atoms={8, 9}, end_atoms={10, 13})
-        # },
+        'product': '[*:4][N:5]([*:6])[C:7](=[O:9])[*:8].[*:3][N:1]([*:2])[C:10](=[O:12])[*:11]',
+        # 'product': '[C:4][N:5]([*:6])[C:7](=[O:9])[*:8].[C:3][N:1]([*:2])[C:10](=[O:12])[*:11]',
+        'checkers': {  # TODO: maybe check explicitly for carbon chains?
+            0: CarbonChainChecker(start_atoms={8, 9}, end_atoms={10, 13})
+        },
         'real_ids': {275592},
         'counting_fn': count_three_reagents_with_two_same
     },

@@ -1,7 +1,6 @@
 """Counts the number of feasible molecules using reaction SMARTS from the top REAL reactions."""
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 from rdkit import Chem
 from tap import Tap
@@ -29,14 +28,19 @@ def count_feasible_reactions(args: Args) -> None:
     # Process data
     total_num_molecules = 0
     for index, reaction in enumerate(tqdm(REAL_REACTIONS, desc='Looping reactions')):
-        reagents = [
-            [
+        reagents = []
+        for reagent_index, reagent in enumerate(tqdm(reaction['reagents'], desc='Looping reagents', leave=False)):
+            params = Chem.SubstructMatchParameters()
+
+            if 'checkers' in reaction and reagent_index in reaction['checkers']:
+                params.setExtraFinalCheck(reaction['checkers'][reagent_index])
+
+            reagents.append([
                 building_block_mol
                 for building_block_mol in tqdm(building_block_mols, desc='Matching reagents', leave=False)
-                if building_block_mol.HasSubstructMatch(reagent)
-            ]
-            for reagent in tqdm(reaction['reagents'], desc='Looping reagents', leave=False)
-        ]
+                if building_block_mol.HasSubstructMatch(reagent, params)
+            ])
+
         num_molecules = reaction['counting_fn'](*[len(reagent) for reagent in reagents])
         print(f'Reaction {index} can produce {num_molecules:,} molecules')
         total_num_molecules += num_molecules
