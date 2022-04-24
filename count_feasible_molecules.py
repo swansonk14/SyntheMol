@@ -42,7 +42,7 @@ def count_feasible_reactions(args: Args) -> None:
             ])
 
         num_molecules = reaction['counting_fn'](*[len(reagent) for reagent in reagents])
-        print(f'Reaction {index} can produce {num_molecules:,} molecules')
+        print(f'Reaction {index + 1} can produce {num_molecules:,} molecules')
         total_num_molecules += num_molecules
 
     print(f'All reactions can produce {total_num_molecules:,} molecules')

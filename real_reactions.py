@@ -90,6 +90,33 @@ REAL_REACTIONS = [
     },
     {
         'reagents': [
+            '[*:1][OH1,SH1:2]',
+            '[F,Cl,Br,I:3][*:4]'
+        ],
+        'product': '[*:1][O,S:2][*:4]',
+        'real_ids': {7, 34, 272692, 272710, 273654},
+        'counting_fn': count_two_different_reagents
+    },
+    {
+        'reagents': [
+            '[*:1][NH1:2][*:3]',
+            '[F,Cl,Br,I:4][*:5]'
+        ],
+        'product': '[*:1][N:2]([*:2])[*:3]',
+        'real_ids': {7, 27, 34, 38, 44, 61, 2230, 269956, 269982, 270122, 270166, 270344, 272692, 272710, 273654},
+        'counting_fn': count_two_different_reagents
+    },
+    {
+        'reagents': [
+            '[O:1]=[C:2]([OH1:3])[*:4]',
+            '[F,Cl,Br,I:5][*:6]'
+        ],
+        'product': '[O:1]=[C:2]([*:4])[O:3][*:6]',
+        'real_ids': {1458},
+        'counting_fn': count_two_different_reagents
+    },
+    {
+        'reagents': [
             '[*:1][NH1:2][*:3]',
             '[OH1][C:4]([*:5])=[O:6]'
         ],
@@ -109,24 +136,6 @@ REAL_REACTIONS = [
     {
         'reagents': [
             '[*:1][NH1:2][*:3]',
-            '[F,Cl,Br,I:4][*:5]'
-        ],
-        'product': '[*:1][N:2]([*:2])[*:3]',
-        'real_ids': {7, 27, 34, 38, 44, 61, 2230, 269956, 269982, 270122, 270166, 270344, 272692, 272710, 273654},
-        'counting_fn': count_two_different_reagents
-    },
-    {
-        'reagents': [
-            '[*:1][O,S:2]',
-            '[F,Cl,Br,I:3][*:4]'
-        ],
-        'product': '[*:1][O,S:2][*:4]',
-        'real_ids': {7, 34, 272692, 272710, 273654},
-        'counting_fn': count_two_different_reagents
-    },
-    {
-        'reagents': [
-            '[*:1][NH1:2][*:3]',
             '[*:4][NH1:5][*:6]',
         ],
         'product': 'O=C(C(=O)[N:2]([*:1])[*:3])[N:5]([*:4])[*:6]',
@@ -140,15 +149,6 @@ REAL_REACTIONS = [
         ],
         'product': '[O:4]=[S:5](=[O:6])([*:8])[N:2]([*:1])[*:3]',
         'real_ids': {20, 40, 196680, 232682, 270084, 270188, 271082, 273578, 274078},
-        'counting_fn': count_two_different_reagents
-    },
-    {
-        'reagents': [
-            '[O:1]=[C:2]([O:3])[*:4]',
-            '[F,Cl,Br,I:5][*:6]'
-        ],
-        'product': '[O:1]=[C:2]([*:4])[O:3][*:6]',
-        'real_ids': {1458},
         'counting_fn': count_two_different_reagents
     }
 ]
