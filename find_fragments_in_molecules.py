@@ -14,10 +14,12 @@ class Args(Tap):
     fragment_smiles_path: str = 'smiles'  # Name of the column in fragment_path containing SMILES.
     molecule_path: Path  # Path to CSV file containing full molecules.
     molecule_smiles_column: str = 'smiles'  # Name of the column in molecule_path containing SMILES.
-    save_path: Path  # Path to PDF file where fragment count histogram will be saved.
+    counts_save_path: Path  # Path to CSV file where fragment counts will be saved.
+    plot_save_path: Path  # Path to PDF file where fragment count histogram will be saved.
 
     def process_args(self) -> None:
-        self.save_path.parent.mkdir(parents=True, exist_ok=True)
+        self.counts_save_path.parent.mkdir(parents=True, exist_ok=True)
+        self.plot_save_path.parent.mkdir(parents=True, exist_ok=True)
 
 
 def find_fragments_in_molecules(args: Args) -> None:
@@ -37,28 +39,27 @@ def find_fragments_in_molecules(args: Args) -> None:
         frag_matchers[fragment] = frag_matcher
 
     # Load molecules
-    molecules = pd.read_csv(args.molecule_path)
+    molecules = pd.read_csv(args.molecule_path).iloc[:50]
     print(f'Number of molecules = {len(molecules):,}')
 
     # Convert SMILES to RDKit molecules
     mols = [Chem.MolFromSmiles(smiles) for smiles in tqdm(molecules[args.molecule_smiles_column], desc='SMILES to mol')]
 
-    # Filter out bad molecules
-    mols = [mol for mol in mols if mol is not None]
-    print(f'Number of valid molecules = {len(molecules):,}')
-
     # Count fragments in molecules
-    num_frags_per_molecule = [
+    molecules['num_fragments'] = [
         sum(frag_matchers[fragment].HasMatch(mol) for fragment in fragments)
         for mol in tqdm(mols, desc='Matching fragments')
     ]
 
+    # Save fragment counts
+    molecules.to_csv(args.counts_save_path, index=False)
+
     # Histogram of fragment counts per molecule
-    plt.hist(num_frags_per_molecule, bins=100)
+    plt.hist(molecules['num_fragments'], bins=100)
     plt.xlabel('Number of fragments per molecule')
     plt.ylabel('Count')
     plt.title('Fragment counts per molecule')
-    plt.savefig(args.save_path)
+    plt.savefig(args.plot_save_path)
 
 
 if __name__ == '__main__':

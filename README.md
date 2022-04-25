@@ -201,3 +201,15 @@ python sample_real_database.py \
     --num_molecules 10000 \
     --save_dir ../data/Enamine_REAL_SMILES_sampled
 ```
+
+## Count fragments in training molecules
+
+Count the number of building blocks that appear in each of the training set molecules.
+```
+python find_fragments_in_molecules.py \
+    --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES.csv \
+    --molecule_path ../data/Screening_data/AB_training/2500+5000_training_set_2sd.csv \
+    --molecule_smiles_column SMILES \
+    --counts_save_path ../data/Screening_data/AB_training/2500+5000_training_set_2sd_fragment_counts.csv \
+    --plot_save_path ../plots/train_7500_fragment_counts.pdf \
+```
