@@ -88,10 +88,10 @@ REAL_REACTIONS = [
     },
     {
         'reagents': [
-            '[*:1][OH1,SH1,NH2:2]',
+            '[*:1][OH1,SH1:2]',
             '[F,Cl,Br,I][*:3]'
         ],
-        'product': '[*:1][O,S,NH:2][*:3]',
+        'product': '[*:1][O,S:2][*:3]',
         'real_ids': {7, 34, 272692, 272710, 273654},
         'counting_fn': count_two_different_reagents
     },
