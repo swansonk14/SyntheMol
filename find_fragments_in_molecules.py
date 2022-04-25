@@ -1,6 +1,7 @@
-"""Finds fragments in molecules."""
+"""Finds fragments in molecules and plots a histogram of number of fragments that match to each molecule."""
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import pandas as pd
 from rdkit import Chem
 from rdkit.Chem.FragmentMatcher import FragmentMatcher
@@ -10,48 +11,54 @@ from tqdm import tqdm
 
 class Args(Tap):
     fragment_path: Path  # Path to CSV file containing molecular fragments.
+    fragment_smiles_path: str = 'smiles'  # Name of the column in fragment_path containing SMILES.
     molecule_path: Path  # Path to CSV file containing full molecules.
-    smiles_column: str = 'smiles'  # Name of the column in molecule_path containing SMILES.
-    save_path: Path  # Path to CSV file where fragment indicators for each molecule will be saved.
+    molecule_smiles_column: str = 'smiles'  # Name of the column in molecule_path containing SMILES.
+    save_path: Path  # Path to PDF file where fragment count histogram will be saved.
 
     def process_args(self) -> None:
         self.save_path.parent.mkdir(parents=True, exist_ok=True)
 
 
 def find_fragments_in_molecules(args: Args) -> None:
-    """Finds fragments in molecules."""
+    """Finds fragments in molecules and plots a histogram of number of fragments that match to each molecule."""
     # Load fragments
     fragments = pd.read_csv(args.fragment_path)
-    fragments = sorted(set(fragments[args.smiles_column]))
+    print(f'Number of fragments = {len(fragments):,}')
+
+    fragments = set(fragments[args.fragment_smiles_path])
+    print(f'Number of unique fragments = {len(fragments):,}')
 
     # Map from fragment SMILES to fragment matcher
     frag_matchers = {}
-    for fragment in tqdm(fragments):
+    for fragment in tqdm(fragments, desc='Initialize fragments'):
         frag_matcher = FragmentMatcher()
         frag_matcher.Init(fragment)
         frag_matchers[fragment] = frag_matcher
 
     # Load molecules
-    molecules = pd.read_csv(args.molecule_path, sep='\t')
+    molecules = pd.read_csv(args.molecule_path)
+    print(f'Number of molecules = {len(molecules):,}')
 
     # Convert SMILES to RDKit molecules
-    molecules['mol'] = [Chem.MolFromSmiles(smiles) for smiles in tqdm(molecules[args.smiles_column])]
+    mols = [Chem.MolFromSmiles(smiles) for smiles in tqdm(molecules[args.molecule_smiles_column], desc='SMILES to mol')]
 
     # Filter out bad molecules
-    molecules = molecules[~molecules['mol'].isna()]
+    mols = [mol for mol in mols if mol is not None]
+    print(f'Number of valid molecules = {len(molecules):,}')
 
-    # Find fragments in molecules
-    for mol in tqdm(molecules['mol']):
-        has_frags = [frag_matchers[fragment].HasMatch(mol) for fragment in fragments]
-        print(sum(has_frags))
+    # Count fragments in molecules
+    num_frags_per_molecule = [
+        sum(frag_matchers[fragment].HasMatch(mol) for fragment in fragments)
+        for mol in tqdm(mols, desc='Matching fragments')
+    ]
 
-    raise NotImplementedError
-
-    # Delete RDKit molecules
-    del molecules['mol']
-
-    # Save data
-    molecules.to_csv(args.save_path, index=False)
+    # Histogram of fragment counts per molecule
+    plt.hist(num_frags_per_molecule, bins=100)
+    plt.xlabel('Number of fragments per molecule')
+    plt.ylabel('Count')
+    plt.title('Fragment counts per molecule')
+    plt.savefig(args.save_path)
 
 
 if __name__ == '__main__':
