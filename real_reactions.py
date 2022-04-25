@@ -71,18 +71,16 @@ def count_three_reagents_with_two_same(num_r1: int, num_r2: int, num_r3: int) ->
     return num_r1 * comb(num_r2, 2, exact=True, repetition=True)
 
 
-# TODO: requires Chem.AddHs()
+# TODO: requires Chem.AddHs() and explicitly checking carbon chain
 REAL_REACTIONS = [
     {
         'reagents': [
             'CC(C)(C)OC(=O)[N:1]([*:2])[*:3].[*:4][N:5]([H])[*:6]',
-            # 'CC(C)(C)OC(=O)[N:1]([*:2])[C:3].[C:4][N:5]([H])[*:6]',
             '[OH1][C:7]([*:8])=[O:9]',
             '[OH1][C:10]([*:11])=[O:12]'
         ],
         'product': '[*:4][N:5]([*:6])[C:7](=[O:9])[*:8].[*:3][N:1]([*:2])[C:10](=[O:12])[*:11]',
-        # 'product': '[C:4][N:5]([*:6])[C:7](=[O:9])[*:8].[C:3][N:1]([*:2])[C:10](=[O:12])[*:11]',
-        'checkers': {  # TODO: maybe check explicitly for carbon chains?
+        'checkers': {
             0: CarbonChainChecker(start_atoms={8, 9}, end_atoms={10, 13})
         },
         'real_ids': {275592},
@@ -91,27 +89,27 @@ REAL_REACTIONS = [
     {
         'reagents': [
             '[*:1][OH1,SH1:2]',
-            '[F,Cl,Br,I:3][*:4]'
+            '[F,Cl,Br,I][*:3]'
         ],
-        'product': '[*:1][O,S:2][*:4]',
+        'product': '[*:1][O,S:2][*:3]',
         'real_ids': {7, 34, 272692, 272710, 273654},
         'counting_fn': count_two_different_reagents
     },
     {
         'reagents': [
             '[*:1][NH1:2][*:3]',
-            '[F,Cl,Br,I:4][*:5]'
+            '[F,Cl,Br,I][*:4]'
         ],
-        'product': '[*:1][N:2]([*:2])[*:3]',
+        'product': '[*:1][N:2]([*:3])[*:4]',
         'real_ids': {7, 27, 34, 38, 44, 61, 2230, 269956, 269982, 270122, 270166, 270344, 272692, 272710, 273654},
         'counting_fn': count_two_different_reagents
     },
     {
         'reagents': [
             '[O:1]=[C:2]([OH1:3])[*:4]',
-            '[F,Cl,Br,I:5][*:6]'
+            '[F,Cl,Br,I][*:5]'
         ],
-        'product': '[O:1]=[C:2]([*:4])[O:3][*:6]',
+        'product': '[O:1]=[C:2]([*:4])[O:3][*:5]',
         'real_ids': {1458},
         'counting_fn': count_two_different_reagents
     },
@@ -145,9 +143,9 @@ REAL_REACTIONS = [
     {
         'reagents': [
             '[*:1][NH1:2][*:3]',
-            '[O:4]=[S:5](=[O:6])([F,Cl,Br,I:7])[*:8]'
+            '[O:4]=[S:5](=[O:6])([F,Cl,Br,I])[*:7]'
         ],
-        'product': '[O:4]=[S:5](=[O:6])([*:8])[N:2]([*:1])[*:3]',
+        'product': '[O:4]=[S:5](=[O:6])([*:7])[N:2]([*:1])[*:3]',
         'real_ids': {20, 40, 196680, 232682, 270084, 270188, 271082, 273578, 274078},
         'counting_fn': count_two_different_reagents
     }
