@@ -39,7 +39,7 @@ def find_fragments_in_molecules(args: Args) -> None:
         frag_matchers[fragment] = frag_matcher
 
     # Load molecules
-    molecules = pd.read_csv(args.molecule_path).iloc[:50]
+    molecules = pd.read_csv(args.molecule_path)
     print(f'Number of molecules = {len(molecules):,}')
 
     # Convert SMILES to RDKit molecules
