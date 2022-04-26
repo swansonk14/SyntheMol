@@ -95,15 +95,6 @@ REAL_REACTIONS = [
     },
     {
         'reagents': [
-            '[*:1][OH1,SH1:2]',
-            '[F,Cl,Br,I][*:3]'
-        ],
-        'product': '[*:1][O,S:2][*:3]',
-        'real_ids': {7, 34, 272692, 272710, 273654},
-        'counting_fn': count_two_different_reagents
-    },
-    {
-        'reagents': [
             '[*:1][N:2]([H])[*:3]',
             '[F,Cl,Br,I][*:4]'
         ],
@@ -113,20 +104,11 @@ REAL_REACTIONS = [
     },
     {
         'reagents': [
-            '[O:1]=[C:2]([OH1:3])[*:4]',
-            '[F,Cl,Br,I][*:5]'
+            '[*:1][OH1,SH1:2]',
+            '[F,Cl,Br,I][*:3]'
         ],
-        'product': '[O:1]=[C:2]([*:4])[O:3][*:5]',
-        'real_ids': {1458},
-        'counting_fn': count_two_different_reagents
-    },
-    {
-        'reagents': [
-            '[*:1][N:2]([H])[*:3]',
-            '[OH1][C:4]([*:5])=[O:6]'
-        ],
-        'product': '[*:5][C:4](=[O:6])[N:2]([*:1])[*:3]',
-        'real_ids': {11, 22, 527, 188690, 240690, 269946, 270006, 270112, 272270, 272430, 273450, 273652, 280130},
+        'product': '[*:1][O,S:2][*:3]',
+        'real_ids': {7, 34, 272692, 272710, 273654},
         'counting_fn': count_two_different_reagents
     },
     {
@@ -146,6 +128,24 @@ REAL_REACTIONS = [
         'product': 'O=C(C(=O)[N:2]([*:1])[*:3])[N:5]([*:4])[*:6]',
         'real_ids': {2718, 271948, 271949, 273460, 273462, 273492, 273494, 273496, 273498},
         'counting_fn': count_two_same_reagents
+    },
+    {
+        'reagents': [
+            '[O:1]=[C:2]([OH1:3])[*:4]',
+            '[F,Cl,Br,I][*:5]'
+        ],
+        'product': '[O:1]=[C:2]([*:4])[O:3][*:5]',
+        'real_ids': {1458},
+        'counting_fn': count_two_different_reagents
+    },
+    {
+        'reagents': [
+            '[*:1][N:2]([H])[*:3]',
+            '[OH1][C:4]([*:5])=[O:6]'
+        ],
+        'product': '[*:5][C:4](=[O:6])[N:2]([*:1])[*:3]',
+        'real_ids': {11, 22, 527, 188690, 240690, 269946, 270006, 270112, 272270, 272430, 273450, 273652, 280130},
+        'counting_fn': count_two_different_reagents
     },
     {
         'reagents': [
