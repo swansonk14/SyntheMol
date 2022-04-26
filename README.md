@@ -213,3 +213,22 @@ python find_fragments_in_molecules.py \
     --counts_save_path ../data/Screening_data/AB_training/2500+5000_training_set_2sd_fragment_counts.csv \
     --plot_save_path ../plots/train_7500_fragment_counts.pdf \
 ```
+
+## Map reagents to fragments
+
+Map reagents (reactants) to REAL fragments (building blocks). This pre-computation step saves time when generating molecules.
+```
+python map_reagents_to_fragments.py \
+    --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES.csv \
+    --save_path ../data/reagents_to_fragments.json
+```
+
+## Generate random molecules
+
+Generate random molecules using combinatorial molecule construction.
+```
+python generate_random_molecules.py \
+    --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES.csv \
+    --reagent_to_fragments_path ../data/reagents_to_fragments.json \
+    --save_path ../generations/random.csv
+```

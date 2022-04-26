@@ -1,4 +1,6 @@
 """SMARTS representations of the REAL reactions."""
+import re
+
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from scipy.special import comb
@@ -71,6 +73,11 @@ def count_three_reagents_with_two_same(num_r1: int, num_r2: int, num_r3: int) ->
     return num_r1 * comb(num_r2, 2, exact=True, repetition=True)
 
 
+def strip_atom_mapping(smarts: str) -> str:
+    """Strips the atom mapping from a smarts."""
+    return re.sub(r':\d+', '', smarts)
+
+
 # TODO: requires Chem.AddHs() and explicitly checking carbon chain
 REAL_REACTIONS = [
     {
@@ -97,7 +104,7 @@ REAL_REACTIONS = [
     },
     {
         'reagents': [
-            '[*:1][NH1:2][*:3]',
+            '[*:1][N:2]([H])[*:3]',
             '[F,Cl,Br,I][*:4]'
         ],
         'product': '[*:1][N:2]([*:3])[*:4]',
@@ -115,7 +122,7 @@ REAL_REACTIONS = [
     },
     {
         'reagents': [
-            '[*:1][NH1:2][*:3]',
+            '[*:1][N:2]([H])[*:3]',
             '[OH1][C:4]([*:5])=[O:6]'
         ],
         'product': '[*:5][C:4](=[O:6])[N:2]([*:1])[*:3]',
@@ -124,8 +131,8 @@ REAL_REACTIONS = [
     },
     {
         'reagents': [
-            '[*:1][NH1:2][*:3]',
-            '[*:4][NH1:5][*:6]'
+            '[*:1][N:2]([H])[*:3]',
+            '[*:4][N:5]([H])[*:6]'
         ],
         'product': 'O=C([N:2]([*:1])[*:3])[N:5]([*:4])[*:6]',
         'real_ids': {512, 2430, 2554, 2708, 272164, 273390, 273392, 273452, 273454, 273458, 273464, 273574},
@@ -133,8 +140,8 @@ REAL_REACTIONS = [
     },
     {
         'reagents': [
-            '[*:1][NH1:2][*:3]',
-            '[*:4][NH1:5][*:6]',
+            '[*:1][N:2]([H])[*:3]',
+            '[*:4][N:5]([H])[*:6]',
         ],
         'product': 'O=C(C(=O)[N:2]([*:1])[*:3])[N:5]([*:4])[*:6]',
         'real_ids': {2718, 271948, 271949, 273460, 273462, 273492, 273494, 273496, 273498},
@@ -142,7 +149,7 @@ REAL_REACTIONS = [
     },
     {
         'reagents': [
-            '[*:1][NH1:2][*:3]',
+            '[*:1][N:2]([H])[*:3]',
             '[O:4]=[S:5](=[O:6])([F,Cl,Br,I])[*:7]'
         ],
         'product': '[O:4]=[S:5](=[O:6])([*:7])[N:2]([*:1])[*:3]',
@@ -151,12 +158,16 @@ REAL_REACTIONS = [
     }
 ]
 
-# Create reaction SMARTS from reagent and product SMARTS
+# Modify REAL_REACTIONS dictionary
 for reaction in REAL_REACTIONS:
+    # Reagent SMARTS without atom mapping
+    reaction['reagents_smarts'] = [strip_atom_mapping(reagent) for reagent in reaction['reagents']]
+
     # TODO: do we need parentheses for the reagents to force them to be separate molecules?
+    # Create reaction object
     # reaction = reagent_1.reagent_2...reagent_n>>product
     reaction['reaction'] = AllChem.ReactionFromSmarts(f'{".".join(reaction["reagents"])}>>{reaction["product"]}')
 
-    # Convert strings to SMARTS objects
+    # Convert SMARTS strings to mols
     reaction['reagents'] = [Chem.MolFromSmarts(smarts) for smarts in reaction['reagents']]
     reaction['product'] = Chem.MolFromSmarts(reaction['product'])
