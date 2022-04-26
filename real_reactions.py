@@ -9,11 +9,33 @@ from collections import deque
 
 
 class CarbonChainChecker:
+    """Checks whether a SMARTS match with two fragments contains a path
+     from one fragment to the other with only non-aromatic carbon atoms."""
+
     def __init__(self, start_atoms: set[int], end_atoms: set[int]) -> None:
-        self.start_atoms = start_atoms  # Atoms that start side chains in one fragment
-        self.end_atoms = end_atoms  # Atoms that end side chains in the other fragment
+        """Initializes the carbon chain checker.
+
+        Note: The indices of start_atoms and end_atoms are indices in the SMARTS query molecule,
+              NOT the full molecule that matches the SMARTS query.
+
+        :param start_atoms: A set of indices of atoms in the first SMARTS query molecule that match to an R group,
+                            i.e., the indices of the "*" symbols which begin side chains.
+        :param end_atoms: A set of indices of atoms in the second SMARTS query molecule that match to an R group,
+                            i.e., the indices of the "*" symbols which begin side chains.
+        """
+        self.start_atoms = start_atoms
+        self.end_atoms = end_atoms
 
     def __call__(self, mol: Chem.Mol, matched_atoms: list[int]) -> bool:
+        """Checks whether a molecule that has matched to the SMARTS query satisfies the carbon chain criterion.
+
+        :param mol: The Mol object of the molecule that matches the SMARTS query.
+        :param matched_atoms: A list of indices of atoms in the molecule that match the SMARTS query.
+                              The ith element of this list is the index of the atom in the molecule
+                              that matches the atom at index i in the SMARTS query.
+                              (Note: This is technically an RDKit vect object, but it can be treated like a list.)
+        :return: Whether the matched molecule satisfies the carbon chain criterion.
+        """
         visited_atoms = set(matched_atoms)
 
         # Get start and end indices on the two side chains which are carbons

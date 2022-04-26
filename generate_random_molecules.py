@@ -120,6 +120,7 @@ def run_random_reaction(fragment: str, reagent_to_fragments: dict[str, list[str]
     fragments.append(second_fragment)
 
     # Possibly select a third fragment
+    # TODO: change this probability
     if np.random.rand() < 0.5:
         third_fragment = sample_next_fragment(fragments=fragments, reagent_to_fragments=reagent_to_fragments)
 
@@ -171,6 +172,7 @@ def generate_random_molecule(fragments: list[str],
         fragment = run_random_reaction(fragment=fragment, reagent_to_fragments=reagent_to_fragments)
 
         # Random chance of stopping early
+        # TODO: change this probability
         if np.random.rand() < 0.33:
             break
 
