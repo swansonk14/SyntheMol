@@ -17,7 +17,7 @@ class Args(Tap):
     fragment_path: Path  # Path to CSV file containing molecular building blocks.
     smiles_column: str = 'smiles'  # Name of the column containing SMILES.
     reagent_to_fragments_path: Path  # Path to a JSON file containing a dictionary mapping from reagents to fragments.
-    num_molecules: int = 100  # Number of molecules to generate.
+    num_molecules: int = 10  # Number of molecules to generate.
     max_num_reactions: int = 3  # Maximum number of reactions that can be performed to expand fragments into molecules.
     save_path: Path  # Path to CSV file where generated molecules will be saved.
 
@@ -77,7 +77,8 @@ def sample_next_fragment(fragments: list[str], reagent_to_fragments: dict[str, l
     return selected_fragment
 
 
-def find_reactions_for_fragments(fragments: list[str]) -> list[Chem.rdChemReactions.ChemicalReaction]:
+def find_reactions_for_fragments(fragments: list[str]) -> list[tuple[Chem.rdChemReactions.ChemicalReaction,
+                                                                     tuple[int, ...]]]:
     mols = [Chem.AddHs(Chem.MolFromSmiles(fragment)) for fragment in fragments]
     matching_reactions = []
 
@@ -89,9 +90,9 @@ def find_reactions_for_fragments(fragments: list[str]) -> list[Chem.rdChemReacti
         reagent_matches_per_mol = get_reagent_matches_per_mol(reaction=reaction, mols=mols)
 
         # If any assignment of fragments to reagents fills all the reagents, then include the reaction
-        # TODO: determine fragment order for reaction
-        if any(len(set(indices)) == len(reaction['reagents']) for indices in product(*reagent_matches_per_mol)):
-            matching_reactions.append(reaction['reaction'])
+        for reagent_indices in product(*reagent_matches_per_mol):
+            if len(set(reagent_indices)) == len(reaction['reagents']):
+                matching_reactions.append((reaction['reaction'], reagent_indices))
 
     return matching_reactions
 
@@ -126,13 +127,19 @@ def run_random_reaction(fragment: str, reagent_to_fragments: dict[str, list[str]
             fragments.append(third_fragment)
 
     # Find all reactions that match the current fragments
-    reactions = find_reactions_for_fragments(fragments=fragments)
+    reactions_with_reagent_indices = find_reactions_for_fragments(fragments=fragments)
 
-    if len(reactions) == 0:
+    if len(reactions_with_reagent_indices) == 0:
         raise ValueError('Cannot finding a matching reaction.')
 
     # Sample reaction
-    reaction = np.random.choice(reactions)
+    reaction_indices = np.arange(len(reactions_with_reagent_indices))
+    reaction_index = np.random.choice(reaction_indices)
+    reaction, reagent_indices = reactions_with_reagent_indices[reaction_index]
+
+    # Put fragments in the right order for the reaction
+    fragment_to_index = dict(zip(fragments, reagent_indices))
+    fragments.sort(key=lambda frag: fragment_to_index[frag])
 
     # Convert fragment SMILES to mols
     fragment_mols = [Chem.AddHs(Chem.MolFromSmiles(fragment)) for fragment in fragments]
@@ -145,8 +152,8 @@ def run_random_reaction(fragment: str, reagent_to_fragments: dict[str, list[str]
 
     assert all(len(product) == 1 for product in products)
 
-    # Convert product mols to SMILES
-    products = sorted({Chem.MolToSmiles(product[0]) for product in products})
+    # Convert product mols to SMILES (and remove Hs)
+    products = sorted({Chem.MolToSmiles(Chem.RemoveHs(product[0])) for product in products})
 
     # Sample a product molecule
     molecule = np.random.choice(products)
@@ -183,6 +190,7 @@ def generate_random_molecules(args: Args) -> None:
     np.random.seed(0)
 
     # Generate random molecules
+    # TODO: keep track of building blocks and reactions that are used
     molecules = [
         generate_random_molecule(
             fragments=fragments,

@@ -78,6 +78,7 @@ def strip_atom_mapping(smarts: str) -> str:
     return re.sub(r':\d+', '', smarts)
 
 
+# TODO: turn this into a class rather than dictionaries
 # TODO: requires Chem.AddHs() and explicitly checking carbon chain
 REAL_REACTIONS = [
     {
