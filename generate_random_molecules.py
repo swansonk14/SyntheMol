@@ -2,7 +2,7 @@
 import json
 from itertools import product
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -25,6 +25,9 @@ class Args(Tap):
         self.save_path.parent.mkdir(parents=True, exist_ok=True)
 
 
+LogEntry = dict[str, Union[int, list[int], list[str]]]
+
+
 # TODO: all documentation
 def get_reagent_matches_per_mol(reaction: Reaction, mols: list[Chem.Mol]) -> list[list[int]]:
     return [
@@ -37,7 +40,7 @@ def get_reagent_matches_per_mol(reaction: Reaction, mols: list[Chem.Mol]) -> lis
     ]
 
 
-def sample_next_fragment(fragments: list[str], reagent_to_fragments: dict[str, list[str]]) -> Optional[str]:
+def sample_next_fragment(fragments: list[str], reagent_to_fragments: dict[str, set[str]]) -> Optional[str]:
     mols = [convert_to_mol(fragment, add_hs=True) for fragment in fragments]
 
     # For each reaction these fragments can participate in, get all the unfilled reagents
@@ -66,7 +69,7 @@ def sample_next_fragment(fragments: list[str], reagent_to_fragments: dict[str, l
 
     # Get all the fragments that match the other reagents
     available_fragments = sorted(set.union(*[
-        set(reagent_to_fragments[reagent.smarts]) for reagent in unfilled_reagents
+        reagent_to_fragments[reagent.smarts] for reagent in unfilled_reagents
     ]))
     selected_fragment = np.random.choice(available_fragments)
 
@@ -87,13 +90,15 @@ def find_reactions_for_fragments(fragments: list[str]) -> list[tuple[Reaction, d
         # Include every assignment of fragments to reagents that fills all the reagents
         for matched_reagent_indices in product(*reagent_matches_per_mol):
             if len(set(matched_reagent_indices)) == reaction.num_reagents:
-                fragment_to_index = dict(zip(fragments, matched_reagent_indices))
-                matching_reactions.append((reaction, fragment_to_index))
+                fragment_to_reagent_index = dict(zip(fragments, matched_reagent_indices))
+                matching_reactions.append((reaction, fragment_to_reagent_index))
 
     return matching_reactions
 
 
-def run_random_reaction(fragment: str, reagent_to_fragments: dict[str, list[str]]) -> str:
+def run_random_reaction(fragment: str,
+                        fragment_to_index: dict[str, int],
+                        reagent_to_fragments: dict[str, set[str]]) -> tuple[str, dict[str, int]]:
     # Create fragments list
     fragments = [fragment]
 
@@ -103,6 +108,7 @@ def run_random_reaction(fragment: str, reagent_to_fragments: dict[str, list[str]
     if second_fragment is None:
         raise ValueError('Cannot find a second fragment.')
 
+    # Add second fragment
     fragments.append(second_fragment)
 
     # Possibly select a third fragment
@@ -121,10 +127,10 @@ def run_random_reaction(fragment: str, reagent_to_fragments: dict[str, list[str]
 
     # Sample reaction
     reaction_index = np.random.choice(len(matching_reactions))
-    reaction, fragment_to_index = matching_reactions[reaction_index]
+    reaction, fragment_to_reagent_index = matching_reactions[reaction_index]
 
     # Put fragments in the right order for the reaction
-    fragments.sort(key=lambda frag: fragment_to_index[frag])
+    fragments.sort(key=lambda frag: fragment_to_reagent_index[frag])
 
     # Run reaction
     products = reaction.run_reactants(fragments)
@@ -140,52 +146,140 @@ def run_random_reaction(fragment: str, reagent_to_fragments: dict[str, list[str]
     # Sample a product molecule
     molecule = np.random.choice(products)
 
-    return molecule
+    # Create reaction log
+    reaction_log = {
+        'reaction_id': reaction.id,
+        'reagent_ids': [fragment_to_index.get(fragment, -1) for fragment in fragments],
+        'reagent_smiles': [fragment for fragment in fragments]
+    }
+
+    return molecule, reaction_log
 
 
 def generate_random_molecule(fragments: list[str],
-                             reagent_to_fragments: dict[str, list[str]],
-                             max_num_reactions: int) -> str:
+                             fragment_to_index: dict[str, int],
+                             reagent_to_fragments: dict[str, set[str]],
+                             max_num_reactions: int) -> tuple[str, list[LogEntry]]:
+    # Select first fragment
     fragment = np.random.choice(fragments)
 
-    for _ in range(max_num_reactions):
+    # Start construction log
+    construction_log = []
+
+    # Loop over reactions to expand the fragment
+    for reaction_index in range(max_num_reactions):
         # Run a reaction to expand the fragment
-        fragment = run_random_reaction(fragment=fragment, reagent_to_fragments=reagent_to_fragments)
+        fragment, reaction_log = run_random_reaction(
+            fragment=fragment,
+            fragment_to_index=fragment_to_index,
+            reagent_to_fragments=reagent_to_fragments
+        )
+
+        # Add entry to construction log
+        construction_log.append(reaction_log)
 
         # Random chance of stopping early
         # TODO: change this probability
         if np.random.rand() < 0.33:
             break
 
-    return fragment
+    return fragment, construction_log
+
+
+def save_molecules(molecules: list[str],
+                   construction_logs: list[list[LogEntry]],
+                   save_path: Path) -> None:
+    # Convert construction logs from lists to dictionaries
+    construction_dicts = []
+    max_reaction_num = 0
+    reaction_num_to_max_reagent_num = {}
+
+    for construction_log in construction_logs:
+        construction_dict = {}
+        max_reaction_num = max(max_reaction_num, len(construction_log))
+
+        for reaction_index, reaction_log in enumerate(construction_log):
+            reaction_num = reaction_index + 1
+            construction_dict[f'reaction_{reaction_num}_id'] = reaction_log['reaction_id']
+
+            reaction_num_to_max_reagent_num[reaction_num] = max(
+                reaction_num_to_max_reagent_num.get(reaction_num, 0),
+                len(reaction_log['reagent_ids'])
+            )
+
+            for reagent_index, (reagent_id, reagent_smiles) in enumerate(zip(reaction_log['reagent_ids'],
+                                                                             reaction_log['reagent_smiles'])):
+                reagent_num = reagent_index + 1
+                construction_dict[f'reagent_{reaction_num}_{reagent_num}_id'] = reagent_id
+                construction_dict[f'reagent_{reaction_num}_{reagent_num}_smiles'] = reagent_smiles
+
+        construction_dicts.append(construction_dict)
+
+    # Specify column order for CSV file
+    columns = ['smiles']
+
+    for reaction_num in range(1, max_reaction_num + 1):
+        columns.append(f'reaction_{reaction_num}')
+
+        for reagent_num in range(1, reaction_num_to_max_reagent_num[reaction_num] + 1):
+            columns.append(f'reagent_{reaction_num}_{reagent_num}_id')
+            columns.append(f'reagent_{reaction_num}_{reagent_num}_smiles')
+
+    # Save data
+    # TODO: save construction logs
+    # TODO: specify column orders
+    data = pd.DataFrame(data=[
+        {
+            'smiles': molecule,
+            **construction_dict
+        }
+        for molecule, construction_dict in zip(molecules, construction_dicts)
+    ])
+    data.to_csv(save_path, index=False)
 
 
 def generate_random_molecules(args: Args) -> None:
     """Generate random molecules combinatorially."""
     # Load fragments
-    fragments = sorted(pd.read_csv(args.fragment_path)[args.smiles_column])
+    fragments = pd.read_csv(args.fragment_path)[args.smiles_column]
+
+    # Map fragments to indices
+    fragment_to_index = {}
+
+    for index, fragment in enumerate(fragments):
+        if fragment not in fragment_to_index:
+            fragment_to_index[fragment] = index
 
     # Load mapping from reagents to fragments
     with open(args.reagent_to_fragments_path) as f:
-        reagent_to_fragments = json.load(f)
+        reagent_to_fragments = {
+            reagent: set(fragments)
+            for reagent, fragments in json.load(f).items()
+        }
 
     # Set random seed
     np.random.seed(0)
 
+    # Get usable fragments
+    usable_fragments = sorted(set.union(*reagent_to_fragments.values()))
+
     # Generate random molecules
-    # TODO: keep track of building blocks and reactions that are used
-    molecules = [
+    molecules, construction_logs = zip(*[
         generate_random_molecule(
-            fragments=fragments,
+            fragments=usable_fragments,
+            fragment_to_index=fragment_to_index,
             reagent_to_fragments=reagent_to_fragments,
             max_num_reactions=args.max_num_reactions
         )
         for _ in trange(args.num_molecules)
-    ]
+    ])
 
-    # Save data
-    data = pd.DataFrame(data={'smiles': molecules})
-    data.to_csv(args.save_path, index=False)
+    # Save generated molecules
+    save_molecules(
+        molecules=molecules,
+        construction_logs=construction_logs,
+        save_path=args.save_path
+    )
 
 
 if __name__ == '__main__':

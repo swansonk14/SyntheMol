@@ -223,10 +223,9 @@ class Reaction:
         self.real_ids = real_ids
         self.counting_fn = counting_fn
 
-        # TODO: do we need parentheses for the reagents to force them to be separate molecules?
         self.reaction = AllChem.ReactionFromSmarts(
-            f'{".".join(reagent.smarts_with_atom_mapping for reagent in self.reagents)}'
-            f'>>{self.product.smarts_with_atom_mapping}'
+            f'{".".join(f"({reagent.smarts_with_atom_mapping})" for reagent in self.reagents)}'
+            f'>>({self.product.smarts_with_atom_mapping})'
         )
 
     @property
