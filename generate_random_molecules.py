@@ -10,7 +10,7 @@ from rdkit import Chem
 from tap import Tap
 from tqdm import trange
 
-from real_reactions import REAL_REACTIONS
+from real_reactions import Reaction, REAL_REACTIONS
 
 
 class Args(Tap):
@@ -25,20 +25,15 @@ class Args(Tap):
         self.save_path.parent.mkdir(parents=True, exist_ok=True)
 
 
-def get_reagent_matches_per_mol(reaction: dict[str, Any], mols: list[Chem.Mol]) -> list[list[int]]:
-    reagent_matches_per_mol = [[] for _ in range(len(mols))]
-
-    for reagent_index, reagent_mol in enumerate(reaction['reagents']):
-        params = Chem.SubstructMatchParameters()
-
-        if 'checkers' in reaction and reagent_index in reaction['checkers']:
-            params.setExtraFinalCheck(reaction['checkers'][reagent_index])
-
-        for mol_index, mol in enumerate(mols):
-            if mol.HasSubstructMatch(reagent_mol, params):
-                reagent_matches_per_mol[mol_index].append(reagent_index)
-
-    return reagent_matches_per_mol
+def get_reagent_matches_per_mol(reaction: Reaction, mols: list[Chem.Mol]) -> list[list[int]]:
+    return [
+        [
+            reagent_index
+            for reagent_index, reagent in enumerate(reaction.reagents)
+            if reagent.has_substruct_match(mol)
+        ]
+        for mol in mols
+    ]
 
 
 def sample_next_fragment(fragments: list[str], reagent_to_fragments: dict[str, list[str]]) -> Optional[str]:
@@ -47,12 +42,10 @@ def sample_next_fragment(fragments: list[str], reagent_to_fragments: dict[str, l
     # Get all the other reagents that match a reaction this fragment can participate in
     unfilled_reagents = set()
     for reaction in REAL_REACTIONS:
-        assert len(reaction['reagents_smarts']) == len(reaction['reagents'])
-
-        reagent_indices = set(range(len(reaction['reagents_smarts'])))
+        reagent_indices = set(range(reaction.num_reagents))
 
         # Skip reaction if there's no room to add more reagents
-        if len(mols) >= len(reaction['reagents_smarts']):
+        if len(mols) >= reaction.num_reagents:
             continue
 
         # For each mol, get a list of indices of reagents it matches
@@ -65,25 +58,26 @@ def sample_next_fragment(fragments: list[str], reagent_to_fragments: dict[str, l
             index_set = set(indices)
 
             if len(index_set) == len(mols):
-                unfilled_reagents |= {reaction['reagents_smarts'][i] for i in reagent_indices - index_set}
+                unfilled_reagents |= {reaction.reagents[i] for i in reagent_indices - index_set}
 
     if len(unfilled_reagents) == 0:
         return None
 
     # Get all the fragments that match the other reagents
-    available_fragments = sorted(set.union(*[set(reagent_to_fragments[reagent]) for reagent in unfilled_reagents]))
+    available_fragments = sorted(set.union(*[
+        set(reagent_to_fragments[reagent.smarts]) for reagent in unfilled_reagents
+    ]))
     selected_fragment = np.random.choice(available_fragments)
 
     return selected_fragment
 
 
-def find_reactions_for_fragments(fragments: list[str]) -> list[tuple[Chem.rdChemReactions.ChemicalReaction,
-                                                                     tuple[int, ...]]]:
+def find_reactions_for_fragments(fragments: list[str]) -> list[tuple[Reaction, tuple[int, ...]]]:
     mols = [Chem.AddHs(Chem.MolFromSmiles(fragment)) for fragment in fragments]
     matching_reactions = []
 
     for reaction in REAL_REACTIONS:
-        if len(mols) != len(reaction['reagents']):
+        if len(mols) != reaction.num_reagents:
             continue
 
         # For each mol, get a list of indices of reagents it matches
@@ -91,8 +85,8 @@ def find_reactions_for_fragments(fragments: list[str]) -> list[tuple[Chem.rdChem
 
         # If any assignment of fragments to reagents fills all the reagents, then include the reaction
         for reagent_indices in product(*reagent_matches_per_mol):
-            if len(set(reagent_indices)) == len(reaction['reagents']):
-                matching_reactions.append((reaction['reaction'], reagent_indices))
+            if len(set(reagent_indices)) == reaction.num_reagents:
+                matching_reactions.append((reaction, reagent_indices))
 
     return matching_reactions
 
@@ -142,11 +136,8 @@ def run_random_reaction(fragment: str, reagent_to_fragments: dict[str, list[str]
     fragment_to_index = dict(zip(fragments, reagent_indices))
     fragments.sort(key=lambda frag: fragment_to_index[frag])
 
-    # Convert fragment SMILES to mols
-    fragment_mols = [Chem.AddHs(Chem.MolFromSmiles(fragment)) for fragment in fragments]
-
     # Run reaction
-    products = reaction.RunReactants(fragment_mols)
+    products = reaction.run_reactants(fragments)
 
     if len(products) == 0:
         raise ValueError('Reaction failed to produce products.')

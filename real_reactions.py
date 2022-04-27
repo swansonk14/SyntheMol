@@ -1,6 +1,6 @@
 """SMARTS representations of the REAL reactions."""
 import re
-from typing import Callable, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 from rdkit import Chem
 from rdkit.Chem import AllChem
@@ -97,6 +97,12 @@ class CarbonChainChecker:
         # If we get here, then there is no path that is all non-aromatic carbon atoms so return False
         return False
 
+    def __hash__(self) -> int:
+        return hash(self.smarts)
+
+    def __eq__(self, other: Any) -> bool:
+        return isinstance(other, CarbonChainChecker) and self.smarts == other.smarts
+
 
 def count_two_different_reagents(num_r1: int, num_r2: int) -> int:
     """Counts the number of feasible molecules created from two different reagents.
@@ -149,12 +155,10 @@ class QueryMol:
     # TODO: document
     def __init__(self,
                  smarts: str,
-                 checker_class: Optional[type] = None,
-                 query_id: Optional[int] = None) -> None:
+                 checker_class: Optional[type] = None) -> None:
         self.smarts_with_atom_mapping = smarts if ':' in smarts else None
         self.smarts = strip_atom_mapping(smarts)
         self.query_mol = Chem.MolFromSmarts(self.smarts)
-        self.id = query_id
 
         self.params = Chem.SubstructMatchParameters()
 
@@ -177,6 +181,14 @@ class QueryMol:
 
         return mol.HasSubstructMatch(self.query_mol, self.params)
 
+    def __hash__(self) -> int:
+        """Gets the hash of the QueryMol. Note: The hash depends on the SMARTS *without* atom mapping."""
+        return hash(self.smarts)
+
+    def __eq__(self, other: Any) -> bool:
+        """Determines equality with another object. Note: The equality depends on the SMARTS *without* atom mapping."""
+        return isinstance(other, QueryMol) and self.smarts == other.smarts and self.checker == other.checker
+
 
 class Reaction:
     """Contains a chemical reaction including SMARTS for the reagents, product, and reaction and helper functions."""
@@ -195,14 +207,25 @@ class Reaction:
         self.real_ids = real_ids
         self.counting_fn = counting_fn
 
-        # Add IDs to the reagents
-        for index, reagent in enumerate(self.reagents):
-            reagent.id = index + 1
-
         # TODO: do we need parentheses for the reagents to force them to be separate molecules?
         self.reaction = AllChem.ReactionFromSmarts(
-            f'{".".join(reagent.smarts for reagent in self.reagents)}>>{self.product.smarts}'
+            f'{".".join(reagent.smarts_with_atom_mapping for reagent in self.reagents)}'
+            f'>>{self.product.smarts_with_atom_mapping}'
         )
+
+    @property
+    def num_reagents(self) -> int:
+        return len(self.reagents)
+
+    def run_reactants(self, reactants: list[Union[str, Chem.Mol]]) -> tuple[tuple[Chem.Mol, ...], ...]:
+        return self.reaction.RunReactants([
+            Chem.AddHs(
+                Chem.MolFromSmiles(reactant)
+                if isinstance(reactant, str)
+                else reactant
+            )
+            for reactant in reactants
+        ])
 
     def count_feasible_products(self, *num_rs: tuple[int]) -> int:
         """Counts the number of feasible products of this reaction given the number of each reagent.
