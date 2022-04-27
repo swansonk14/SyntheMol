@@ -219,22 +219,23 @@ def save_molecules(molecules: list[str],
     columns = ['smiles']
 
     for reaction_num in range(1, max_reaction_num + 1):
-        columns.append(f'reaction_{reaction_num}')
+        columns.append(f'reaction_{reaction_num}_id')
 
         for reagent_num in range(1, reaction_num_to_max_reagent_num[reaction_num] + 1):
             columns.append(f'reagent_{reaction_num}_{reagent_num}_id')
             columns.append(f'reagent_{reaction_num}_{reagent_num}_smiles')
 
     # Save data
-    # TODO: save construction logs
-    # TODO: specify column orders
-    data = pd.DataFrame(data=[
-        {
-            'smiles': molecule,
-            **construction_dict
-        }
-        for molecule, construction_dict in zip(molecules, construction_dicts)
-    ])
+    data = pd.DataFrame(
+        data=[
+            {
+                'smiles': molecule,
+                **construction_dict
+            }
+            for molecule, construction_dict in zip(molecules, construction_dicts)
+        ],
+        columns=columns
+    )
     data.to_csv(save_path, index=False)
 
 
@@ -264,6 +265,7 @@ def generate_random_molecules(args: Args) -> None:
     usable_fragments = sorted(set.union(*reagent_to_fragments.values()))
 
     # Generate random molecules
+    # TODO: need to strip salts from molecules to prevent aberrant matches
     molecules, construction_logs = zip(*[
         generate_random_molecule(
             fragments=usable_fragments,
