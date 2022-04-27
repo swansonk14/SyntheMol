@@ -6,7 +6,7 @@ from rdkit import Chem
 from tap import Tap
 from tqdm import tqdm
 
-from real_reactions import REAL_REACTIONS
+from real_reactions import convert_to_mol, REAL_REACTIONS
 
 
 class Args(Tap):
@@ -21,7 +21,7 @@ def count_feasible_reactions(args: Args) -> None:
 
     # Convert SMILES to mols
     fragment_mols = [
-        Chem.AddHs(Chem.MolFromSmiles(smiles))
+        convert_to_mol(smiles, add_hs=True)
         for smiles in tqdm(fragment_data[args.smiles_column], desc='SMILES to mol')
     ]
 

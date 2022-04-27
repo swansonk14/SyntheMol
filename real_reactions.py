@@ -9,6 +9,9 @@ from scipy.special import comb
 from collections import deque
 
 
+Molecule = Union[str, Chem.Mol]  # Either a SMILES string or an RDKit Mol object
+
+
 class CarbonChainChecker:
     """Checks whether a SMARTS match with two fragments contains a path
      from one fragment to the other with only non-aromatic carbon atoms."""
@@ -149,6 +152,22 @@ def strip_atom_mapping(smarts: str) -> str:
     return re.sub(r':\d+', '', smarts)
 
 
+def convert_to_mol(mol: Molecule, add_hs: bool = False) -> Chem.Mol:
+    """Converts a SMILES to an RDKit Mol object (if not already converted) and optionally adds Hs.
+
+    :param mol: A SMILES string or an RDKit Mol object.
+    :param add_hs: Whether to add Hs.
+    :return: An RDKit Mol object with Hs added optionally.
+    """
+    if isinstance(mol, str):
+        mol = Chem.MolFromSmiles(mol)
+
+    if add_hs:
+        mol = Chem.AddHs(mol)
+
+    return mol
+
+
 class QueryMol:
     """Contains a molecule query in the form of a SMARTS string with helper functions."""
 
@@ -168,16 +187,13 @@ class QueryMol:
         else:
             self.checker = None
 
-    def has_substruct_match(self, mol: Union[str, Chem.Mol]) -> bool:
+    def has_substruct_match(self, mol: Molecule) -> bool:
         """Determines whether the provided molecule includes this QueryMol as a substructure.
 
         :param mol: A molecule, which can either be a SMILES string or an RDKit Mol object.
         :return: True if the molecule includes this QueryMol as a substructure, False otherwise.
         """
-        if isinstance(mol, str):
-            mol = Chem.MolFromSmiles(mol)
-
-        mol = Chem.AddHs(mol)
+        mol = convert_to_mol(mol, add_hs=True)
 
         return mol.HasSubstructMatch(self.query_mol, self.params)
 
@@ -217,15 +233,8 @@ class Reaction:
     def num_reagents(self) -> int:
         return len(self.reagents)
 
-    def run_reactants(self, reactants: list[Union[str, Chem.Mol]]) -> tuple[tuple[Chem.Mol, ...], ...]:
-        return self.reaction.RunReactants([
-            Chem.AddHs(
-                Chem.MolFromSmiles(reactant)
-                if isinstance(reactant, str)
-                else reactant
-            )
-            for reactant in reactants
-        ])
+    def run_reactants(self, reactants: list[Molecule]) -> tuple[tuple[Chem.Mol, ...], ...]:
+        return self.reaction.RunReactants([convert_to_mol(reactant, add_hs=True) for reactant in reactants])
 
     def count_feasible_products(self, *num_rs: tuple[int]) -> int:
         """Counts the number of feasible products of this reaction given the number of each reagent.

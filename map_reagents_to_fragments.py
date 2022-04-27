@@ -7,7 +7,7 @@ from rdkit import Chem
 from tap import Tap
 from tqdm import tqdm
 
-from real_reactions import REAL_REACTIONS
+from real_reactions import convert_to_mol, REAL_REACTIONS
 
 
 class Args(Tap):
@@ -28,7 +28,7 @@ def map_reagents_to_fragments(args: Args) -> None:
     fragments = sorted(set(fragment_data[args.smiles_column]))
 
     # Convert fragment SMILES to mols
-    fragment_mols = [Chem.AddHs(Chem.MolFromSmiles(fragment)) for fragment in tqdm(fragments, desc='SMILES to mol')]
+    fragment_mols = [convert_to_mol(fragment, add_hs=True) for fragment in tqdm(fragments, desc='SMILES to mol')]
 
     # Map reagents to fragments
     reagent_to_fragments = {}
