@@ -214,6 +214,14 @@ python find_fragments_in_molecules.py \
     --plot_save_path ../plots/train_7500_fragment_counts.pdf \
 ```
 
+## Count number of feasible molecules
+
+Count the number of molecules that could be feasibly produced by the REAL reactions using the building blocks.
+```
+python count_feasible_molecules.py \
+    --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES.csv
+```
+
 ## Map reagents to fragments
 
 Map reagents (reactants) to REAL fragments (building blocks). This pre-computation step saves time when generating molecules.

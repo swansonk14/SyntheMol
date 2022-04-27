@@ -34,19 +34,14 @@ def map_reagents_to_fragments(args: Args) -> None:
     reagent_to_fragments = {}
 
     for reaction in tqdm(REAL_REACTIONS, desc='Mapping reagents to fragments'):
-        for reagent_index, (reagent, reagent_mol) in enumerate(zip(reaction['reagents_smarts'], reaction['reagents'])):
-            if reagent in reagent_to_fragments:
+        for reagent in reaction.reagents:
+            if reagent.smarts in reagent_to_fragments:
                 continue
 
-            params = Chem.SubstructMatchParameters()
-
-            if 'checkers' in reaction and reagent_index in reaction['checkers']:
-                params.setExtraFinalCheck(reaction['checkers'][reagent_index])
-
-            reagent_to_fragments[reagent] = [
+            reagent_to_fragments[reagent.smarts] = [
                 fragment
                 for fragment, fragment_mol in tqdm(zip(fragments, fragment_mols), total=len(fragments), leave=False)
-                if fragment_mol.HasSubstructMatch(reagent_mol, params)
+                if reagent.has_substruct_match(fragment_mol)
             ]
 
     # Save data
