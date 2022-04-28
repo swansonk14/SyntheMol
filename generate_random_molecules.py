@@ -73,11 +73,11 @@ def sample_next_fragment(fragments: list[str], reagent_to_fragments: dict[str, l
         return None
 
     # Get all the fragments that match the other reagents
-    available_fragments = list(dict.fromkeys([
+    available_fragments = list(dict.fromkeys(
         fragment
         for reagent in sorted(unfilled_reagents, key=lambda reagent: reagent.smarts)
         for fragment in reagent_to_fragments[reagent.smarts]
-    ]))
+    ))
     selected_fragment = random_choice(available_fragments)
 
     return selected_fragment
@@ -148,7 +148,7 @@ def run_random_reaction(fragment: str,
     assert all(len(product) == 1 for product in products)
 
     # Convert product mols to SMILES, remove Hs, and deduplicate (preserving order for random reproducibility)
-    products = list(dict.fromkeys([Chem.MolToSmiles(Chem.RemoveHs(product[0])) for product in products]))
+    products = list(dict.fromkeys(Chem.MolToSmiles(Chem.RemoveHs(product[0])) for product in products))
 
     # Sample a product molecule
     # TODO: do we only want to allow reactions that only have a single product?
@@ -273,11 +273,11 @@ def generate_random_molecules(args: Args) -> None:
         reagent_to_fragments: dict[str, list[str]] = json.load(f)
 
     # Get usable fragments (deduplicated and in a canonical order to ensure reproducibility of random sampling)
-    usable_fragments = list(dict.fromkeys([
+    usable_fragments = list(dict.fromkeys(
         fragment
         for reagent in reagent_to_fragments
         for fragment in reagent_to_fragments[reagent]
-    ]))
+    ))
 
     # Generate random molecules
     molecules, construction_logs = zip(*[
