@@ -2,10 +2,10 @@
 import json
 from itertools import product
 from pathlib import Path
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
-import numpy as np
 import pandas as pd
+from numpy.random import default_rng
 from rdkit import Chem
 from tap import Tap
 from tqdm import trange
@@ -26,6 +26,11 @@ class Args(Tap):
 
 
 LogEntry = dict[str, Union[int, list[int], list[str]]]
+RNG = default_rng(seed=0)
+
+
+def random_choice(arr: list[Any]) -> Any:
+    return arr[RNG.integers(0, len(arr))]
 
 
 # TODO: all documentation
@@ -71,7 +76,7 @@ def sample_next_fragment(fragments: list[str], reagent_to_fragments: dict[str, s
     available_fragments = sorted(set.union(*[
         reagent_to_fragments[reagent.smarts] for reagent in unfilled_reagents
     ]))
-    selected_fragment = np.random.choice(available_fragments)
+    selected_fragment = random_choice(available_fragments)
 
     return selected_fragment
 
@@ -105,19 +110,20 @@ def run_random_reaction(fragment: str,
     # Select second fragment
     second_fragment = sample_next_fragment(fragments=fragments, reagent_to_fragments=reagent_to_fragments)
 
+    # If a second fragment cannot be found, then this fragment must not match to any reagents so we stop here
     if second_fragment is None:
-        raise ValueError('Cannot find a second fragment.')
+        return fragment, dict()
 
     # Add second fragment
     fragments.append(second_fragment)
 
     # Possibly select a third fragment
-    # TODO: change this probability
-    if np.random.rand() < 0.5:
-        third_fragment = sample_next_fragment(fragments=fragments, reagent_to_fragments=reagent_to_fragments)
+    # TODO: should we only select a third fragment if the first two fragments
+    # TODO: only match to reaction 1 (i.e., the reaction with three reagents)
+    third_fragment = sample_next_fragment(fragments=fragments, reagent_to_fragments=reagent_to_fragments)
 
-        if third_fragment is not None:
-            fragments.append(third_fragment)
+    if third_fragment is not None:
+        fragments.append(third_fragment)
 
     # Find all reactions that match the current fragments
     matching_reactions = find_reactions_for_fragments(fragments=fragments)
@@ -126,8 +132,7 @@ def run_random_reaction(fragment: str,
         raise ValueError('Cannot finding a matching reaction.')
 
     # Sample reaction
-    reaction_index = np.random.choice(len(matching_reactions))
-    reaction, fragment_to_reagent_index = matching_reactions[reaction_index]
+    reaction, fragment_to_reagent_index = random_choice(matching_reactions)
 
     # Put fragments in the right order for the reaction
     fragments.sort(key=lambda frag: fragment_to_reagent_index[frag])
@@ -144,7 +149,8 @@ def run_random_reaction(fragment: str,
     products = sorted({Chem.MolToSmiles(Chem.RemoveHs(product[0])) for product in products})
 
     # Sample a product molecule
-    molecule = np.random.choice(products)
+    # TODO: do we only want to allow reactions that only have a single product?
+    molecule = random_choice(products)
 
     # Create reaction log
     reaction_log = {
@@ -156,12 +162,13 @@ def run_random_reaction(fragment: str,
     return molecule, reaction_log
 
 
+# TODO: make this all faster (maybe caching?)
 def generate_random_molecule(fragments: list[str],
                              fragment_to_index: dict[str, int],
                              reagent_to_fragments: dict[str, set[str]],
                              max_num_reactions: int) -> tuple[str, list[LogEntry]]:
     # Select first fragment
-    fragment = np.random.choice(fragments)
+    fragment = random_choice(fragments)
 
     # Start construction log
     construction_log = []
@@ -169,18 +176,26 @@ def generate_random_molecule(fragments: list[str],
     # Loop over reactions to expand the fragment
     for reaction_index in range(max_num_reactions):
         # Run a reaction to expand the fragment
-        fragment, reaction_log = run_random_reaction(
+        new_fragment, reaction_log = run_random_reaction(
             fragment=fragment,
             fragment_to_index=fragment_to_index,
             reagent_to_fragments=reagent_to_fragments
         )
+
+        # If we failed to produce a new fragment due to no matching reagents, stop here
+        if new_fragment == fragment:
+            assert reaction_log == dict()
+            break
+
+        # Set current fragment equal to new fragment
+        fragment = new_fragment
 
         # Add entry to construction log
         construction_log.append(reaction_log)
 
         # Random chance of stopping early
         # TODO: change this probability
-        if np.random.rand() < 0.33:
+        if RNG.uniform() < 0.33:
             break
 
     return fragment, construction_log
@@ -195,7 +210,7 @@ def save_molecules(molecules: list[str],
     reaction_num_to_max_reagent_num = {}
 
     for construction_log in construction_logs:
-        construction_dict = {}
+        construction_dict = {'num_reactions': len(construction_log)}
         max_reaction_num = max(max_reaction_num, len(construction_log))
 
         for reaction_index, reaction_log in enumerate(construction_log):
@@ -216,7 +231,7 @@ def save_molecules(molecules: list[str],
         construction_dicts.append(construction_dict)
 
     # Specify column order for CSV file
-    columns = ['smiles']
+    columns = ['smiles', 'num_reactions']
 
     for reaction_num in range(1, max_reaction_num + 1):
         columns.append(f'reaction_{reaction_num}_id')
@@ -258,14 +273,10 @@ def generate_random_molecules(args: Args) -> None:
             for reagent, fragments in json.load(f).items()
         }
 
-    # Set random seed
-    np.random.seed(0)
-
     # Get usable fragments
     usable_fragments = sorted(set.union(*reagent_to_fragments.values()))
 
     # Generate random molecules
-    # TODO: need to strip salts from molecules to prevent aberrant matches
     molecules, construction_logs = zip(*[
         generate_random_molecule(
             fragments=usable_fragments,

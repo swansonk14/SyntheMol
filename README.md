@@ -250,5 +250,7 @@ Generate random molecules using combinatorial molecule construction.
 python generate_random_molecules.py \
     --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     --reagent_to_fragments_path ../data/reagents_to_fragments.json \
+    --num_molecules 10 \
+    --max_num_reactions 3 \
     --save_path ../generations/random.csv
 ```
