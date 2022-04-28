@@ -29,8 +29,8 @@ LogEntry = dict[str, Union[int, list[int], list[str]]]
 RNG = default_rng(seed=0)
 
 
-def random_choice(arr: list[Any]) -> Any:
-    return arr[RNG.integers(0, len(arr))]
+def random_choice(array: list[Any]) -> Any:
+    return array[RNG.integers(0, len(array))]
 
 
 # TODO: all documentation
@@ -45,7 +45,7 @@ def get_reagent_matches_per_mol(reaction: Reaction, mols: list[Chem.Mol]) -> lis
     ]
 
 
-def sample_next_fragment(fragments: list[str], reagent_to_fragments: dict[str, set[str]]) -> Optional[str]:
+def sample_next_fragment(fragments: list[str], reagent_to_fragments: dict[str, list[str]]) -> Optional[str]:
     mols = [convert_to_mol(fragment, add_hs=True) for fragment in fragments]
 
     # For each reaction these fragments can participate in, get all the unfilled reagents
@@ -73,8 +73,10 @@ def sample_next_fragment(fragments: list[str], reagent_to_fragments: dict[str, s
         return None
 
     # Get all the fragments that match the other reagents
-    available_fragments = sorted(set.union(*[
-        reagent_to_fragments[reagent.smarts] for reagent in unfilled_reagents
+    available_fragments = list(dict.fromkeys([
+        fragment
+        for reagent in sorted(unfilled_reagents, key=lambda reagent: reagent.smarts)
+        for fragment in reagent_to_fragments[reagent.smarts]
     ]))
     selected_fragment = random_choice(available_fragments)
 
@@ -103,7 +105,7 @@ def find_reactions_for_fragments(fragments: list[str]) -> list[tuple[Reaction, d
 
 def run_random_reaction(fragment: str,
                         fragment_to_index: dict[str, int],
-                        reagent_to_fragments: dict[str, set[str]]) -> tuple[str, dict[str, int]]:
+                        reagent_to_fragments: dict[str, list[str]]) -> tuple[str, dict[str, int]]:
     # Create fragments list
     fragments = [fragment]
 
@@ -145,8 +147,8 @@ def run_random_reaction(fragment: str,
 
     assert all(len(product) == 1 for product in products)
 
-    # Convert product mols to SMILES (and remove Hs)
-    products = sorted({Chem.MolToSmiles(Chem.RemoveHs(product[0])) for product in products})
+    # Convert product mols to SMILES, remove Hs, and deduplicate (preserving order for random reproducibility)
+    products = list(dict.fromkeys([Chem.MolToSmiles(Chem.RemoveHs(product[0])) for product in products]))
 
     # Sample a product molecule
     # TODO: do we only want to allow reactions that only have a single product?
@@ -165,7 +167,7 @@ def run_random_reaction(fragment: str,
 # TODO: make this all faster (maybe caching?)
 def generate_random_molecule(fragments: list[str],
                              fragment_to_index: dict[str, int],
-                             reagent_to_fragments: dict[str, set[str]],
+                             reagent_to_fragments: dict[str, list[str]],
                              max_num_reactions: int) -> tuple[str, list[LogEntry]]:
     # Select first fragment
     fragment = random_choice(fragments)
@@ -268,13 +270,14 @@ def generate_random_molecules(args: Args) -> None:
 
     # Load mapping from reagents to fragments
     with open(args.reagent_to_fragments_path) as f:
-        reagent_to_fragments = {
-            reagent: set(fragments)
-            for reagent, fragments in json.load(f).items()
-        }
+        reagent_to_fragments: dict[str, list[str]] = json.load(f)
 
-    # Get usable fragments
-    usable_fragments = sorted(set.union(*reagent_to_fragments.values()))
+    # Get usable fragments (deduplicated and in a canonical order to ensure reproducibility of random sampling)
+    usable_fragments = list(dict.fromkeys([
+        fragment
+        for reagent in reagent_to_fragments
+        for fragment in reagent_to_fragments[reagent]
+    ]))
 
     # Generate random molecules
     molecules, construction_logs = zip(*[
