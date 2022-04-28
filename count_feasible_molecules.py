@@ -2,7 +2,6 @@
 from pathlib import Path
 
 import pandas as pd
-from rdkit import Chem
 from tap import Tap
 from tqdm import tqdm
 
@@ -19,10 +18,13 @@ def count_feasible_reactions(args: Args) -> None:
     # Load data
     fragment_data = pd.read_csv(args.fragment_path)
 
+    # Remove duplicate fragments
+    fragments = set(fragment_data[args.smiles_column])
+
     # Convert SMILES to mols
     fragment_mols = [
         convert_to_mol(smiles, add_hs=True)
-        for smiles in tqdm(fragment_data[args.smiles_column], desc='SMILES to mol')
+        for smiles in tqdm(fragments, desc='SMILES to mol')
     ]
 
     # Process data

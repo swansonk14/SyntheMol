@@ -22,17 +22,29 @@ The 11 CXSMILES files contain 4,492,114,676 molecules and 170 chemical reactions
 
 ## Process Data
 
+### SDF to SMILES
+
 Convert the building blocks from SDF to (unique) SMILES using the `sdf_to_smiles.py` script from [chem_utils](https://github.com/swansonk14/chem_utils).
 ```
 python sdf_to_smiles.py \
-    --data_path ../data/2021q3-4_Enamine_REAL_reagents_SDF.sdf \
-    --save_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES.csv \
+    --data_path ../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SDF.sdf \
+    --save_path ../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SMILES.csv \
     --properties Reagent_ID Catalog_ID
 ```
 
 All molecules were successfully converted from SDF to SMILES, and among those 134,609 are unique.
 
 Note: This seems to be because the SMILES are not capturing any stereochemistry information even though it is annotated with the `CFG` tag in the SDF file (although 3D coordinates are missing).
+
+### Remove Salts
+
+Remove the salts from the building blocks using the `canonicalize_smiles.py` script from [chem_utils](https://github.com/swansonk14/chem_utils). This will also canonicalize the SMILES using RDKit's canonicalization method.
+```
+python canonicalize_smiles.py \
+    --data_path ../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SMILES.csv \
+    --save_path ../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
+    --remove_salts
+```
 
 
 ## Plot regression values
@@ -207,7 +219,7 @@ python sample_real_database.py \
 Count the number of building blocks that appear in each of the training set molecules.
 ```
 python find_fragments_in_molecules.py \
-    --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES.csv \
+    --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     --molecule_path ../data/Screening_data/AB_training/2500+5000_training_set_2sd.csv \
     --molecule_smiles_column SMILES \
     --counts_save_path ../data/Screening_data/AB_training/2500+5000_training_set_2sd_fragment_counts.csv \
@@ -219,7 +231,7 @@ python find_fragments_in_molecules.py \
 Count the number of molecules that could be feasibly produced by the REAL reactions using the building blocks.
 ```
 python count_feasible_molecules.py \
-    --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES.csv
+    --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv
 ```
 
 ## Map reagents to fragments
@@ -227,7 +239,7 @@ python count_feasible_molecules.py \
 Map reagents (reactants) to REAL fragments (building blocks). This pre-computation step saves time when generating molecules.
 ```
 python map_reagents_to_fragments.py \
-    --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES.csv \
+    --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     --save_path ../data/reagents_to_fragments.json
 ```
 
@@ -236,7 +248,7 @@ python map_reagents_to_fragments.py \
 Generate random molecules using combinatorial molecule construction.
 ```
 python generate_random_molecules.py \
-    --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES.csv \
+    --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     --reagent_to_fragments_path ../data/reagents_to_fragments.json \
     --save_path ../generations/random.csv
 ```

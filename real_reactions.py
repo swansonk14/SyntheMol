@@ -302,22 +302,22 @@ REAL_REACTIONS = [
     ),
     Reaction(
         reagents=[
-            QueryMol('[O:1]=[C:2]([OH1:3])[*:4]'),
-            QueryMol('[F,Cl,Br,I][*:5]')
-        ],
-        product=QueryMol('[O:1]=[C:2]([*:4])[O:3][*:5]'),
-        reaction_id=6,
-        real_ids={1458},
-        counting_fn=count_two_different_reagents
-    ),
-    Reaction(
-        reagents=[
             QueryMol('[*:1][N:2]([H])[*:3]'),
             QueryMol('[OH1][C:4]([*:5])=[O:6]')
         ],
         product=QueryMol('[*:5][C:4](=[O:6])[N:2]([*:1])[*:3]'),
-        reaction_id=7,
+        reaction_id=6,
         real_ids={11, 22, 527, 188690, 240690, 269946, 270006, 270112, 272270, 272430, 273450, 273652, 280130},
+        counting_fn=count_two_different_reagents
+    ),
+    Reaction(
+        reagents=[
+            QueryMol('[O:1]=[C:2]([OH1:3])[*:4]'),
+            QueryMol('[F,Cl,Br,I][*:5]')
+        ],
+        product=QueryMol('[O:1]=[C:2]([*:4])[O:3][*:5]'),
+        reaction_id=7,
+        real_ids={1458},
         counting_fn=count_two_different_reagents
     ),
     Reaction(
