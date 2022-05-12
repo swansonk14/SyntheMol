@@ -186,6 +186,7 @@ def generate_random_molecule(fragments: list[str],
 
         # If we failed to produce a new fragment due to no matching reagents, stop here
         if new_fragment == fragment:
+            # Double check that no reaction took place
             assert reaction_log == dict()
             break
 

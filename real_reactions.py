@@ -12,6 +12,7 @@ from collections import deque
 Molecule = Union[str, Chem.Mol]  # Either a SMILES string or an RDKit Mol object
 
 
+# TODO: is this the right check to perform for reaction 1?
 class CarbonChainChecker:
     """Checks whether a SMARTS match with two fragments contains a path
      from one fragment to the other with only non-aromatic carbon atoms."""
@@ -171,10 +172,14 @@ def convert_to_mol(mol: Molecule, add_hs: bool = False) -> Chem.Mol:
 class QueryMol:
     """Contains a molecule query in the form of a SMARTS string with helper functions."""
 
-    # TODO: document
     def __init__(self,
                  smarts: str,
                  checker_class: Optional[type] = None) -> None:
+        """Initializes the QueryMol.
+
+        :param smarts: A SMARTS string representing the molecular query.
+        :param checker_class: A class that is used as an extra checker for any molecules that match the SMARTS query.
+        """
         self.smarts_with_atom_mapping = smarts if ':' in smarts else None
         self.smarts = strip_atom_mapping(smarts)
         self.query_mol = Chem.MolFromSmarts(self.smarts)
@@ -209,7 +214,6 @@ class QueryMol:
 class Reaction:
     """Contains a chemical reaction including SMARTS for the reagents, product, and reaction and helper functions."""
 
-    # TODO: document
     def __init__(self,
                  reagents: list[QueryMol],
                  product: QueryMol,
@@ -217,6 +221,15 @@ class Reaction:
                  real_ids: Optional[set[int]] = None,
                  counting_fn: Optional[Union[Callable[[int, int], int],
                                              Callable[[int, int, int], int]]] = None) -> None:
+        """Initializes the Reaction.
+
+        :param reagents: A list of QueryMols containing the reagents of the reaction.
+        :param product: A QueryMol containing the product of the reaction.
+        :param reaction_id: The ID of the reaction.
+        :param real_ids: A set of reaction IDs from the REAL database that this reaction corresponds to.
+        :param counting_fn: A function that takes in the number of molecules that match each possible reagent
+                            and outputs the number of possible product molecules.
+        """
         self.reagents = reagents
         self.product = product
         self.id = reaction_id
