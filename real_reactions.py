@@ -236,7 +236,7 @@ class Reaction:
                  product: QueryMol,
                  reaction_id: Optional[int] = None,
                  real_ids: Optional[set[int]] = None,
-                 synnet_id: Optional[int] = None,
+                 synnet_ids: Optional[set[int]] = None,
                  counting_fn: Optional[Union[Callable[[int, int], int],
                                              Callable[[int, int, int], int]]] = None) -> None:
         """Initializes the Reaction.
@@ -245,7 +245,7 @@ class Reaction:
         :param product: A QueryMol containing the product of the reaction.
         :param reaction_id: The ID of the reaction.
         :param real_ids: A set of reaction IDs from the REAL database that this reaction corresponds to.
-        :param synnet_id: The ID of the corresponding reaction in SynNet.
+        :param synnet_ids: A set of IDs from the SynNet database that this reaction corresponds to.
         :param counting_fn: A function that takes in the number of molecules that match each possible reagent
                             and outputs the number of possible product molecules.
         """
@@ -253,7 +253,7 @@ class Reaction:
         self.product = product
         self.id = reaction_id
         self.real_ids = real_ids
-        self.synnet_id = synnet_id
+        self.synnet_id = synnet_ids
         self.counting_fn = counting_fn
 
         self.reaction = AllChem.ReactionFromSmarts(
@@ -371,7 +371,7 @@ REAL_REACTIONS = [
         ],
         product=QueryMol('[c:1]12:[c:2](-[CH2:7]-[CH2:8]-[NH1:9]-[C:10]-2(-[#6:11])):[c:3]:[c:4]:[c:5]:[c:6]:1'),
         reaction_id=9,
-        synnet_id=1,
+        synnet_ids={1},
         counting_fn=count_two_different_reagents
     )
 ]
