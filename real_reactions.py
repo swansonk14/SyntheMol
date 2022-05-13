@@ -12,7 +12,6 @@ from collections import deque
 Molecule = Union[str, Chem.Mol]  # Either a SMILES string or an RDKit Mol object
 
 
-# TODO: is this the right check to perform for reaction 1?
 class CarbonChainChecker:
     """Checks whether a SMARTS match with two fragments contains a path
      from one fragment to the other with only non-aromatic carbon atoms."""
@@ -134,6 +133,7 @@ def count_two_same_reagents(num_r1: int, num_r2: int, diff: bool = False) -> int
 
     return comb(num_r1, 2, exact=True, repetition=True)
 
+
 # TODO: document/remove diff
 def count_three_reagents_with_two_same(num_r1: int, num_r2: int, num_r3: int, diff: bool = False) -> int:
     """Counts the number of feasible molecules created from three reagents
@@ -227,6 +227,7 @@ class Reaction:
                  product: QueryMol,
                  reaction_id: Optional[int] = None,
                  real_ids: Optional[set[int]] = None,
+                 synnet_id: Optional[int] = None,
                  counting_fn: Optional[Union[Callable[[int, int], int],
                                              Callable[[int, int, int], int]]] = None) -> None:
         """Initializes the Reaction.
@@ -235,6 +236,7 @@ class Reaction:
         :param product: A QueryMol containing the product of the reaction.
         :param reaction_id: The ID of the reaction.
         :param real_ids: A set of reaction IDs from the REAL database that this reaction corresponds to.
+        :param synnet_id: The ID of the corresponding reaction in SynNet.
         :param counting_fn: A function that takes in the number of molecules that match each possible reagent
                             and outputs the number of possible product molecules.
         """
@@ -242,6 +244,7 @@ class Reaction:
         self.product = product
         self.id = reaction_id
         self.real_ids = real_ids
+        self.synnet_id = synnet_id
         self.counting_fn = counting_fn
 
         self.reaction = AllChem.ReactionFromSmarts(
@@ -350,6 +353,16 @@ REAL_REACTIONS = [
         product=QueryMol('[O:4]=[S:5](=[O:6])([*:7])[N:2]([*:1])[*:3]'),
         reaction_id=8,
         real_ids={20, 40, 196680, 232682, 270084, 270188, 271082, 273578, 274078},
+        counting_fn=count_two_different_reagents
+    ),
+    Reaction(
+        reagents=[
+            QueryMol('[cH1:1]1:[c:2](-[CH2:7]-[CH2:8]-[NH2:9]):[c:3]:[c:4]:[c:5]:[c:6]:1'),
+            QueryMol('[#6:11]-[CH1;R0:10]=[OD1]')
+        ],
+        product=QueryMol('[c:1]12:[c:2](-[CH2:7]-[CH2:8]-[NH1:9]-[C:10]-2(-[#6:11])):[c:3]:[c:4]:[c:5]:[c:6]:1'),
+        reaction_id=9,
+        synnet_id=1,
         counting_fn=count_two_different_reagents
     )
 ]

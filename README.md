@@ -231,7 +231,8 @@ python find_fragments_in_molecules.py \
 Count the number of molecules that could be feasibly produced by the REAL reactions using the building blocks.
 ```
 python count_feasible_molecules.py \
-    --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv
+    --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
+    --reagent_to_fragments_path ../data/reagents_to_fragments.json
 ```
 
 ## Map reagents to fragments
