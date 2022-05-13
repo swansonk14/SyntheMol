@@ -108,7 +108,8 @@ class CarbonChainChecker:
         return isinstance(other, CarbonChainChecker) and self.smarts == other.smarts
 
 
-def count_two_different_reagents(num_r1: int, num_r2: int) -> int:
+# TODO: document/remove diff
+def count_two_different_reagents(num_r1: int, num_r2: int, diff: bool = False) -> int:
     """Counts the number of feasible molecules created from two different reagents.
 
     :param num_r1: The number of molecules that match the first reagent.
@@ -118,19 +119,23 @@ def count_two_different_reagents(num_r1: int, num_r2: int) -> int:
     return num_r1 * num_r2
 
 
-def count_two_same_reagents(num_r1: int, num_r2: int) -> int:
+# TODO: document/remove diff
+def count_two_same_reagents(num_r1: int, num_r2: int, diff: bool = False) -> int:
     """Counts the number of feasible molecules created from two of the same reagent.
 
     :param num_r1: The number of molecules that match the first reagent.
     :param num_r2: The number of molecules that match the second reagent (this should be the same as num_r1).
     :return: The number of different molecules that can be constructed using this reaction and the given reagents.
     """
+    if diff:
+        return num_r1 * num_r2
+
     assert num_r1 == num_r2
 
     return comb(num_r1, 2, exact=True, repetition=True)
 
-
-def count_three_reagents_with_two_same(num_r1: int, num_r2: int, num_r3: int) -> int:
+# TODO: document/remove diff
+def count_three_reagents_with_two_same(num_r1: int, num_r2: int, num_r3: int, diff: bool = False) -> int:
     """Counts the number of feasible molecules created from three reagents
        with the last two the same and the first different.
 
@@ -139,6 +144,9 @@ def count_three_reagents_with_two_same(num_r1: int, num_r2: int, num_r3: int) ->
     :param num_r3: The number of molecules that match the third reagent (this should be the same as num_r2).
     :return: The number of different molecules that can be constructed using this reaction and the given reagents.
     """
+    if diff:
+        return num_r1 * num_r2 * num_r3
+
     assert num_r2 == num_r3
 
     return num_r1 * comb(num_r2, 2, exact=True, repetition=True)
@@ -248,7 +256,8 @@ class Reaction:
     def run_reactants(self, reactants: list[Molecule]) -> tuple[tuple[Chem.Mol, ...], ...]:
         return self.reaction.RunReactants([convert_to_mol(reactant, add_hs=True) for reactant in reactants])
 
-    def count_feasible_products(self, *num_rs: tuple[int]) -> int:
+    # TODO: document/remove diff
+    def count_feasible_products(self, *num_rs: tuple[int], diff: bool = False) -> int:
         """Counts the number of feasible products of this reaction given the number of each reagent.
 
         :param num_rs: The number of different molecules that match each reagent in the reaction.
@@ -257,7 +266,7 @@ class Reaction:
         if self.counting_fn is None:
             raise ValueError('Counting function is not provided for this reaction.')
 
-        return self.counting_fn(*num_rs)
+        return self.counting_fn(*num_rs, diff=diff)
 
 
 REAL_REACTIONS = [
