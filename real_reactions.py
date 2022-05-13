@@ -107,6 +107,15 @@ class CarbonChainChecker:
         return isinstance(other, CarbonChainChecker) and self.smarts == other.smarts
 
 
+def count_one_reagent(num_r1: int) -> int:
+    """Counts the number of feasible molecules created from one reagent.
+
+    :param num_r1: The number of molecules that match the first reagent.
+    :return: The number of different molecules that can be constructed using this reaction and the given reagents.
+    """
+    return num_r1
+
+
 # TODO: document/remove diff
 def count_two_different_reagents(num_r1: int, num_r2: int, diff: bool = False) -> int:
     """Counts the number of feasible molecules created from two different reagents.
