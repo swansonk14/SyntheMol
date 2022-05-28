@@ -255,3 +255,41 @@ python generate_random_molecules.py \
     --max_num_reactions 3 \
     --save_path ../generations/random.csv
 ```
+
+
+## Selecting representative Enamine molecules
+
+Download and extract the Enamine screening collection.
+```
+wge thttps://enamine.net/files/Stock_Screening_Collections/screening_collection.zip
+unzip screening_collection.zip
+rm screening_collection.zip
+```
+
+Convert SDF to SMILES. (Command from [chem_utils](https://github.com/swansonk14/chem_utils).)
+```
+python sdf_to_smiles.py \
+    --data_path ../combinatorial_antibiotics/data/screening_collection.sdf \
+    --save_path ../combinatorial_antibiotics/data/screening_collection.csv \
+    --properties idnumber
+```
+
+2,968,443 of 2,968,445 compounds were converted successfully.
+
+Cluster molecules. (Command from [chem_utils](https://github.com/swansonk14/chem_utils).)
+```
+python cluster_molecules.py \
+    --data_path ../combinatorial_antibiotics/data/screening_collection.csv \
+    --save_path ../combinatorial_antibiotics/data/screening_collection_clustered.csv \
+    --num_clusters 5000 \
+    --mini_batch
+```
+
+Randomly select a molecule from each cluster. (Command from [chem_utils](https://github.com/swansonk14/chem_utils).)
+```
+python sample_molecules.py \
+    --data_path ../combinatorial_antibiotics/data/screening_collection_clustered.csv \
+    --save_path ../combinatorial_antibiotics/data/screening_collection_clustered_sampled.csv \
+    --num_molecules 1 \
+    --cluster_column cluster_label
+```
