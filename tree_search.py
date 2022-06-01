@@ -22,16 +22,16 @@ def get_reagent_matches_per_mol(reaction: Reaction, mols: list[Chem.Mol]) -> lis
     ]
 
 
-def get_next_fragments(fragments: list[str], reagent_to_fragments: dict[str, list[str]]) -> list[str]:
+def get_next_fragments(fragments: tuple[str], reagent_to_fragments: dict[str, list[str]]) -> list[str]:
     mols = [convert_to_mol(fragment, add_hs=True) for fragment in fragments]
 
     # For each reaction these fragments can participate in, get all the unfilled reagents
     unfilled_reagents = set()
     for reaction in REAL_REACTIONS:
-        reagent_indices = set(range(reaction.num_reagents))
+        reagent_indices = set(range(reaction.num_fragments))
 
         # Skip reaction if there's no room to add more reagents
-        if len(mols) >= reaction.num_reagents:
+        if len(mols) >= reaction.num_fragments:
             continue
 
         # For each mol, get a list of indices of reagents it matches
@@ -44,7 +44,7 @@ def get_next_fragments(fragments: list[str], reagent_to_fragments: dict[str, lis
             matched_reagent_indices = set(matched_reagent_indices)
 
             if len(matched_reagent_indices) == len(mols):
-                unfilled_reagents |= {reaction.reagents[index] for index in reagent_indices - matched_reagent_indices}
+                unfilled_reagents |= {reaction.fragments[index] for index in reagent_indices - matched_reagent_indices}
 
     if len(unfilled_reagents) == 0:
         return []
@@ -66,60 +66,39 @@ class TreeNode:
     def __init__(self,
                  c_puct: float,
                  scoring_fn: Callable[[str], float],
-                 reagents: Optional[tuple[str]] = None,
+                 fragments: Optional[tuple[str]] = None,
                  construction_log: Optional[dict[str, Any]] = None) -> None:
         """Initializes the TreeNode object.
 
         :param c_puct: The hyperparameter that encourages exploration.
         :param scoring_fn: A function that takes as input a SMILES representing a molecule and returns a score.
-        :param reagents: A list of SMILES containing the reagents for the next reaction.
+        :param fragments: A tuple of SMILES containing the fragments for the next reaction.
                          The first element is the currently constructed molecule while the remaining elements
-                         are the reagents that are about to be added.
+                         are the fragments that are about to be added.
         :param construction_log: A list of dictionaries containing information about each reaction.
         """
         self.c_puct = c_puct
         self.scoring_fn = scoring_fn
-        self.reagents = reagents or tuple()
+        self.fragments = fragments or tuple()
         self.construction_log = construction_log or []
-        self._W = 0.0  # The sum of the node value.
-        self._N = 0  # The number of times of arrival at this node.
-        self._P = None  # The property score (reward) of this node.
+        # TODO: maybe change sum (really mean) to max since we don't care about finding the best leaf node, just the best node along the way?
+        self.W = 0.0  # The sum of the leaf node values for leaf nodes that descend from this node.
+        self.N = 0  # The number of leaf nodes that have been visited from this node.
+        self.P = self.compute_score(fragments=fragments, scoring_fn=scoring_fn)  # The property score of this node.
         self.children: List[TreeNode] = []
 
-    def compute_score(self) -> float:
-        """Computes the score of this node in terms of the scores of the reagents.
+    @classmethod
+    def compute_score(cls, fragments: tuple[str], scoring_fn: Callable[[str], float]) -> float:
+        """Computes the score of the fragments.
 
-        :return: The score of this node.
+        :param fragments: A tuple of SMILES containing the fragments for the next reaction.
+                         The first element is the currently constructed molecule while the remaining elements
+                         are the fragments that are about to be added.
+        :param scoring_fn: A function that takes as input a SMILES representing a molecule and returns a score.
+        :return: The score of the fragments.
         """
-        # TODO: change this!!! to weight the reagents differently
-        return sum(self.scoring_fn(reagent) for reagent in self.reagents)
-
-    # TODO: maybe change sum (really mean) to max since we don't care about finding the best leaf node, just the best node along the way?
-    @property
-    def W(self) -> float:
-        """The sum of the leaf node values for leaf nodes that descend from this node."""
-        return self._W
-
-    @W.setter
-    def W(self, W: float) -> None:
-        self._W = W
-
-    @property
-    def N(self) -> int:
-        """The number of leaf nodes that have been visited from this node."""
-        return self._N
-
-    @N.setter
-    def N(self, N: int) -> None:
-        self._N = N
-
-    @property
-    def P(self) -> float:
-        """The score of this node."""
-        if self._P is None:
-            self._P = self.compute_score()
-
-        return self._P
+        # TODO: change this!!! to weight the fragments differently
+        return sum(scoring_fn(fragment) for fragment in fragments)
 
     def Q(self) -> float:
         """Value that encourages exploitation of nodes with high reward."""
@@ -130,12 +109,12 @@ class TreeNode:
         return self.c_puct * self.P * math.sqrt(n) / (1 + self.N)
 
     @property
-    def num_reagents(self) -> int:
-        """Returns the number of reagents for the upcoming reaction.
+    def num_fragments(self) -> int:
+        """Returns the number of fragments for the upcoming reaction.
 
-        :return: The number of reagents for the upcoming reaction.
+        :return: The number of fragments for the upcoming reaction.
         """
-        return len(self.reagents)
+        return len(self.fragments)
 
     @property
     def num_reactions(self) -> int:
@@ -178,7 +157,7 @@ class TreeSearcher:
 
         self.TreeNodeClass = partial(TreeNode, c_puct=c_puct, scoring_fn=scoring_fn)
         self.root = self.TreeNodeClass()
-        self.state_map = {tuple(): self.root}
+        self.state_map: dict[tuple[str, ...], TreeNode] = {tuple(): self.root}
 
     def rollout(self, tree_node: TreeNode) -> float:
         """Performs a Monte Carlo Tree Search rollout.
@@ -194,37 +173,45 @@ class TreeSearcher:
         if len(tree_node.children) == 0:
             # TODO: fill this in
             # Select the first fragment
-            if tree_node.num_reagents == 0:
-                pass
+            if tree_node.num_fragments == 0:
+                new_fragment_tuples = [(fragment,) for fragment in self.all_fragments]
             # Select the second fragment
-            elif tree_node.num_reagents == 1:
-                pass
-            # Either complete the reaction with two reagents or select and complete the reaction with three reagents
-            elif tree_node.num_reagents == 2:
+            elif tree_node.num_fragments == 1:
+                next_fragments = get_next_fragments(
+                    fragments=tree_node.fragments,
+                    reagent_to_fragments=self.reagent_to_fragments
+                )
+
+                new_fragment_tuples = [
+                    (*tree_node.fragments, next_fragment)
+                    for next_fragment in next_fragments
+                ]
+            # Either complete the reaction with two fragments or select and complete the reaction with three fragments
+            elif tree_node.num_fragments == 2:
                 pass
             else:
-                raise ValueError(f'Cannot handle reactions with "{tree_node.num_reagents}" reagents.')
+                raise ValueError(f'Cannot handle reactions with "{tree_node.num_fragments}" fragments.')
 
             # Limit the number of nodes to expand
-            self.random.shuffle(new_nodes)
-            new_nodes = new_nodes[:self.num_expand_nodes]
+            self.random.shuffle(new_fragment_tuples)
+            new_fragment_tuples = new_fragment_tuples[:self.num_expand_nodes]
 
             # Add the expanded nodes as children
-            child_states = set()
-            for new_node in new_nodes:
+            child_fragment_tuples = set()
+            for new_fragment_tuple in new_fragment_tuples:
+
                 # Check whether this node was already added as a child
-                if new_node.state not in child_states:
+                if new_fragment_tuple not in child_fragment_tuples:
+
                     # Check the state map and merge with an existing node if available
-                    new_node = self.state_map.setdefault(TreeNode.compute_state(new_node.reagents), new_node)
+                    if new_fragment_tuple not in self.state_map:
+                        self.state_map[new_fragment_tuple] = self.TreeNodeClass(fragments=new_fragment_tuple)
+
+                    new_node = self.state_map[new_fragment_tuple]
 
                     # Add the new node as a child of the tree node
                     tree_node.children.append(new_node)
-                    child_states.add(new_node.state)
-
-            # For each child in the tree, compute its reward
-            for child_node in tree_node.children:
-                if child_node.P == 0:
-                    child_node.P = state_score(reagents=child_node.reagents, scoring_fn=self.scoring_fn)
+                    child_fragment_tuples.add(new_fragment_tuple)
 
         # Select the best child node and unroll it
         sum_count = sum(child.N for child in tree_node.children)
@@ -243,8 +230,8 @@ class TreeSearcher:
         for _ in range(self.n_rollout):
             self.rollout(tree_node=self.root)
 
-        # Get all the nodes representing fully constructed molecules (i.e., no reagents about to be added)
-        nodes = [node for _, node in self.state_map.items() if node.reagents is not None]
+        # Get all the nodes representing fully constructed molecules
+        nodes = [node for _, node in self.state_map.items() if node.num_fragments == 1]
 
         # Sort by highest reward and break ties by preferring less unmasked results
         nodes = sorted(nodes, key=lambda node: node.P, reverse=True)
@@ -284,7 +271,7 @@ class TreeSearchRunner:
         :return: A list of TreeNode objects representing text masks sorted from highest to lowest reward.
         """
         return TreeSearcher(
-            reagent_to_fragments=reagent_to_fragments,
+            reagent_to_fragments=self.reagent_to_fragments,
             max_reactions=self.max_reactions,
             scoring_fn=self.scoring_fn,
             n_rollout=self.n_rollout,
