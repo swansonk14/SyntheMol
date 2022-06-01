@@ -152,6 +152,11 @@ class TreeSearcher:
         self.root = self.TreeNodeClass()
         self.state_map: dict[TreeNode, TreeNode] = {self.root: self.root}
 
+    def random_choice(self, array: list[Any], size: int = 1, replace: bool = True) -> Any:
+        return [
+            array[i] for i in self.rng.choice(len(array), size=size, replace=replace)
+        ]
+
     # TODO: documentation
     @classmethod
     def get_reagent_matches_per_mol(cls, reaction: Reaction, mols: list[Chem.Mol]) -> list[list[int]]:
@@ -311,7 +316,7 @@ class TreeSearcher:
 
             # Limit the number of nodes to expand
             if len(new_nodes) > self.num_expand_nodes:
-                new_nodes = self.rng.choice(new_nodes, size=self.num_expand_nodes, replace=False)
+                new_nodes = self.random_choice(new_nodes, size=self.num_expand_nodes, replace=False)
 
             # Add the expanded nodes as children
             child_set = set()
@@ -329,7 +334,7 @@ class TreeSearcher:
 
         # Select a child node based on the search type
         if self.search_type == 'random':
-            selected_node = self.rng.choice(node.children)
+            selected_node = self.random_choice(node.children)
 
         elif self.search_type == 'greedy':
             min_num_visits = min(child.N for child in node.children)
