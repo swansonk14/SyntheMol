@@ -152,7 +152,10 @@ class TreeSearcher:
         self.root = self.TreeNodeClass()
         self.state_map: dict[TreeNode, TreeNode] = {self.root: self.root}
 
-    def random_choice(self, array: list[Any], size: int = 1, replace: bool = True) -> Any:
+    def random_choice(self, array: list[Any], size: Optional[int] = None, replace: bool = True) -> Any:
+        if size is None:
+            return array[self.rng.integers(len(array))]
+
         return [
             array[i] for i in self.rng.choice(len(array), size=size, replace=replace)
         ]
@@ -199,6 +202,7 @@ class TreeSearcher:
             return []
 
         # Get all the fragments that match the other reagents
+        # TODO: cache this? or allow duplicates?
         available_fragments = list(dict.fromkeys(
             fragment
             for reagent in sorted(unfilled_reagents, key=lambda reagent: reagent.smarts)
