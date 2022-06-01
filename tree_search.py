@@ -23,7 +23,7 @@ class Args(Tap):
     search_type: Literal['random', 'greedy', 'mcts']  # Type of search to perform.
     smiles_column: str = 'smiles'  # Name of the column containing SMILES.
     max_reactions: int = 3  # Maximum number of reactions that can be performed to expand fragments into molecules.
-    n_rollout: int = 20  # The number of times to run the tree search.
+    n_rollout: int = 100  # The number of times to run the tree search.
     c_puct: float = 10.0  # The hyperparameter that encourages exploration.
     num_expand_nodes: int = 20  # The number of tree nodes to expand when extending the child nodes in the search tree.
 
@@ -332,8 +332,9 @@ class TreeSearcher:
             selected_node = self.rng.choice(node.children)
 
         elif self.search_type == 'greedy':
-            unvisited_children = (child for child in node.children if child.N == 0)
-            selected_node = max(unvisited_children, key=lambda child: child.P)
+            min_num_visits = min(child.N for child in node.children)
+            min_visited_children = (child for child in node.children if child.N == min_num_visits)
+            selected_node = max(min_visited_children, key=lambda child: child.P)
 
         elif self.search_type == 'mcts':
             sum_count = sum(child.N for child in node.children)
