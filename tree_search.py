@@ -1,5 +1,6 @@
 """Contains classes and functions for performing a tree search to generate molecules combinatorially."""
 import math
+import termios
 from functools import partial
 from random import Random
 from typing import Any, Callable, List, Optional
@@ -20,14 +21,14 @@ def compute_state(molecule: Optional[str] = None,
     )
 
 
-# TODO: construction log
 class TreeNode:
-    """A node in a Monte Carlo Tree Search representing a step in the molecule construction process."""
+    """A node in a tree search representing a step in the molecule construction process."""
 
     def __init__(self,
                  c_puct: float,
                  molecule: Optional[str] = None,
                  reagents: Optional[list[str]] = None,
+                 construction_log: Optional[dict[str, Any]] = None,
                  W: float = 0.0,
                  N: int = 0,
                  P: float = 0.0) -> None:
@@ -36,6 +37,7 @@ class TreeNode:
         :param c_puct: The hyperparameter that encourages exploration.
         :param molecule: The SMILES representing the currently constructed molecule.
         :param reagents: A list of SMILES containing the reagents that will be added to the current molecule.
+        :param construction_log: A list of dictionaries containing information about each reaction.
         :param W: The sum of the node value.
         :param N: The number of times of arrival at this node.
         :param P: The property score (reward) of this node.
@@ -43,6 +45,7 @@ class TreeNode:
         self.c_puct = c_puct
         self.molecule = molecule
         self.reagents = reagents
+        self.construction_log = construction_log
         self.W = W
         self.N = N
         self.P = P
@@ -56,22 +59,33 @@ class TreeNode:
         """Value that encourages exploration of nodes with few visits."""
         return self.c_puct * self.P * math.sqrt(n) / (1 + self.N)
 
+    @property
+    def num_reactions(self) -> int:
+        """Returns the number of reactions used so far to generate the current molecule.
+
+        :return: The number of reactions used so far to generate the current molecule.
+        """
+        return len(self.construction_log)
+
 
 class TreeSearcher:
     """A class that runs a tree search to generate high scoring molecules."""
 
     def __init__(self,
+                 max_reactions: int,
                  scoring_fn: Callable[[str], float],
                  n_rollout: int,
                  c_puct: float,
                  num_expand_nodes: int) -> None:
         """Creates the TreeSearcher object.
 
+        :param max_reactions: The maximum number of reactions to use to construct a molecule.
         :param scoring_fn: A function that takes as input a SMILES representing a molecule and returns a score.
         :param n_rollout: The number of times to run the tree search.
         :param c_puct: The hyperparameter that encourages exploration.
         :param num_expand_nodes: The number of tree nodes to expand when extending the child nodes in the search tree.
         """
+        self.max_reactions = max_reactions
         self.scoring_fn = scoring_fn
         self.n_rollout = n_rollout
         self.c_puct = c_puct
@@ -88,14 +102,8 @@ class TreeSearcher:
         :param tree_node: An TreeNode representing the root of the MCTS search.
         :return: The value (reward) of the rollout.
         """
-        # Get a list of currently existing phrases (list of lists of indices)
-        phrases = get_phrases(tree_node.mask)
-
-        # Filter to only include phrases that are above the minimum phrase length
-        shrinkable_phrases = [phrase for phrase in phrases if len(phrase) > self.min_phrase_length]
-
-        # Stop the search and call this a leaf node if the node can't be expanded further
-        if tree_node.percent_unmasked <= self.min_percent_unmasked or len(shrinkable_phrases) == 0:
+        # Stop the search if we've reached the maximum number of reactions
+        if tree_node.num_reactions >= self.max_reactions:
             return tree_node.P
 
         # Expand if this node has never been visited
@@ -166,17 +174,20 @@ class TreeSearchRunner:
     """A class that creates instances of TreeSearcher to search for high scoring molecules."""
 
     def __init__(self,
+                 max_reactions: int,
                  scoring_fn: Callable[[str], float],
                  n_rollout: int,
                  c_puct: float,
                  num_expand_nodes: int) -> None:
         """Creates the TreeSearchRunner object.
 
+        :param max_reactions: The maximum number of reactions to use to construct a molecule.
         :param scoring_fn: A function that takes as input a SMILES representing a molecule and returns a score.
         :param n_rollout: The number of times to run the tree search.
         :param c_puct: The hyperparameter that encourages exploration.
         :param num_expand_nodes: The number of tree nodes to expand when extending the child nodes in the search tree.
         """
+        self.max_reactions = max_reactions
         self.scoring_fn = scoring_fn
         self.n_rollout = n_rollout
         self.c_puct = c_puct
@@ -188,6 +199,7 @@ class TreeSearchRunner:
         :return: A list of TreeNode objects representing text masks sorted from highest to lowest reward.
         """
         return TreeSearcher(
+            max_reactions=self.max_reactions,
             scoring_fn=self.scoring_fn,
             n_rollout=self.n_rollout,
             c_puct=self.c_puct,
