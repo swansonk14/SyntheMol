@@ -2,61 +2,12 @@
 import math
 from functools import partial
 from itertools import product
-from random import Random
 from typing import Any, Callable, List, Optional
 
+import numpy as np
 from rdkit import Chem
 
 from real_reactions import convert_to_mol, Reaction, REAL_REACTIONS
-
-
-# TODO: all documentation
-def get_reagent_matches_per_mol(reaction: Reaction, mols: list[Chem.Mol]) -> list[list[int]]:
-    return [
-        [
-            reagent_index
-            for reagent_index, reagent in enumerate(reaction.reagents)
-            if reagent.has_substruct_match(mol)
-        ]
-        for mol in mols
-    ]
-
-
-def get_next_fragments(fragments: tuple[str], reagent_to_fragments: dict[str, list[str]]) -> list[str]:
-    mols = [convert_to_mol(fragment, add_hs=True) for fragment in fragments]
-
-    # For each reaction these fragments can participate in, get all the unfilled reagents
-    unfilled_reagents = set()
-    for reaction in REAL_REACTIONS:
-        reagent_indices = set(range(reaction.num_fragments))
-
-        # Skip reaction if there's no room to add more reagents
-        if len(mols) >= reaction.num_fragments:
-            continue
-
-        # For each mol, get a list of indices of reagents it matches
-        reagent_matches_per_mol = get_reagent_matches_per_mol(reaction=reaction, mols=mols)
-
-        # Loop through products of reagent indices that the mols match to
-        # and for each product, if it matches to all separate reagents,
-        # then include the missing reagents in the set of unfilled reagents
-        for matched_reagent_indices in product(*reagent_matches_per_mol):
-            matched_reagent_indices = set(matched_reagent_indices)
-
-            if len(matched_reagent_indices) == len(mols):
-                unfilled_reagents |= {reaction.fragments[index] for index in reagent_indices - matched_reagent_indices}
-
-    if len(unfilled_reagents) == 0:
-        return []
-
-    # Get all the fragments that match the other reagents
-    available_fragments = list(dict.fromkeys(
-        fragment
-        for reagent in sorted(unfilled_reagents, key=lambda reagent: reagent.smarts)
-        for fragment in reagent_to_fragments[reagent.smarts]
-    ))
-
-    return available_fragments
 
 
 # TODO: construction logs
@@ -145,19 +96,127 @@ class TreeSearcher:
         :param num_expand_nodes: The number of tree nodes to expand when extending the child nodes in the search tree.
         """
         self.reagent_to_fragments = reagent_to_fragments
-        self.all_fragments = sorted(
-            fragment for fragments in self.reagent_to_fragments.values() for fragment in fragments
+        self.all_fragment_tuples = sorted(
+            (fragment,) for fragments in self.reagent_to_fragments.values() for fragment in fragments
         )
         self.max_reactions = max_reactions
         self.scoring_fn = scoring_fn
         self.n_rollout = n_rollout
         self.c_puct = c_puct
         self.num_expand_nodes = num_expand_nodes
-        self.random = Random(0)
+        self.rng = np.random.default_rng(seed=0)
 
         self.TreeNodeClass = partial(TreeNode, c_puct=c_puct, scoring_fn=scoring_fn)
         self.root = self.TreeNodeClass()
         self.state_map: dict[tuple[str, ...], TreeNode] = {tuple(): self.root}
+
+    # TODO: documentation
+    @classmethod
+    def get_reagent_matches_per_mol(cls, reaction: Reaction, mols: list[Chem.Mol]) -> list[list[int]]:
+        return [
+            [
+                reagent_index
+                for reagent_index, reagent in enumerate(reaction.reagents)
+                if reagent.has_substruct_match(mol)
+            ]
+            for mol in mols
+        ]
+
+    # TODO: documentation
+    def get_next_fragments(self, fragments: tuple[str]) -> list[str]:
+        mols = [convert_to_mol(fragment, add_hs=True) for fragment in fragments]
+
+        # For each reaction these fragments can participate in, get all the unfilled reagents
+        unfilled_reagents = set()
+        for reaction in REAL_REACTIONS:
+            reagent_indices = set(range(reaction.num_reagents))
+
+            # Skip reaction if there's no room to add more reagents
+            if len(mols) >= reaction.num_reagents:
+                continue
+
+            # For each mol, get a list of indices of reagents it matches
+            reagent_matches_per_mol = self.get_reagent_matches_per_mol(reaction=reaction, mols=mols)
+
+            # Loop through products of reagent indices that the mols match to
+            # and for each product, if it matches to all separate reagents,
+            # then include the missing reagents in the set of unfilled reagents
+            for matched_reagent_indices in product(*reagent_matches_per_mol):
+                matched_reagent_indices = set(matched_reagent_indices)
+
+                if len(matched_reagent_indices) == len(mols):
+                    unfilled_reagents |= {reaction.fragments[index] for index in
+                                          reagent_indices - matched_reagent_indices}
+
+        if len(unfilled_reagents) == 0:
+            return []
+
+        # Get all the fragments that match the other reagents
+        available_fragments = list(dict.fromkeys(
+            fragment
+            for reagent in sorted(unfilled_reagents, key=lambda reagent: reagent.smarts)
+            for fragment in self.reagent_to_fragments[reagent.smarts]
+        ))
+
+        return available_fragments
+
+    # TODO: documentation
+    def get_next_fragment_tuples(self, fragments: tuple[str]) -> list[tuple[str, ...]]:
+        if len(fragments) == 0:
+            return self.all_fragment_tuples
+
+        next_fragments = self.get_next_fragments(fragments=fragments)
+        next_fragment_tuples = [(*fragments, next_fragment) for next_fragment in next_fragments]
+
+        return next_fragment_tuples
+
+    def get_reactions_for_fragments(self, fragments: tuple[str]) -> list[tuple[Reaction, dict[str, int]]]:
+        mols = [convert_to_mol(fragment, add_hs=True) for fragment in fragments]
+        matching_reactions = []
+
+        for reaction in REAL_REACTIONS:
+            if len(mols) != reaction.num_reagents:
+                continue
+
+            # For each mol, get a list of indices of reagents it matches
+            reagent_matches_per_mol = self.get_reagent_matches_per_mol(reaction=reaction, mols=mols)
+
+            # Include every assignment of fragments to reagents that fills all the reagents
+            for matched_reagent_indices in product(*reagent_matches_per_mol):
+                if len(set(matched_reagent_indices)) == reaction.num_reagents:
+                    fragment_to_reagent_index = dict(zip(fragments, matched_reagent_indices))
+                    matching_reactions.append((reaction, fragment_to_reagent_index))
+
+        return matching_reactions
+
+    def run_all_reactions_for_fragments(self, fragments: tuple[str]) -> list[str]:
+        matching_reactions = self.get_reactions_for_fragments(fragments=fragments)
+
+        products = []
+        for reaction, fragment_to_reagent_index in matching_reactions:
+            # Put fragments in the right order for the reaction
+            sorted_fragments = sorted(fragments, key=lambda frag: fragment_to_reagent_index[frag])
+
+            # Run reaction
+            reaction_products = reaction.run_reactants(sorted_fragments)
+
+            if len(reaction_products) == 0:
+                raise ValueError('Reaction failed to produce products.')
+
+            assert all(len(product) == 1 for product in reaction_products)
+
+            # Convert product mols to SMILES, remove Hs, and deduplicate (preserving order for random reproducibility)
+            products += list(dict.fromkeys(Chem.MolToSmiles(Chem.RemoveHs(product[0])) for product in reaction_products))
+
+            # TODO: reaction log
+            # # Create reaction log
+            # reaction_log = {
+            #     'reaction_id': reaction.id,
+            #     'reagent_ids': [fragment_to_index.get(fragment, -1) for fragment in fragments],
+            #     'reagent_smiles': [fragment for fragment in fragments]
+            # }
+
+        return products
 
     def rollout(self, tree_node: TreeNode) -> float:
         """Performs a Monte Carlo Tree Search rollout.
@@ -171,30 +230,20 @@ class TreeSearcher:
 
         # Expand if this node has never been visited
         if len(tree_node.children) == 0:
-            # TODO: fill this in
-            # Select the first fragment
-            if tree_node.num_fragments == 0:
-                new_fragment_tuples = [(fragment,) for fragment in self.all_fragments]
-            # Select the second fragment
-            elif tree_node.num_fragments == 1:
-                next_fragments = get_next_fragments(
-                    fragments=tree_node.fragments,
-                    reagent_to_fragments=self.reagent_to_fragments
-                )
+            # Run all valid reactions on the current fragments to generate new molecules
+            new_fragment_tuples = [
+                (product,) for product in self.run_all_reactions_for_fragments(fragments=tree_node.fragments)
+            ]
 
-                new_fragment_tuples = [
-                    (*tree_node.fragments, next_fragment)
-                    for next_fragment in next_fragments
-                ]
-            # Either complete the reaction with two fragments or select and complete the reaction with three fragments
-            elif tree_node.num_fragments == 2:
-                pass
-            else:
-                raise ValueError(f'Cannot handle reactions with "{tree_node.num_fragments}" fragments.')
+            # Add all possible next fragments to the current fragments
+            new_fragment_tuples += self.get_next_fragment_tuples(fragments=tree_node.fragments)
+
+            if len(new_fragment_tuples) == 0:
+                raise NotImplementedError  # TODO: handle this case of no valid next fragments
 
             # Limit the number of nodes to expand
-            self.random.shuffle(new_fragment_tuples)
-            new_fragment_tuples = new_fragment_tuples[:self.num_expand_nodes]
+            if len(new_fragment_tuples) > self.num_expand_nodes:
+                new_fragment_tuples = self.rng.choice(new_fragment_tuples, size=self.num_expand_nodes, replace=False)
 
             # Add the expanded nodes as children
             child_fragment_tuples = set()
