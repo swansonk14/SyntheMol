@@ -80,6 +80,8 @@ class TreeNode:
         """Value that encourages exploitation of nodes with high reward."""
         return self.W / self.N if self.N > 0 else 0.0
 
+    # TODO: change this so that n = 0 to start instead of n = 0 so that self.P is taken into account
+    # TODO: because otherwise it's too much random exploration since there are so many possible choices at each step
     def U(self, n: int) -> float:
         """Value that encourages exploration of nodes with few visits."""
         return self.c_puct * self.P * math.sqrt(n) / (1 + self.N)
@@ -331,14 +333,18 @@ class TreeSearcher:
                     node.children.append(new_node)
                     child_set.add(new_node)
 
+        # TODO: think more about balancing reaction nodes vs additional fragment nodes
+
         # Select a child node based on the search type
         if self.search_type == 'random':
             selected_node = self.random_choice(node.children)
 
         elif self.search_type == 'greedy':
-            min_num_visits = min(child.N for child in node.children)
-            min_visited_children = (child for child in node.children if child.N == min_num_visits)
-            selected_node = max(min_visited_children, key=lambda child: child.P)
+            # Randomly sample from top 3
+            # TODO: better method? there's still a lot of randomness involved when limiting the number of nodes
+            top_k = 3
+            sorted_children = sorted(node.children, key=lambda child: child.P, reverse=True)
+            selected_node = self.random_choice(sorted_children[:top_k])
 
         elif self.search_type == 'mcts':
             sum_count = sum(child.N for child in node.children)
