@@ -207,23 +207,6 @@ class TreeSearcher:
 
         return available_fragments
 
-    # TODO: documentation
-    def get_all_next_fragment_nodes(self, node: TreeNode) -> list[TreeNode]:
-        if len(node.fragments) == 0:
-            next_fragments = self.all_fragments
-        else:
-            next_fragments = self.get_next_fragments(fragments=node.fragments)
-
-        new_nodes = [
-            self.TreeNodeClass(
-                fragments=(*node.fragments, next_fragment),
-                construction_log=node.construction_log
-            )
-            for next_fragment in next_fragments
-        ]
-
-        return new_nodes
-
     def get_reactions_for_fragments(self, fragments: tuple[str]) -> list[tuple[Reaction, dict[str, int]]]:
         mols = [convert_to_mol(fragment, add_hs=True) for fragment in fragments]
         matching_reactions = []
@@ -289,7 +272,23 @@ class TreeSearcher:
         new_nodes = self.run_all_reactions(node=node)
 
         # Add all possible next fragments to the current fragment
-        new_nodes += self.get_all_next_fragment_nodes(node=node)
+        if node.num_fragments == 0:
+            next_fragments = self.all_fragments
+        else:
+            next_fragments = self.get_next_fragments(fragments=node.fragments)
+
+        # Limit the number of next fragments to expand
+        if len(next_fragments) > self.num_expand_nodes:
+            next_fragments = self.random_choice(next_fragments, size=self.num_expand_nodes, replace=False)
+
+        # Convert next fragment tuples to TreeNodes
+        new_nodes += [
+            self.TreeNodeClass(
+                fragments=node.fragments + (next_fragment,),
+                construction_log=node.construction_log
+            )
+            for next_fragment in next_fragments
+        ]
 
         return new_nodes
 
@@ -313,10 +312,6 @@ class TreeSearcher:
                     return node.P
                 else:
                     raise ValueError('Failed to expand a partially expanded node.')
-
-            # Limit the number of nodes to expand
-            if len(new_nodes) > self.num_expand_nodes:
-                new_nodes = self.random_choice(new_nodes, size=self.num_expand_nodes, replace=False)
 
             # Add the expanded nodes as children
             child_set = set()
