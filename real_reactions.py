@@ -364,16 +364,17 @@ REAL_REACTIONS = [
         real_ids={20, 40, 196680, 232682, 270084, 270188, 271082, 273578, 274078},
         counting_fn=count_two_different_reagents
     ),
-    Reaction(
-        reagents=[
-            QueryMol('[cH1:1]1:[c:2](-[CH2:7]-[CH2:8]-[NH2:9]):[c:3]:[c:4]:[c:5]:[c:6]:1'),
-            QueryMol('[#6:11]-[CH1;R0:10]=[OD1]')
-        ],
-        product=QueryMol('[c:1]12:[c:2](-[CH2:7]-[CH2:8]-[NH1:9]-[C:10]-2(-[#6:11])):[c:3]:[c:4]:[c:5]:[c:6]:1'),
-        reaction_id=9,
-        synnet_ids={1},
-        counting_fn=count_two_different_reagents
-    )
+    # TODO: possibly remove Connor's reactions but get the improve strip_atom_mapping function from the other branch
+    # Reaction(
+    #     reagents=[
+    #         QueryMol('[cH1:1]1:[c:2](-[CH2:7]-[CH2:8]-[NH2:9]):[c:3]:[c:4]:[c:5]:[c:6]:1'),
+    #         QueryMol('[#6:11]-[CH1;R0:10]=[OD1]')
+    #     ],
+    #     product=QueryMol('[c:1]12:[c:2](-[CH2:7]-[CH2:8]-[NH1:9]-[C:10]-2(-[#6:11])):[c:3]:[c:4]:[c:5]:[c:6]:1'),
+    #     reaction_id=9,
+    #     synnet_ids={1},
+    #     counting_fn=count_two_different_reagents
+    # )
 ]
 
 # Check that reaction IDs are unique and count from 1 to the number of reactions

@@ -293,3 +293,13 @@ python sample_molecules.py \
     --num_molecules 1 \
     --cluster_column cluster_label
 ```
+
+
+## Generate molecules using MCTS
+
+```
+python tree_search.py \
+    --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
+    --reagent_to_fragments_path ../data/reagents_to_fragments.json \
+    --save_path ../generations/tree_search.csv
+```

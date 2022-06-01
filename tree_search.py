@@ -11,6 +11,7 @@ import pandas as pd
 from rdkit import Chem
 from rdkit.Chem.Crippen import MolLogP
 from tap import Tap
+from tqdm import trange
 
 from real_reactions import convert_to_mol, Reaction, REAL_REACTIONS
 
@@ -52,7 +53,7 @@ class TreeNode:
         self.W = 0.0  # The sum of the leaf node values for leaf nodes that descend from this node.
         self.N = 0  # The number of leaf nodes that have been visited from this node.
         self._P = None  # The property score of this node. (Computed lazily.)
-        self.children: set[TreeNode] = set()
+        self.children: list[TreeNode] = []
 
     @classmethod
     def compute_score(cls, fragments: tuple[str], scoring_fn: Callable[[str], float]) -> float:
@@ -65,7 +66,7 @@ class TreeNode:
         :return: The score of the fragments.
         """
         # TODO: change this!!! to weight the fragments differently
-        return sum(scoring_fn(fragment) for fragment in fragments)
+        return sum(scoring_fn(fragment) for fragment in fragments) / len(fragments) if len(fragments) > 0 else 0.0
 
     @property
     def P(self) -> float:
@@ -183,7 +184,7 @@ class TreeSearcher:
                 matched_reagent_indices = set(matched_reagent_indices)
 
                 if len(matched_reagent_indices) == len(mols):
-                    unfilled_reagents |= {reaction.fragments[index] for index in
+                    unfilled_reagents |= {reaction.reagents[index] for index in
                                           reagent_indices - matched_reagent_indices}
 
         if len(unfilled_reagents) == 0:
@@ -238,6 +239,7 @@ class TreeSearcher:
         matching_reactions = self.get_reactions_for_fragments(fragments=node.fragments)
 
         product_nodes = []
+        product_set = set()
         for reaction, fragment_to_reagent_index in matching_reactions:
             # Put fragments in the right order for the reaction
             fragments = sorted(node.fragments, key=lambda frag: fragment_to_reagent_index[frag])
@@ -250,8 +252,12 @@ class TreeSearcher:
 
             assert all(len(product) == 1 for product in products)
 
-            # Convert product mols to SMILES, remove Hs, and deduplicate (preserving order for random reproducibility)
-            products = list(dict.fromkeys(Chem.MolToSmiles(Chem.RemoveHs(product[0])) for product in products))
+            # Convert product mols to SMILES (and remove Hs)
+            products = [Chem.MolToSmiles(Chem.RemoveHs(product[0])) for product in products]
+
+            # Filter out products that have already been created and deduplicate
+            products = list(dict.fromkeys(product for product in products if product not in product_set))
+            product_set |= set(products)
 
             # Create reaction log
             reaction_log = {
@@ -302,16 +308,18 @@ class TreeSearcher:
                 new_nodes = self.rng.choice(new_nodes, size=self.num_expand_nodes, replace=False)
 
             # Add the expanded nodes as children
+            child_set = set()
             for new_node in new_nodes:
 
                 # Check whether this node was already added as a child
-                if new_node not in node.children:
+                if new_node not in child_set:
 
                     # Check the state map and merge with an existing node if available
                     new_node = self.state_map.setdefault(new_node, new_node)
 
                     # Add the new node as a child of the tree node
-                    node.children.add(new_node)
+                    node.children.append(new_node)
+                    child_set.add(new_node)
 
         # Select the best child node and unroll it
         sum_count = sum(child.N for child in node.children)
@@ -327,7 +335,7 @@ class TreeSearcher:
 
         :return: A list of TreeNode objects sorted from highest to lowest reward.
         """
-        for _ in range(self.n_rollout):
+        for _ in trange(self.n_rollout):
             self.rollout(node=self.root)
 
         # Get all the nodes representing fully constructed molecules
@@ -415,7 +423,7 @@ def save_molecules(nodes: list[TreeNode], save_path: Path) -> None:
         construction_dicts.append(construction_dict)
 
     # Specify column order for CSV file
-    columns = ['smiles', 'num_reactions']
+    columns = ['smiles', 'score', 'num_reactions']
 
     for reaction_num in range(1, max_reaction_num + 1):
         columns.append(f'reaction_{reaction_num}_id')
@@ -424,17 +432,15 @@ def save_molecules(nodes: list[TreeNode], save_path: Path) -> None:
             columns.append(f'reagent_{reaction_num}_{reagent_num}_id')
             columns.append(f'reagent_{reaction_num}_{reagent_num}_smiles')
 
-    # Get molecules
-    molecules = [node.fragments[0] for node in nodes]
-
     # Save data
     data = pd.DataFrame(
         data=[
             {
-                'smiles': molecule,
+                'smiles': node.fragments[0],
+                'score': node.P,
                 **construction_dict
             }
-            for molecule, construction_dict in zip(molecules, construction_dicts)
+            for node, construction_dict in zip(nodes, construction_dicts)
         ],
         columns=columns
     )
@@ -442,7 +448,7 @@ def save_molecules(nodes: list[TreeNode], save_path: Path) -> None:
 
 
 def run_tree_search(args: Args) -> None:
-    """Generate random molecules combinatorially."""
+    """Generate molecules combinatorially by performing a tree search."""
     # Load fragments
     fragments = pd.read_csv(args.fragment_path)[args.smiles_column]
 
@@ -483,5 +489,6 @@ def run_tree_search(args: Args) -> None:
     save_molecules(nodes=top_nodes, save_path=args.save_path)
 
 
+# TODO: greedy search and random search
 if __name__ == '__main__':
     run_tree_search(Args().parse_args())
