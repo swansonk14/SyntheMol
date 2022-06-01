@@ -1,5 +1,6 @@
 """SMARTS representations of the REAL reactions."""
 import re
+from functools import cache
 from typing import Any, Callable, Optional, Union
 
 from rdkit import Chem
@@ -209,6 +210,8 @@ class QueryMol:
         else:
             self.checker = None
 
+    # TODO: cache this (might need to switch to only using strings)
+    @cache
     def has_substruct_match(self, mol: Molecule) -> bool:
         """Determines whether the provided molecule includes this QueryMol as a substructure.
 

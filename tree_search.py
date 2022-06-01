@@ -2,8 +2,8 @@
 import itertools
 import json
 import math
+from functools import cache, cached_property, partial
 from pathlib import Path
-from functools import partial
 from typing import Any, Callable, Literal, Optional
 
 import numpy as np
@@ -55,7 +55,6 @@ class TreeNode:
         # TODO: maybe change sum (really mean) to max since we don't care about finding the best leaf node, just the best node along the way?
         self.W = 0.0  # The sum of the leaf node values for leaf nodes that descend from this node.
         self.N = 0  # The number of leaf nodes that have been visited from this node.
-        self._P = None  # The property score of this node. (Computed lazily.)
         self.children: list[TreeNode] = []
 
     @classmethod
@@ -71,13 +70,10 @@ class TreeNode:
         # TODO: change this!!! to weight the fragments differently
         return sum(scoring_fn(fragment) for fragment in fragments) / len(fragments) if len(fragments) > 0 else 0.0
 
-    @property
+    @cached_property
     def P(self) -> float:
-        """The property score of this node."""
-        if self._P is None:
-            self._P = self.compute_score(fragments=self.fragments, scoring_fn=self.scoring_fn)
-
-        return self._P
+        """The property score of this node. (Note: The value is cached so it assumes the node is immutable.)"""
+        return self.compute_score(fragments=self.fragments, scoring_fn=self.scoring_fn)
 
     def Q(self) -> float:
         """Value that encourages exploitation of nodes with high reward."""
@@ -166,6 +162,7 @@ class TreeSearcher:
         ]
 
     # TODO: documentation
+    # TODO: change the mols to be strings to save time with caching (this next!)
     @classmethod
     def get_reagent_matches_per_mol(cls, reaction: Reaction, mols: list[Chem.Mol]) -> list[list[int]]:
         return [
@@ -442,6 +439,12 @@ def save_molecules(nodes: list[TreeNode], save_path: Path) -> None:
     data.to_csv(save_path, index=False)
 
 
+# TODO: change this scoring function!!!
+@cache
+def log_p_score(smiles: str) -> float:
+    return MolLogP(Chem.MolFromSmiles(smiles))
+
+
 def run_tree_search(args: Args) -> None:
     """Generate molecules combinatorially by performing a tree search."""
     # Load fragments
@@ -458,18 +461,13 @@ def run_tree_search(args: Args) -> None:
     with open(args.reagent_to_fragments_path) as f:
         reagent_to_fragments: dict[str, list[str]] = json.load(f)
 
-    # TODO: change this scoring function!!!
-    # TODO: change the scoring function to use RDKit molecules to avoid recomputing them
-    def scoring_fn(smiles: str) -> float:
-        return MolLogP(Chem.MolFromSmiles(smiles))
-
     # Set up TreeSearchRunner
     tree_searcher = TreeSearcher(
         search_type=args.search_type,
         fragment_to_index=fragment_to_index,
         reagent_to_fragments=reagent_to_fragments,
         max_reactions=args.max_reactions,
-        scoring_fn=scoring_fn,
+        scoring_fn=log_p_score,
         n_rollout=args.n_rollout,
         c_puct=args.c_puct,
         num_expand_nodes=args.num_expand_nodes
