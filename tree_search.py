@@ -34,12 +34,14 @@ class TreeNode:
     def __init__(self,
                  c_puct: float,
                  scoring_fn: Callable[[str], float],
+                 node_id: Optional[int] = None,
                  fragments: Optional[tuple[str]] = None,
                  construction_log: Optional[tuple[dict[str, Any]]] = None) -> None:
         """Initializes the TreeNode object.
 
         :param c_puct: The hyperparameter that encourages exploration.
         :param scoring_fn: A function that takes as input a SMILES representing a molecule and returns a score.
+        :param node_id: The ID of the node, which should correspond to the order in which the node was visited.
         :param fragments: A tuple of SMILES containing the fragments for the next reaction.
                          The first element is the currently constructed molecule while the remaining elements
                          are the fragments that are about to be added.
@@ -47,6 +49,7 @@ class TreeNode:
         """
         self.c_puct = c_puct
         self.scoring_fn = scoring_fn
+        self.node_id = node_id
         self.fragments = fragments if fragments is not None else tuple()
         self.construction_log = construction_log if construction_log is not None else tuple()
         # TODO: maybe change sum (really mean) to max since we don't care about finding the best leaf node, just the best node along the way?
@@ -151,7 +154,7 @@ class TreeSearcher:
         self.rng = np.random.default_rng(seed=0)
 
         self.TreeNodeClass = partial(TreeNode, c_puct=c_puct, scoring_fn=scoring_fn)
-        self.root = self.TreeNodeClass()
+        self.root = self.TreeNodeClass(node_id=1)
         self.state_map: dict[TreeNode, TreeNode] = {self.root: self.root}
 
     def random_choice(self, array: list[Any], size: Optional[int] = None, replace: bool = True) -> Any:
@@ -329,6 +332,10 @@ class TreeSearcher:
                     # Check the state map and merge with an existing node if available
                     new_node = self.state_map.setdefault(new_node, new_node)
 
+                    # Assign node ID as order in which the node was added
+                    if new_node.node_id is None:
+                        new_node.node_id = len(self.state_map)
+
                     # Add the new node as a child of the tree node
                     node.children.append(new_node)
                     child_set.add(new_node)
@@ -408,7 +415,7 @@ def save_molecules(nodes: list[TreeNode], save_path: Path) -> None:
         construction_dicts.append(construction_dict)
 
     # Specify column order for CSV file
-    columns = ['smiles', 'score', 'num_reactions']
+    columns = ['smiles', 'node_id', 'num_visits', 'score', 'Q_value', 'num_reactions']
 
     for reaction_num in range(1, max_reaction_num + 1):
         columns.append(f'reaction_{reaction_num}_id')
@@ -422,7 +429,10 @@ def save_molecules(nodes: list[TreeNode], save_path: Path) -> None:
         data=[
             {
                 'smiles': node.fragments[0],
+                'node_id': node.node_id,
+                'num_visits': node.N,
                 'score': node.P,
+                'Q_value': node.Q(),
                 **construction_dict
             }
             for node, construction_dict in zip(nodes, construction_dicts)
