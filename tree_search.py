@@ -1,38 +1,125 @@
 """Contains classes and functions for performing a tree search to generate molecules combinatorially."""
 import math
 from functools import partial
+from itertools import product
 from random import Random
 from typing import Any, Callable, List, Optional
 
+from rdkit import Chem
 
+from real_reactions import convert_to_mol, Reaction, REAL_REACTIONS
+
+
+# TODO: all documentation
+def get_reagent_matches_per_mol(reaction: Reaction, mols: list[Chem.Mol]) -> list[list[int]]:
+    return [
+        [
+            reagent_index
+            for reagent_index, reagent in enumerate(reaction.reagents)
+            if reagent.has_substruct_match(mol)
+        ]
+        for mol in mols
+    ]
+
+
+def get_next_fragments(fragments: list[str], reagent_to_fragments: dict[str, list[str]]) -> list[str]:
+    mols = [convert_to_mol(fragment, add_hs=True) for fragment in fragments]
+
+    # For each reaction these fragments can participate in, get all the unfilled reagents
+    unfilled_reagents = set()
+    for reaction in REAL_REACTIONS:
+        reagent_indices = set(range(reaction.num_reagents))
+
+        # Skip reaction if there's no room to add more reagents
+        if len(mols) >= reaction.num_reagents:
+            continue
+
+        # For each mol, get a list of indices of reagents it matches
+        reagent_matches_per_mol = get_reagent_matches_per_mol(reaction=reaction, mols=mols)
+
+        # Loop through products of reagent indices that the mols match to
+        # and for each product, if it matches to all separate reagents,
+        # then include the missing reagents in the set of unfilled reagents
+        for matched_reagent_indices in product(*reagent_matches_per_mol):
+            matched_reagent_indices = set(matched_reagent_indices)
+
+            if len(matched_reagent_indices) == len(mols):
+                unfilled_reagents |= {reaction.reagents[index] for index in reagent_indices - matched_reagent_indices}
+
+    if len(unfilled_reagents) == 0:
+        return []
+
+    # Get all the fragments that match the other reagents
+    available_fragments = list(dict.fromkeys(
+        fragment
+        for reagent in sorted(unfilled_reagents, key=lambda reagent: reagent.smarts)
+        for fragment in reagent_to_fragments[reagent.smarts]
+    ))
+
+    return available_fragments
+
+
+# TODO: construction logs
 class TreeNode:
     """A node in a tree search representing a step in the molecule construction process."""
 
     def __init__(self,
                  c_puct: float,
-                 reagents: Optional[list[str]] = None,
-                 construction_log: Optional[dict[str, Any]] = None,
-                 W: float = 0.0,
-                 N: int = 0,
-                 P: float = 0.0) -> None:
+                 scoring_fn: Callable[[str], float],
+                 reagents: Optional[tuple[str]] = None,
+                 construction_log: Optional[dict[str, Any]] = None) -> None:
         """Initializes the TreeNode object.
 
         :param c_puct: The hyperparameter that encourages exploration.
+        :param scoring_fn: A function that takes as input a SMILES representing a molecule and returns a score.
         :param reagents: A list of SMILES containing the reagents for the next reaction.
                          The first element is the currently constructed molecule while the remaining elements
                          are the reagents that are about to be added.
         :param construction_log: A list of dictionaries containing information about each reaction.
-        :param W: The sum of the node value.
-        :param N: The number of times of arrival at this node.
-        :param P: The property score (reward) of this node.
         """
         self.c_puct = c_puct
-        self.reagents = reagents or []
+        self.scoring_fn = scoring_fn
+        self.reagents = reagents or tuple()
         self.construction_log = construction_log or []
-        self.W = W
-        self.N = N
-        self.P = P
+        self._W = 0.0  # The sum of the node value.
+        self._N = 0  # The number of times of arrival at this node.
+        self._P = None  # The property score (reward) of this node.
         self.children: List[TreeNode] = []
+
+    def compute_score(self) -> float:
+        """Computes the score of this node in terms of the scores of the reagents.
+
+        :return: The score of this node.
+        """
+        # TODO: change this!!! to weight the reagents differently
+        return sum(self.scoring_fn(reagent) for reagent in self.reagents)
+
+    # TODO: maybe change sum (really mean) to max since we don't care about finding the best leaf node, just the best node along the way?
+    @property
+    def W(self) -> float:
+        """The sum of the leaf node values for leaf nodes that descend from this node."""
+        return self._W
+
+    @W.setter
+    def W(self, W: float) -> None:
+        self._W = W
+
+    @property
+    def N(self) -> int:
+        """The number of leaf nodes that have been visited from this node."""
+        return self._N
+
+    @N.setter
+    def N(self, N: int) -> None:
+        self._N = N
+
+    @property
+    def P(self) -> float:
+        """The score of this node."""
+        if self._P is None:
+            self._P = self.compute_score()
+
+        return self._P
 
     def Q(self) -> float:
         """Value that encourages exploitation of nodes with high reward."""
@@ -58,18 +145,6 @@ class TreeNode:
         """
         return len(self.construction_log)
 
-    @classmethod
-    def compute_state(cls, reagents: Optional[list[str]] = None) -> str:
-        """Computes the state (as a string) given a molecule and reagents to be added.
-
-        :param reagents: A list of SMILES containing the reagents for the next reaction.
-                         The first element is the currently constructed molecule while the remaining elements
-                         are the reagents that are about to be added.
-        :return: A string representing the state, which consists of the SMILES for the molecule followed by the SMILES
-                 for each reagent, all space separated.
-        """
-        return ' '.join(reagents or [])
-
 
 class TreeSearcher:
     """A class that runs a tree search to generate high scoring molecules."""
@@ -91,6 +166,9 @@ class TreeSearcher:
         :param num_expand_nodes: The number of tree nodes to expand when extending the child nodes in the search tree.
         """
         self.reagent_to_fragments = reagent_to_fragments
+        self.all_fragments = sorted(
+            fragment for fragments in self.reagent_to_fragments.values() for fragment in fragments
+        )
         self.max_reactions = max_reactions
         self.scoring_fn = scoring_fn
         self.n_rollout = n_rollout
@@ -98,9 +176,9 @@ class TreeSearcher:
         self.num_expand_nodes = num_expand_nodes
         self.random = Random(0)
 
-        self.TreeNodeClass = partial(TreeNode, c_puct=c_puct)
+        self.TreeNodeClass = partial(TreeNode, c_puct=c_puct, scoring_fn=scoring_fn)
         self.root = self.TreeNodeClass()
-        self.state_map = {TreeNode.compute_state(): self.root}
+        self.state_map = {tuple(): self.root}
 
     def rollout(self, tree_node: TreeNode) -> float:
         """Performs a Monte Carlo Tree Search rollout.
@@ -115,8 +193,11 @@ class TreeSearcher:
         # Expand if this node has never been visited
         if len(tree_node.children) == 0:
             # TODO: fill this in
-            # Select the first or second fragment
-            if tree_node.num_reactions in {0, 1}:
+            # Select the first fragment
+            if tree_node.num_reagents == 0:
+                pass
+            # Select the second fragment
+            elif tree_node.num_reagents == 1:
                 pass
             # Either complete the reaction with two reagents or select and complete the reaction with three reagents
             elif tree_node.num_reagents == 2:
@@ -124,41 +205,26 @@ class TreeSearcher:
             else:
                 raise ValueError(f'Cannot handle reactions with "{tree_node.num_reagents}" reagents.')
 
-            # Maintain a set of all the masks added as children of the tree
-            tree_children_masks = set()
+            # Limit the number of nodes to expand
+            self.random.shuffle(new_nodes)
+            new_nodes = new_nodes[:self.num_expand_nodes]
 
-            # Include left and right ends of each phrase as options to mask
-            indices_to_mask = [i for phrase in shrinkable_phrases for i in [phrase[0], phrase[-1]]]
+            # Add the expanded nodes as children
+            child_states = set()
+            for new_node in new_nodes:
+                # Check whether this node was already added as a child
+                if new_node.state not in child_states:
+                    # Check the state map and merge with an existing node if available
+                    new_node = self.state_map.setdefault(TreeNode.compute_state(new_node.reagents), new_node)
 
-            # If not yet at max number of phrases, allow breaking a phrase
-            # (as long as the resulting phrases are long enough)
-            if len(phrases) < self.max_phrases:
-                indices_to_mask += [i for phrase in shrinkable_phrases for i in
-                                    phrase[self.min_phrase_length:-self.min_phrase_length]]
-
-            # Limit the number of MCTS nodes to expand
-            self.random.shuffle(indices_to_mask)
-            indices_to_mask = indices_to_mask[:self.num_expand_nodes]
-
-            # For each index, prune (mask) it and create a new TreeNode (if it doesn't already exist)
-            for index_to_mask in indices_to_mask:
-                # Create new mask with additional index masked
-                new_mask = list(tree_node.mask)
-                new_mask[index_to_mask] = 0
-                new_mask = tuple(new_mask)
-
-                # Check the state map and merge with an existing mask if available
-                new_node = self.state_map.setdefault(new_mask, self.TreeNodeClass(mask=new_mask))
-
-                # Add the mask to the children of the tree
-                if new_mask not in tree_children_masks:
+                    # Add the new node as a child of the tree node
                     tree_node.children.append(new_node)
-                    tree_children_masks.add(new_mask)
+                    child_states.add(new_node.state)
 
             # For each child in the tree, compute its reward
-            for child in tree_node.children:
-                if child.P == 0:
-                    child.P = text_score(words=child.words, mask=child.mask, scoring_fn=self.scoring_fn)
+            for child_node in tree_node.children:
+                if child_node.P == 0:
+                    child_node.P = state_score(reagents=child_node.reagents, scoring_fn=self.scoring_fn)
 
         # Select the best child node and unroll it
         sum_count = sum(child.N for child in tree_node.children)
