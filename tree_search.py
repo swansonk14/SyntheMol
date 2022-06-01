@@ -20,13 +20,12 @@ class Args(Tap):
     fragment_path: Path  # Path to CSV file containing molecular building blocks.
     reagent_to_fragments_path: Path  # Path to a JSON file containing a dictionary mapping from reagents to fragments.
     save_path: Path  # Path to CSV file where generated molecules will be saved.
-    search_type: Literal['random', 'greedy', ' mcts']  # Type of search to perform.
+    search_type: Literal['random', 'greedy', 'mcts']  # Type of search to perform.
     smiles_column: str = 'smiles'  # Name of the column containing SMILES.
     max_reactions: int = 3  # Maximum number of reactions that can be performed to expand fragments into molecules.
     n_rollout: int = 20  # The number of times to run the tree search.
     c_puct: float = 10.0  # The hyperparameter that encourages exploration.
-    num_expand_nodes: int = 10  # The number of tree nodes to expand when extending the child nodes in the search tree.
-    top_k: int = 10  # The number of top scoring molecules to save.
+    num_expand_nodes: int = 20  # The number of tree nodes to expand when extending the child nodes in the search tree.
 
 
 class TreeNode:
@@ -305,7 +304,10 @@ class TreeSearcher:
             new_nodes = self.expand_node(node=node)
 
             if len(new_nodes) == 0:
-                raise NotImplementedError  # TODO: handle this case of no valid next fragments
+                if node.num_fragments == 1:
+                    return node.P
+                else:
+                    raise ValueError('Failed to expand a partially expanded node.')
 
             # Limit the number of nodes to expand
             if len(new_nodes) > self.num_expand_nodes:
@@ -455,11 +457,8 @@ def run_tree_search(args: Args) -> None:
     # Search for molecules
     nodes = tree_searcher.search()
 
-    # Get top k molecules
-    top_nodes = nodes[:args.top_k]
-
     # Save generated molecules
-    save_molecules(nodes=top_nodes, save_path=args.save_path)
+    save_molecules(nodes=nodes, save_path=args.save_path)
 
 
 if __name__ == '__main__':
