@@ -5,6 +5,21 @@ from random import Random
 from typing import Any, Callable, List, Optional
 
 
+def compute_state(molecule: Optional[str] = None,
+                  reagents: Optional[list[str]] = None) -> str:
+    """Computes the state (as a string) given a molecule and reagents to be added.
+
+    :param molecule: The SMILES representing the currently constructed molecule.
+    :param reagents: A list of SMILES containing the reagents that will be added to the current molecule.
+    :return: A string representating the state, which consists of the SMILES for the molecule followed by the SMILES
+             for each reagent, all space separated.
+    """
+    return ' '.join(
+        ([molecule] if molecule is not None else []) +
+        (reagents if reagents is not None else [])
+    )
+
+
 # TODO: construction log
 class TreeNode:
     """A node in a Monte Carlo Tree Search representing a step in the molecule construction process."""
@@ -41,34 +56,6 @@ class TreeNode:
         """Value that encourages exploration of nodes with few visits."""
         return self.c_puct * self.P * math.sqrt(n) / (1 + self.N)
 
-    def __str__(self) -> str:
-        """Gets a string representation of the TreeNode.
-
-        :return: The SMILES for the molecule followedd by the SMILES for each reagent, all space separated.
-        """
-        return ' '.join(
-            ([self.molecule] if self.molecule is not None else []) +
-            (self.reagents if self.reagents is not None else [])
-        )
-
-    def __hash__(self) -> int:
-        """Computes the hash of the TreeNode, which is the hash of the string representation.
-
-        :return: The hash of the TreeNode.
-        """
-        return hash(str(self))
-
-    def __eq__(self, other: Any) -> bool:
-        """Determines whether this TreeNode is equal to another object.
-
-        :param other: Any object.
-        :return: True if this TreeNode is equal to the other object (same molecule and reagents), False otherwise.
-        """
-        if not isinstance(other, TreeNode):
-            return False
-
-        return self.molecule == other.molecule and self.reagents == other.reagents
-
 
 class TreeSearcher:
     """A class that runs a tree search to generate high scoring molecules."""
@@ -93,7 +80,7 @@ class TreeSearcher:
 
         self.TreeNodeClass = partial(TreeNode, c_puct=c_puct)
         self.root = self.TreeNodeClass()
-        self.state_map = {self.root: self.root}
+        self.state_map = {compute_state(): self.root}
 
     def rollout(self, tree_node: TreeNode) -> float:
         """Performs a Monte Carlo Tree Search rollout.
