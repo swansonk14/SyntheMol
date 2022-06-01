@@ -1,13 +1,30 @@
 """Contains classes and functions for performing a tree search to generate molecules combinatorially."""
 import itertools
+import json
 import math
+from pathlib import Path
 from functools import partial
 from typing import Any, Callable, Optional
 
 import numpy as np
+import pandas as pd
 from rdkit import Chem
+from rdkit.Chem.Crippen import MolLogP
+from tap import Tap
 
 from real_reactions import convert_to_mol, Reaction, REAL_REACTIONS
+
+
+class Args(Tap):
+    fragment_path: Path  # Path to CSV file containing molecular building blocks.
+    reagent_to_fragments_path: Path  # Path to a JSON file containing a dictionary mapping from reagents to fragments.
+    save_path: Path  # Path to CSV file where generated molecules will be saved.
+    smiles_column: str = 'smiles'  # Name of the column containing SMILES.
+    max_reactions: int = 3  # Maximum number of reactions that can be performed to expand fragments into molecules.
+    n_rollout: int = 20  # The number of times to run the tree search.
+    c_puct: float = 10.0  # The hyperparameter that encourages exploration.
+    num_expand_nodes: int = 10  # The number of tree nodes to expand when extending the child nodes in the search tree.
+    top_k: int = 10  # The number of top scoring molecules to save.
 
 
 class TreeNode:
@@ -115,9 +132,11 @@ class TreeSearcher:
         """
         self.fragment_to_index = fragment_to_index
         self.reagent_to_fragments = reagent_to_fragments
-        self.all_fragments = sorted(
-            fragment for fragments in self.reagent_to_fragments.values() for fragment in fragments
-        )
+        self.all_fragments = list(dict.fromkeys(
+            fragment
+            for reagent in reagent_to_fragments
+            for fragment in self.reagent_to_fragments[reagent]
+        ))
         self.max_reactions = max_reactions
         self.scoring_fn = scoring_fn
         self.n_rollout = n_rollout
@@ -306,7 +325,7 @@ class TreeSearcher:
     def search(self) -> list[TreeNode]:
         """Runs the tree search.
 
-        :return: A list of TreeNode objects representing text masks sorted from highest to lowest reward.
+        :return: A list of TreeNode objects sorted from highest to lowest reward.
         """
         for _ in range(self.n_rollout):
             self.rollout(node=self.root)
@@ -352,7 +371,7 @@ class TreeSearchRunner:
     def search(self) -> list[TreeNode]:
         """Runs the tree search.
 
-        :return: A list of TreeNode objects representing text masks sorted from highest to lowest reward.
+        :return: A list of TreeNode objects sorted from highest to lowest reward.
         """
         return TreeSearcher(
             fragment_to_index=self.fragment_to_index,
@@ -363,3 +382,106 @@ class TreeSearchRunner:
             c_puct=self.c_puct,
             num_expand_nodes=self.num_expand_nodes
         ).search()
+
+
+def save_molecules(nodes: list[TreeNode], save_path: Path) -> None:
+    # Create save directory
+    save_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Convert construction logs from lists to dictionaries
+    construction_dicts = []
+    max_reaction_num = 0
+    reaction_num_to_max_reagent_num = {}
+
+    for node in nodes:
+        construction_dict = {'num_reactions': len(node.construction_log)}
+        max_reaction_num = max(max_reaction_num, len(node.construction_log))
+
+        for reaction_index, reaction_log in enumerate(node.construction_log):
+            reaction_num = reaction_index + 1
+            construction_dict[f'reaction_{reaction_num}_id'] = reaction_log['reaction_id']
+
+            reaction_num_to_max_reagent_num[reaction_num] = max(
+                reaction_num_to_max_reagent_num.get(reaction_num, 0),
+                len(reaction_log['reagent_ids'])
+            )
+
+            for reagent_index, (reagent_id, reagent_smiles) in enumerate(zip(reaction_log['reagent_ids'],
+                                                                             reaction_log['reagent_smiles'])):
+                reagent_num = reagent_index + 1
+                construction_dict[f'reagent_{reaction_num}_{reagent_num}_id'] = reagent_id
+                construction_dict[f'reagent_{reaction_num}_{reagent_num}_smiles'] = reagent_smiles
+
+        construction_dicts.append(construction_dict)
+
+    # Specify column order for CSV file
+    columns = ['smiles', 'num_reactions']
+
+    for reaction_num in range(1, max_reaction_num + 1):
+        columns.append(f'reaction_{reaction_num}_id')
+
+        for reagent_num in range(1, reaction_num_to_max_reagent_num[reaction_num] + 1):
+            columns.append(f'reagent_{reaction_num}_{reagent_num}_id')
+            columns.append(f'reagent_{reaction_num}_{reagent_num}_smiles')
+
+    # Get molecules
+    molecules = [node.fragments[0] for node in nodes]
+
+    # Save data
+    data = pd.DataFrame(
+        data=[
+            {
+                'smiles': molecule,
+                **construction_dict
+            }
+            for molecule, construction_dict in zip(molecules, construction_dicts)
+        ],
+        columns=columns
+    )
+    data.to_csv(save_path, index=False)
+
+
+def run_tree_search(args: Args) -> None:
+    """Generate random molecules combinatorially."""
+    # Load fragments
+    fragments = pd.read_csv(args.fragment_path)[args.smiles_column]
+
+    # Map fragments to indices
+    fragment_to_index = {}
+
+    for index, fragment in enumerate(fragments):
+        if fragment not in fragment_to_index:
+            fragment_to_index[fragment] = index
+
+    # Load mapping from reagents to fragments
+    with open(args.reagent_to_fragments_path) as f:
+        reagent_to_fragments: dict[str, list[str]] = json.load(f)
+
+    # TODO: change this scoring function!!!
+    # TODO: change the scoring function to use RDKit molecules to avoid recomputing them
+    def scoring_fn(smiles: str) -> float:
+        return MolLogP(Chem.MolFromSmiles(smiles))
+
+    # Set up TreeSearchRunner
+    tree_search_runner = TreeSearchRunner(
+        fragment_to_index=fragment_to_index,
+        reagent_to_fragments=reagent_to_fragments,
+        max_reactions=args.max_reactions,
+        scoring_fn=scoring_fn,
+        n_rollout=args.n_rollout,
+        c_puct=args.c_puct,
+        num_expand_nodes=args.num_expand_nodes
+    )
+
+    # Search for molecules
+    nodes = tree_search_runner.search()
+
+    # Get top k molecules
+    top_nodes = nodes[:args.top_k]
+
+    # Save generated molecules
+    save_molecules(nodes=top_nodes, save_path=args.save_path)
+
+
+if __name__ == '__main__':
+    run_tree_search(Args().parse_args())
