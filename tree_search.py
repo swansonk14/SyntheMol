@@ -4,7 +4,7 @@ import json
 import math
 from pathlib import Path
 from functools import partial
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Literal, Optional
 
 import numpy as np
 import pandas as pd
@@ -20,6 +20,7 @@ class Args(Tap):
     fragment_path: Path  # Path to CSV file containing molecular building blocks.
     reagent_to_fragments_path: Path  # Path to a JSON file containing a dictionary mapping from reagents to fragments.
     save_path: Path  # Path to CSV file where generated molecules will be saved.
+    search_type: Literal['random', 'greedy', ' mcts']  # Type of search to perform.
     smiles_column: str = 'smiles'  # Name of the column containing SMILES.
     max_reactions: int = 3  # Maximum number of reactions that can be performed to expand fragments into molecules.
     n_rollout: int = 20  # The number of times to run the tree search.
@@ -114,6 +115,7 @@ class TreeSearcher:
     """A class that runs a tree search to generate high scoring molecules."""
 
     def __init__(self,
+                 search_type: Literal['random', 'greedy', 'mcts'],
                  fragment_to_index: dict[str, int],
                  reagent_to_fragments: dict[str, list[str]],
                  max_reactions: int,
@@ -123,6 +125,7 @@ class TreeSearcher:
                  num_expand_nodes: int) -> None:
         """Creates the TreeSearcher object.
 
+        :param search_type: Type of search to perform.
         :param fragment_to_index: A dictionary mapping fragment SMILES to their index in the fragment file.
         :param reagent_to_fragments: A dictionary mapping a reagent SMARTS to all fragment SMILES that match that reagent.
         :param max_reactions: The maximum number of reactions to use to construct a molecule.
@@ -131,6 +134,7 @@ class TreeSearcher:
         :param c_puct: The hyperparameter that encourages exploration.
         :param num_expand_nodes: The number of tree nodes to expand when extending the child nodes in the search tree.
         """
+        self.search_type = search_type
         self.fragment_to_index = fragment_to_index
         self.reagent_to_fragments = reagent_to_fragments
         self.all_fragments = list(dict.fromkeys(
@@ -321,9 +325,22 @@ class TreeSearcher:
                     node.children.append(new_node)
                     child_set.add(new_node)
 
-        # Select the best child node and unroll it
-        sum_count = sum(child.N for child in node.children)
-        selected_node = max(node.children, key=lambda x: x.Q() + x.U(n=sum_count))
+        # Select a child node based on the search type
+        if self.search_type == 'random':
+            selected_node = self.rng.choice(node.children)
+
+        elif self.search_type == 'greedy':
+            unvisited_children = (child for child in node.children if child.N == 0)
+            selected_node = max(unvisited_children, key=lambda child: child.P)
+
+        elif self.search_type == 'mcts':
+            sum_count = sum(child.N for child in node.children)
+            selected_node = max(node.children, key=lambda child: child.Q() + child.U(n=sum_count))
+
+        else:
+            raise ValueError(f'Search type "{self.search_type}" is not supported.')
+
+        # Unroll the child node
         v = self.rollout(node=selected_node)
         selected_node.W += v
         selected_node.N += 1
@@ -345,51 +362,6 @@ class TreeSearcher:
         nodes = sorted(nodes, key=lambda node: node.P, reverse=True)
 
         return nodes
-
-
-class TreeSearchRunner:
-    """A class that creates instances of TreeSearcher to search for high scoring molecules."""
-
-    def __init__(self,
-                 fragment_to_index: dict[str, int],
-                 reagent_to_fragments: dict[str, list[str]],
-                 max_reactions: int,
-                 scoring_fn: Callable[[str], float],
-                 n_rollout: int,
-                 c_puct: float,
-                 num_expand_nodes: int) -> None:
-        """Creates the TreeSearchRunner object.
-
-        :param fragment_to_index: A dictionary mapping fragment SMILES to their index in the fragment file.
-        :param reagent_to_fragments: A dictionary mapping a reagent SMARTS to all fragment SMILES that match that reagent.
-        :param max_reactions: The maximum number of reactions to use to construct a molecule.
-        :param scoring_fn: A function that takes as input a SMILES representing a molecule and returns a score.
-        :param n_rollout: The number of times to run the tree search.
-        :param c_puct: The hyperparameter that encourages exploration.
-        :param num_expand_nodes: The number of tree nodes to expand when extending the child nodes in the search tree.
-        """
-        self.fragment_to_index = fragment_to_index
-        self.reagent_to_fragments = reagent_to_fragments
-        self.max_reactions = max_reactions
-        self.scoring_fn = scoring_fn
-        self.n_rollout = n_rollout
-        self.c_puct = c_puct
-        self.num_expand_nodes = num_expand_nodes
-
-    def search(self) -> list[TreeNode]:
-        """Runs the tree search.
-
-        :return: A list of TreeNode objects sorted from highest to lowest reward.
-        """
-        return TreeSearcher(
-            fragment_to_index=self.fragment_to_index,
-            reagent_to_fragments=self.reagent_to_fragments,
-            max_reactions=self.max_reactions,
-            scoring_fn=self.scoring_fn,
-            n_rollout=self.n_rollout,
-            c_puct=self.c_puct,
-            num_expand_nodes=self.num_expand_nodes
-        ).search()
 
 
 def save_molecules(nodes: list[TreeNode], save_path: Path) -> None:
@@ -469,7 +441,8 @@ def run_tree_search(args: Args) -> None:
         return MolLogP(Chem.MolFromSmiles(smiles))
 
     # Set up TreeSearchRunner
-    tree_search_runner = TreeSearchRunner(
+    tree_searcher = TreeSearcher(
+        search_type=args.search_type,
         fragment_to_index=fragment_to_index,
         reagent_to_fragments=reagent_to_fragments,
         max_reactions=args.max_reactions,
@@ -480,7 +453,7 @@ def run_tree_search(args: Args) -> None:
     )
 
     # Search for molecules
-    nodes = tree_search_runner.search()
+    nodes = tree_searcher.search()
 
     # Get top k molecules
     top_nodes = nodes[:args.top_k]
@@ -489,6 +462,5 @@ def run_tree_search(args: Args) -> None:
     save_molecules(nodes=top_nodes, save_path=args.save_path)
 
 
-# TODO: greedy search and random search
 if __name__ == '__main__':
     run_tree_search(Args().parse_args())
