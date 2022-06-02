@@ -164,31 +164,29 @@ class TreeSearcher:
     # TODO: documentation
     # TODO: change the mols to be strings to save time with caching (this next!)
     @classmethod
-    def get_reagent_matches_per_mol(cls, reaction: Reaction, mols: list[Chem.Mol]) -> list[list[int]]:
+    def get_reagent_matches_per_mol(cls, reaction: Reaction, fragments: tuple[str]) -> list[list[int]]:
         return [
             [
                 reagent_index
                 for reagent_index, reagent in enumerate(reaction.reagents)
-                if reagent.has_substruct_match(mol)
+                if reagent.has_substruct_match(fragment)
             ]
-            for mol in mols
+            for fragment in fragments
         ]
 
     # TODO: documentation
     def get_next_fragments(self, fragments: tuple[str]) -> list[str]:
-        mols = [convert_to_mol(fragment, add_hs=True) for fragment in fragments]
-
         # For each reaction these fragments can participate in, get all the unfilled reagents
         unfilled_reagents = set()
         for reaction in REAL_REACTIONS:
             reagent_indices = set(range(reaction.num_reagents))
 
             # Skip reaction if there's no room to add more reagents
-            if len(mols) >= reaction.num_reagents:
+            if len(fragments) >= reaction.num_reagents:
                 continue
 
             # For each mol, get a list of indices of reagents it matches
-            reagent_matches_per_mol = self.get_reagent_matches_per_mol(reaction=reaction, mols=mols)
+            reagent_matches_per_mol = self.get_reagent_matches_per_mol(reaction=reaction, fragments=fragments)
 
             # Loop through products of reagent indices that the mols match to
             # and for each product, if it matches to all separate reagents,
@@ -196,7 +194,7 @@ class TreeSearcher:
             for matched_reagent_indices in itertools.product(*reagent_matches_per_mol):
                 matched_reagent_indices = set(matched_reagent_indices)
 
-                if len(matched_reagent_indices) == len(mols):
+                if len(matched_reagent_indices) == len(fragments):
                     unfilled_reagents |= {reaction.reagents[index] for index in
                                           reagent_indices - matched_reagent_indices}
 
@@ -214,15 +212,14 @@ class TreeSearcher:
         return available_fragments
 
     def get_reactions_for_fragments(self, fragments: tuple[str]) -> list[tuple[Reaction, dict[str, int]]]:
-        mols = [convert_to_mol(fragment, add_hs=True) for fragment in fragments]
         matching_reactions = []
 
         for reaction in REAL_REACTIONS:
-            if len(mols) != reaction.num_reagents:
+            if len(fragments) != reaction.num_reagents:
                 continue
 
             # For each mol, get a list of indices of reagents it matches
-            reagent_matches_per_mol = self.get_reagent_matches_per_mol(reaction=reaction, mols=mols)
+            reagent_matches_per_mol = self.get_reagent_matches_per_mol(reaction=reaction, fragments=fragments)
 
             # Include every assignment of fragments to reagents that fills all the reagents
             for matched_reagent_indices in itertools.product(*reagent_matches_per_mol):
