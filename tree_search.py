@@ -162,7 +162,6 @@ class TreeSearcher:
         ]
 
     # TODO: documentation
-    # TODO: change the mols to be strings to save time with caching (this next!)
     @classmethod
     def get_reagent_matches_per_mol(cls, reaction: Reaction, fragments: tuple[str]) -> list[list[int]]:
         return [

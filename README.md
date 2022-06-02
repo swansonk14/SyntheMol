@@ -304,3 +304,16 @@ python tree_search.py \
     --save_path ../generations/tree_search/mcts.csv \
     --search_type mcts
 ```
+
+
+## Process AB training data
+
+```
+python process_data.py \
+    --data_paths ../data/Screening_data/AB_original/AB_2560_normalized.csv ../data/Screening_data/AB_original/AB_Mar27_normalized.csv ../data/Screening_data/AB_original/For_gen_AB_DRH.csv \
+    --save_path ../data/Screening_data/AB_combined.csv
+```
+
+
+## Train random forest model on Morgan fingerprints
+
