@@ -2,6 +2,7 @@
 import itertools
 import json
 import math
+import pickle
 from functools import cache, cached_property, partial
 from pathlib import Path
 from typing import Any, Callable, Literal, Optional
@@ -10,13 +11,16 @@ import numpy as np
 import pandas as pd
 from rdkit import Chem
 from rdkit.Chem.Crippen import MolLogP
+from sklearn.ensemble import RandomForestClassifier
 from tap import Tap
 from tqdm import trange
 
-from real_reactions import convert_to_mol, Reaction, REAL_REACTIONS
+from morgan_fingerprint import compute_morgan_fingerprint
+from real_reactions import Reaction, REAL_REACTIONS
 
 
 class Args(Tap):
+    model_path: Path  # Path to PKL file containing a RandomForestClassifier trained on Morgan fingerprints.
     fragment_path: Path  # Path to CSV file containing molecular building blocks.
     reagent_to_fragments_path: Path  # Path to a JSON file containing a dictionary mapping from reagents to fragments.
     save_path: Path  # Path to CSV file where generated molecules will be saved.
@@ -443,6 +447,18 @@ def log_p_score(smiles: str) -> float:
 
 def run_tree_search(args: Args) -> None:
     """Generate molecules combinatorially by performing a tree search."""
+    # Load model
+    with open(args.model_path, 'rb') as f:
+        model: RandomForestClassifier = pickle.load(f)
+
+    # Define scoring function
+    @cache
+    def model_scoring_fn(smiles: str) -> float:
+        fingerprint = compute_morgan_fingerprint(smiles)
+        prob = model.predict_proba([fingerprint])[0, 1]
+
+        return prob
+
     # Load fragments
     fragments = pd.read_csv(args.fragment_path)[args.smiles_column]
 
@@ -463,7 +479,7 @@ def run_tree_search(args: Args) -> None:
         fragment_to_index=fragment_to_index,
         reagent_to_fragments=reagent_to_fragments,
         max_reactions=args.max_reactions,
-        scoring_fn=log_p_score,
+        scoring_fn=model_scoring_fn,
         n_rollout=args.n_rollout,
         c_puct=args.c_puct,
         num_expand_nodes=args.num_expand_nodes
