@@ -22,14 +22,15 @@ from real_reactions import Reaction, REAL_REACTIONS
 class Args(Tap):
     model_path: Path  # Path to PKL file containing a RandomForestClassifier trained on Morgan fingerprints.
     fragment_path: Path  # Path to CSV file containing molecular building blocks.
-    reagent_to_fragments_path: Path  # Path to a JSON file containing a dictionary mapping from reagents to fragments.
+    fragment_to_score_path: Path  # Path to JSON file containing a dictionary mapping fragments to prediction scores.
+    reagent_to_fragments_path: Path  # Path to JSON file containing a dictionary mapping from reagents to fragments.
     save_path: Path  # Path to CSV file where generated molecules will be saved.
     search_type: Literal['random', 'greedy', 'mcts']  # Type of search to perform.
     smiles_column: str = 'smiles'  # Name of the column containing SMILES.
     max_reactions: int = 3  # Maximum number of reactions that can be performed to expand fragments into molecules.
     n_rollout: int = 100  # The number of times to run the tree search.
     c_puct: float = 10.0  # The hyperparameter that encourages exploration.
-    num_expand_nodes: int = 20  # The number of tree nodes to expand when extending the child nodes in the search tree.
+    num_expand_nodes: Optional[int] = None  # The number of tree nodes to expand when extending the child nodes in the search tree.
 
 
 class TreeNode:
@@ -284,7 +285,7 @@ class TreeSearcher:
             next_fragments = self.get_next_fragments(fragments=node.fragments)
 
         # Limit the number of next fragments to expand
-        if len(next_fragments) > self.num_expand_nodes:
+        if self.num_expand_nodes is not None and len(next_fragments) > self.num_expand_nodes:
             next_fragments = self.random_choice(next_fragments, size=self.num_expand_nodes, replace=False)
 
         # Convert next fragment tuples to TreeNodes
@@ -452,14 +453,6 @@ def run_tree_search(args: Args) -> None:
     with open(args.model_path, 'rb') as f:
         model: RandomForestClassifier = pickle.load(f)
 
-    # Define scoring function
-    @cache
-    def model_scoring_fn(smiles: str) -> float:
-        fingerprint = compute_morgan_fingerprint(smiles)
-        prob = model.predict_proba([fingerprint])[0, 1]
-
-        return prob
-
     # Load fragments
     fragments = pd.read_csv(args.fragment_path)[args.smiles_column]
 
@@ -470,9 +463,24 @@ def run_tree_search(args: Args) -> None:
         if fragment not in fragment_to_index:
             fragment_to_index[fragment] = index
 
+    # Load mapping from SMILES to scores
+    with open(args.fragment_to_score_path) as f:
+        fragment_to_score: dict[str, float] = json.load(f)
+
     # Load mapping from reagents to fragments
     with open(args.reagent_to_fragments_path) as f:
         reagent_to_fragments: dict[str, list[str]] = json.load(f)
+
+    # Define scoring function
+    @cache
+    def model_scoring_fn(smiles: str) -> float:
+        if smiles not in fragment_to_score:
+            fingerprint = compute_morgan_fingerprint(smiles)
+            prob = model.predict_proba([fingerprint])[0, 1]
+        else:
+            prob = fragment_to_score[smiles]
+
+        return prob
 
     # Set up TreeSearchRunner
     tree_searcher = TreeSearcher(
