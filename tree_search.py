@@ -84,11 +84,10 @@ class TreeNode:
         """Value that encourages exploitation of nodes with high reward."""
         return self.W / self.N if self.N > 0 else 0.0
 
-    # TODO: change this so that n = 0 to start instead of n = 0 so that self.P is taken into account
-    # TODO: because otherwise it's too much random exploration since there are so many possible choices at each step
+    # TODO: is it okay to use math.sqrt(1 + n) or should it go back to math.sqrt(n)?
     def U(self, n: int) -> float:
         """Value that encourages exploration of nodes with few visits."""
-        return self.c_puct * self.P * math.sqrt(n) / (1 + self.N)
+        return self.c_puct * self.P * math.sqrt(1 + n) / (1 + self.N)
 
     @property
     def num_fragments(self) -> int:
