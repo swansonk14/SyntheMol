@@ -10,6 +10,7 @@ from rdkit.Chem import AllChem
 from tqdm import tqdm
 
 
+# TODO: load all of this from chem_utils instead
 def compute_morgan_fingerprint(mol: Union[str, Chem.Mol],
                                radius: int = 2,
                                num_bits: int = 2048) -> np.ndarray:

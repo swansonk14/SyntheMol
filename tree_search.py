@@ -308,6 +308,7 @@ class TreeSearcher:
         if node.num_reactions >= self.max_reactions:
             return node.P
 
+        # TODO: prevent exploration of a subtree that has been fully explored
         # Expand if this node has never been visited
         if len(node.children) == 0:
             # Expand the node both by running reactions with the current fragments and adding new fragments

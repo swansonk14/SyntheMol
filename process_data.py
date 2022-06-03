@@ -1,6 +1,7 @@
 """Processes antibiotics data from potentially multiple files."""
 from collections import defaultdict
 from pathlib import Path
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -11,12 +12,14 @@ from tap import Tap
 class Args(Tap):
     data_paths: list[Path]  # A list of paths to CSV files containing data.
     save_path: Path  # A path to a CSV file where the processed data will be saved.
+    save_hits_path: Optional[Path]  # A path to a CSV file where only the hits (actives) will be saved.
     smiles_column: str = 'SMILES'  # The name of the column containing the SMILES.
     mean_column: str = 'Mean'  # The name of the column containing the activity.
     num_std: int = 2  # The number of standard deviations to use when binarizing the data.
 
     def process_args(self) -> None:
         self.save_path.parent.mkdir(parents=True, exist_ok=True)
+        self.save_hits_path.parent.mkdir(parents=True, exist_ok=True)
 
 
 ACTIVITY_COLUMN = 'activity'
@@ -66,6 +69,12 @@ def process_data(args: Args) -> None:
 
     # Save data
     data.to_csv(args.save_path, index=False)
+
+    # Save hits
+    if args.save_hits_path is not None:
+        hits = data[data[ACTIVITY_COLUMN] == 1]
+        print(f'Number of hits = {len(hits):,}')
+        hits.to_csv(args.save_hits_path, index=False)
 
 
 if __name__ == '__main__':

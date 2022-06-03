@@ -300,7 +300,8 @@ python sample_molecules.py \
 ```
 python process_data.py \
     --data_paths ../data/Screening_data/AB_original/AB_2560_normalized.csv ../data/Screening_data/AB_original/AB_Mar27_normalized.csv ../data/Screening_data/AB_original/For_gen_AB_DRH.csv \
-    --save_path ../data/Screening_data/AB_combined.csv
+    --save_path ../data/Screening_data/AB_combined.csv \
+    --save_hits_path ../data/Screening_data/AB_combined_hits.csv
 ```
 
 
@@ -322,4 +323,14 @@ python tree_search.py \
     --reagent_to_fragments_path ../data/reagents_to_fragments.json \
     --save_path ../generations/tree_search/mcts.csv \
     --search_type mcts
+```
+
+
+## Assess generated molecules
+
+```
+python assess_generated_molecules.py \
+    --data_path ../generations/tree_search/mcts.csv \
+    --save_dir ../generations/tree_search/mcts \
+    --train_hits_path ../data/Screening_data/AB_combined_hits.csv
 ```
