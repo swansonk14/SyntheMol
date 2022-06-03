@@ -345,9 +345,9 @@ class TreeSearcher:
             selected_node = self.random_choice(node.children)
 
         elif self.search_type == 'greedy':
-            # Randomly sample from top 3
-            # TODO: better method? there's still a lot of randomness involved when limiting the number of nodes
-            top_k = 3
+            # Randomly sample from top k
+            # TODO: better method?
+            top_k = 100
             sorted_children = sorted(node.children, key=lambda child: child.P, reverse=True)
             selected_node = self.random_choice(sorted_children[:top_k])
 
