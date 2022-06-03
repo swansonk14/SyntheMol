@@ -12,14 +12,16 @@ from tap import Tap
 class Args(Tap):
     data_paths: list[Path]  # A list of paths to CSV files containing data.
     save_path: Path  # A path to a CSV file where the processed data will be saved.
-    save_hits_path: Optional[Path]  # A path to a CSV file where only the hits (actives) will be saved.
+    save_hits_path: Optional[Path] = None  # A path to a CSV file where only the hits (actives) will be saved.
     smiles_column: str = 'SMILES'  # The name of the column containing the SMILES.
     mean_column: str = 'Mean'  # The name of the column containing the activity.
     num_std: int = 2  # The number of standard deviations to use when binarizing the data.
 
     def process_args(self) -> None:
         self.save_path.parent.mkdir(parents=True, exist_ok=True)
-        self.save_hits_path.parent.mkdir(parents=True, exist_ok=True)
+
+        if self.save_hits_path is not None:
+            self.save_hits_path.parent.mkdir(parents=True, exist_ok=True)
 
 
 ACTIVITY_COLUMN = 'activity'
