@@ -345,3 +345,42 @@ python assess_generated_molecules.py \
     --save_dir ../generations/tree_search/mcts \
     --train_hits_path ../data/Screening_data/AB_combined_hits.csv
 ```
+
+```
+python assess_generated_molecules.py \
+    --data_path ../generations/tree_search/mcts.csv \
+    --save_dir ../generations/tree_search/mcts_above_0.2 \
+    --train_hits_path ../data/Screening_data/AB_combined_hits.csv \
+    --min_score 0.2
+```
+
+## Select generated molecules
+
+Compute nearest neighbor Tanimoto distance to train set. (Command from [chem_utils](https://github.com/swansonk14/chem_utils).)
+
+```
+python nearest_neighbor_tanimoto.py \
+    --data_path ../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules.csv \
+    --reference_data_path ../combinatorial_antibiotics/data/Screening_data/AB_combined_hits.csv \
+    --reference_name train_hits
+```
+
+TODO: script to filter to only keep molecules with similarity < 0.5
+
+Cluster molecules. (Command from [chem_utils](https://github.com/swansonk14/chem_utils).)
+
+```
+python cluster_molecules.py \
+    --data_path ../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tanimoto_below_0.5.csv \
+    --num_clusters 100
+```
+
+TODO: script to select top molecule from each cluster
+
+Visualize selected molecules
+
+```
+python visualize_molecules.py \
+    --data_path ../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tanimoto_below_0.5_clustered.csv \
+    --save_dir ../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tanimoto_below_0.5_clustered
+```

@@ -52,8 +52,8 @@ def train_random_forest(args: Args) -> None:
 
     # Evaluate model
     test_probs = model.predict_proba(test_fingerprints)[:, 1]
-    print(f'Test ROC-AUC = {roc_auc_score(test_activities, test_probs):.2f}')
-    print(f'Test PRC-AUC = {average_precision_score(test_activities, test_probs):.2f}')
+    print(f'Test ROC-AUC = {roc_auc_score(test_activities, test_probs):.3f}')
+    print(f'Test PRC-AUC = {average_precision_score(test_activities, test_probs):.3f}')
 
     # Save model
     with open(args.save_path, 'wb') as f:
