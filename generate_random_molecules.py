@@ -3,6 +3,7 @@ import json
 from itertools import product
 from pathlib import Path
 from typing import Any, Optional, Union
+from xmlrpc.client import Boolean
 
 import pandas as pd
 from numpy.random import default_rng
@@ -10,7 +11,7 @@ from rdkit import Chem
 from tap import Tap
 from tqdm import trange
 
-from real_reactions import convert_to_mol, Reaction, REAL_REACTIONS
+from real_reactions import convert_to_mol, Reaction, REAL_REACTIONS, Synnet_REACTIONS
 
 
 class Args(Tap):
@@ -20,10 +21,10 @@ class Args(Tap):
     num_molecules: int = 10  # Number of molecules to generate.
     max_num_reactions: int = 3  # Maximum number of reactions that can be performed to expand fragments into molecules.
     save_path: Path  # Path to CSV file where generated molecules will be saved.
+    synnet_rxn: bool = False
 
     def process_args(self) -> None:
         self.save_path.parent.mkdir(parents=True, exist_ok=True)
-
 
 LogEntry = dict[str, Union[int, list[int], list[str]]]
 RNG = default_rng(seed=0)
@@ -259,6 +260,10 @@ def save_molecules(molecules: list[str],
 
 def generate_random_molecules(args: Args) -> None:
     """Generate random molecules combinatorially."""
+    # Include synnet reactions if flagged
+    if args.synnet_rxn:
+        REAL_REACTIONS.extend(Synnet_REACTIONS)
+
     # Load fragments
     fragments = pd.read_csv(args.fragment_path)[args.smiles_column]
 

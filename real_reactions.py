@@ -609,32 +609,12 @@ Synnet_REACTIONS = [
 	),
 	Reaction(
 		reagents=[
-			QueryMol('[S;$(S(=O)(=O)[C,N]):1][Cl]'),
-			QueryMol('[N;$(NC);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[c,O]);!$(N[C,S]=[S,O,N]):2]')
-		],
-		product=QueryMol('[S:1][N+0:2]'),
-		reaction_id=33,
-		synnet_ids={39},
-		counting_fn=count_two_different_reagents
-	),
-	Reaction(
-		reagents=[
 			QueryMol('[Cl,Br,I][c;$(c1:[c,n]:[c,n]:[c,n]:[c,n]:[c,n]:1):1]'),
 			QueryMol('[N;$(NC)&!$(N=*)&!$([N-])&!$(N#*)&!$([ND3])&!$([ND4])&!$(N[c,O])&!$(N[C,S]=[S,O,N]),H2&$(Nc1:[c,n]:[c,n]:[c,n]:[c,n]:[c,n]:1):2]')
 		],
 		product=QueryMol('[c:1][N:2]'),
-		reaction_id=34,
+		reaction_id=33,
 		synnet_ids={42},
-		counting_fn=count_two_different_reagents
-	),
-	Reaction(
-		reagents=[
-			QueryMol('[C;$(C([#6])[#6;!$([#6]Br)]):4](=[OD1])[CH;$(C([#6])[#6]):5]Br'),
-			QueryMol('[#7;H2:3][C;$(C(=N)(N)[c,#7]):2]=[#7;H1;D1:1]')
-		],
-		product=QueryMol('[C:4]1=[CH0:5][NH:3][C:2]=[N:1]1'),
-		reaction_id=35,
-		synnet_ids={43},
 		counting_fn=count_two_different_reagents
 	),
 	Reaction(
@@ -643,58 +623,8 @@ Synnet_REACTIONS = [
 			QueryMol('[c;$(c1aaccc1):2][Cl,Br,I]')
 		],
 		product=QueryMol('[c:1][c:2]'),
-		reaction_id=36,
+		reaction_id=34,
 		synnet_ids={44},
-		counting_fn=count_two_different_reagents
-	),
-	Reaction(
-		reagents=[
-			QueryMol('[c;!$(c1ccccc1);$(c1[n,c]c[n,c]c[n,c]1):1][Cl,F]'),
-			QueryMol('[N;$(NC);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[c,O]);!$(N[C,S]=[S,O,N]):2]')
-		],
-		product=QueryMol('[c:1][N:2]'),
-		reaction_id=37,
-		synnet_ids={45},
-		counting_fn=count_two_different_reagents
-	),
-	Reaction(
-		reagents=[
-			QueryMol('[c;$(c1c(N(~O)~O)cccc1):1][Cl,F]'),
-			QueryMol('[N;$(NC);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[c,O]);!$(N[C,S]=[S,O,N]):2]')
-		],
-		product=QueryMol('[c:1][N:2]'),
-		reaction_id=38,
-		synnet_ids={46},
-		counting_fn=count_two_different_reagents
-	),
-	Reaction(
-		reagents=[
-			QueryMol('[c;$(c1ccc(N(~O)~O)cc1):1][Cl,F]'),
-			QueryMol('[N;$(NC);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[c,O]);!$(N[C,S]=[S,O,N]):2]')
-		],
-		product=QueryMol('[c:1][N:2]'),
-		reaction_id=39,
-		synnet_ids={47},
-		counting_fn=count_two_different_reagents
-	),
-	Reaction(
-		reagents=[
-			QueryMol('[N;$(N-[#6]):3]=[C;$(C=O):1]'),
-			QueryMol('[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]')
-		],
-		product=QueryMol('[N:3]-[C:1]-[N+0:2]'),
-		reaction_id=40,
-		synnet_ids={48},
-		counting_fn=count_two_different_reagents
-	),
-	Reaction(
-		reagents=[
-			QueryMol('[N;$(N-[#6]):3]=[C;$(C=S):1]'),
-			QueryMol('[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]')
-		],
-		product=QueryMol('[N:3]-[C:1]-[N+0:2]'),
-		reaction_id=41,
-		synnet_ids={49},
 		counting_fn=count_two_different_reagents
 	),
 	Reaction(
@@ -703,18 +633,8 @@ Synnet_REACTIONS = [
 			QueryMol('[OH:12]-[c:11]1[c:6][c:7][c:8][c:9][c:10]1-[CH:13]=[O:14]')
 		],
 		product=QueryMol('[C:3](=[O:4])-[c:2]1[c:13][c:10]2[c:9][c:8][c:7][c:6][c:11]2[o:12]1'),
-		reaction_id=42,
+		reaction_id=35,
 		synnet_ids={54},
-		counting_fn=count_two_different_reagents
-	),
-	Reaction(
-		reagents=[
-			QueryMol('[C$(C(=O)([CX4])([CX4])),C$([CH](=O)([CX4])):2](=[O:6])-[C$([CH]([CX4])),C$([CH2]):3]-[C$(C(=O)([CX4])([CX4])),C$([CH](=O)([CX4])):4]=[O:7]'),
-			QueryMol('[NH2:8]-[C:9](=[O:10])-[CH2:11][C:12]#[N:13]')
-		],
-		product=QueryMol('[OH:10]-[c:9]1[n:8][c:4][c:3][c:2][c:11]1[C:12]#[N:13]'),
-		reaction_id=43,
-		synnet_ids={57},
 		counting_fn=count_two_different_reagents
 	),
 	Reaction(
@@ -723,7 +643,7 @@ Synnet_REACTIONS = [
 			QueryMol('[N$(N(~N)([CX4])):5]~[N]~[N]')
 		],
 		product=QueryMol('[c:2]1[c:1][n:5][n][n]1'),
-		reaction_id=44,
+		reaction_id=36,
 		synnet_ids={58},
 		counting_fn=count_two_different_reagents
 	),
@@ -733,7 +653,7 @@ Synnet_REACTIONS = [
 			QueryMol('[N$(N(~N)([CX4])):5]~[N]~[N]')
 		],
 		product=QueryMol('[C:2]1[C:1][N:5][N]=[N]1'),
-		reaction_id=45,
+		reaction_id=37,
 		synnet_ids={59},
 		counting_fn=count_two_different_reagents
 	),
@@ -743,7 +663,7 @@ Synnet_REACTIONS = [
 			QueryMol('[C$(C(=C)([CX4,OX2,NX3])([CX4,OX2,NX3])),C$([CH](=C)([CX4,OX2,NX3])),C$([CH2](=C)):3]=[C$([C](=C)(C)([CX4,OX2,NX3])),C$([CH](=C)(C)):4]-[C$([C](=C)(C)([CX4,OX2,NX3])),C$([CH](=C)(C)):5]=[C$(C(=C)([CX4,OX2,NX3])([CX4,OX2,NX3])),C$([CH](=C)([CX4,OX2,NX3])),C$([CH2](=C)):6]')
 		],
 		product=QueryMol('[C:1]1[C:2][C:3][C:4]=[C:5][C:6]1'),
-		reaction_id=46,
+		reaction_id=38,
 		synnet_ids={60},
 		counting_fn=count_two_different_reagents
 	),
@@ -753,7 +673,7 @@ Synnet_REACTIONS = [
 			QueryMol('[C$(C(=C)([CX4,OX2,NX3])([CX4,OX2,NX3])),C$([CH](=C)([CX4,OX2,NX3])),C$([CH2](=C)):3]=[C$([C](=C)(C)([CX4,OX2,NX3])),C$([CH](=C)(C)):4]-[C$([C](=C)(C)([CX4,OX2,NX3])),C$([CH](=C)(C)):5]=[C$(C(=C)([CX4,OX2,NX3])([CX4,OX2,NX3])),C$([CH](=C)([CX4,OX2,NX3])),C$([CH2](=C)):6]')
 		],
 		product=QueryMol('[C:1]1=[C:2][C:3][C:4]=[C:5][C:6]1'),
-		reaction_id=47,
+		reaction_id=39,
 		synnet_ids={61},
 		counting_fn=count_two_different_reagents
 	),
@@ -763,7 +683,7 @@ Synnet_REACTIONS = [
 			QueryMol('[O:24]=[C:23](-[C:22](=[O:25])-[c:15]1[c:10][c:11][c:12][c:13][c:14]1)-[c:20]1[c:21][c:16][c:17][c:18][c:19]1')
 		],
 		product=QueryMol('[nH:27]-1[c:7]([n:26][c:23]([c:22]-1[c:15]1[c:10][c:11][c:12][c:13][c:14]1)-[c:20]1[c:21][c:16][c:17][c:18][c:19]1)-[c:1]1[c:2][c:3][c:4][c:5][c:6]1'),
-		reaction_id=48,
+		reaction_id=40,
 		synnet_ids={64},
 		counting_fn=count_two_different_reagents
 	),
@@ -772,7 +692,7 @@ Synnet_REACTIONS = [
 			QueryMol('[O$(O(C)([CX4])):8][C:7](=[O:9])[CH:6][C:5][C:4][C:3][C:2]([O$(O(C)([CX4])):10])=[O:1]')
 		],
 		product=QueryMol('[O:8][C:7](=[O:9])[C:6]1[C:5][C:4][C:3][C:2]1=[O:1]'),
-		reaction_id=49,
+		reaction_id=41,
 		synnet_ids={66},
 		counting_fn=count_one_reagent
 	),
@@ -781,7 +701,7 @@ Synnet_REACTIONS = [
 			QueryMol('[O$(O(C)([CX4])):8][C:7](=[O:9])[CH:6][C:5][C:11][C:4][C:3][C:2]([O$(O(C)([CX4])):10])=[O:1]')
 		],
 		product=QueryMol('[O:8][C:7](=[O:9])[C:6]1[C:5][C:11][C:4][C:3][C:2]1=[O:1]'),
-		reaction_id=50,
+		reaction_id=42,
 		synnet_ids={67},
 		counting_fn=count_one_reagent
 	),
@@ -791,7 +711,7 @@ Synnet_REACTIONS = [
 			QueryMol('[C$([CH2](C)([CX4])),C$([CH3](C)):18]-[C:16](=[O:17])-[c:14]1[c:13][c:12][c:11][c:10][c:15]1-[OH:19]')
 		],
 		product=QueryMol('[O:17]=[C:16]-1-[C:18]=[C:7](-[O:8]-[c:15]2[c:10][c:11][c:12][c:13][c:14]-12)-[c:3]1[c:2][c:1][c:6][c:5][c:4]1'),
-		reaction_id=51,
+		reaction_id=43,
 		synnet_ids={68},
 		counting_fn=count_two_different_reagents
 	),
@@ -801,7 +721,7 @@ Synnet_REACTIONS = [
 			QueryMol('[C$(C(C)(#N)),C$(C(C)([CX4,OX2&H0])([CX4,OX2&H0])([OX2&H0])),C$([CH](C)([CX4,OX2&H0])([OX2&H0])),C$([CH2](C)([OX2&H0])),C$(C(C)(=O)([OX2&H0])):6][CH:5]=[C$(C(=C)([CX4])([CX4])),C$([CH](=C)([CX4])),C$([CH2](=C)):4]')
 		],
 		product=QueryMol('[C:6][C:5][C:4][C:2]([C:1])[C:3]'),
-		reaction_id=52,
+		reaction_id=44,
 		synnet_ids={69},
 		counting_fn=count_two_different_reagents
 	),
@@ -811,7 +731,7 @@ Synnet_REACTIONS = [
 			QueryMol('[C$([CH](C)([CX4])([CX4])),C$([CH2](C)([CX4])),C$([CH3](C)):7]-[C$(C(=O)([CX4])),C$([CH](=O)):8]=[O:9]')
 		],
 		product=QueryMol('[C:7](-[C:2]=[O:5])-[C:8]=[O:9]'),
-		reaction_id=53,
+		reaction_id=45,
 		synnet_ids={70},
 		counting_fn=count_two_different_reagents
 	),
@@ -821,7 +741,7 @@ Synnet_REACTIONS = [
 			QueryMol('[O$([OH]([CX4,c])),O$([OH]([CX4,c])([CX4,c])),S$([SH]([CX4,c])),S$([SH]([CX4,c])([CX4,c])):6]')
 		],
 		product=QueryMol('[*:6]-[C:2]=[O:4]'),
-		reaction_id=54,
+		reaction_id=46,
 		synnet_ids={71},
 		counting_fn=count_two_different_reagents
 	),
@@ -831,7 +751,7 @@ Synnet_REACTIONS = [
 			QueryMol('[N$([NH2,NH3+1]([CX4,c])),N$([NH]([CX4,c])([CX4,c])):3]')
 		],
 		product=QueryMol('[N+0:3][C:1]'),
-		reaction_id=55,
+		reaction_id=47,
 		synnet_ids={72},
 		counting_fn=count_two_different_reagents
 	),
@@ -841,7 +761,7 @@ Synnet_REACTIONS = [
 			QueryMol('[C$(C(B)([CX4])([CX4])([CX4])),C$([CH](B)([CX4])([CX4])),C$([CH2](B)([CX4])),C$([CH2](B)),C$(C(B)(=C)),c$(c(B)),o$(o(B)),n$(n(B)):3][B$(B([C,c,n,o])([OH,$(OC)])([OH,$(OC)])),B$([B-1]([C,c,n,o])(N)([OH,$(OC)])([OH,$(OC)])):4]')
 		],
 		product=QueryMol('[C,c,n,o:2][C,c,n,o:3]'),
-		reaction_id=56,
+		reaction_id=48,
 		synnet_ids={73},
 		counting_fn=count_two_different_reagents
 	),
@@ -851,7 +771,7 @@ Synnet_REACTIONS = [
 			QueryMol('[Br,I:3][C$(C([Br,I])([CX4])([CX4])([CX4])),C$([CH]([Br,I])([CX4])([CX4])),C$([CH2]([Br,I])([CX4])),C$([CH3]([Br,I])),C$([C]([Br,I])(=C)([CX4])),C$([CH]([Br,I])(=C)),C$(C([Br,I])(#C)),c$(c([Br,I])):4]')
 		],
 		product=QueryMol('[C,c:2][C,c:4]'),
-		reaction_id=57,
+		reaction_id=49,
 		synnet_ids={74},
 		counting_fn=count_two_different_reagents
 	),
@@ -861,7 +781,7 @@ Synnet_REACTIONS = [
 			QueryMol('[OH:8]-[C$([CH](O)([CX4,c])([CX4,c])),C$([CH2](O)([CX4,c])),C$([CH3](O)):6]')
 		],
 		product=QueryMol('[C:6][O]-[C:2]=[O:3]'),
-		reaction_id=58,
+		reaction_id=50,
 		synnet_ids={75},
 		counting_fn=count_two_different_reagents
 	),
@@ -871,7 +791,7 @@ Synnet_REACTIONS = [
 			QueryMol('[Br,I:7][C$([CX4]([Br,I])),c$([c]([Br,I])):4]')
 		],
 		product=QueryMol('[C,c:4][C:2]=[C:3]'),
-		reaction_id=59,
+		reaction_id=51,
 		synnet_ids={76},
 		counting_fn=count_two_different_reagents
 	),
@@ -881,28 +801,8 @@ Synnet_REACTIONS = [
 			QueryMol('[N$([NH2,NH3+1]([CX4,c])),N$([NH]([CX4,c])([CX4,c])):6]')
 		],
 		product=QueryMol('[N+0:6]-[C:2]=[O:4]'),
-		reaction_id=60,
+		reaction_id=52,
 		synnet_ids={77},
-		counting_fn=count_two_different_reagents
-	),
-	Reaction(
-		reagents=[
-			QueryMol('[C$(C(=C)([CX4])([CX4])),C$([CH](=C)([CX4])),C$([CH2](=C)):1]=[C$(C(=C)([CX4])([CX4])),C$([CH](=C)([CX4])),C$([CH2](=C)):2]'),
-			QueryMol('[SH:4]-[CX4:5][Br,Cl,I]')
-		],
-		product=QueryMol('[C:1]-[C:2]-[S:4][C:5]'),
-		reaction_id=61,
-		synnet_ids={78},
-		counting_fn=count_two_different_reagents
-	),
-	Reaction(
-		reagents=[
-			QueryMol('[C$([C](=O)([CX4])),C$([CH](=O)):2](=[O:1])[OH,Cl,O-:6]'),
-			QueryMol('[SH:4]-[CX4:5][Br,Cl,I]')
-		],
-		product=QueryMol('[CH2:2]-[S:4][C:5]'),
-		reaction_id=62,
-		synnet_ids={79},
 		counting_fn=count_two_different_reagents
 	),
 	Reaction(
@@ -911,18 +811,8 @@ Synnet_REACTIONS = [
 			QueryMol('[C$(C(=O)([Cl,OH,O-])([CX4,c])),C$([CH]([Cl,OH,O-])(=O)):3](=[O:6])[Cl,OH,O-:5]')
 		],
 		product=QueryMol('[C:2]-[C:3]=[O:6]'),
-		reaction_id=63,
+		reaction_id=53,
 		synnet_ids={80},
-		counting_fn=count_two_different_reagents
-	),
-	Reaction(
-		reagents=[
-			QueryMol('[*:1][C:2]#[CH:3]'),
-			QueryMol('[Br,I:4][C$(C([CX4,c])([CX4,c])([CX4,c])),C$([CH]([CX4,c])([CX4,c])),C$([CH2]([CX4,c])),C$([CH3]),c$(c):5]')
-		],
-		product=QueryMol('[C,c:5][C:3]#[C:2][*:1]'),
-		reaction_id=64,
-		synnet_ids={82},
 		counting_fn=count_two_different_reagents
 	),
 	Reaction(
@@ -931,7 +821,7 @@ Synnet_REACTIONS = [
 			QueryMol('[Br,I:4][C$(C(=O)([Br,I])([CX4])),C$([CH](=O)([Br,I])):5]=[O:6]')
 		],
 		product=QueryMol('[C:1][C:2]#[C:3][C:5]=[O:6]'),
-		reaction_id=65,
+		reaction_id=54,
 		synnet_ids={83},
 		counting_fn=count_two_different_reagents
 	),
@@ -940,7 +830,7 @@ Synnet_REACTIONS = [
 			QueryMol('[OH,O-:4]-[C$(C(=O)([OH,O-])([CX4])),C$([CH](=O)([OH,O-])):2]=[O:3]')
 		],
 		product=QueryMol('[Cl:5][C:2]=[O:3]'),
-		reaction_id=66,
+		reaction_id=55,
 		synnet_ids={84},
 		counting_fn=count_one_reagent
 	),
@@ -949,7 +839,7 @@ Synnet_REACTIONS = [
 			QueryMol('[OH:2]-[$([CX4]),c:1]')
 		],
 		product=QueryMol('[Br:3][C,c:1]'),
-		reaction_id=67,
+		reaction_id=56,
 		synnet_ids={85},
 		counting_fn=count_one_reagent
 	),
@@ -958,7 +848,7 @@ Synnet_REACTIONS = [
 			QueryMol('[OH:2]-[$([CX4]),c:1]')
 		],
 		product=QueryMol('[Cl:3][C,c:1]'),
-		reaction_id=68,
+		reaction_id=57,
 		synnet_ids={86},
 		counting_fn=count_one_reagent
 	),
@@ -967,7 +857,7 @@ Synnet_REACTIONS = [
 			QueryMol('[OH,O-:3][S$(S([CX4])):2](=[O:4])=[O:5]')
 		],
 		product=QueryMol('[Cl:6][S:2](=[O:5])=[O:4]'),
-		reaction_id=69,
+		reaction_id=58,
 		synnet_ids={87},
 		counting_fn=count_one_reagent
 	),
@@ -976,10 +866,10 @@ Synnet_REACTIONS = [
 			QueryMol('[Cl,I,Br:7][c:1]1[c:2][c:3][c:4][c:5][c:6]1')
 		],
 		product=QueryMol('[N:9]#[C:8][c:1]1[c:2][c:3][c:4][c:5][c:6]1'),
-		reaction_id=70,
+		reaction_id=59,
 		synnet_ids={90},
 		counting_fn=count_one_reagent
-	)
+	),
 ]
 
 # Check that reaction IDs are unique and count from 1 to the number of reactions

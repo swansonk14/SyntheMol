@@ -1,4 +1,5 @@
 """Contains classes and functions for performing a tree search to generate molecules combinatorially."""
+from curses.ascii import SYN
 import itertools
 import json
 import math
@@ -16,7 +17,7 @@ from tap import Tap
 from tqdm import trange
 
 from morgan_fingerprint import compute_morgan_fingerprint
-from real_reactions import Reaction, REAL_REACTIONS
+from real_reactions import Reaction, REAL_REACTIONS, Synnet_REACTIONS
 
 
 class Args(Tap):
@@ -31,7 +32,7 @@ class Args(Tap):
     n_rollout: int = 100  # The number of times to run the tree search.
     c_puct: float = 10.0  # The hyperparameter that encourages exploration.
     num_expand_nodes: Optional[int] = None  # The number of tree nodes to expand when extending the child nodes in the search tree.
-
+    synnet_rxn: bool = False
 
 class TreeNode:
     """A node in a tree search representing a step in the molecule construction process."""
@@ -448,6 +449,8 @@ def log_p_score(smiles: str) -> float:
 
 def run_tree_search(args: Args) -> None:
     """Generate molecules combinatorially by performing a tree search."""
+    if args.synnet_rxn:
+        REAL_REACTIONS.append(Synnet_REACTIONS)
     # Load model
     with open(args.model_path, 'rb') as f:
         model: RandomForestClassifier = pickle.load(f)
