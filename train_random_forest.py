@@ -1,5 +1,6 @@
 """Trains a random forest classifier model."""
 import pickle
+import numpy as np
 from pathlib import Path
 
 import pandas as pd
@@ -10,6 +11,7 @@ from sklearn.model_selection import train_test_split
 from tap import Tap
 
 from morgan_fingerprint import compute_morgan_fingerprints
+from rdkit_2d_normalized import compute_rdkit_2d_normalized_features
 
 
 class Args(Tap):
@@ -17,7 +19,7 @@ class Args(Tap):
     save_path: Path  # Path to a PKL file where the trained model will be saved.
     smiles_column: str = 'smiles'  # The name of the column containing SMILES.
     activity_column: str = 'activity'  # The name of the column containing binary activity values.
-
+    rdkit_features: bool = False
     def process_args(self) -> None:
         self.save_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -30,6 +32,11 @@ def train_random_forest(args: Args) -> None:
 
     # Get Morgan fingerprints
     fingerprints = compute_morgan_fingerprints(data[args.smiles_column])
+
+    # Get RDKit features 
+    if args.rdkit_features:
+        rdkit_features = compute_rdkit_2d_normalized_features(data[args.smiles_column])
+        fingerprints = np.concatenate((fingerprints, rdkit_features), axis=1)
 
     # Get activity
     activities = data[args.activity_column]

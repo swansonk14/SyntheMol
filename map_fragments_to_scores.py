@@ -7,8 +7,10 @@ import pandas as pd
 # TODO: sklearn intelex
 from sklearn.ensemble import RandomForestClassifier
 from tap import Tap
+import numpy as np
 
 from morgan_fingerprint import compute_morgan_fingerprints
+from rdkit_2d_normalized import compute_rdkit_2d_normalized_features
 
 
 class Args(Tap):
@@ -16,6 +18,7 @@ class Args(Tap):
     model_path: Path  # Path to a PKL file containing a trained RandomForestClassifier model.
     save_path: Path  # Path to a JSON file where a dictionary mapping fragments to scores will be saved.
     smiles_column: str = 'smiles'  # Name of the column containing SMILES.
+    rdkit_features: bool = False #Will incorperate rdkit_features if model is trained with rdkit_features
 
     def process_args(self) -> None:
         self.save_path.parent.mkdir(parents=True, exist_ok=True)
@@ -32,6 +35,11 @@ def map_fragments_to_scores(args: Args) -> None:
 
     # Compute Morgan fingerprints
     fingerprints = compute_morgan_fingerprints(fragments)
+    # Computes RDKit_2D_Normalized Features if flagged
+    if args.rdkit_features:
+        rdkit_features = compute_rdkit_2d_normalized_features(fragments)
+        fingerprints = np.concatenate((fingerprints, rdkit_features), axis=1)
+
 
     # Make predictions
     scores = model.predict_proba(fingerprints)[:, 1]

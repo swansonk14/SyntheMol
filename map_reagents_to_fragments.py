@@ -26,7 +26,6 @@ def map_reagents_to_fragments(fragments: list[str],synnet_rxn: bool) -> dict[str
     """
     if synnet_rxn:
         REAL_REACTIONS.extend(Synnet_REACTIONS)
-        print(len(REAL_REACTIONS), len(Synnet_REACTIONS))
     # Get fragment SMILES
     fragments = sorted(set(fragments))
 

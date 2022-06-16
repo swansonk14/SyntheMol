@@ -16,6 +16,7 @@ from sklearn.ensemble import RandomForestClassifier
 from tap import Tap
 from tqdm import trange
 
+from rdkit_2d_normalized import compute_rdkit_2d_normalized_feature
 from morgan_fingerprint import compute_morgan_fingerprint
 from real_reactions import Reaction, REAL_REACTIONS, Synnet_REACTIONS
 
@@ -33,6 +34,7 @@ class Args(Tap):
     c_puct: float = 10.0  # The hyperparameter that encourages exploration.
     num_expand_nodes: Optional[int] = None  # The number of tree nodes to expand when extending the child nodes in the search tree.
     synnet_rxn: bool = False
+    rdkit_features: bool = False
 
 class TreeNode:
     """A node in a tree search representing a step in the molecule construction process."""
@@ -450,7 +452,7 @@ def log_p_score(smiles: str) -> float:
 def run_tree_search(args: Args) -> None:
     """Generate molecules combinatorially by performing a tree search."""
     if args.synnet_rxn:
-        REAL_REACTIONS.append(Synnet_REACTIONS)
+        REAL_REACTIONS.extend(Synnet_REACTIONS)
     # Load model
     with open(args.model_path, 'rb') as f:
         model: RandomForestClassifier = pickle.load(f)
@@ -474,15 +476,28 @@ def run_tree_search(args: Args) -> None:
         reagent_to_fragments: dict[str, list[str]] = json.load(f)
 
     # Define scoring function
-    @cache
-    def model_scoring_fn(smiles: str) -> float:
-        if smiles not in fragment_to_score:
-            fingerprint = compute_morgan_fingerprint(smiles)
-            prob = model.predict_proba([fingerprint])[0, 1]
-        else:
-            prob = fragment_to_score[smiles]
+    if args.rdkit_features:
+        @cache
+        def model_scoring_fn(smiles: str) -> float:
+            if smiles not in fragment_to_score:
+                fingerprint = compute_morgan_fingerprint(smiles)
+                rdkit_features = compute_rdkit_2d_normalized_feature(smiles)
+                fingerprint = np.concatenate((fingerprint, rdkit_features), axis=0)
+                prob = model.predict_proba([fingerprint])[0, 1]
+            else:
+                prob = fragment_to_score[smiles] #UPDATE to new fragment_to_score file
 
-        return prob
+            return prob
+    else:
+        @cache
+        def model_scoring_fn(smiles: str) -> float:
+            if smiles not in fragment_to_score:
+                fingerprint = compute_morgan_fingerprint(smiles)
+                prob = model.predict_proba([fingerprint])[0, 1]
+            else:
+                prob = fragment_to_score[smiles]
+
+            return prob
 
     # Set up TreeSearchRunner
     tree_searcher = TreeSearcher(
