@@ -308,9 +308,11 @@ python process_data.py \
 ## Train random forest model on Morgan fingerprints
 
 ```
-python train_random_forest.py \
+python train_model.py \
     --data_path ../data/Screening_data/AB_combined.csv \
-    --save_path ../ckpt/AB_combined_RF_morgan.pkl
+    --save_path ../ckpt/AB_combined_RF_morgan.pkl \
+    --model_type rf \
+    --fingerprint_type morgan
 ```
 
 

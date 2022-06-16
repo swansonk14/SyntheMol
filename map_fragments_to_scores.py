@@ -8,7 +8,7 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from tap import Tap
 
-from morgan_fingerprint import compute_morgan_fingerprints
+from molecular_fingerprints import compute_fingerprints
 
 
 class Args(Tap):
@@ -31,7 +31,7 @@ def map_fragments_to_scores(args: Args) -> None:
         model: RandomForestClassifier = pickle.load(f)
 
     # Compute Morgan fingerprints
-    fingerprints = compute_morgan_fingerprints(fragments)
+    fingerprints = compute_fingerprints(fragments, fingerprint_type='morgan')
 
     # Make predictions
     scores = model.predict_proba(fingerprints)[:, 1]

@@ -16,4 +16,5 @@ dependencies:
   - scipy
   - tqdm
   - pip:
-      - typed-argument-parser
+    - typed-argument-parser
+    - git+https://github.com/bp-kelley/descriptastorus

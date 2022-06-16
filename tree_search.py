@@ -15,7 +15,7 @@ from sklearn.ensemble import RandomForestClassifier
 from tap import Tap
 from tqdm import trange
 
-from morgan_fingerprint import compute_morgan_fingerprint
+from molecular_fingerprints import compute_morgan_fingerprint
 from real_reactions import Reaction, REAL_REACTIONS, SYNNET_REACTIONS
 
 
