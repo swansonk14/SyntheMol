@@ -3,7 +3,6 @@ import json
 from itertools import product
 from pathlib import Path
 from typing import Any, Optional, Union
-from xmlrpc.client import Boolean
 
 import pandas as pd
 from numpy.random import default_rng
@@ -11,7 +10,7 @@ from rdkit import Chem
 from tap import Tap
 from tqdm import trange
 
-from real_reactions import convert_to_mol, Reaction, REAL_REACTIONS, Synnet_REACTIONS
+from real_reactions import convert_to_mol, Reaction, REAL_REACTIONS, SYNNET_REACTIONS
 
 
 class Args(Tap):
@@ -21,10 +20,11 @@ class Args(Tap):
     num_molecules: int = 10  # Number of molecules to generate.
     max_num_reactions: int = 3  # Maximum number of reactions that can be performed to expand fragments into molecules.
     save_path: Path  # Path to CSV file where generated molecules will be saved.
-    synnet_rxn: bool = False
+    synnet_rxn: bool = False  # Whether to include SynNet reactions in addition to REAL reactions.
 
     def process_args(self) -> None:
         self.save_path.parent.mkdir(parents=True, exist_ok=True)
+
 
 LogEntry = dict[str, Union[int, list[int], list[str]]]
 RNG = default_rng(seed=0)
@@ -46,12 +46,14 @@ def get_reagent_matches_per_mol(reaction: Reaction, mols: list[Chem.Mol]) -> lis
     ]
 
 
-def sample_next_fragment(fragments: list[str], reagent_to_fragments: dict[str, list[str]]) -> Optional[str]:
+def sample_next_fragment(fragments: list[str],
+                         reagent_to_fragments: dict[str, list[str]],
+                         reactions: list[Reaction]) -> Optional[str]:
     mols = [convert_to_mol(fragment, add_hs=True) for fragment in fragments]
 
     # For each reaction these fragments can participate in, get all the unfilled reagents
     unfilled_reagents = set()
-    for reaction in REAL_REACTIONS:
+    for reaction in reactions:
         reagent_indices = set(range(reaction.num_reagents))
 
         # Skip reaction if there's no room to add more reagents
@@ -84,11 +86,12 @@ def sample_next_fragment(fragments: list[str], reagent_to_fragments: dict[str, l
     return selected_fragment
 
 
-def find_reactions_for_fragments(fragments: list[str]) -> list[tuple[Reaction, dict[str, int]]]:
+def find_reactions_for_fragments(fragments: list[str],
+                                 reactions: list[Reaction]) -> list[tuple[Reaction, dict[str, int]]]:
     mols = [convert_to_mol(fragment, add_hs=True) for fragment in fragments]
     matching_reactions = []
 
-    for reaction in REAL_REACTIONS:
+    for reaction in reactions:
         if len(mols) != reaction.num_reagents:
             continue
 
@@ -106,12 +109,17 @@ def find_reactions_for_fragments(fragments: list[str]) -> list[tuple[Reaction, d
 
 def run_random_reaction(fragment: str,
                         fragment_to_index: dict[str, int],
-                        reagent_to_fragments: dict[str, list[str]]) -> tuple[str, dict[str, int]]:
+                        reagent_to_fragments: dict[str, list[str]],
+                        reactions: list[Reaction]) -> tuple[str, dict[str, int]]:
     # Create fragments list
     fragments = [fragment]
 
     # Select second fragment
-    second_fragment = sample_next_fragment(fragments=fragments, reagent_to_fragments=reagent_to_fragments)
+    second_fragment = sample_next_fragment(
+        fragments=fragments,
+        reagent_to_fragments=reagent_to_fragments,
+        reactions=reactions
+    )
 
     # If a second fragment cannot be found, then this fragment must not match to any reagents so we stop here
     if second_fragment is None:
@@ -123,13 +131,20 @@ def run_random_reaction(fragment: str,
     # Possibly select a third fragment
     # TODO: should we only select a third fragment if the first two fragments
     # TODO: only match to reaction 1 (i.e., the reaction with three reagents)
-    third_fragment = sample_next_fragment(fragments=fragments, reagent_to_fragments=reagent_to_fragments)
+    third_fragment = sample_next_fragment(
+        fragments=fragments,
+        reagent_to_fragments=reagent_to_fragments,
+        reactions=reactions
+    )
 
     if third_fragment is not None:
         fragments.append(third_fragment)
 
     # Find all reactions that match the current fragments
-    matching_reactions = find_reactions_for_fragments(fragments=fragments)
+    matching_reactions = find_reactions_for_fragments(
+        fragments=fragments,
+        reactions=reactions
+    )
 
     if len(matching_reactions) == 0:
         raise ValueError('Cannot finding a matching reaction.')
@@ -169,7 +184,8 @@ def run_random_reaction(fragment: str,
 def generate_random_molecule(fragments: list[str],
                              fragment_to_index: dict[str, int],
                              reagent_to_fragments: dict[str, list[str]],
-                             max_num_reactions: int) -> tuple[str, list[LogEntry]]:
+                             max_num_reactions: int,
+                             reactions: list[Reaction]) -> tuple[str, list[LogEntry]]:
     # Select first fragment
     fragment = random_choice(fragments)
 
@@ -182,7 +198,8 @@ def generate_random_molecule(fragments: list[str],
         new_fragment, reaction_log = run_random_reaction(
             fragment=fragment,
             fragment_to_index=fragment_to_index,
-            reagent_to_fragments=reagent_to_fragments
+            reagent_to_fragments=reagent_to_fragments,
+            reactions=reactions
         )
 
         # If we failed to produce a new fragment due to no matching reagents, stop here
@@ -262,7 +279,9 @@ def generate_random_molecules(args: Args) -> None:
     """Generate random molecules combinatorially."""
     # Include synnet reactions if flagged
     if args.synnet_rxn:
-        REAL_REACTIONS.extend(Synnet_REACTIONS)
+        reactions = REAL_REACTIONS + SYNNET_REACTIONS
+    else:
+        reactions = REAL_REACTIONS
 
     # Load fragments
     fragments = pd.read_csv(args.fragment_path)[args.smiles_column]
@@ -291,7 +310,8 @@ def generate_random_molecules(args: Args) -> None:
             fragments=usable_fragments,
             fragment_to_index=fragment_to_index,
             reagent_to_fragments=reagent_to_fragments,
-            max_num_reactions=args.max_num_reactions
+            max_num_reactions=args.max_num_reactions,
+            reactions=reactions
         )
         for _ in trange(args.num_molecules)
     ])

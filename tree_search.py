@@ -1,5 +1,4 @@
 """Contains classes and functions for performing a tree search to generate molecules combinatorially."""
-from curses.ascii import SYN
 import itertools
 import json
 import math
@@ -17,7 +16,7 @@ from tap import Tap
 from tqdm import trange
 
 from morgan_fingerprint import compute_morgan_fingerprint
-from real_reactions import Reaction, REAL_REACTIONS, Synnet_REACTIONS
+from real_reactions import Reaction, REAL_REACTIONS, SYNNET_REACTIONS
 
 
 class Args(Tap):
@@ -32,7 +31,8 @@ class Args(Tap):
     n_rollout: int = 100  # The number of times to run the tree search.
     c_puct: float = 10.0  # The hyperparameter that encourages exploration.
     num_expand_nodes: Optional[int] = None  # The number of tree nodes to expand when extending the child nodes in the search tree.
-    synnet_rxn: bool = False
+    synnet_rxn: bool = False  # Whether to include SynNet reactions in addition to REAL reactions.
+
 
 class TreeNode:
     """A node in a tree search representing a step in the molecule construction process."""
@@ -127,7 +127,8 @@ class TreeSearcher:
                  scoring_fn: Callable[[str], float],
                  n_rollout: int,
                  c_puct: float,
-                 num_expand_nodes: int) -> None:
+                 num_expand_nodes: int,
+                 reactions: list[Reaction]) -> None:
         """Creates the TreeSearcher object.
 
         :param search_type: Type of search to perform.
@@ -138,6 +139,7 @@ class TreeSearcher:
         :param n_rollout: The number of times to run the tree search.
         :param c_puct: The hyperparameter that encourages exploration.
         :param num_expand_nodes: The number of tree nodes to expand when extending the child nodes in the search tree.
+        :param reactions: A list of chemical reactions that can be used to combine molecular fragments.
         """
         self.search_type = search_type
         self.fragment_to_index = fragment_to_index
@@ -152,6 +154,7 @@ class TreeSearcher:
         self.n_rollout = n_rollout
         self.c_puct = c_puct
         self.num_expand_nodes = num_expand_nodes
+        self.reactions = reactions
         self.rng = np.random.default_rng(seed=0)
 
         self.TreeNodeClass = partial(TreeNode, c_puct=c_puct, scoring_fn=scoring_fn)
@@ -182,7 +185,7 @@ class TreeSearcher:
     def get_next_fragments(self, fragments: tuple[str]) -> list[str]:
         # For each reaction these fragments can participate in, get all the unfilled reagents
         unfilled_reagents = set()
-        for reaction in REAL_REACTIONS:
+        for reaction in self.reactions:
             reagent_indices = set(range(reaction.num_reagents))
 
             # Skip reaction if there's no room to add more reagents
@@ -218,7 +221,7 @@ class TreeSearcher:
     def get_reactions_for_fragments(self, fragments: tuple[str]) -> list[tuple[Reaction, dict[str, int]]]:
         matching_reactions = []
 
-        for reaction in REAL_REACTIONS:
+        for reaction in self.reactions:
             if len(fragments) != reaction.num_reagents:
                 continue
 
@@ -450,7 +453,10 @@ def log_p_score(smiles: str) -> float:
 def run_tree_search(args: Args) -> None:
     """Generate molecules combinatorially by performing a tree search."""
     if args.synnet_rxn:
-        REAL_REACTIONS.append(Synnet_REACTIONS)
+        reactions = REAL_REACTIONS + SYNNET_REACTIONS
+    else:
+        reactions = REAL_REACTIONS
+
     # Load model
     with open(args.model_path, 'rb') as f:
         model: RandomForestClassifier = pickle.load(f)
@@ -493,7 +499,8 @@ def run_tree_search(args: Args) -> None:
         scoring_fn=model_scoring_fn,
         n_rollout=args.n_rollout,
         c_puct=args.c_puct,
-        num_expand_nodes=args.num_expand_nodes
+        num_expand_nodes=args.num_expand_nodes,
+        reactions=reactions
     )
 
     # Search for molecules
