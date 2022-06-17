@@ -168,7 +168,7 @@ def strip_atom_mapping(smarts: str) -> str:
     :param smarts: A SMARTS string with atom mapping indices.
     :return: The same SMARTS string but without the atom mapping indices.
     """
-    return re.sub(r'\[(\w+)(:\d+)]', r'[\1]', smarts)
+    return re.sub(r'\[([\w|*]+)(:\d+)]', r'[\1]', smarts)
 
 
 def convert_to_mol(mol: Molecule, add_hs: bool = False) -> Chem.Mol:
@@ -366,7 +366,8 @@ REAL_REACTIONS = [
         reaction_id=8,
         real_ids={20, 40, 196680, 232682, 270084, 270188, 271082, 273578, 274078},
         counting_fn=count_two_different_reagents
-    )]
+    )
+]
 
 SYNNET_REACTIONS = [
     Reaction(
@@ -870,7 +871,7 @@ SYNNET_REACTIONS = [
         reaction_id=59,
         synnet_ids={90},
         counting_fn=count_one_reagent
-    ),
+    )
 ]
 
 # Check that reaction IDs are unique and count from 1 to the number of reactions
