@@ -369,7 +369,15 @@ python nearest_neighbor_tanimoto.py \
     --reference_name train_hits
 ```
 
-TODO: script to filter to only keep molecules with similarity < 0.5
+Filter to only keep molecules with similarity <= 0.5 (Command from [chem_utils](https://github.com/swansonk14/chem_utils).)
+
+```
+python filter_molecules.py \
+    --data_path ../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules.csv \
+    --save_path ../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tanimoto_below_0.5.csv \
+    --filter_column train_hits_nearest_neighbor_similarity \
+    --max_value 0.5
+```
 
 Cluster molecules. (Command from [chem_utils](https://github.com/swansonk14/chem_utils).)
 
@@ -379,9 +387,16 @@ python cluster_molecules.py \
     --num_clusters 100
 ```
 
-TODO: script to select top molecule from each cluster
+Select top molecule from each cluster. (Command from [chem_utils](https://github.com/swansonk14/chem_utils).)
 
-Visualize selected molecules
+```
+python select_from_clusters.py \
+    --data_path ../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tanimoto_below_0.5.csv \
+    --save_path ../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tanimoto_below_0.5_clustered.csv \
+    --value_column score
+```
+
+Visualize selected molecules. (Command from [chem_utils](https://github.com/swansonk14/chem_utils).)
 
 ```
 python visualize_molecules.py \
