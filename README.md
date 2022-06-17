@@ -322,7 +322,8 @@ python train_model.py \
 python map_fragments_to_scores.py \
     --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     --model_path ../ckpt/AB_combined_RF_morgan.pkl \
-    --save_path ../ckpt/AB_combined_RF_morgan_fragments_to_scores.json
+    --save_path ../ckpt/AB_combined_RF_morgan_fragments_to_scores.json \
+    --fingerprint_type morgan
 ```
 
 
@@ -335,7 +336,8 @@ python tree_search.py \
     --fragment_to_score_path ../ckpt/AB_combined_RF_morgan_fragments_to_scores.json \
     --reagent_to_fragments_path ../data/reagents_to_fragments.json \
     --save_path ../generations/tree_search/mcts.csv \
-    --search_type mcts
+    --search_type mcts \
+    --fingerprint_type morgan
 ```
 
 

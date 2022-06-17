@@ -33,7 +33,7 @@ def map_fragments_to_scores(args: Args) -> None:
         model: RandomForestClassifier = pickle.load(f)
 
     # Compute Morgan fingerprints
-    fingerprints = compute_fingerprints(fragments, fingerprint_type='morgan')
+    fingerprints = compute_fingerprints(fragments, fingerprint_type=args.fingerprint_type)
 
     # Make predictions
     scores = model.predict_proba(fingerprints)[:, 1]
