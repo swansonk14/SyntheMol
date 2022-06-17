@@ -15,7 +15,7 @@ from sklearn.ensemble import RandomForestClassifier
 from tap import Tap
 from tqdm import trange
 
-from molecular_fingerprints import compute_morgan_fingerprint
+from molecular_fingerprints import compute_fingerprint
 from real_reactions import Reaction, REAL_REACTIONS, SYNNET_REACTIONS
 
 
@@ -31,6 +31,7 @@ class Args(Tap):
     n_rollout: int = 100  # The number of times to run the tree search.
     c_puct: float = 10.0  # The hyperparameter that encourages exploration.
     num_expand_nodes: Optional[int] = None  # The number of tree nodes to expand when extending the child nodes in the search tree.
+    fingerprint_type: Literal['morgan', 'rdkit']  # Type of fingerprints to use as input features.
     synnet_rxn: bool = False  # Whether to include SynNet reactions in addition to REAL reactions.
 
 
@@ -483,7 +484,7 @@ def run_tree_search(args: Args) -> None:
     @cache
     def model_scoring_fn(smiles: str) -> float:
         if smiles not in fragment_to_score:
-            fingerprint = compute_morgan_fingerprint(smiles)
+            fingerprint = compute_fingerprint(smiles, fingerprint_type=args.fingerprint_type)
             prob = model.predict_proba([fingerprint])[0, 1]
         else:
             prob = fragment_to_score[smiles]

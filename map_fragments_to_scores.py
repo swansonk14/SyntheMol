@@ -2,6 +2,7 @@
 import json
 import pickle
 from pathlib import Path
+from typing import Literal
 
 import pandas as pd
 # TODO: sklearn intelex
@@ -16,6 +17,7 @@ class Args(Tap):
     model_path: Path  # Path to a PKL file containing a trained RandomForestClassifier model.
     save_path: Path  # Path to a JSON file where a dictionary mapping fragments to scores will be saved.
     smiles_column: str = 'smiles'  # Name of the column containing SMILES.
+    fingerprint_type: Literal['morgan', 'rdkit']  # Type of fingerprints to use as input features.
 
     def process_args(self) -> None:
         self.save_path.parent.mkdir(parents=True, exist_ok=True)
