@@ -168,7 +168,7 @@ def strip_atom_mapping(smarts: str) -> str:
     :param smarts: A SMARTS string with atom mapping indices.
     :return: The same SMARTS string but without the atom mapping indices.
     """
-    return re.sub(r'\[([\w|*]+)(:\d+)]', r'[\1]', smarts)
+    return re.sub(r'\[([^:]+)(:\d+)]', r'[\1]', smarts)
 
 
 def convert_to_mol(mol: Molecule, add_hs: bool = False) -> Chem.Mol:
