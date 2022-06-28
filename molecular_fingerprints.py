@@ -1,5 +1,4 @@
 """Functions to compute Morgan fingerprints for molecules."""
-from functools import partial
 from multiprocessing import Pool
 from typing import Callable, Union
 

@@ -65,8 +65,11 @@ def compute_min_tanimoto_distances(mols: list[Union[str, Chem.Mol]],
     # Compute pairwise Tanimoto distances
     pairwise_tanimoto_distances = compute_pairwise_tanimoto_distances(mols_1=mols, mols_2=reference_mols)
 
+    # Prevent comparison to self molecule
+    if reference_mols is None:
+        np.fill_diagonal(pairwise_tanimoto_distances, np.inf)
+
     # Compute average minimum Tanimoto distance between each molecule and the other molecules
-    np.fill_diagonal(pairwise_tanimoto_distances, np.inf)
     min_tanimoto_distances = np.min(pairwise_tanimoto_distances, axis=1)
 
     return min_tanimoto_distances
