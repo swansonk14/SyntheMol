@@ -1,14 +1,13 @@
 """Assess the quality and diversity of generated molecules."""
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from rdkit import Chem
 from tap import Tap
 
-from chem_utils.nearest_neighbor import compute_pairwise_tanimoto_similarities
+from chem_utils.molecular_similarities import compute_max_similarities
 
 
 class Args(Tap):
@@ -24,33 +23,7 @@ class Args(Tap):
         self.save_dir.mkdir(parents=True, exist_ok=True)
 
 
-# TODO: load this from chem_utils
-def compute_min_tanimoto_distances(mols: list[Union[str, Chem.Mol]],
-                                   reference_mols: Optional[list[Union[str, Chem.Mol]]] = None) -> np.ndarray:
-    """Computes the minimum Tanimoto distance between each molecule and a set of molecules.
-
-    If only mols is provided, computes the minimum distance between each molecule and every other molecule in the set.
-    If reference_mols is provided, computes the minimum distance between each molecule in mols to the molecules in
-    reference_mols.
-
-    Note: Does NOT remove duplicate SMILES before computing pairwise distances.
-
-    :param mols: A list of SMILES for the molecules whose distances should be computed.
-    :param reference_mols: A list of SMILES that serves as the reference set against which distances are computed.
-    :return: The minimum Tanimoto distance between each molecule and
-             every other molecule (either in mols or reference_mols).
-    """
-    # Compute pairwise Tanimoto distances
-    pairwise_tanimoto_distances = 1 - compute_pairwise_tanimoto_similarities(mols_1=mols, mols_2=reference_mols)
-
-    # Prevent comparison to self molecule
-    if reference_mols is None:
-        np.fill_diagonal(pairwise_tanimoto_distances, np.inf)
-
-    # Compute average minimum Tanimoto distance between each molecule and the other molecules
-    min_tanimoto_distances = np.min(pairwise_tanimoto_distances, axis=1)
-
-    return min_tanimoto_distances
+SIMILARITY_TYPES = ['tanimoto', 'tversky']
 
 
 def compute_novelty(smiles: list[str], reference_smiles: set[str]) -> float:
@@ -67,6 +40,14 @@ def compute_novelty(smiles: list[str], reference_smiles: set[str]) -> float:
 
 def assess_generated_molecules(args: Args) -> None:
     """Assess the quality and diversity of generated molecules."""
+    # Results dictionary
+    results = {
+        'generated_diversity_mean': generated_diversity_mean,
+        'generated_diversity_std': generated_diversity_std,
+        'train_diversity_mean': train_diversity_mean,
+        'train_diversity_std': train_diversity_std,
+    }
+
     # Load data
     data = pd.read_csv(args.data_path)
 
@@ -76,17 +57,17 @@ def assess_generated_molecules(args: Args) -> None:
         data.to_csv(args.save_dir / 'molecules.csv', index=False)
 
     # Count molecules
-    num_molecules = len(data)
-    print(f'Number of molecules = {num_molecules:,}')
+    results['num_molecules'] = len(data)
+    print(f'Number of molecules = {results["num_molecules"]:,}')
 
     # Get SMILES and scores
     smiles = data[args.smiles_column]
     scores = data[args.score_column]
 
     # Assess score distribution
-    score_mean = np.mean(scores)
-    score_std = np.std(scores)
-    print(f'Scores = {score_mean:.3f} +/- {score_std:.3f}')
+    results['score_mean'] = np.mean(scores)
+    results['score_std'] = np.std(scores)
+    print(f'Scores = {results["score_mean"]:.3f} +/- {results["score_std"]:.3f}')
 
     # Plot score distribution
     plt.clf()
@@ -98,19 +79,26 @@ def assess_generated_molecules(args: Args) -> None:
     plt.savefig(args.save_dir / 'scores.pdf')
 
     # Assess diversity within generated molecules
-    generated_min_tanimoto_distances = compute_min_tanimoto_distances(smiles)
-    generated_diversity_mean = np.mean(generated_min_tanimoto_distances)
-    generated_diversity_std = np.std(generated_min_tanimoto_distances)
-    print(f'Generated diversity = {generated_diversity_mean:.3f} +/- {generated_diversity_std:.3f}')
+    for similarity_type in SIMILARITY_TYPES:
+        # Compute similarities within generated molecules
+        generated_max_similarities = compute_max_similarities(
+            similarity_type=similarity_type,
+            mols=smiles
+        )
+        results[f'generated_diversity_{similarity_type}_mean'] = np.mean(generated_max_similarities)
+        results[f'generated_diversity_{similarity_type}_std'] = np.std(generated_max_similarities)
+        print(f'Generated diversity {similarity_type} = '
+              f'{results[f"generated_diversity_{similarity_type}_mean"]:.3f} +/- '
+              f'{results[f"generated_diversity_{similarity_type}_std"]:.3f}')
 
-    # Plot diversity distribution within generated molecules
-    plt.clf()
-    plt.hist(generated_min_tanimoto_distances, bins=100)
-    plt.xlabel('Minimum Tanimoto Distance between Generated Molecules')
-    plt.ylabel('Count')
-    plt.title('Generated Minimum Tanimoto Distance Distribution')
-    plt.tight_layout()
-    plt.savefig(args.save_dir / 'generated_diversity.pdf')
+        # Plot diversity distribution within generated molecules
+        plt.clf()
+        plt.hist(generated_max_similarities, bins=100)
+        plt.xlabel(f'Maximum {similarity_type.title()} Similarity between Generated Molecules')
+        plt.ylabel('Count')
+        plt.title(f'Generated Maximum {similarity_type.title()} Similarity Distribution')
+        plt.tight_layout()
+        plt.savefig(args.save_dir / f'generated_diversity_{similarity_type}.pdf')
 
     # Compare to train hits
     if args.train_hits_path is not None:
@@ -119,37 +107,33 @@ def assess_generated_molecules(args: Args) -> None:
         train_hits_smiles = train_hits[args.train_hits_smiles_column]
 
         # Assess diversity compared to train
-        train_min_tanimoto_distances = compute_min_tanimoto_distances(mols=smiles, reference_mols=train_hits_smiles)
-        train_diversity_mean = np.mean(train_min_tanimoto_distances)
-        train_diversity_std = np.std(train_min_tanimoto_distances)
-        print(f'Train diversity = {train_diversity_mean:.3f} +/- {train_diversity_std:.3f}')
+        for similarity_type in SIMILARITY_TYPES:
+            train_max_similarities = compute_max_similarities(
+                similarity_type=similarity_type,
+                mols=smiles,
+                reference_mols=train_hits_smiles
+            )
+            results[f'train_diversity_{similarity_type}_mean'] = np.mean(train_max_similarities)
+            results[f'train_diversity_{similarity_type}_std'] = np.std(train_max_similarities)
+            print(f'Train diversity {similarity_type} = '
+                  f'{results[f"train_diversity_{similarity_type}_mean"]:.3f} +/- '
+                  f'{results[f"train_diversity_{similarity_type}_std"]:.3f}')
 
-        # Plot diversity distribution compared to train
-        plt.clf()
-        plt.hist(train_min_tanimoto_distances, bins=100)
-        plt.xlabel('Minimum Tanimoto Distance from Generated to Train Molecules')
-        plt.ylabel('Count')
-        plt.title('Train Minimum Tanimoto Distance Distribution')
-        plt.tight_layout()
-        plt.savefig(args.save_dir / 'train_diversity.pdf')
+            # Plot diversity distribution compared to train
+            plt.clf()
+            plt.hist(train_max_similarities, bins=100)
+            plt.xlabel(f'Maximum {similarity_type.title()} Similarity from Generated to Train Molecules')
+            plt.ylabel('Count')
+            plt.title(f'Train Maximum {similarity_type.title()} Similarity Distribution')
+            plt.tight_layout()
+            plt.savefig(args.save_dir / f'train_diversity_{similarity_type}.pdf')
 
         # Assess novelty
-        novelty = compute_novelty(smiles=smiles, reference_smiles=train_hits_smiles)
-        print(f'Novelty = {novelty:.3f}')
-    else:
-        train_diversity_mean = train_diversity_std = novelty = None
+        results['novelty'] = compute_novelty(smiles=smiles, reference_smiles=train_hits_smiles)
+        print(f'Novelty = {results["novelty"]:.3f}')
 
     # Save data
-    evaluation = pd.DataFrame(data=[{
-        'num_molecules': num_molecules,
-        'score_mean': score_mean,
-        'score_std': score_std,
-        'generated_diversity_mean': generated_diversity_mean,
-        'generated_diversity_std': generated_diversity_std,
-        'train_diversity_mean': train_diversity_mean,
-        'train_diversity_std': train_diversity_std,
-        'novelty': novelty
-    }])
+    evaluation = pd.DataFrame(data=[results])
     evaluation.to_csv(args.save_dir / 'evaluation.csv', index=False)
 
 
