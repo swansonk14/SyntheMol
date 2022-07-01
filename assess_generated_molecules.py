@@ -6,12 +6,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from rdkit import Chem
-from sklearnex import patch_sklearn
-patch_sklearn()
-from sklearn.metrics import pairwise_distances
 from tap import Tap
 
-from chem_utils.molecular_fingerprints import compute_fingerprints
+from chem_utils.nearest_neighbor import compute_pairwise_tanimoto_similarities
 
 
 class Args(Tap):
@@ -25,26 +22,6 @@ class Args(Tap):
 
     def process_args(self) -> None:
         self.save_dir.mkdir(parents=True, exist_ok=True)
-
-
-# TODO: load this from chem_utils
-def compute_pairwise_tanimoto_distances(mols_1: list[Union[str, Chem.Mol]],
-                                        mols_2: Optional[list[Union[str, Chem.Mol]]] = None) -> np.ndarray:
-    """Computes pairwise Tanimoto distances between the molecules in mols_1 and mols_2.
-
-    :param mols_1: A list of molecules, either SMILES strings or RDKit molecules.
-    :param mols_2: A list of molecules, either SMILES strings or RDKit molecules.
-                   If None, copies mols_1 list.
-    :return: A 2D numpy array of pairwise distances.
-    """
-    # Compute Morgan fingerprints
-    fps_1 = np.array(compute_fingerprints(mols_1, fingerprint_type='morgan'), dtype=bool)
-    fps_2 = np.array(compute_fingerprints(mols_2, fingerprint_type='morgan'), dtype=bool) if mols_2 is not None else fps_1
-
-    # Compute pairwise distances
-    tanimoto_distances = pairwise_distances(fps_1, fps_2, metric='jaccard', n_jobs=-1)
-
-    return tanimoto_distances
 
 
 # TODO: load this from chem_utils
@@ -64,7 +41,7 @@ def compute_min_tanimoto_distances(mols: list[Union[str, Chem.Mol]],
              every other molecule (either in mols or reference_mols).
     """
     # Compute pairwise Tanimoto distances
-    pairwise_tanimoto_distances = compute_pairwise_tanimoto_distances(mols_1=mols, mols_2=reference_mols)
+    pairwise_tanimoto_distances = 1 - compute_pairwise_tanimoto_similarities(mols_1=mols, mols_2=reference_mols)
 
     # Prevent comparison to self molecule
     if reference_mols is None:
