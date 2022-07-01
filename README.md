@@ -12,6 +12,15 @@ Activate conda environment.
 conda activate combinatorial_antibiotics
 ```
 
+Install [chem_utils](https://github.com/swansonk14/chem_utils).
+```
+cd ..
+git clone TODO
+cd chem_utils
+pip install -e .
+cd ../combinatorial_antibiotics
+```
+
 ## Download Data
 
 Download the REAL Enamine building blocks SDF file and CXSMILES database files from here: https://enamine.net/compound-collections/real-compounds/real-database#

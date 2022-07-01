@@ -4,14 +4,15 @@ from pathlib import Path
 from typing import Literal
 
 import pandas as pd
-# TODO: sklearn intelex
+from sklearnex import patch_sklearn
+patch_sklearn()
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import average_precision_score, roc_auc_score
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 from tap import Tap
 
-from molecular_fingerprints import compute_fingerprints
+from chem_utils.molecular_fingerprints import compute_fingerprints
 
 
 class Args(Tap):

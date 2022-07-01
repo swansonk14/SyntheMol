@@ -13,6 +13,7 @@ dependencies:
   - pip
   - rdkit
   - scikit-learn
+  - scikit-learn-intelex
   - scipy
   - tqdm
   - pip:

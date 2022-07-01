@@ -11,11 +11,13 @@ import numpy as np
 import pandas as pd
 from rdkit import Chem
 from rdkit.Chem.Crippen import MolLogP
+from sklearnex import patch_sklearn
+patch_sklearn()
 from sklearn.ensemble import RandomForestClassifier
 from tap import Tap
 from tqdm import trange
 
-from molecular_fingerprints import compute_fingerprint
+from chem_utils.molecular_fingerprints import compute_fingerprint
 from real_reactions import Reaction, REAL_REACTIONS, SYNNET_REACTIONS
 
 
