@@ -344,6 +344,7 @@ python tree_search.py \
     --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     --fragment_to_score_path ../ckpt/AB_combined_RF_morgan_fragments_to_scores.json \
     --reagent_to_fragments_path ../data/reagents_to_fragments.json \
+    --train_hits_path ../data/Screening_data/AB_combined_hits.csv \
     --save_path ../generations/tree_search/mcts.csv \
     --search_type mcts \
     --fingerprint_type morgan

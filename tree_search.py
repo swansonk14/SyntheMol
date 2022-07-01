@@ -10,14 +10,13 @@ from typing import Any, Callable, Literal, Optional
 import numpy as np
 import pandas as pd
 from rdkit import Chem
-from rdkit.Chem.Crippen import MolLogP
 from sklearnex import patch_sklearn
 patch_sklearn()
 from sklearn.ensemble import RandomForestClassifier
 from tap import Tap
 from tqdm import trange
 
-from chem_utils.molecular_fingerprints import compute_fingerprint
+from chem_utils.molecular_fingerprints import compute_fingerprint, compute_max_similarities
 from real_reactions import Reaction, REAL_REACTIONS, SYNNET_REACTIONS
 
 
@@ -26,6 +25,7 @@ class Args(Tap):
     fragment_path: Path  # Path to CSV file containing molecular building blocks.
     fragment_to_score_path: Path  # Path to JSON file containing a dictionary mapping fragments to prediction scores.
     reagent_to_fragments_path: Path  # Path to JSON file containing a dictionary mapping from reagents to fragments.
+    train_hits_path: Path  # Path to CSV file containing SMILES for the active molecules in the training set.
     save_path: Path  # Path to CSV file where generated molecules will be saved.
     search_type: Literal['random', 'greedy', 'mcts']  # Type of search to perform.
     smiles_column: str = 'smiles'  # Name of the column containing SMILES.
@@ -447,12 +447,6 @@ def save_molecules(nodes: list[TreeNode], save_path: Path) -> None:
     data.to_csv(save_path, index=False)
 
 
-# TODO: change this scoring function!!!
-@cache
-def log_p_score(smiles: str) -> float:
-    return MolLogP(Chem.MolFromSmiles(smiles))
-
-
 def run_tree_search(args: Args) -> None:
     """Generate molecules combinatorially by performing a tree search."""
     if args.synnet_rxn:
@@ -482,16 +476,37 @@ def run_tree_search(args: Args) -> None:
     with open(args.reagent_to_fragments_path) as f:
         reagent_to_fragments: dict[str, list[str]] = json.load(f)
 
+    # Load train hits and compute Morgan fingerprints
+    train_hits = pd.read_csv(args.train_hits_path)[args.smiles_column]
+    train_hits_morgans = compute_fingerprints(train_hits, fingerprint_type='morgan')
+    train_hits_tversky = (train_hits_morgans / train_hits_morgans.sum(axis=1)).transpose()
+
     # Define scoring function
     @cache
-    def model_scoring_fn(smiles: str) -> float:
-        if smiles not in fragment_to_score:
-            fingerprint = compute_fingerprint(smiles, fingerprint_type=args.fingerprint_type)
-            prob = model.predict_proba([fingerprint])[0, 1]
-        else:
-            prob = fragment_to_score[smiles]
+    def scoring_fn(smiles: str) -> float:
+        # Compute Morgan fingerprint
+        morgan_fingerprint = compute_fingerprint(smiles, fingerprint='morgan')
 
-        return prob
+        # Compute model probability score
+        if smiles not in fragment_to_score:
+            if args.fingerprint_type == 'morgan':
+                fingerprint = morgan_fingerprint
+            else:
+                fingerprint = compute_fingerprint(smiles, fingerprint_type=args.fingerprint_type)
+
+            model_prob_score = model.predict_proba([fingerprint])[0, 1]
+        else:
+            model_prob_score = fragment_to_score[smiles]
+
+        # Compute maximum Tversky similarity to train hits
+        train_hits_max_tversky_similarity = np.max(morgan_fingerprint @ train_hits_tversky)
+
+        # TODO: compute diversity within generated molecules (note: will potentially break caching assumption)
+
+        # Compute total score
+        score = model_prob_score - train_hits_max_tversky_similarity
+
+        return score
 
     # Set up TreeSearchRunner
     tree_searcher = TreeSearcher(
@@ -499,7 +514,7 @@ def run_tree_search(args: Args) -> None:
         fragment_to_index=fragment_to_index,
         reagent_to_fragments=reagent_to_fragments,
         max_reactions=args.max_reactions,
-        scoring_fn=model_scoring_fn,
+        scoring_fn=scoring_fn,
         n_rollout=args.n_rollout,
         c_puct=args.c_puct,
         num_expand_nodes=args.num_expand_nodes,

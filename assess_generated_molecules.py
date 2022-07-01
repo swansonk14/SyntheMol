@@ -41,12 +41,7 @@ def compute_novelty(smiles: list[str], reference_smiles: set[str]) -> float:
 def assess_generated_molecules(args: Args) -> None:
     """Assess the quality and diversity of generated molecules."""
     # Results dictionary
-    results = {
-        'generated_diversity_mean': generated_diversity_mean,
-        'generated_diversity_std': generated_diversity_std,
-        'train_diversity_mean': train_diversity_mean,
-        'train_diversity_std': train_diversity_std,
-    }
+    results = {}
 
     # Load data
     data = pd.read_csv(args.data_path)
