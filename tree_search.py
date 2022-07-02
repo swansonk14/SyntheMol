@@ -425,7 +425,8 @@ def save_molecules(nodes: list[TreeNode],
         construction_dicts.append(construction_dict)
 
     # Specify column order for CSV file
-    columns = ['smiles', 'node_id', 'num_visits', 'score', 'Q_value', 'num_reactions']
+    columns = ['smiles', 'node_id', 'num_visits', 'score', 'model_score',
+               'train_hits_similarity_score', 'Q_value', 'num_reactions']
 
     for reaction_num in range(1, max_reaction_num + 1):
         columns.append(f'reaction_{reaction_num}_id')
