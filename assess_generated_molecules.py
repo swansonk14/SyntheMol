@@ -23,6 +23,7 @@ class Args(Tap):
         self.save_dir.mkdir(parents=True, exist_ok=True)
 
 
+SCORE_TYPES = ['score', 'model_score']
 SIMILARITY_TYPES = ['tanimoto', 'tversky']
 
 
@@ -55,30 +56,32 @@ def assess_generated_molecules(args: Args) -> None:
     results['num_molecules'] = len(data)
     print(f'Number of molecules = {results["num_molecules"]:,}')
 
-    # Get SMILES and scores
+    # Get SMILES
     smiles = data[args.smiles_column]
-    scores = data[args.score_column]
 
-    # Assess score distribution
-    results['score_mean'] = np.mean(scores)
-    results['score_std'] = np.std(scores)
-    print(f'Scores = {results["score_mean"]:.3f} +/- {results["score_std"]:.3f}')
+    for score_type in SCORE_TYPES:
+        scores = data[score_type]
 
-    # Plot score distribution
-    plt.clf()
-    plt.hist(scores, bins=100)
-    plt.xlabel('Score')
-    plt.ylabel('Count')
-    plt.title('Score Distribution')
-    plt.tight_layout()
-    plt.savefig(args.save_dir / 'scores.pdf')
+        # Assess score distribution
+        results['score_mean'] = np.mean(scores)
+        results['score_std'] = np.std(scores)
+        print(f'{score_type.title()} = {results["score_mean"]:.3f} +/- {results["score_std"]:.3f}')
+
+        # Plot score distribution
+        plt.clf()
+        plt.hist(scores, bins=100)
+        plt.xlabel(score_type.title())
+        plt.ylabel('Count')
+        plt.title('Score Distribution')
+        plt.tight_layout()
+        plt.savefig(args.save_dir / f'{score_type}.pdf')
 
     # Assess diversity within generated molecules
     for similarity_type in SIMILARITY_TYPES:
         # Compute similarities within generated molecules
         generated_max_similarities = compute_max_similarities(
             similarity_type=similarity_type,
-            mols=smiles
+            mols=data[args.smiles_column]
         )
         results[f'generated_diversity_{similarity_type}_mean'] = np.mean(generated_max_similarities)
         results[f'generated_diversity_{similarity_type}_std'] = np.std(generated_max_similarities)
