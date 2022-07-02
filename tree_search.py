@@ -16,7 +16,7 @@ from sklearn.ensemble import RandomForestClassifier
 from tap import Tap
 from tqdm import trange
 
-from chem_utils.molecular_fingerprints import compute_fingerprint
+from chem_utils.molecular_fingerprints import compute_fingerprint, compute_fingerprints
 from real_reactions import Reaction, REAL_REACTIONS, SYNNET_REACTIONS
 
 
@@ -81,7 +81,7 @@ class TreeNode:
 
     @cached_property
     def P(self) -> float:
-        """The property score of this node. (Note: The value is cached so it assumes the node is immutable.)"""
+        """The property score of this node. (Note: The value is cached, so it assumes the node is immutable.)"""
         return self.compute_score(fragments=self.fragments, scoring_fn=self.scoring_fn)
 
     def Q(self) -> float:
@@ -373,7 +373,9 @@ class TreeSearcher:
         return v
 
     def search(self) -> list[TreeNode]:
-        """Runs the tree search.
+        """Runs the tree search, returning a list of TreeNode objects sorted from highest to lowest reward.
+
+        NOTE: Only returns nodes with exactly one fragment, i.e., complete molecules.
 
         :return: A list of TreeNode objects sorted from highest to lowest reward.
         """
@@ -389,7 +391,10 @@ class TreeSearcher:
         return nodes
 
 
-def save_molecules(nodes: list[TreeNode], save_path: Path) -> None:
+def save_molecules(nodes: list[TreeNode],
+                   save_path: Path,
+                   model_scoring_fn: Callable[[str], float],
+                   train_hits_similarity_scoring_fn: Callable[[str], float]) -> None:
     # Create save directory
     save_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -437,6 +442,8 @@ def save_molecules(nodes: list[TreeNode], save_path: Path) -> None:
                 'node_id': node.node_id,
                 'num_visits': node.N,
                 'score': node.P,
+                'model_score': model_scoring_fn(node.fragments[0]),
+                'train_hits_similarity_score': train_hits_similarity_scoring_fn(node.fragments[0]),
                 'Q_value': node.Q(),
                 **construction_dict
             }
@@ -479,34 +486,31 @@ def run_tree_search(args: Args) -> None:
     # Load train hits and compute Morgan fingerprints
     train_hits = pd.read_csv(args.train_hits_path)[args.smiles_column]
     train_hits_morgans = compute_fingerprints(train_hits, fingerprint_type='morgan')
-    train_hits_tversky = (train_hits_morgans / train_hits_morgans.sum(axis=1)).transpose()
+    train_hits_tversky = (train_hits_morgans.transpose() / train_hits_morgans.sum(axis=1))
+
+    # Define model scoring function
+    def model_scoring_fn(smiles: str) -> float:
+        if smiles not in fragment_to_score:
+            fingerprint = compute_fingerprint(smiles, fingerprint_type=args.fingerprint_type)
+            model_score = model.predict_proba([fingerprint])[0, 1]
+        else:
+            model_score = fragment_to_score[smiles]
+
+        return model_score
+
+    # Define train similarity scoring function
+    def train_hits_similarity_scoring_fn(smiles: str) -> float:
+        # TODO: precompute this for fragments
+        morgan_fingerprint = compute_fingerprint(smiles, fingerprint_type='morgan')
+        train_hits_similarity_score = np.max(morgan_fingerprint @ train_hits_tversky)
+
+        return train_hits_similarity_score
 
     # Define scoring function
     @cache
     def scoring_fn(smiles: str) -> float:
-        # Compute Morgan fingerprint
-        morgan_fingerprint = compute_fingerprint(smiles, fingerprint='morgan')
-
-        # Compute model probability score
-        if smiles not in fragment_to_score:
-            if args.fingerprint_type == 'morgan':
-                fingerprint = morgan_fingerprint
-            else:
-                fingerprint = compute_fingerprint(smiles, fingerprint_type=args.fingerprint_type)
-
-            model_prob_score = model.predict_proba([fingerprint])[0, 1]
-        else:
-            model_prob_score = fragment_to_score[smiles]
-
-        # Compute maximum Tversky similarity to train hits
-        train_hits_max_tversky_similarity = np.max(morgan_fingerprint @ train_hits_tversky)
-
         # TODO: compute diversity within generated molecules (note: will potentially break caching assumption)
-
-        # Compute total score
-        score = model_prob_score - train_hits_max_tversky_similarity
-
-        return score
+        return model_scoring_fn(smiles) - train_hits_similarity_scoring_fn(smiles)
 
     # Set up TreeSearchRunner
     tree_searcher = TreeSearcher(
@@ -525,7 +529,12 @@ def run_tree_search(args: Args) -> None:
     nodes = tree_searcher.search()
 
     # Save generated molecules
-    save_molecules(nodes=nodes, save_path=args.save_path)
+    save_molecules(
+        nodes=nodes,
+        save_path=args.save_path,
+        model_scoring_fn=model_scoring_fn,
+        train_hits_similarity_scoring_fn=train_hits_similarity_scoring_fn
+    )
 
 
 if __name__ == '__main__':
