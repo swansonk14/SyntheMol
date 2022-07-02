@@ -16,7 +16,7 @@ from sklearn.ensemble import RandomForestClassifier
 from tap import Tap
 from tqdm import trange
 
-from chem_utils.molecular_fingerprints import compute_fingerprint, compute_max_similarities
+from chem_utils.molecular_fingerprints import compute_fingerprint
 from real_reactions import Reaction, REAL_REACTIONS, SYNNET_REACTIONS
 
 
