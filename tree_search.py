@@ -489,6 +489,7 @@ def run_tree_search(args: Args) -> None:
     train_hits_tversky = (train_hits_morgans.transpose() / train_hits_morgans.sum(axis=1))
 
     # Define model scoring function
+    @cache
     def model_scoring_fn(smiles: str) -> float:
         if smiles not in fragment_to_score:
             fingerprint = compute_fingerprint(smiles, fingerprint_type=args.fingerprint_type)
@@ -499,6 +500,7 @@ def run_tree_search(args: Args) -> None:
         return model_score
 
     # Define train similarity scoring function
+    @cache
     def train_hits_similarity_scoring_fn(smiles: str) -> float:
         # TODO: precompute this for fragments
         morgan_fingerprint = compute_fingerprint(smiles, fingerprint_type='morgan')
