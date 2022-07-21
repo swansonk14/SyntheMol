@@ -15,11 +15,21 @@ conda activate combinatorial_antibiotics
 Install [chem_utils](https://github.com/swansonk14/chem_utils).
 ```
 cd ..
-git clone TODO
+git clone git@github.com:swansonk14/chem_utils.git
 cd chem_utils
 pip install -e .
 cd ../combinatorial_antibiotics
 ```
+
+Install [chemprop](https://github.com/chemprop/chemprop).
+```
+cd ..
+git clone git@github.com:chemprop/chemprop.git
+cd chemprop
+pip install -e .
+cd ../combinatorial_antibiotics
+```
+
 
 ## Download Data
 
@@ -314,14 +324,14 @@ python process_data.py \
 ```
 
 
-## Train random forest model on Morgan fingerprints
+## Train random forest model on fingerprints
 
 ```
 python train_model.py \
     --data_path ../data/Screening_data/AB_combined.csv \
-    --save_path ../ckpt/AB_combined_RF_morgan.pkl \
+    --save_path ../ckpt/AB_combined_RF_rdkit.pkl \
     --model_type rf \
-    --fingerprint_type morgan
+    --fingerprint_type rdkit
 ```
 
 
@@ -330,9 +340,9 @@ python train_model.py \
 ```
 python map_fragments_to_scores.py \
     --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
-    --model_path ../ckpt/AB_combined_RF_morgan.pkl \
-    --save_path ../ckpt/AB_combined_RF_morgan_fragments_to_scores.json \
-    --fingerprint_type morgan
+    --model_path ../ckpt/AB_combined_RF_rdkit.pkl \
+    --save_path ../ckpt/AB_combined_RF_rdkit_fragments_to_scores.json \
+    --fingerprint_type rdkit
 ```
 
 
@@ -340,14 +350,14 @@ python map_fragments_to_scores.py \
 
 ```
 python tree_search.py \
-    --model_path ../ckpt/AB_combined_RF_morgan.pkl \
+    --model_path ../ckpt/AB_combined_RF_rdkit.pkl \
     --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
-    --fragment_to_score_path ../ckpt/AB_combined_RF_morgan_fragments_to_scores.json \
+    --fragment_to_score_path ../ckpt/AB_combined_RF_rdkit_fragments_to_scores.json \
     --reagent_to_fragments_path ../data/reagents_to_fragments.json \
     --train_hits_path ../data/Screening_data/AB_combined_hits.csv \
     --save_path ../generations/tree_search/mcts.csv \
     --search_type mcts \
-    --fingerprint_type morgan
+    --fingerprint_type rdkit
 ```
 
 

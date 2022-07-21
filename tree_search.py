@@ -10,8 +10,6 @@ from typing import Any, Callable, Literal, Optional
 import numpy as np
 import pandas as pd
 from rdkit import Chem
-from sklearnex import patch_sklearn
-patch_sklearn()
 from sklearn.ensemble import RandomForestClassifier
 from tap import Tap
 from tqdm import trange

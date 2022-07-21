@@ -3,6 +3,7 @@ name: combinatorial_antibiotics
 channels:
   - conda-forge
   - rdkit
+  - pytorch
 
 dependencies:
   - python>=3.9
@@ -11,9 +12,9 @@ dependencies:
   - numpy
   - pandas
   - pip
+  - pytorch
   - rdkit
   - scikit-learn
-  - scikit-learn-intelex
   - scipy
   - tqdm
   - pip:
