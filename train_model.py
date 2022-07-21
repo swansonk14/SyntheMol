@@ -5,21 +5,21 @@ from typing import Literal
 
 import numpy as np
 import pandas as pd
-# import torch
+import torch
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import average_precision_score, roc_auc_score
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 from tap import Tap
-# from torch.optim.lr_scheduler import ExponentialLR
+from torch.optim.lr_scheduler import ExponentialLR
 from tqdm import trange
 
 from chem_utils.molecular_fingerprints import compute_fingerprints
-# from chemprop.args import TrainArgs
-# from chemprop.data import MoleculeDataLoader, MoleculeDatapoint, MoleculeDataset
-# from chemprop.train import get_loss_func, predict, train
-# from chemprop.models import MoleculeModel
-# from chemprop.utils import build_optimizer, build_lr_scheduler, load_checkpoint, save_checkpoint
+from chemprop.args import TrainArgs
+from chemprop.data import MoleculeDataLoader, MoleculeDatapoint, MoleculeDataset
+from chemprop.train import get_loss_func, predict, train
+from chemprop.models import MoleculeModel
+from chemprop.utils import build_optimizer, build_lr_scheduler, load_checkpoint, save_checkpoint
 
 
 class Args(Tap):
@@ -76,15 +76,16 @@ def build_chemprop_model(train_smiles: list[str],
                          save_path: Path) -> None:
     """Trains, evaluates, and saves a chemprop model."""
     # Create args
-    args = TrainArgs().parse_args(['--data_path', 'foo.csv', '--dataset_type', 'classification'])
+    args = TrainArgs().parse_args(['--data_path', 'foo.csv', '--dataset_type', 'classification', '--quiet'])
     args.task_names = ['activity']
+    args.train_data_size = len(train_smiles)
 
     # Build data loaders
     train_data_loader = MoleculeDataLoader(
         dataset=MoleculeDataset([
             MoleculeDatapoint(
                 smiles=[smiles],
-                targets=[activity],
+                targets=[float(activity)],
                 features=fingerprint,
             ) for smiles, fingerprint, activity in zip(train_smiles, train_fingerprints, train_activities)
         ]),
@@ -97,7 +98,7 @@ def build_chemprop_model(train_smiles: list[str],
         dataset=MoleculeDataset([
             MoleculeDatapoint(
                 smiles=[smiles],
-                targets=[activity],
+                targets=[float(activity)],
                 features=fingerprint,
             ) for smiles, fingerprint, activity in zip(val_smiles, val_fingerprints, val_activities)
         ]),
@@ -110,7 +111,7 @@ def build_chemprop_model(train_smiles: list[str],
         dataset=MoleculeDataset([
             MoleculeDatapoint(
                 smiles=[smiles],
-                targets=[activity],
+                targets=[float(activity)],
                 features=fingerprint,
             ) for smiles, fingerprint, activity in zip(test_smiles, test_fingerprints, test_activities)
         ]),
@@ -182,13 +183,13 @@ def train_model(args: Args) -> None:
     print(f'Data size = {len(data):,}')
 
     # Get SMILES
-    smiles = data[args.smiles_column]
+    smiles = list(data[args.smiles_column])
 
     # Get fingerprints
     fingerprints = compute_fingerprints(smiles, fingerprint_type=args.fingerprint_type)
 
     # Get activity
-    activities = data[args.activity_column]
+    activities = list(data[args.activity_column])
 
     # Split into train and test
     train_smiles, val_test_smiles, train_fingerprints, val_test_fingerprints, train_activities, val_test_activities = \
