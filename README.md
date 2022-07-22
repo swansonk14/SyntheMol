@@ -358,6 +358,7 @@ python tree_search.py \
     --train_hits_path ../data/Screening_data/AB_combined_hits.csv \
     --save_path ../generations/tree_search/mcts.csv \
     --search_type mcts \
+    --model_type rf \
     --fingerprint_type rdkit
 ```
 

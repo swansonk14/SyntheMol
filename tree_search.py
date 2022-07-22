@@ -11,10 +11,12 @@ import numpy as np
 import pandas as pd
 from rdkit import Chem
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.neural_network import MLPClassifier
 from tap import Tap
 from tqdm import trange
 
 from chem_utils.molecular_fingerprints import compute_fingerprint, compute_fingerprints
+from chemprop.utils import load_checkpoint
 from real_reactions import Reaction, REAL_REACTIONS, SYNNET_REACTIONS
 
 
@@ -31,6 +33,7 @@ class Args(Tap):
     n_rollout: int = 100  # The number of times to run the tree search.
     c_puct: float = 10.0  # The hyperparameter that encourages exploration.
     num_expand_nodes: Optional[int] = None  # The number of tree nodes to expand when extending the child nodes in the search tree.
+    model_type: Literal['rf', 'mlp', 'chemprop']  # Type of model to train. 'rf' = random forest. 'mlp' = multilayer perceptron.
     fingerprint_type: Literal['morgan', 'rdkit']  # Type of fingerprints to use as input features.
     synnet_rxn: bool = False  # Whether to include SynNet reactions in addition to REAL reactions.
 
@@ -453,16 +456,52 @@ def save_molecules(nodes: list[TreeNode],
     data.to_csv(save_path, index=False)
 
 
+def create_model_scoring_fn(model_path: Path,
+                            model_type: str,
+                            fingerprint_type: str,
+                            fragment_to_score: dict[str, float]) -> Callable[[str], float]:
+    """Creates a function that scores a molecule using a model."""
+    # Load model and set up scoring function
+    if model_type == 'chemprop':
+        model = load_checkpoint(path=model_path)
+
+        @cache
+        def model_scoring_fn(smiles: str) -> float:
+            if smiles not in fragment_to_score:
+                fingerprint = compute_fingerprint(smiles, fingerprint_type=fingerprint_type)
+                model_score = model(batch=[[smiles]], features_batch=[fingerprint])[0][0]
+            else:
+                model_score = fragment_to_score[smiles]
+
+            return model_score
+    else:
+        with open(model_path, 'rb') as f:
+            if model_type == 'rf':
+                model: RandomForestClassifier = pickle.load(f)
+            elif model_type == 'mlp':
+                model: MLPClassifier = pickle.load(f)
+            else:
+                raise ValueError(f'Model type "{model_type}" is not supported.')
+
+        @cache
+        def model_scoring_fn(smiles: str) -> float:
+            if smiles not in fragment_to_score:
+                fingerprint = compute_fingerprint(smiles, fingerprint_type=fingerprint_type)
+                model_score = model.predict_proba([fingerprint])[0, 1]
+            else:
+                model_score = fragment_to_score[smiles]
+
+            return model_score
+
+    return model_scoring_fn
+
+
 def run_tree_search(args: Args) -> None:
     """Generate molecules combinatorially by performing a tree search."""
     if args.synnet_rxn:
         reactions = REAL_REACTIONS + SYNNET_REACTIONS
     else:
         reactions = REAL_REACTIONS
-
-    # Load model
-    with open(args.model_path, 'rb') as f:
-        model: RandomForestClassifier = pickle.load(f)
 
     # Load fragments
     fragments = pd.read_csv(args.fragment_path)[args.smiles_column]
@@ -488,15 +527,12 @@ def run_tree_search(args: Args) -> None:
     train_hits_tversky = (train_hits_morgans.transpose() / train_hits_morgans.sum(axis=1))
 
     # Define model scoring function
-    @cache
-    def model_scoring_fn(smiles: str) -> float:
-        if smiles not in fragment_to_score:
-            fingerprint = compute_fingerprint(smiles, fingerprint_type=args.fingerprint_type)
-            model_score = model.predict_proba([fingerprint])[0, 1]
-        else:
-            model_score = fragment_to_score[smiles]
-
-        return model_score
+    model_scoring_fn = create_model_scoring_fn(
+        model_path=args.model_path,
+        model_type=args.model_type,
+        fingerprint_type=args.fingerprint_type,
+        fragment_to_score=fragment_to_score
+    )
 
     # Define train similarity scoring function
     @cache
