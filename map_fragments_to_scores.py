@@ -2,6 +2,7 @@
 import json
 import pickle
 from pathlib import Path
+from time import time
 from typing import Literal
 
 import numpy as np
@@ -75,7 +76,6 @@ def map_fragments_to_scores_chemprop(fragments: list[str],
         model=model,
         data_loader=data_loader
     )
-    breakpoint()
     scores = [score[0] for score in scores]
 
     # Map fragments to predictions
@@ -93,6 +93,7 @@ def map_fragments_to_scores(args: Args) -> None:
     fingerprints = compute_fingerprints(fragments, fingerprint_type=args.fingerprint_type)
 
     # Map fragments to predictions
+    start_time = time()
     if args.model_type == 'chemprop':
         fragment_to_score = map_fragments_to_scores_chemprop(
             fragments=fragments,
@@ -106,6 +107,7 @@ def map_fragments_to_scores(args: Args) -> None:
             model_path=args.model_path,
             model_type=args.model_type
         )
+    print(f'Total time to map fragments for {args.model_type} using {args.fingerprint_type} = {time() - start_time:.2f}')
 
     # Save data
     with open(args.save_path, 'w') as f:
