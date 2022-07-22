@@ -342,6 +342,7 @@ python map_fragments_to_scores.py \
     --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     --model_path ../ckpt/AB_combined_RF_rdkit.pkl \
     --save_path ../ckpt/AB_combined_RF_rdkit_fragments_to_scores.json \
+    --model_type rf \
     --fingerprint_type rdkit
 ```
 
