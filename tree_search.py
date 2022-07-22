@@ -16,6 +16,7 @@ from tap import Tap
 from tqdm import trange
 
 from chem_utils.molecular_fingerprints import compute_fingerprint, compute_fingerprints
+from chemprop.models import MoleculeModel
 from chemprop.utils import load_checkpoint
 from real_reactions import Reaction, REAL_REACTIONS, SYNNET_REACTIONS
 
@@ -463,13 +464,14 @@ def create_model_scoring_fn(model_path: Path,
     """Creates a function that scores a molecule using a model."""
     # Load model and set up scoring function
     if model_type == 'chemprop':
-        model = load_checkpoint(path=model_path)
+        model: MoleculeModel = load_checkpoint(path=model_path)
+        model.eval()
 
         @cache
         def model_scoring_fn(smiles: str) -> float:
             if smiles not in fragment_to_score:
                 fingerprint = compute_fingerprint(smiles, fingerprint_type=fingerprint_type)
-                model_score = model(batch=[[smiles]], features_batch=[fingerprint])[0][0]
+                model_score = model(batch=[[smiles]], features_batch=[fingerprint]).item()
             else:
                 model_score = fragment_to_score[smiles]
 
