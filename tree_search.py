@@ -37,7 +37,7 @@ class Args(Tap):
     model_type: Literal['rf', 'mlp', 'chemprop']  # Type of model to train. 'rf' = random forest. 'mlp' = multilayer perceptron.
     fingerprint_type: Literal['morgan', 'rdkit']  # Type of fingerprints to use as input features.
     synnet_rxn: bool = False  # Whether to include SynNet reactions in addition to REAL reactions.
-
+    binarize_scoring:float = 0
 
 class TreeNode:
     """A node in a tree search representing a step in the molecule construction process."""
@@ -460,7 +460,8 @@ def save_molecules(nodes: list[TreeNode],
 def create_model_scoring_fn(model_path: Path,
                             model_type: str,
                             fingerprint_type: str,
-                            fragment_to_score: dict[str, float]) -> Callable[[str], float]:
+                            fragment_to_score: dict[str, float],
+                            binarize_scoring: float) -> Callable[[str], float]:
     """Creates a function that scores a molecule using a model."""
     # Load model and set up scoring function
     if model_type == 'chemprop':
@@ -474,7 +475,11 @@ def create_model_scoring_fn(model_path: Path,
                 model_score = model(batch=[[smiles]], features_batch=[fingerprint]).item()
             else:
                 model_score = fragment_to_score[smiles]
-
+            if binarize_scoring > 0:
+                if model_score >= binarize_scoring:
+                    return 1
+                else:
+                    return 0
             return model_score
     else:
         with open(model_path, 'rb') as f:
@@ -492,7 +497,11 @@ def create_model_scoring_fn(model_path: Path,
                 model_score = model.predict_proba([fingerprint])[0, 1]
             else:
                 model_score = fragment_to_score[smiles]
-
+            if binarize_scoring > 0:
+                if model_score >= binarize_scoring:
+                    return 1
+                else:
+                    return 0
             return model_score
 
     return model_scoring_fn
@@ -533,7 +542,8 @@ def run_tree_search(args: Args) -> None:
         model_path=args.model_path,
         model_type=args.model_type,
         fingerprint_type=args.fingerprint_type,
-        fragment_to_score=fragment_to_score
+        fragment_to_score=fragment_to_score,
+        binarize_scoring= args.binarize_scoring
     )
 
     # Define train similarity scoring function
