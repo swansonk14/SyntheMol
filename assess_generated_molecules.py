@@ -1,4 +1,5 @@
 """Assess the quality and diversity of generated molecules."""
+from collections import Counter
 from pathlib import Path
 from typing import Optional
 
@@ -129,6 +130,37 @@ def assess_generated_molecules(args: Args) -> None:
         # Assess novelty
         results['novelty'] = compute_novelty(smiles=smiles, reference_smiles=train_hits_smiles)
         print(f'Novelty = {results["novelty"]:.3f}')
+
+    # Distribution of number of reactions
+    reaction_counts = Counter(data['num_reactions'])
+    min_reactions, max_reactions = min(reaction_counts), max(reaction_counts)
+    reaction_nums = range(min_reactions, max_reactions + 1)
+
+    plt.clf()
+    plt.bar(reaction_nums, [reaction_counts[num_reactions] for num_reactions in reaction_nums])
+    plt.xticks(reaction_nums)
+    plt.xlabel('Number of Reactions')
+    plt.ylabel('Count')
+    plt.title('Number of Reactions')
+    plt.savefig(args.save_dir / 'reaction_counts.pdf')
+
+    # Usage of fragments (unique fragments per molecule)
+    reagent_columns = [column for column in data.columns if column.startswith('reagent_') and column.endswith('_id')]
+    reagent_data = data[reagent_columns]
+    fragment_counter = Counter(
+        reagent
+        for _, reagent_row in reagent_data.iterrows()
+        for reagent in {int(reagent) for reagent in reagent_row.dropna()}
+    )
+
+    fragment_counts = sorted(fragment_counter.values(), reverse=True)
+
+    plt.clf()
+    plt.scatter(np.arange(len(fragment_counts)), fragment_counts)
+    plt.xlabel('Sorted Fragment Index')
+    plt.ylabel('Count (# molecules containing the fragment)')
+    plt.title('Fragment Counts')
+    plt.savefig(args.save_dir / 'fragment_counts.pdf')
 
     # Save data
     evaluation = pd.DataFrame(data=[results])

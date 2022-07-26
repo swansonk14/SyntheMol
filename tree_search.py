@@ -584,7 +584,7 @@ def run_tree_search(args: Args) -> None:
         # TODO: compute diversity within generated molecules (note: will potentially break caching assumption)
         return model_scoring_fn(smiles) - train_hits_similarity_scoring_fn(smiles)
 
-    # Set up TreeSearchRunner
+    # Set up TreeSearcher
     tree_searcher = TreeSearcher(
         search_type=args.search_type,
         fragment_to_index=fragment_to_index,
