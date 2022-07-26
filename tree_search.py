@@ -3,6 +3,7 @@ import itertools
 import json
 import math
 import pickle
+from collections import Counter
 from functools import cache, cached_property, partial
 from pathlib import Path
 from typing import Any, Callable, Literal, Optional
@@ -114,6 +115,16 @@ class TreeNode:
         """
         return len(self.construction_log)
 
+    @cached_property
+    def unique_reagents(self) -> set[int]:
+        """A set of unique reagents in this node. (Note: The value is cached, so it assumes the node is immutable.)"""
+        return {
+            reagent_id
+            for reaction_log in self.construction_log
+            for reagent_id in reaction_log['reagent_ids']
+            if reagent_id != -1
+        }
+
     def __hash__(self) -> int:
         return hash(self.fragments)
 
@@ -170,6 +181,7 @@ class TreeSearcher:
         self.TreeNodeClass = partial(TreeNode, c_puct=c_puct, scoring_fn=scoring_fn)
         self.root = self.TreeNodeClass(node_id=1)
         self.state_map: dict[TreeNode, TreeNode] = {self.root: self.root}
+        self.reagent_counts = Counter()
 
     def random_choice(self, array: list[Any], size: Optional[int] = None, replace: bool = True) -> Any:
         if size is None:
@@ -312,6 +324,17 @@ class TreeSearcher:
 
         return new_nodes
 
+    def compute_mcts_score(self, node: TreeNode, total_visit_count: int) -> float:
+        """Computes the MCTS score of a TreeNode."""
+        mcts_score = node.Q() + node.U(n=total_visit_count)
+
+        # Reduce MCTS score when node includes a common fragment
+        if len(node.unique_reagents) > 0:
+            max_reagent_count = max(self.reagent_counts[reagent_id] for reagent_id in node.unique_reagents)
+            mcts_score /= np.log(1 + max_reagent_count)
+
+        return mcts_score
+
     def rollout(self, node: TreeNode) -> float:
         """Performs a Monte Carlo Tree Search rollout.
 
@@ -348,6 +371,10 @@ class TreeSearcher:
                     if new_node.node_id is None:
                         new_node.node_id = len(self.state_map)
 
+                        # Increment reagent counts if this node is a full molecule
+                        if new_node.num_fragments == 1:
+                            self.reagent_counts.update(new_node.unique_reagents)
+
                     # Add the new node as a child of the tree node
                     node.children.append(new_node)
                     child_set.add(new_node)
@@ -366,8 +393,12 @@ class TreeSearcher:
             selected_node = self.random_choice(sorted_children[:top_k])
 
         elif self.search_type == 'mcts':
-            sum_count = sum(child.N for child in node.children)
-            selected_node = max(node.children, key=lambda child: child.Q() + child.U(n=sum_count))
+            total_visit_count = sum(child.N for child in node.children)
+            # TODO: incorporate fragment counts into greedy search?
+            selected_node = max(
+                node.children,
+                key=partial(self.compute_mcts_score, total_visit_count=total_visit_count)
+            )
 
         else:
             raise ValueError(f'Search type "{self.search_type}" is not supported.')
