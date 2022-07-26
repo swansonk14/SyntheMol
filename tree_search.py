@@ -40,6 +40,9 @@ class Args(Tap):
     binarize_scoring:float = 0
     noise: bool = False
     noise_std: float = 0.1
+    rng_seed: float = 0
+
+
 
 class TreeNode:
     """A node in a tree search representing a step in the molecule construction process."""
@@ -458,7 +461,7 @@ def save_molecules(nodes: list[TreeNode],
     )
     data.to_csv(save_path, index=False)
 
-def gaussian_noise(score, mean, std):
+def gaussian_noise(score, std):
     noise = np.random.normal(0, std)
     score = score + noise
     return score
@@ -521,6 +524,8 @@ def create_model_scoring_fn(model_path: Path,
 
 def run_tree_search(args: Args) -> None:
     """Generate molecules combinatorially by performing a tree search."""
+    np.random.seed(args.rng_seed)
+    
     if args.synnet_rxn:
         reactions = REAL_REACTIONS + SYNNET_REACTIONS
     else:
