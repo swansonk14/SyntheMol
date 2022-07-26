@@ -37,11 +37,10 @@ class Args(Tap):
     model_type: Literal['rf', 'mlp', 'chemprop']  # Type of model to train. 'rf' = random forest. 'mlp' = multilayer perceptron.
     fingerprint_type: Literal['morgan', 'rdkit']  # Type of fingerprints to use as input features.
     synnet_rxn: bool = False  # Whether to include SynNet reactions in addition to REAL reactions.
-    binarize_scoring:float = 0
-    noise: bool = False
-    noise_std: float = 0.1
-    rng_seed: int = 0
-
+    binarize_scoring: float = 0  # If > 0, then molecule scores are binarized based on whether they are >= this threshold.
+    noise: bool = False  # Whether to add Gaussian noise to molecule scores.
+    noise_std: float = 0.1  # If noise is True, this is the standard deviation of the Gaussian noise added to molecule scores.
+    rng_seed: int = 0  # Seed for random number generators.
 
 
 class TreeNode:
@@ -138,7 +137,8 @@ class TreeSearcher:
                  n_rollout: int,
                  c_puct: float,
                  num_expand_nodes: int,
-                 reactions: list[Reaction]) -> None:
+                 reactions: list[Reaction],
+                 rng_seed: int) -> None:
         """Creates the TreeSearcher object.
 
         :param search_type: Type of search to perform.
@@ -150,6 +150,7 @@ class TreeSearcher:
         :param c_puct: The hyperparameter that encourages exploration.
         :param num_expand_nodes: The number of tree nodes to expand when extending the child nodes in the search tree.
         :param reactions: A list of chemical reactions that can be used to combine molecular fragments.
+        :param rng_seed: Seed for the random number generator.
         """
         self.search_type = search_type
         self.fragment_to_index = fragment_to_index
@@ -165,7 +166,7 @@ class TreeSearcher:
         self.c_puct = c_puct
         self.num_expand_nodes = num_expand_nodes
         self.reactions = reactions
-        self.rng = np.random.default_rng(seed=0)
+        self.rng = np.random.default_rng(seed=rng_seed)
 
         self.TreeNodeClass = partial(TreeNode, c_puct=c_puct, scoring_fn=scoring_fn)
         self.root = self.TreeNodeClass(node_id=1)
@@ -461,10 +462,13 @@ def save_molecules(nodes: list[TreeNode],
     )
     data.to_csv(save_path, index=False)
 
-def gaussian_noise(score, std):
+
+def gaussian_noise(score: float, std: float) -> float:
     noise = np.random.normal(0, std)
     score = score + noise
+
     return score
+
 
 def create_model_scoring_fn(model_path: Path,
                             model_type: str,
@@ -486,13 +490,13 @@ def create_model_scoring_fn(model_path: Path,
                 model_score = model(batch=[[smiles]], features_batch=[fingerprint]).item()
             else:
                 model_score = fragment_to_score[smiles]
+
             if binarize_scoring > 0:
-                if model_score >= binarize_scoring:
-                    return 1
-                else:
-                    return 0
+                model_score = int(model_score >= binarize_scoring)
+
             if noise:
-                model_score = gaussian_noise(score = model_score, std = noise_std) 
+                model_score = gaussian_noise(score=model_score, std=noise_std)
+
             return model_score
     else:
         with open(model_path, 'rb') as f:
@@ -510,13 +514,13 @@ def create_model_scoring_fn(model_path: Path,
                 model_score = model.predict_proba([fingerprint])[0, 1]
             else:
                 model_score = fragment_to_score[smiles]
+
             if binarize_scoring > 0:
-                if model_score >= binarize_scoring:
-                    return 1
-                else:
-                    return 0
+                model_score = int(model_score >= binarize_scoring)
+
             if noise:
-                model_score = gaussian_noise(score = model_score, std = noise_std) 
+                model_score = gaussian_noise(score=model_score, std=noise_std)
+
             return model_score
 
     return model_scoring_fn
@@ -560,9 +564,9 @@ def run_tree_search(args: Args) -> None:
         model_type=args.model_type,
         fingerprint_type=args.fingerprint_type,
         fragment_to_score=fragment_to_score,
-        binarize_scoring= args.binarize_scoring,
-        noise = args.noise,
-        noise_std = args.noise_std
+        binarize_scoring=args.binarize_scoring,
+        noise=args.noise,
+        noise_std=args.noise_std
     )
 
     # Define train similarity scoring function
@@ -590,7 +594,8 @@ def run_tree_search(args: Args) -> None:
         n_rollout=args.n_rollout,
         c_puct=args.c_puct,
         num_expand_nodes=args.num_expand_nodes,
-        reactions=reactions
+        reactions=reactions,
+        rng_seed=args.rng_seed
     )
 
     # Search for molecules
