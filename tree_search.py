@@ -38,6 +38,8 @@ class Args(Tap):
     fingerprint_type: Literal['morgan', 'rdkit']  # Type of fingerprints to use as input features.
     synnet_rxn: bool = False  # Whether to include SynNet reactions in addition to REAL reactions.
     binarize_scoring:float = 0
+    noise: bool = False
+    noise_std: float = 0.1
 
 class TreeNode:
     """A node in a tree search representing a step in the molecule construction process."""
@@ -456,12 +458,18 @@ def save_molecules(nodes: list[TreeNode],
     )
     data.to_csv(save_path, index=False)
 
+def gaussian_noise(score, mean, std):
+    noise = np.random.normal(0, std)
+    score = score + noise
+    return score
 
 def create_model_scoring_fn(model_path: Path,
                             model_type: str,
                             fingerprint_type: str,
                             fragment_to_score: dict[str, float],
-                            binarize_scoring: float) -> Callable[[str], float]:
+                            binarize_scoring: float,
+                            noise: bool,
+                            noise_std: float) -> Callable[[str], float]:
     """Creates a function that scores a molecule using a model."""
     # Load model and set up scoring function
     if model_type == 'chemprop':
@@ -480,6 +488,8 @@ def create_model_scoring_fn(model_path: Path,
                     return 1
                 else:
                     return 0
+            if noise:
+                model_score = gaussian_noise(score = model_score, std = noise_std) 
             return model_score
     else:
         with open(model_path, 'rb') as f:
@@ -502,6 +512,8 @@ def create_model_scoring_fn(model_path: Path,
                     return 1
                 else:
                     return 0
+            if noise:
+                model_score = gaussian_noise(score = model_score, std = noise_std) 
             return model_score
 
     return model_scoring_fn
@@ -543,7 +555,9 @@ def run_tree_search(args: Args) -> None:
         model_type=args.model_type,
         fingerprint_type=args.fingerprint_type,
         fragment_to_score=fragment_to_score,
-        binarize_scoring= args.binarize_scoring
+        binarize_scoring= args.binarize_scoring,
+        noise = args.noise,
+        noise_std = args.noise_std
     )
 
     # Define train similarity scoring function
