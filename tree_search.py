@@ -94,7 +94,6 @@ class TreeNode:
         """Value that encourages exploitation of nodes with high reward."""
         return self.W / self.N if self.N > 0 else 0.0
 
-    # TODO: is it okay to use math.sqrt(1 + n) or should it go back to math.sqrt(n)?
     def U(self, n: int) -> float:
         """Value that encourages exploration of nodes with few visits."""
         return self.c_puct * self.P * math.sqrt(1 + n) / (1 + self.N)
@@ -582,7 +581,7 @@ def run_tree_search(args: Args) -> None:
     @cache
     def scoring_fn(smiles: str) -> float:
         # TODO: compute diversity within generated molecules (note: will potentially break caching assumption)
-        return model_scoring_fn(smiles) - train_hits_similarity_scoring_fn(smiles)
+        return max(0, model_scoring_fn(smiles) - train_hits_similarity_scoring_fn(smiles) + 1)  # ensure non-negative score
 
     # Set up TreeSearcher
     tree_searcher = TreeSearcher(
