@@ -40,7 +40,7 @@ class Args(Tap):
     binarize_scoring:float = 0
     noise: bool = False
     noise_std: float = 0.1
-    rng_seed: float = 0
+    rng_seed: int = 0
 
 
 
