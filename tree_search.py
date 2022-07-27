@@ -42,6 +42,7 @@ class Args(Tap):
     noise: bool = False  # Whether to add Gaussian noise to molecule scores.
     noise_std: float = 0.1  # If noise is True, this is the standard deviation of the Gaussian noise added to molecule scores.
     rng_seed: int = 0  # Seed for random number generators.
+    fragment_diversity: bool = False  # Whether to encourage the use of diverse fragments by modifying the score.
 
 
 class TreeNode:
@@ -148,7 +149,8 @@ class TreeSearcher:
                  c_puct: float,
                  num_expand_nodes: int,
                  reactions: list[Reaction],
-                 rng_seed: int) -> None:
+                 rng_seed: int,
+                 fragment_diversity: bool) -> None:
         """Creates the TreeSearcher object.
 
         :param search_type: Type of search to perform.
@@ -161,6 +163,7 @@ class TreeSearcher:
         :param num_expand_nodes: The number of tree nodes to expand when extending the child nodes in the search tree.
         :param reactions: A list of chemical reactions that can be used to combine molecular fragments.
         :param rng_seed: Seed for the random number generator.
+        :param fragment_diversity: Whether to encourage the use of diverse fragments by modifying the score.
         """
         self.search_type = search_type
         self.fragment_to_index = fragment_to_index
@@ -177,6 +180,7 @@ class TreeSearcher:
         self.num_expand_nodes = num_expand_nodes
         self.reactions = reactions
         self.rng = np.random.default_rng(seed=rng_seed)
+        self.fragment_diversity = fragment_diversity
 
         self.TreeNodeClass = partial(TreeNode, c_puct=c_puct, scoring_fn=scoring_fn)
         self.root = self.TreeNodeClass(node_id=1)
@@ -329,7 +333,7 @@ class TreeSearcher:
         mcts_score = node.Q() + node.U(n=total_visit_count)
 
         # Reduce MCTS score when node includes a common fragment
-        if len(node.unique_reagents) > 0:
+        if self.fragment_diversity and len(node.unique_reagents) > 0:
             max_reagent_count = max(self.reagent_counts[reagent_id] for reagent_id in node.unique_reagents)
             mcts_score /= np.log(1 + max_reagent_count)
 
@@ -625,7 +629,8 @@ def run_tree_search(args: Args) -> None:
         c_puct=args.c_puct,
         num_expand_nodes=args.num_expand_nodes,
         reactions=reactions,
-        rng_seed=args.rng_seed
+        rng_seed=args.rng_seed,
+        fragment_diversity=args.fragment_diversity
     )
 
     # Search for molecules
