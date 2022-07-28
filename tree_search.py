@@ -4,7 +4,9 @@ import json
 import math
 import pickle
 from collections import Counter
+from datetime import datetime
 from functools import cache, cached_property, partial
+from inspect import getouterframes, currentframe  # TODO: remove this debugging
 from pathlib import Path
 from typing import Any, Callable, Literal, Optional
 
@@ -185,7 +187,7 @@ class TreeSearcher:
         self.root = self.TreeNodeClass(node_id=1)
         self.state_map: dict[TreeNode, TreeNode] = {self.root: self.root}
         self.reagent_counts = Counter()
-        self.max_level = 0
+        self.max_level = 0  # TODO: remove this debugging
 
     def random_choice(self, array: list[Any], size: Optional[int] = None, replace: bool = True) -> Any:
         if size is None:
@@ -336,11 +338,12 @@ class TreeSearcher:
 
         # Reduce MCTS score when node includes a common fragment
         if self.fragment_diversity and node.num_fragments > 0:
-            from inspect import getouterframes, currentframe
+            # TODO: remove this debugging
             level = len(getouterframes(currentframe()))
             if level > self.max_level:
                 self.max_level = level
-                print(f'Level = {level}')
+                print(f'Level = {level} at {datetime.now()}')
+
             max_reagent_count = max(self.reagent_counts[reagent_id] for reagent_id in node.unique_reagents)
             mcts_score /= np.exp((max_reagent_count - 1) / 100)  # -1 b/c every fragment appears once as its own node
 
@@ -438,6 +441,11 @@ class TreeSearcher:
         nodes = sorted(nodes, key=lambda node: node.P, reverse=True)
 
         return nodes
+
+    @property
+    def num_nodes(self) -> int:
+        """Gets the number of nodes in the search tree."""
+        return len(self.state_map)
 
 
 def save_molecules(nodes: list[TreeNode],
@@ -647,7 +655,11 @@ def run_tree_search(args: Args) -> None:
     )
 
     # Search for molecules
+    start_time = datetime.now()
     nodes = tree_searcher.search()
+    print(f'MCTS time = {datetime.now() - start_time}')
+    print(f'Total number of nodes searched = {tree_searcher.num_nodes:,}')
+    print(f'Number of full molecule, nonzero reaction nodes = {len(nodes):,}')
 
     # Save generated molecules
     save_molecules(
