@@ -350,7 +350,7 @@ python map_fragments_to_model_scores.py \
 python map_fragments_to_train_similarities.py \
     --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     --train_hits_path ../data/Screening_data/AB_combined_hits.csv \
-    --save_path ../ckpt/AB_combined_RF_rdkit_fragments_to_train_similarities.json
+    --save_path ../data/AB_combined_fragments_to_train_similarities.json
 ```
 
 
@@ -361,7 +361,7 @@ python tree_search.py \
     --model_path ../ckpt/AB_combined_RF_rdkit.pkl \
     --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     --fragment_to_model_score_path ../ckpt/AB_combined_RF_rdkit_fragments_to_model_scores.json \
-    --fragment_to_train_similarity_path ../ckpt/AB_combined_RF_rdkit_fragments_to_train_similarities.json \
+    --fragment_to_train_similarity_path ../data/AB_combined_fragments_to_train_similarities.json \
     --reagent_to_fragments_path ../data/reagents_to_fragments.json \
     --train_hits_path ../data/Screening_data/AB_combined_hits.csv \
     --save_path ../generations/tree_search/mcts.csv \
