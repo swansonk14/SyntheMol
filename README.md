@@ -335,15 +335,22 @@ python train_model.py \
 ```
 
 
-## Map fragments to prediction scores
+## Map fragments to model scores and train similarites
 
 ```
-python map_fragments_to_scores.py \
+python map_fragments_to_model_scores.py \
     --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     --model_path ../ckpt/AB_combined_RF_rdkit.pkl \
-    --save_path ../ckpt/AB_combined_RF_rdkit_fragments_to_scores.json \
+    --save_path ../ckpt/AB_combined_RF_rdkit_fragments_to_model_scores.json \
     --model_type rf \
     --fingerprint_type rdkit
+```
+
+```
+python map_fragments_to_train_similarities.py \
+    --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
+    --train_hits_path ../data/Screening_data/AB_combined_hits.csv \
+    --save_path ../ckpt/AB_combined_RF_rdkit_fragments_to_train_similarities.json
 ```
 
 
@@ -353,7 +360,8 @@ python map_fragments_to_scores.py \
 python tree_search.py \
     --model_path ../ckpt/AB_combined_RF_rdkit.pkl \
     --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
-    --fragment_to_score_path ../ckpt/AB_combined_RF_rdkit_fragments_to_scores.json \
+    --fragment_to_model_score_path ../ckpt/AB_combined_RF_rdkit_fragments_to_model_scores.json \
+    --fragment_to_train_similarity_path ../ckpt/AB_combined_RF_rdkit_fragments_to_train_similarities.json \
     --reagent_to_fragments_path ../data/reagents_to_fragments.json \
     --train_hits_path ../data/Screening_data/AB_combined_hits.csv \
     --save_path ../generations/tree_search/mcts.csv \

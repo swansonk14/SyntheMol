@@ -25,7 +25,8 @@ from real_reactions import Reaction, REAL_REACTIONS, SYNNET_REACTIONS
 class Args(Tap):
     model_path: Path  # Path to PKL file containing a RandomForestClassifier trained on Morgan fingerprints.
     fragment_path: Path  # Path to CSV file containing molecular building blocks.
-    fragment_to_score_path: Path  # Path to JSON file containing a dictionary mapping fragments to prediction scores.
+    fragment_to_model_score_path: Path  # Path to JSON file containing a dictionary mapping fragments to model prediction scores.
+    fragment_to_train_similarity_path: Path  # Path to JSON file containing a dictionary mapping fragments to train similarities.
     reagent_to_fragments_path: Path  # Path to JSON file containing a dictionary mapping from reagents to fragments.
     train_hits_path: Path  # Path to CSV file containing SMILES for the active molecules in the training set.
     save_path: Path  # Path to CSV file where generated molecules will be saved.
@@ -184,6 +185,7 @@ class TreeSearcher:
         self.root = self.TreeNodeClass(node_id=1)
         self.state_map: dict[TreeNode, TreeNode] = {self.root: self.root}
         self.reagent_counts = Counter()
+        self.max_level = 0
 
     def random_choice(self, array: list[Any], size: Optional[int] = None, replace: bool = True) -> Any:
         if size is None:
@@ -334,6 +336,11 @@ class TreeSearcher:
 
         # Reduce MCTS score when node includes a common fragment
         if self.fragment_diversity and node.num_fragments > 0:
+            from inspect import getouterframes, currentframe
+            level = len(getouterframes(currentframe()))
+            if level > self.max_level:
+                self.max_level = level
+                print(f'Level = {level}')
             max_reagent_count = max(self.reagent_counts[reagent_id] for reagent_id in node.unique_reagents)
             mcts_score /= np.exp((max_reagent_count - 1) / 100)  # -1 b/c every fragment appears once as its own node
 
@@ -507,7 +514,7 @@ def gaussian_noise(score: float, std: float) -> float:
 def create_model_scoring_fn(model_path: Path,
                             model_type: str,
                             fingerprint_type: str,
-                            fragment_to_score: dict[str, float],
+                            fragment_to_model_score: dict[str, float],
                             binarize_scoring: float,
                             noise: bool,
                             noise_std: float) -> Callable[[str], float]:
@@ -519,11 +526,11 @@ def create_model_scoring_fn(model_path: Path,
 
         @cache
         def model_scoring_fn(smiles: str) -> float:
-            if smiles not in fragment_to_score:
+            if smiles not in fragment_to_model_score:
                 fingerprint = compute_fingerprint(smiles, fingerprint_type=fingerprint_type)
                 model_score = model(batch=[[smiles]], features_batch=[fingerprint]).item()
             else:
-                model_score = fragment_to_score[smiles]
+                model_score = fragment_to_model_score[smiles]
 
             if binarize_scoring > 0:
                 model_score = int(model_score >= binarize_scoring)
@@ -543,11 +550,11 @@ def create_model_scoring_fn(model_path: Path,
 
         @cache
         def model_scoring_fn(smiles: str) -> float:
-            if smiles not in fragment_to_score:
+            if smiles not in fragment_to_model_score:
                 fingerprint = compute_fingerprint(smiles, fingerprint_type=fingerprint_type)
                 model_score = model.predict_proba([fingerprint])[0, 1]
             else:
-                model_score = fragment_to_score[smiles]
+                model_score = fragment_to_model_score[smiles]
 
             if binarize_scoring > 0:
                 model_score = int(model_score >= binarize_scoring)
@@ -579,9 +586,13 @@ def run_tree_search(args: Args) -> None:
         if fragment not in fragment_to_index:
             fragment_to_index[fragment] = index
 
-    # Load mapping from SMILES to scores
-    with open(args.fragment_to_score_path) as f:
-        fragment_to_score: dict[str, float] = json.load(f)
+    # Load mapping from SMILES to model scores
+    with open(args.fragment_to_model_score_path) as f:
+        fragment_to_model_score: dict[str, float] = json.load(f)
+
+    # Load mapping from SMILES to train similarity
+    with open(args.fragment_to_train_similarity_path) as f:
+        fragment_to_train_similarity: dict[str, float] = json.load(f)
 
     # Load mapping from reagents to fragments
     with open(args.reagent_to_fragments_path) as f:
@@ -597,7 +608,7 @@ def run_tree_search(args: Args) -> None:
         model_path=args.model_path,
         model_type=args.model_type,
         fingerprint_type=args.fingerprint_type,
-        fragment_to_score=fragment_to_score,
+        fragment_to_model_score=fragment_to_model_score,
         binarize_scoring=args.binarize_scoring,
         noise=args.noise,
         noise_std=args.noise_std
@@ -606,9 +617,11 @@ def run_tree_search(args: Args) -> None:
     # Define train similarity scoring function
     @cache
     def train_hits_similarity_scoring_fn(smiles: str) -> float:
-        # TODO: precompute this for fragments
-        morgan_fingerprint = compute_fingerprint(smiles, fingerprint_type='morgan')
-        train_hits_similarity_score = np.max(morgan_fingerprint @ train_hits_tversky)
+        if smiles not in fragment_to_train_similarity:
+            morgan_fingerprint = compute_fingerprint(smiles, fingerprint_type='morgan')
+            train_hits_similarity_score = np.max(morgan_fingerprint @ train_hits_tversky)
+        else:
+            train_hits_similarity_score = fragment_to_train_similarity[smiles]
 
         return train_hits_similarity_score
 

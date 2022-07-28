@@ -1,4 +1,4 @@
-"""Map fragments to prediction scores."""
+"""Map fragments to model prediction scores."""
 import json
 import pickle
 from pathlib import Path
@@ -20,7 +20,7 @@ from chemprop.utils import load_checkpoint
 class Args(Tap):
     fragment_path: Path  # Path to a CSV file containing fragments.
     model_path: Path  # Path to a PKL or PT file containing a trained model.
-    save_path: Path  # Path to a JSON file where a dictionary mapping fragments to scores will be saved.
+    save_path: Path  # Path to a JSON file where a dictionary mapping fragments to model scores will be saved.
     smiles_column: str = 'smiles'  # Name of the column containing SMILES.
     model_type: Literal['rf', 'mlp', 'chemprop']  # Type of model to train. 'rf' = random forest. 'mlp' = multilayer perceptron.
     fingerprint_type: Literal['morgan', 'rdkit']  # Type of fingerprints to use as input features.
@@ -92,26 +92,27 @@ def map_fragments_to_scores(args: Args) -> None:
     # Compute fingerprints
     fingerprints = compute_fingerprints(fragments, fingerprint_type=args.fingerprint_type)
 
-    # Map fragments to predictions
+    # Map fragments to model scores
     start_time = time()
     if args.model_type == 'chemprop':
-        fragment_to_score = map_fragments_to_scores_chemprop(
+        fragment_to_model_score = map_fragments_to_scores_chemprop(
             fragments=fragments,
             fingerprints=fingerprints,
             model_path=args.model_path
         )
     else:
-        fragment_to_score = map_fragments_to_scores_sklearn(
+        fragment_to_model_score = map_fragments_to_scores_sklearn(
             fragments=fragments,
             fingerprints=fingerprints,
             model_path=args.model_path,
             model_type=args.model_type
         )
-    print(f'Total time to map fragments for {args.model_type} using {args.fingerprint_type} = {time() - start_time:.2f}')
+    print(f'Total time to map fragments to scores for {args.model_type} '
+          f'using {args.fingerprint_type} = {time() - start_time:.2f}')
 
-    # Save data
+    # Save fragment to model score mapping
     with open(args.save_path, 'w') as f:
-        json.dump(fragment_to_score, f, indent=4, sort_keys=True)
+        json.dump(fragment_to_model_score, f, indent=4, sort_keys=True)
 
 
 if __name__ == '__main__':
