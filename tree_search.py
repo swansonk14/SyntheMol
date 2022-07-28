@@ -53,6 +53,7 @@ class TreeNode:
                  scoring_fn: Callable[[str], float],
                  node_id: Optional[int] = None,
                  fragments: Optional[tuple[str]] = None,
+                 reagent_counts: Optional[Counter] = None,
                  construction_log: Optional[tuple[dict[str, Any]]] = None) -> None:
         """Initializes the TreeNode object.
 
@@ -62,16 +63,18 @@ class TreeNode:
         :param fragments: A tuple of SMILES containing the fragments for the next reaction.
                          The first element is the currently constructed molecule while the remaining elements
                          are the fragments that are about to be added.
+        :param reagent_counts: A Counter mapping reagent indices to the number of times they appear in this node.
         :param construction_log: A tuple of dictionaries containing information about each reaction.
         """
         self.c_puct = c_puct
         self.scoring_fn = scoring_fn
         self.node_id = node_id
         self.fragments = fragments if fragments is not None else tuple()
+        self.reagent_counts = reagent_counts if reagent_counts is not None else Counter()
         self.construction_log = construction_log if construction_log is not None else tuple()
         # TODO: maybe change sum (really mean) to max since we don't care about finding the best leaf node, just the best node along the way?
         self.W = 0.0  # The sum of the leaf node values for leaf nodes that descend from this node.
-        self.N = 0  # The number of leaf nodes that have been visited from this node.
+        self.N = 0  # The number of times this node has been expanded.
         self.children: list[TreeNode] = []
 
     @classmethod
@@ -119,12 +122,7 @@ class TreeNode:
     @cached_property
     def unique_reagents(self) -> set[int]:
         """A set of unique reagents in this node. (Note: The value is cached, so it assumes the node is immutable.)"""
-        return {
-            reagent_id
-            for reaction_log in self.construction_log
-            for reagent_id in reaction_log['reagent_ids']
-            if reagent_id != -1
-        }
+        return set(self.reagent_counts)
 
     def __hash__(self) -> int:
         return hash(self.fragments)
@@ -147,7 +145,7 @@ class TreeSearcher:
                  scoring_fn: Callable[[str], float],
                  n_rollout: int,
                  c_puct: float,
-                 num_expand_nodes: int,
+                 num_expand_nodes: Optional[int],
                  reactions: list[Reaction],
                  rng_seed: int,
                  fragment_diversity: bool) -> None:
@@ -296,6 +294,7 @@ class TreeSearcher:
             product_nodes += [
                 self.TreeNodeClass(
                     fragments=(product,),
+                    reagent_counts=node.reagent_counts,
                     construction_log=node.construction_log + (reaction_log,)
                 )
                 for product in products
@@ -321,6 +320,7 @@ class TreeSearcher:
         new_nodes += [
             self.TreeNodeClass(
                 fragments=node.fragments + (next_fragment,),
+                reagent_counts=node.reagent_counts + Counter({self.fragment_to_index[next_fragment]: 1}),
                 construction_log=node.construction_log
             )
             for next_fragment in next_fragments
@@ -333,9 +333,9 @@ class TreeSearcher:
         mcts_score = node.Q() + node.U(n=total_visit_count)
 
         # Reduce MCTS score when node includes a common fragment
-        if self.fragment_diversity and len(node.unique_reagents) > 0:
+        if self.fragment_diversity and node.num_fragments > 0:
             max_reagent_count = max(self.reagent_counts[reagent_id] for reagent_id in node.unique_reagents)
-            mcts_score /= np.log(1 + max_reagent_count)
+            mcts_score /= np.exp((max_reagent_count - 1) / 100)  # -1 b/c every fragment appears once as its own node
 
         return mcts_score
 
@@ -417,15 +417,15 @@ class TreeSearcher:
     def search(self) -> list[TreeNode]:
         """Runs the tree search, returning a list of TreeNode objects sorted from highest to lowest reward.
 
-        NOTE: Only returns nodes with exactly one fragment, i.e., complete molecules.
+        NOTE: Only returns nodes with exactly one fragment, i.e., complete molecules, and at least one reaction.
 
         :return: A list of TreeNode objects sorted from highest to lowest reward.
         """
         for _ in trange(self.n_rollout):
             self.rollout(node=self.root)
 
-        # Get all the nodes representing fully constructed molecules
-        nodes = [node for _, node in self.state_map.items() if node.num_fragments == 1]
+        # Get all the nodes representing fully constructed molecules that are not initial building blocks
+        nodes = [node for _, node in self.state_map.items() if node.num_fragments == 1 and node.num_reactions > 0]
 
         # Sort by highest reward and break ties by preferring less unmasked results
         nodes = sorted(nodes, key=lambda node: node.P, reverse=True)
@@ -467,7 +467,7 @@ def save_molecules(nodes: list[TreeNode],
         construction_dicts.append(construction_dict)
 
     # Specify column order for CSV file
-    columns = ['smiles', 'node_id', 'num_visits', 'score', 'model_score',
+    columns = ['smiles', 'node_id', 'num_expansions', 'score', 'model_score',
                'train_hits_similarity_score', 'Q_value', 'num_reactions']
 
     for reaction_num in range(1, max_reaction_num + 1):
@@ -483,7 +483,7 @@ def save_molecules(nodes: list[TreeNode],
             {
                 'smiles': node.fragments[0],
                 'node_id': node.node_id,
-                'num_visits': node.N,
+                'num_expansions': node.N,
                 'score': node.P,
                 'model_score': model_scoring_fn(node.fragments[0]),
                 'train_hits_similarity_score': train_hits_similarity_scoring_fn(node.fragments[0]),
