@@ -341,10 +341,7 @@ class TreeSearcher:
                 max_reagent_count = max(self.reagent_counts[reagent_id] for reagent_id in node.unique_reagents)
             except RecursionError as e:
                 print(e)
-                from inspect import getouterframes, currentframe
-                frames = getouterframes(currentframe())
-                print(frames)
-                print(f'Level = {len(frames)}')
+                print(node.fragments)
                 print(f'Size of reagent_counts = {len(self.reagent_counts)}')
                 print(f'Number of unique reagents = {len(node.unique_reagents)}')
                 print(f'Size of search tree = {len(self.state_map)}')
