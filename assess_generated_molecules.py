@@ -74,8 +74,7 @@ def assess_generated_molecules(args: Args) -> None:
         plt.xlabel(score_type.title())
         plt.ylabel('Count')
         plt.title('Score Distribution')
-        plt.tight_layout()
-        plt.savefig(args.save_dir / f'{score_type}.pdf')
+        plt.savefig(args.save_dir / f'{score_type}.pdf', bbox_inches='tight')
 
     # Assess diversity within generated molecules
     for similarity_type in SIMILARITY_TYPES:
@@ -96,8 +95,7 @@ def assess_generated_molecules(args: Args) -> None:
         plt.xlabel(f'Maximum {similarity_type.title()} Similarity between Generated Molecules')
         plt.ylabel('Count')
         plt.title(f'Generated Maximum {similarity_type.title()} Similarity Distribution')
-        plt.tight_layout()
-        plt.savefig(args.save_dir / f'generated_diversity_{similarity_type}.pdf')
+        plt.savefig(args.save_dir / f'generated_diversity_{similarity_type}.pdf', bbox_inches='tight')
 
     # Compare to train hits
     if args.train_hits_path is not None:
@@ -124,8 +122,7 @@ def assess_generated_molecules(args: Args) -> None:
             plt.xlabel(f'Maximum {similarity_type.title()} Similarity from Generated to Train Molecules')
             plt.ylabel('Count')
             plt.title(f'Train Maximum {similarity_type.title()} Similarity Distribution')
-            plt.tight_layout()
-            plt.savefig(args.save_dir / f'train_diversity_{similarity_type}.pdf')
+            plt.savefig(args.save_dir / f'train_diversity_{similarity_type}.pdf', bbox_inches='tight')
 
         # Assess novelty
         results['novelty'] = compute_novelty(smiles=smiles, reference_smiles=train_hits_smiles)
@@ -142,7 +139,7 @@ def assess_generated_molecules(args: Args) -> None:
     plt.xlabel('Number of Reactions')
     plt.ylabel('Count')
     plt.title('Number of Reactions')
-    plt.savefig(args.save_dir / 'reaction_counts.pdf')
+    plt.savefig(args.save_dir / 'reaction_numbers.pdf', bbox_inches='tight')
 
     # Usage of fragments (unique fragments per molecule)
     reagent_columns = [column for column in data.columns if column.startswith('reagent_') and column.endswith('_id')]
@@ -151,16 +148,41 @@ def assess_generated_molecules(args: Args) -> None:
         reagent
         for _, reagent_row in reagent_data.iterrows()
         for reagent in {int(reagent) for reagent in reagent_row.dropna()}
+        if reagent != -1
     )
 
-    fragment_counts = sorted(fragment_counter.values(), reverse=True)
+    fragments_with_counts = fragment_counter.most_common()
+    fragments, fragment_counts = zip(*fragments_with_counts)
 
     plt.clf()
     plt.scatter(np.arange(len(fragment_counts)), fragment_counts)
+
+    for i, (fragment, count) in enumerate(fragments_with_counts[:3]):
+        plt.annotate(str(fragment), (i, count))
+
     plt.xlabel('Sorted Fragment Index')
     plt.ylabel('Count (# molecules containing the fragment)')
     plt.title('Fragment Counts')
-    plt.savefig(args.save_dir / 'fragment_counts.pdf')
+    plt.savefig(args.save_dir / 'fragment_counts.pdf', bbox_inches='tight')
+
+    # Usage of reactions (unique reactions per molecules)
+    reaction_columns = [column for column in data.columns if column.startswith('reaction_') and column.endswith('_id')]
+    reaction_data = data[reaction_columns]
+    reaction_counter = Counter(
+        reaction
+        for _, reaction_row in reaction_data.iterrows()
+        for reaction in {int(reaction) for reaction in reaction_row.dropna()}
+    )
+
+    reactions = sorted(reaction_counter)
+    reaction_counts = [reaction_counter[reaction] for reaction in reactions]
+
+    plt.clf()
+    plt.bar(reactions, reaction_counts)
+    plt.xlabel('Reaction')
+    plt.ylabel('Count (# molecules containing the reaction)')
+    plt.title('Reaction Counts')
+    plt.savefig(args.save_dir / 'reaction_counts.pdf', bbox_inches='tight')
 
     # Save data
     evaluation = pd.DataFrame(data=[results])
