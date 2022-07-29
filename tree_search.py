@@ -336,22 +336,13 @@ class TreeSearcher:
 
         # Reduce MCTS score when node includes a common fragment
         if self.fragment_diversity and node.num_fragments > 0:
-            # TODO: remove this debugging
-            try:
-                max_reagent_count = max(self.reagent_counts[reagent_id] for reagent_id in node.unique_reagents)
-            except RecursionError as e:
-                print(e)
-                print(node.fragments)
-                print(f'Size of reagent_counts = {len(self.reagent_counts)}')
-                print(f'Number of unique reagents = {len(node.unique_reagents)}')
-                print(f'Size of search tree = {len(self.state_map)}')
-                exit()
-
+            max_reagent_count = max(self.reagent_counts[reagent_id] for reagent_id in node.unique_reagents)
             mcts_score /= np.exp((max_reagent_count - 1) / 100)  # -1 b/c every fragment appears once as its own node
 
         return mcts_score
 
-    def rollout(self, node: TreeNode) -> float:
+    # TODO: remove level debugging
+    def rollout(self, node: TreeNode, level: int) -> float:
         """Performs a Monte Carlo Tree Search rollout.
 
         :param node: An TreeNode representing the root of the MCTS search.
@@ -360,6 +351,19 @@ class TreeSearcher:
         # Stop the search if we've reached the maximum number of reactions
         if node.num_reactions >= self.max_reactions:
             return node.P
+
+        if level > 25:
+            print(f'Level = {level}')
+            print('Node fragments')
+            print(node.fragments)
+            print('Node reagent counts')
+            print(node.reagent_counts)
+            print(f'Number of unique reagents = {len(node.unique_reagents)}')
+            print('Construction log')
+            print(node.construction_log)
+            print(f'Size of reagent_counts = {len(self.reagent_counts)}')
+            print(f'Size of search tree = {len(self.state_map)}')
+            exit()
 
         # TODO: prevent exploration of a subtree that has been fully explored
         # Expand if this node has never been visited
@@ -420,7 +424,7 @@ class TreeSearcher:
             raise ValueError(f'Search type "{self.search_type}" is not supported.')
 
         # Unroll the child node
-        v = self.rollout(node=selected_node)
+        v = self.rollout(node=selected_node, level=level + 1)
         selected_node.W += v
         selected_node.N += 1
 
@@ -434,7 +438,7 @@ class TreeSearcher:
         :return: A list of TreeNode objects sorted from highest to lowest reward.
         """
         for _ in trange(self.n_rollout):
-            self.rollout(node=self.root)
+            self.rollout(node=self.root, level=1)
 
         # Get all the nodes representing fully constructed molecules that are not initial building blocks
         nodes = [node for _, node in self.state_map.items() if node.num_fragments == 1 and node.num_reactions > 0]
