@@ -41,8 +41,8 @@ class Args(Tap):
     fingerprint_type: Literal['morgan', 'rdkit']  # Type of fingerprints to use as input features.
     synnet_rxn: bool = False  # Whether to include SynNet reactions in addition to REAL reactions.
     binarize_scoring: float = 0  # If > 0, then molecule scores are binarized based on whether they are >= this threshold.
-    noise: bool = False  # Whether to add Gaussian noise to molecule scores.
-    noise_std: float = 0.1  # If noise is True, this is the standard deviation of the Gaussian noise added to molecule scores.
+    noise: bool = False  # Whether to add uniformly random noise to molecule scores.
+    noise_limit: float = 0.2  # If noise is True, this is the maximum noise added to molecule scores.
     rng_seed: int = 0  # Seed for random number generators.
     fragment_diversity: bool = False  # Whether to encourage the use of diverse fragments by modifying the score.
 
@@ -514,41 +514,19 @@ def save_molecules(nodes: list[TreeNode],
     data.to_csv(save_path, index=False)
 
 
-def gaussian_noise(score: float, std: float) -> float:
-    noise = np.random.normal(0, std)
-    score = score + noise
-
-    return score
-
-
 def create_model_scoring_fn(model_path: Path,
                             model_type: str,
                             fingerprint_type: str,
                             fragment_to_model_score: dict[str, float],
-                            binarize_scoring: float,
-                            noise: bool,
-                            noise_std: float) -> Callable[[str], float]:
+                            binarize_scoring: float) -> Callable[[str], float]:
     """Creates a function that scores a molecule using a model."""
     # Load model and set up scoring function
     if model_type == 'chemprop':
         model: MoleculeModel = load_checkpoint(path=model_path)
         model.eval()
 
-        @cache
-        def model_scoring_fn(smiles: str) -> float:
-            if smiles not in fragment_to_model_score:
-                fingerprint = compute_fingerprint(smiles, fingerprint_type=fingerprint_type)
-                model_score = model(batch=[[smiles]], features_batch=[fingerprint]).item()
-            else:
-                model_score = fragment_to_model_score[smiles]
-
-            if binarize_scoring > 0:
-                model_score = int(model_score >= binarize_scoring)
-
-            if noise:
-                model_score = gaussian_noise(score=model_score, std=noise_std)
-
-            return model_score
+        def model_scorer(smiles: str, fingerprint: np.ndarray) -> float:
+            return model(batch=[[smiles]], features_batch=[fingerprint]).item()
     else:
         with open(model_path, 'rb') as f:
             if model_type == 'rf':
@@ -558,29 +536,27 @@ def create_model_scoring_fn(model_path: Path,
             else:
                 raise ValueError(f'Model type "{model_type}" is not supported.')
 
-        @cache
-        def model_scoring_fn(smiles: str) -> float:
-            if smiles not in fragment_to_model_score:
-                fingerprint = compute_fingerprint(smiles, fingerprint_type=fingerprint_type)
-                model_score = model.predict_proba([fingerprint])[0, 1]
-            else:
-                model_score = fragment_to_model_score[smiles]
+        def model_scorer(smiles: str, fingerprint: np.ndarray) -> float:
+            return model.predict_proba([fingerprint])[0, 1]
 
-            if binarize_scoring > 0:
-                model_score = int(model_score >= binarize_scoring)
+    @cache
+    def model_scoring_fn(smiles: str) -> float:
+        if smiles not in fragment_to_model_score:
+            fingerprint = compute_fingerprint(smiles, fingerprint_type=fingerprint_type)
+            model_score = model_scorer(smiles=smiles, fingerprint=fingerprint)
+        else:
+            model_score = fragment_to_model_score[smiles]
 
-            if noise:
-                model_score = gaussian_noise(score=model_score, std=noise_std)
+        if binarize_scoring > 0:
+            model_score = int(model_score >= binarize_scoring)
 
-            return model_score
+        return model_score
 
     return model_scoring_fn
 
 
 def run_tree_search(args: Args) -> None:
     """Generate molecules combinatorially by performing a tree search."""
-    np.random.seed(args.rng_seed)
-    
     if args.synnet_rxn:
         reactions = REAL_REACTIONS + SYNNET_REACTIONS
     else:
@@ -619,9 +595,7 @@ def run_tree_search(args: Args) -> None:
         model_type=args.model_type,
         fingerprint_type=args.fingerprint_type,
         fragment_to_model_score=fragment_to_model_score,
-        binarize_scoring=args.binarize_scoring,
-        noise=args.noise,
-        noise_std=args.noise_std
+        binarize_scoring=args.binarize_scoring
     )
 
     # Define train similarity scoring function
@@ -638,8 +612,13 @@ def run_tree_search(args: Args) -> None:
     # Define scoring function
     @cache
     def scoring_fn(smiles: str) -> float:
-        # TODO: compute diversity within generated molecules (note: will potentially break caching assumption)
         return max(0, model_scoring_fn(smiles) - train_hits_similarity_scoring_fn(smiles) + 1)  # ensure non-negative score
+
+    # Define noisy scoring function
+    rng = np.random.default_rng(seed=args.rng_seed)
+
+    def noisy_scoring_fn(smiles: str) -> float:
+        return scoring_fn(smiles) + rng.uniform(0, args.noise_limit)
 
     # Set up TreeSearcher
     tree_searcher = TreeSearcher(
@@ -647,7 +626,7 @@ def run_tree_search(args: Args) -> None:
         fragment_to_index=fragment_to_index,
         reagent_to_fragments=reagent_to_fragments,
         max_reactions=args.max_reactions,
-        scoring_fn=scoring_fn,
+        scoring_fn=noisy_scoring_fn if args.noise else scoring_fn,
         n_rollout=args.n_rollout,
         c_puct=args.c_puct,
         num_expand_nodes=args.num_expand_nodes,
