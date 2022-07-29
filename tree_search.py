@@ -6,7 +6,6 @@ import pickle
 from collections import Counter
 from datetime import datetime
 from functools import cache, cached_property, partial
-from inspect import getouterframes, currentframe  # TODO: remove this debugging
 from pathlib import Path
 from typing import Any, Callable, Literal, Optional
 
@@ -187,7 +186,6 @@ class TreeSearcher:
         self.root = self.TreeNodeClass(node_id=1)
         self.state_map: dict[TreeNode, TreeNode] = {self.root: self.root}
         self.reagent_counts = Counter()
-        self.max_level = 0  # TODO: remove this debugging
 
     def random_choice(self, array: list[Any], size: Optional[int] = None, replace: bool = True) -> Any:
         if size is None:
@@ -339,12 +337,19 @@ class TreeSearcher:
         # Reduce MCTS score when node includes a common fragment
         if self.fragment_diversity and node.num_fragments > 0:
             # TODO: remove this debugging
-            level = len(getouterframes(currentframe()))
-            if level > self.max_level:
-                self.max_level = level
-                print(f'Level = {level} at {datetime.now()}')
+            try:
+                max_reagent_count = max(self.reagent_counts[reagent_id] for reagent_id in node.unique_reagents)
+            except RecursionError as e:
+                print(e)
+                from inspect import getouterframes, currentframe
+                frames = getouterframes(currentframe())
+                print(frames)
+                print(f'Level = {len(frames)}')
+                print(f'Size of reagent_counts = {len(self.reagent_counts)}')
+                print(f'Number of unique reagents = {len(node.unique_reagents)}')
+                print(f'Size of search tree = {len(self.state_map)}')
+                exit()
 
-            max_reagent_count = max(self.reagent_counts[reagent_id] for reagent_id in node.unique_reagents)
             mcts_score /= np.exp((max_reagent_count - 1) / 100)  # -1 b/c every fragment appears once as its own node
 
         return mcts_score
