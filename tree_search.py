@@ -354,15 +354,12 @@ class TreeSearcher:
 
         if level > 25:
             print(f'Level = {level}')
-            print('Node fragments')
-            print(node.fragments)
-            print('Node reagent counts')
-            print(node.reagent_counts)
+            print(f'Node fragments: {node.fragments}')
+            print(f'Node reagent counts: {node.reagent_counts}')
             print(f'Number of unique reagents = {len(node.unique_reagents)}')
-            print('Construction log')
-            print(node.construction_log)
-            print(f'Size of reagent_counts = {len(self.reagent_counts)}')
-            print(f'Size of search tree = {len(self.state_map)}')
+            print(f'Construction log: {node.construction_log}')
+            print()
+        if level > 50:
             exit()
 
         # TODO: prevent exploration of a subtree that has been fully explored
