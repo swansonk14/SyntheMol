@@ -46,8 +46,8 @@ The 11 CXSMILES files contain 4,492,114,676 molecules and 170 chemical reactions
 Convert the building blocks from SDF to (unique) SMILES using the `sdf_to_smiles.py` script from [chem_utils](https://github.com/swansonk14/chem_utils).
 ```
 python sdf_to_smiles.py \
-    --data_path ../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SDF.sdf \
-    --save_path ../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SMILES.csv \
+    --data_path ../../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SDF.sdf \
+    --save_path ../../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SMILES.csv \
     --properties Reagent_ID Catalog_ID
 ```
 
@@ -60,10 +60,13 @@ Note: This seems to be because the SMILES are not capturing any stereochemistry 
 Remove the salts from the building blocks using the `canonicalize_smiles.py` script from [chem_utils](https://github.com/swansonk14/chem_utils). This will also canonicalize the SMILES using RDKit's canonicalization method.
 ```
 python canonicalize_smiles.py \
-    --data_path ../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SMILES.csv \
-    --save_path ../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
-    --remove_salts
+    --data_path ../../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SMILES.csv \
+    --save_path ../../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
+    --remove_salts \
+    --delete_disconnected_mols
 ```
+
+NOTE: This step is crucial to prevent errors in running reactions. Salts can cause reactions to create products that are the same as the reactants, leading to undesired infinite loops.
 
 
 ## Plot regression values
@@ -288,8 +291,8 @@ rm screening_collection.zip
 Convert SDF to SMILES. (Command from [chem_utils](https://github.com/swansonk14/chem_utils).)
 ```
 python sdf_to_smiles.py \
-    --data_path ../combinatorial_antibiotics/data/screening_collection.sdf \
-    --save_path ../combinatorial_antibiotics/data/screening_collection.csv \
+    --data_path ../../combinatorial_antibiotics/data/screening_collection.sdf \
+    --save_path ../../combinatorial_antibiotics/data/screening_collection.csv \
     --properties idnumber
 ```
 
@@ -298,8 +301,8 @@ python sdf_to_smiles.py \
 Cluster molecules. (Command from [chem_utils](https://github.com/swansonk14/chem_utils).)
 ```
 python cluster_molecules.py \
-    --data_path ../combinatorial_antibiotics/data/screening_collection.csv \
-    --save_path ../combinatorial_antibiotics/data/screening_collection_clustered.csv \
+    --data_path ../../combinatorial_antibiotics/data/screening_collection.csv \
+    --save_path ../../combinatorial_antibiotics/data/screening_collection_clustered.csv \
     --num_clusters 5000 \
     --mini_batch
 ```
@@ -307,8 +310,8 @@ python cluster_molecules.py \
 Randomly select a molecule from each cluster. (Command from [chem_utils](https://github.com/swansonk14/chem_utils).)
 ```
 python sample_molecules.py \
-    --data_path ../combinatorial_antibiotics/data/screening_collection_clustered.csv \
-    --save_path ../combinatorial_antibiotics/data/screening_collection_clustered_sampled.csv \
+    --data_path ../../combinatorial_antibiotics/data/screening_collection_clustered.csv \
+    --save_path ../../combinatorial_antibiotics/data/screening_collection_clustered_sampled.csv \
     --num_molecules 1 \
     --cluster_column cluster_label
 ```
@@ -335,7 +338,7 @@ python train_model.py \
 ```
 
 
-## Map fragments to model scores and train similarites
+## Map fragments to model scores and train similarities
 
 ```
 python map_fragments_to_model_scores.py \
@@ -394,8 +397,8 @@ Compute nearest neighbor Tanimoto distance to train set. (Command from [chem_uti
 
 ```
 python nearest_neighbor_tanimoto.py \
-    --data_path ../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules.csv \
-    --reference_data_path ../combinatorial_antibiotics/data/Screening_data/AB_combined_hits.csv \
+    --data_path ../../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules.csv \
+    --reference_data_path ../../combinatorial_antibiotics/data/Screening_data/AB_combined_hits.csv \
     --reference_name train_hits
 ```
 
@@ -403,8 +406,8 @@ Filter to only keep molecules with similarity <= 0.5 (Command from [chem_utils](
 
 ```
 python filter_molecules.py \
-    --data_path ../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules.csv \
-    --save_path ../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tanimoto_below_0.5.csv \
+    --data_path ../../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules.csv \
+    --save_path ../../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tanimoto_below_0.5.csv \
     --filter_column train_hits_nearest_neighbor_similarity \
     --max_value 0.5
 ```
@@ -413,7 +416,7 @@ Cluster molecules. (Command from [chem_utils](https://github.com/swansonk14/chem
 
 ```
 python cluster_molecules.py \
-    --data_path ../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tanimoto_below_0.5.csv \
+    --data_path ../../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tanimoto_below_0.5.csv \
     --num_clusters 100
 ```
 
@@ -421,8 +424,8 @@ Select top molecule from each cluster. (Command from [chem_utils](https://github
 
 ```
 python select_from_clusters.py \
-    --data_path ../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tanimoto_below_0.5.csv \
-    --save_path ../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tanimoto_below_0.5_clustered.csv \
+    --data_path ../../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tanimoto_below_0.5.csv \
+    --save_path ../../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tanimoto_below_0.5_clustered.csv \
     --value_column score
 ```
 
@@ -430,6 +433,6 @@ Visualize selected molecules. (Command from [chem_utils](https://github.com/swan
 
 ```
 python visualize_molecules.py \
-    --data_path ../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tanimoto_below_0.5_clustered.csv \
-    --save_dir ../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tanimoto_below_0.5_clustered
+    --data_path ../../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tanimoto_below_0.5_clustered.csv \
+    --save_dir ../../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tanimoto_below_0.5_clustered
 ```
