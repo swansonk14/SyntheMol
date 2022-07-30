@@ -393,30 +393,31 @@ python assess_generated_molecules.py \
 
 ## Select generated molecules
 
-Compute nearest neighbor Tanimoto distance to train set. (Command from [chem_utils](https://github.com/swansonk14/chem_utils).)
+Compute nearest neighbor Tversky distance to train set. (Command from [chem_utils](https://github.com/swansonk14/chem_utils).)
 
 ```
-python nearest_neighbor_tanimoto.py \
+python nearest_neighbor.py \
     --data_path ../../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules.csv \
     --reference_data_path ../../combinatorial_antibiotics/data/Screening_data/AB_combined_hits.csv \
-    --reference_name train_hits
+    --reference_name train_hits \
+    --metrics tversky
 ```
 
-Filter to only keep molecules with similarity <= 0.5 (Command from [chem_utils](https://github.com/swansonk14/chem_utils).)
+Filter to only keep molecules with similarity <= 0.4 (Command from [chem_utils](https://github.com/swansonk14/chem_utils).)
 
 ```
 python filter_molecules.py \
     --data_path ../../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules.csv \
-    --save_path ../../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tanimoto_below_0.5.csv \
-    --filter_column train_hits_nearest_neighbor_similarity \
-    --max_value 0.5
+    --save_path ../../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tversky_below_0.4.csv \
+    --filter_column train_hits_tversky_nearest_neighbor_similarity \
+    --max_value 0.4
 ```
 
 Cluster molecules. (Command from [chem_utils](https://github.com/swansonk14/chem_utils).)
 
 ```
 python cluster_molecules.py \
-    --data_path ../../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tanimoto_below_0.5.csv \
+    --data_path ../../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tversky_below_0.4.csv \
     --num_clusters 100
 ```
 
@@ -424,15 +425,15 @@ Select top molecule from each cluster. (Command from [chem_utils](https://github
 
 ```
 python select_from_clusters.py \
-    --data_path ../../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tanimoto_below_0.5.csv \
-    --save_path ../../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tanimoto_below_0.5_clustered.csv \
-    --value_column score
+    --data_path ../../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tversky_below_0.4.csv \
+    --save_path ../../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tversky_below_0.4_selected_100.csv \
+    --value_column model_score
 ```
 
 Visualize selected molecules. (Command from [chem_utils](https://github.com/swansonk14/chem_utils).)
 
 ```
 python visualize_molecules.py \
-    --data_path ../../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tanimoto_below_0.5_clustered.csv \
-    --save_dir ../../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tanimoto_below_0.5_clustered
+    --data_path ../../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tversky_below_0.4_selected_100.csv \
+    --save_dir ../../combinatorial_antibiotics/generations/tree_search/mcts_above_0.2/molecules_tversky_below_0.4_selected_100
 ```
