@@ -1,20 +1,12 @@
 """Map fragments to model prediction scores."""
 import json
-import pickle
 from pathlib import Path
-from time import time
 from typing import Literal
 
-import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.neural_network import MLPClassifier
 from tap import Tap
 
-from chem_utils.molecular_fingerprints import compute_fingerprints
-from chemprop.data import MoleculeDataLoader, MoleculeDatapoint, MoleculeDataset
-from chemprop.train import predict
-from chemprop.utils import load_checkpoint
+from predict_with_model import predict_with_model
 
 
 class Args(Tap):
@@ -29,86 +21,21 @@ class Args(Tap):
         self.save_path.parent.mkdir(parents=True, exist_ok=True)
 
 
-def map_fragments_to_scores_sklearn(fragments: list[str],
-                                    fingerprints: np.ndarray,
-                                    model_path: Path,
-                                    model_type: str) -> dict[str, float]:
-    """Map fragments to prediction scores using a scikit-learn model."""
-    # Load model
-    with open(model_path, 'rb') as f:
-        if model_type == 'rf':
-            model: RandomForestClassifier = pickle.load(f)
-        elif model_type == 'mlp':
-            model: MLPClassifier = pickle.load(f)
-        else:
-            raise ValueError(f'Model type "{model_type}" is not supported.')
-
-    # Make predictions
-    scores = model.predict_proba(fingerprints)[:, 1]
-
-    # Map fragments to predictions
-    fragment_to_score = dict(zip(fragments, scores))
-
-    return fragment_to_score
-
-
-def map_fragments_to_scores_chemprop(fragments: list[str],
-                                     fingerprints: np.ndarray,
-                                     model_path: Path) -> dict[str, float]:
-    """Map fragments to prediction scores using a chemprop model."""
-    # Build data loader
-    data_loader = MoleculeDataLoader(
-        dataset=MoleculeDataset([
-            MoleculeDatapoint(
-                smiles=[fragment],
-                features=fingerprint,
-            ) for fragment, fingerprint in zip(fragments, fingerprints)
-        ]),
-        num_workers=0,
-        shuffle=False
-    )
-
-    # Load model
-    model = load_checkpoint(path=model_path)
-
-    # Make predictions
-    scores = predict(
-        model=model,
-        data_loader=data_loader
-    )
-    scores = [score[0] for score in scores]
-
-    # Map fragments to predictions
-    fragment_to_score = dict(zip(fragments, scores))
-
-    return fragment_to_score
-
-
 def map_fragments_to_scores(args: Args) -> None:
     """Map fragments to prediction scores."""
     # Load fragments
     fragments = sorted(set(pd.read_csv(args.fragment_path)[args.smiles_column]))
 
-    # Compute fingerprints
-    fingerprints = compute_fingerprints(fragments, fingerprint_type=args.fingerprint_type)
+    # Make predictions
+    scores = predict_with_model(
+        smiles=fragments,
+        fingerprint_type=args.fingerprint_type,
+        model_type=args.model_type,
+        model_path=args.model_path
+    )
 
-    # Map fragments to model scores
-    start_time = time()
-    if args.model_type == 'chemprop':
-        fragment_to_model_score = map_fragments_to_scores_chemprop(
-            fragments=fragments,
-            fingerprints=fingerprints,
-            model_path=args.model_path
-        )
-    else:
-        fragment_to_model_score = map_fragments_to_scores_sklearn(
-            fragments=fragments,
-            fingerprints=fingerprints,
-            model_path=args.model_path,
-            model_type=args.model_type
-        )
-    print(f'Total time to map fragments to scores for {args.model_type} '
-          f'using {args.fingerprint_type} = {time() - start_time:.2f}')
+    # Map fragments to predictions
+    fragment_to_model_score = dict(zip(fragments, scores))
 
     # Save fragment to model score mapping
     with open(args.save_path, 'w') as f:
