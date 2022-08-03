@@ -6,7 +6,10 @@ from typing import Optional
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from rdkit import Chem
+from rdkit.Chem.QED import qed
 from tap import Tap
+from tqdm import tqdm
 
 from chem_utils.molecular_similarities import compute_max_similarities
 
@@ -183,6 +186,17 @@ def assess_generated_molecules(args: Args) -> None:
     plt.ylabel('Count (# molecules containing the reaction)')
     plt.title('Reaction Counts')
     plt.savefig(args.save_dir / 'reaction_counts.pdf', bbox_inches='tight')
+
+    # Assess QED scores
+    mols = [Chem.MolFromSmiles(s) for s in tqdm(smiles, desc='SMILES to mol')]
+    qed_scores = [qed(mol) for mol in tqdm(mols, desc='QED')]
+
+    plt.clf()
+    plt.hist(qed_scores, bins=100)
+    plt.xlabel('QED Score')
+    plt.ylabel('Count')
+    plt.title('QED Score Counts')
+    plt.savefig(args.save_dir / 'qed_scores.pdf', bbox_inches='tight')
 
     # Save data
     evaluation = pd.DataFrame(data=[results])
