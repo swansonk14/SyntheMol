@@ -32,8 +32,8 @@ def analyze_molecular_similarities(args: Args) -> None:
     reference_data = pd.read_csv(args.reference_data_path)
 
     # Get SMILES
-    smiles = data[args.smiles_column].iloc[:500]
-    reference_smiles = reference_data[args.reference_smiles_column].iloc[:400]
+    smiles = data[args.smiles_column]
+    reference_smiles = reference_data[args.reference_smiles_column]
 
     # Compute similarities
     similarity_function = get_similarity_function(args.similarity_type)
