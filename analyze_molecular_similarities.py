@@ -17,12 +17,15 @@ class Args(Tap):
     reference_smiles_column: Optional[str] = None  # Name of the column in reference_data_path containing SMILES. Defaults to smiles_column.
     similarity_type: Literal['tanimoto', 'tversky']  # Type of similarity to compute.
     save_path: Path  # Path to PDF file where the results plot will be saved.
+    percentile_range: list[float] = [0.0, 100.1, 5.0]  # The [start, ]stop, [step] parameters of np.arange for the similarity percentiles to measure.
 
     def process_args(self) -> None:
         if self.reference_smiles_column is None:
             self.reference_smiles_column = self.smiles_column
 
         self.save_path.parent.mkdir(parents=True, exist_ok=True)
+
+        assert 1 <= len(self.percentile_range) <= 3
 
 
 def analyze_molecular_similarities(args: Args) -> None:
@@ -40,7 +43,7 @@ def analyze_molecular_similarities(args: Args) -> None:
     pairwise_similarities = similarity_function(smiles, reference_smiles)
 
     # Analyze similarities at different percentiles
-    percentiles = np.arange(0, 101, 5)
+    percentiles = np.arange(*args.percentile_range)
     percentile_similarities = np.percentile(pairwise_similarities, percentiles, axis=1)
 
     # Plot similarities at different percentiles
