@@ -46,9 +46,11 @@ def analyze_molecular_similarities(args: Args) -> None:
     percentiles = np.arange(*args.percentile_range)
     percentile_similarities = np.percentile(pairwise_similarities, percentiles, axis=1)
 
+    step = args.percentile_range[-1] if len(args.percentile_range) == 3 else 1.0
+
     # Plot similarities at different percentiles
     plt.clf()
-    plt.violinplot(percentile_similarities.transpose(), positions=percentiles, widths=2.5, showmedians=True)
+    plt.violinplot(percentile_similarities.transpose(), positions=percentiles, widths=step / 2, showmedians=True)
     plt.xlabel('Percentile')
     plt.ylabel(f'{args.similarity_type.title()} Similarity')
     plt.title(f'{args.similarity_type.title()} Similarity Percentiles')
