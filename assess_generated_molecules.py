@@ -11,7 +11,7 @@ from rdkit.Chem.QED import qed
 from tap import Tap
 from tqdm import tqdm
 
-from chem_utils.molecular_similarities import compute_max_similarities
+from chem_utils.molecular_similarities import compute_top_similarities
 from analyze_molecular_similarities import plot_molecular_similarities
 
 
@@ -85,7 +85,7 @@ def assess_generated_molecules(args: Args) -> None:
     # Assess diversity within generated molecules
     for similarity_type in SIMILARITY_TYPES:
         # Compute similarities within generated molecules
-        generated_max_similarities = compute_max_similarities(
+        generated_max_similarities = compute_top_similarities(
             similarity_type=similarity_type,
             mols=data[args.smiles_column]
         )
@@ -111,23 +111,23 @@ def assess_generated_molecules(args: Args) -> None:
 
         # Assess diversity compared to train
         for similarity_type in SIMILARITY_TYPES:
-            train_max_similarities = compute_max_similarities(
+            train_hits_max_similarities = compute_top_similarities(
                 similarity_type=similarity_type,
                 mols=smiles,
                 reference_mols=train_hits_smiles
             )
-            results[f'train_diversity_{similarity_type}_mean'] = np.mean(train_max_similarities)
-            results[f'train_diversity_{similarity_type}_std'] = np.std(train_max_similarities)
+            results[f'train_diversity_{similarity_type}_mean'] = np.mean(train_hits_max_similarities)
+            results[f'train_diversity_{similarity_type}_std'] = np.std(train_hits_max_similarities)
             print(f'Train diversity {similarity_type} = '
                   f'{results[f"train_hits_diversity_{similarity_type}_mean"]:.3f} +/- '
                   f'{results[f"train_hits_diversity_{similarity_type}_std"]:.3f}')
 
             # Plot diversity distribution compared to train
             plt.clf()
-            plt.hist(train_max_similarities, bins=100)
-            plt.xlabel(f'Maximum {similarity_type.title()} Similarity from Generated to Train Molecules')
+            plt.hist(train_hits_max_similarities, bins=100)
+            plt.xlabel(f'Maximum {similarity_type.title()} Similarity from Generated to Train Hits')
             plt.ylabel('Count')
-            plt.title(f'Train Maximum {similarity_type.title()} Similarity Distribution')
+            plt.title(f'Train Hits Maximum {similarity_type.title()} Similarity Distribution')
             plt.savefig(args.save_dir / f'train_hits_diversity_{similarity_type}.pdf', bbox_inches='tight')
 
             # Assess novelty
@@ -141,6 +141,20 @@ def assess_generated_molecules(args: Args) -> None:
         train_smiles = train[args.train_smiles_column]
 
         for similarity_type in SIMILARITY_TYPES:
+            train_top_10_similarities = compute_top_similarities(
+                similarity_type=similarity_type,
+                mols=smiles,
+                reference_mols=train_smiles,
+                top_k=10
+            )
+
+            plt.clf()
+            plt.hist(train_top_10_similarities, bins=100)
+            plt.xlabel(f'Top 10 {similarity_type.title()} Similarity from Generated to Train')
+            plt.ylabel('Count')
+            plt.title(f'Train Top 10 {similarity_type.title()} Similarity Distribution')
+            plt.savefig(args.save_dir / f'train_diversity_{similarity_type}.pdf', bbox_inches='tight')
+
             # Violin plot of diversity compared to train across percentiles (not just nearest neighbor)
             plot_molecular_similarities(
                 smiles=smiles,
