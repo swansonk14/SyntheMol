@@ -46,7 +46,7 @@ def plot_molecular_similarities(smiles: Iterable[Molecule],
 
     # Plot similarities at different percentiles
     plt.clf()
-    plt.violinplot(percentile_similarities.transpose(), positions=percentiles, widths=step / 2, showmedians=True)
+    plt.violinplot(percentile_similarities.transpose(), positions=percentiles, widths=0.95 * step, showmedians=True)
     plt.xlabel('Percentile')
     plt.ylabel(f'{similarity_type.title()} Similarity')
     plt.title(f'{similarity_type.title()} Similarity Percentiles')

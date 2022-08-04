@@ -551,6 +551,10 @@ def create_model_scoring_fn(model_path: Path,
 
 def run_tree_search(args: Args) -> None:
     """Generate molecules combinatorially by performing a tree search."""
+    # Create save directory and save arguments
+    args.save_dir.mkdir(parents=True, exist_ok=True)
+    args.save(args.save_dir / 'args.json')
+
     if args.synnet_rxn:
         reactions = REAL_REACTIONS + SYNNET_REACTIONS
     else:
@@ -572,21 +576,21 @@ def run_tree_search(args: Args) -> None:
     with open(args.fragment_to_model_score_path) as f:
         fragment_to_model_score: dict[str, float] = json.load(f)
 
-    if set(fragment_to_model_score) == fragment_set:
+    if set(fragment_to_model_score) != fragment_set:
         raise ValueError('The fragments in fragment_to_model do not match the fragment set.')
 
     # Load mapping from SMILES to train similarity
     with open(args.fragment_to_train_similarity_path) as f:
         fragment_to_train_similarity: dict[str, float] = json.load(f)
 
-    if set(fragment_to_train_similarity) == fragment_set:
+    if set(fragment_to_train_similarity) != fragment_set:
         raise ValueError('The fragments in fragment_to_train_similarity do not match the fragment set.')
 
     # Load mapping from SMILES to train similarity
     with open(args.fragment_to_train_hits_similarity_path) as f:
         fragment_to_train_hits_similarity: dict[str, float] = json.load(f)
 
-    if set(fragment_to_train_hits_similarity) == fragment_set:
+    if set(fragment_to_train_hits_similarity) != fragment_set:
         raise ValueError('The fragments in fragment_to_train_hits_similarity do not match the fragment set.')
 
     # Load mapping from reagents to fragments
@@ -684,14 +688,21 @@ def run_tree_search(args: Args) -> None:
     # Search for molecules
     start_time = datetime.now()
     nodes = tree_searcher.search()
-    print(f'MCTS time = {datetime.now() - start_time}')
-    print(f'Total number of nodes searched = {tree_searcher.num_nodes:,}')
-    print(f'Number of full molecule, nonzero reaction nodes = {len(nodes):,}')
+
+    # Compute, print, and save stats
+    stats = {
+        'mcts_time': datetime.now() - start_time,
+        'num_nodes_searched': tree_searcher.num_nodes,
+        'num_nonzero_reaction_molecules': len(nodes)
+    }
+
+    print(f'MCTS time = {stats["mcts_time"]}')
+    print(f'Total number of nodes searched = {stats["num_nodes_searched"]:,}')
+    print(f'Number of full molecule, nonzero reaction nodes = {stats["num_nonzero_reaction_molecules"]:,}')
+
+    pd.DataFrame(data=[stats]).to_csv(args.save_dir / 'stats.csv', index=False)
 
     # Save generated molecules
-    args.save_dir.mkdir(parents=True, exist_ok=True)
-    args.save(args.save_dir / 'args.json')
-
     save_molecules(
         nodes=nodes,
         save_path=args.save_dir / 'molecules.csv',
