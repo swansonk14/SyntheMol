@@ -32,8 +32,8 @@ def analyze_molecular_similarities(args: Args) -> None:
     reference_data = pd.read_csv(args.reference_data_path)
 
     # Get SMILES
-    smiles = data[args.smiles_column]
-    reference_smiles = reference_data[args.reference_smiles_column]
+    smiles = data[args.smiles_column].iloc[:500]
+    reference_smiles = reference_data[args.reference_smiles_column].iloc[:400]
 
     # Compute similarities
     similarity_function = get_similarity_function(args.similarity_type)
@@ -43,12 +43,9 @@ def analyze_molecular_similarities(args: Args) -> None:
     percentiles = np.arange(0, 101, 5)
     percentile_similarities = np.percentile(pairwise_similarities, percentiles, axis=1)
 
-    mean_percentile_similarities = np.mean(percentile_similarities, axis=1)
-    std_percentile_similarities = np.std(percentile_similarities, axis=1)
-
     # Plot similarities at different percentiles
     plt.clf()
-    plt.bar(percentiles, mean_percentile_similarities, yerr=std_percentile_similarities, width=3, capsize=3)
+    plt.violinplot(percentile_similarities.transpose(), positions=percentiles, widths=2.5, showmedians=True)
     plt.xlabel('Percentile')
     plt.ylabel(f'{args.similarity_type.title()} Similarity')
     plt.title(f'{args.similarity_type.title()} Similarity Percentiles')
