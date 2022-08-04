@@ -341,8 +341,7 @@ class TreeSearcher:
 
         return mcts_score
 
-    # TODO: remove level debugging
-    def rollout(self, node: TreeNode, level: int) -> float:
+    def rollout(self, node: TreeNode) -> float:
         """Performs a Monte Carlo Tree Search rollout.
 
         :param node: An TreeNode representing the root of the MCTS search.
@@ -351,16 +350,6 @@ class TreeSearcher:
         # Stop the search if we've reached the maximum number of reactions
         if node.num_reactions >= self.max_reactions:
             return node.P
-
-        if level > 25:
-            print(f'Level = {level}')
-            print(f'Node fragments: {node.fragments}')
-            print(f'Node reagent counts: {node.reagent_counts}')
-            print(f'Number of unique reagents = {len(node.unique_reagents)}')
-            print(f'Construction log: {node.construction_log}')
-            print()
-        if level > 50:
-            exit()
 
         # TODO: prevent exploration of a subtree that has been fully explored
         # Expand if this node has never been visited
@@ -421,7 +410,7 @@ class TreeSearcher:
             raise ValueError(f'Search type "{self.search_type}" is not supported.')
 
         # Unroll the child node
-        v = self.rollout(node=selected_node, level=level + 1)
+        v = self.rollout(node=selected_node)
         selected_node.W += v
         selected_node.N += 1
 
@@ -435,7 +424,7 @@ class TreeSearcher:
         :return: A list of TreeNode objects sorted from highest to lowest reward.
         """
         for _ in trange(self.n_rollout):
-            self.rollout(node=self.root, level=1)
+            self.rollout(node=self.root)
 
         # Get all the nodes representing fully constructed molecules that are not initial building blocks
         nodes = [node for _, node in self.state_map.items() if node.num_fragments == 1 and node.num_reactions > 0]
