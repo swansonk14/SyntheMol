@@ -628,7 +628,7 @@ def run_tree_search(args: Args) -> None:
         train_similarities = 1 - train_distances
         argsort = np.argsort(train_similarities)
         top_k_indices = argsort[:, -top_k]
-        train_similarity_score = train_similarities[top_k_indices]
+        train_similarity_score = train_similarities[np.arange(len(train_similarities)), top_k_indices]
 
         return train_similarity_score
 
