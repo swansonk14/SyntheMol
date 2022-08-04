@@ -172,6 +172,7 @@ def build_chemprop_model(train_smiles: list[str],
         model=model,
         data_loader=test_data_loader
     )
+    test_probs = [test_prob[0] for test_prob in test_probs]
     print(f'Test ROC-AUC = {roc_auc_score(test_activities, test_probs):.3f}')
     print(f'Test PRC-AUC = {average_precision_score(test_activities, test_probs):.3f}')
 

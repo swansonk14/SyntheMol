@@ -567,6 +567,7 @@ def run_tree_search(args: Args) -> None:
     fragments = pd.read_csv(args.fragment_path)[args.smiles_column]
 
     # Map fragments to indices
+    # TODO: switch to use reagent IDs rather than fragment indices
     fragment_to_index = {}
 
     for index, fragment in enumerate(fragments):
