@@ -18,9 +18,11 @@ from analyze_molecular_similarities import plot_molecular_similarities
 class Args(Tap):
     data_path: Path  # Path to CSV file containing generated molecules.
     save_dir: Path  # Path to directory where plots and results will be saved.
+    train_path: Optional[Path] = None  # Path to CSV file containing the training set for computing novelty.
     train_hits_path: Optional[Path] = None  # Path to CSV file containing hits from the training set for computing novelty.
     min_score: Optional[float] = None  # If provided, only molecules with scores >= this threshold are assessed.
     smiles_column: str = 'smiles'  # The name of the column containing SMILES in data_path.
+    train_smiles_column: str = 'smiles'  # The name of the column containing SMILES in train_path.
     train_hits_smiles_column: str = 'smiles'  # The name of the column containing SMILES in train_hits_path.
     score_column: str = 'score'  # The name of the column containing scores.
 
@@ -117,8 +119,8 @@ def assess_generated_molecules(args: Args) -> None:
             results[f'train_diversity_{similarity_type}_mean'] = np.mean(train_max_similarities)
             results[f'train_diversity_{similarity_type}_std'] = np.std(train_max_similarities)
             print(f'Train diversity {similarity_type} = '
-                  f'{results[f"train_diversity_{similarity_type}_mean"]:.3f} +/- '
-                  f'{results[f"train_diversity_{similarity_type}_std"]:.3f}')
+                  f'{results[f"train_hits_diversity_{similarity_type}_mean"]:.3f} +/- '
+                  f'{results[f"train_hits_diversity_{similarity_type}_std"]:.3f}')
 
             # Plot diversity distribution compared to train
             plt.clf()
@@ -126,19 +128,26 @@ def assess_generated_molecules(args: Args) -> None:
             plt.xlabel(f'Maximum {similarity_type.title()} Similarity from Generated to Train Molecules')
             plt.ylabel('Count')
             plt.title(f'Train Maximum {similarity_type.title()} Similarity Distribution')
-            plt.savefig(args.save_dir / f'train_diversity_{similarity_type}.pdf', bbox_inches='tight')
+            plt.savefig(args.save_dir / f'train_hits_diversity_{similarity_type}.pdf', bbox_inches='tight')
 
+            # Assess novelty
+            results['novelty'] = compute_novelty(smiles=smiles, reference_smiles=train_hits_smiles)
+            print(f'Novelty = {results["novelty"]:.3f}')
+
+    # Compare to train
+    if args.train_path is not None:
+        # Load train
+        train = pd.read_csv(args.train_path)
+        train_smiles = train[args.train_smiles_column]
+
+        for similarity_type in SIMILARITY_TYPES:
             # Violin plot of diversity compared to train across percentiles (not just nearest neighbor)
             plot_molecular_similarities(
                 smiles=smiles,
-                reference_smiles=train_hits_smiles,
+                reference_smiles=train_smiles,
                 similarity_type=similarity_type,
                 save_path=args.save_dir / f'train_diversity_percentiles_{similarity_type}.pdf'
             )
-
-        # Assess novelty
-        results['novelty'] = compute_novelty(smiles=smiles, reference_smiles=train_hits_smiles)
-        print(f'Novelty = {results["novelty"]:.3f}')
 
     # Distribution of number of reactions
     reaction_counts = Counter(data['num_reactions'])

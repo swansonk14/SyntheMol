@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 from rdkit import Chem
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import pairwise_distances
 from sklearn.neural_network import MLPClassifier
 from tap import Tap
 from tqdm import trange
@@ -27,8 +28,10 @@ class Args(Tap):
     model_path: Path  # Path to PKL file containing a RandomForestClassifier trained on Morgan fingerprints.
     fragment_path: Path  # Path to CSV file containing molecular building blocks.
     fragment_to_model_score_path: Path  # Path to JSON file containing a dictionary mapping fragments to model prediction scores.
-    fragment_to_train_similarity_path: Path  # Path to JSON file containing a dictionary mapping fragments to train similarities.
+    fragment_to_train_similarity_path: Path  # Path to JSON file containing a dictionary mapping fragments to train similarities (top 10 nearest neighbor Tanimoto).
+    fragment_to_train_hits_similarity_path: Path  # Path to JSON file containing a dictionary mapping fragments to train hits similarities (nearest neighbor Tversky).
     reagent_to_fragments_path: Path  # Path to JSON file containing a dictionary mapping from reagents to fragments.
+    train_path: Path  # Path to CSV file containing SMILES for the molecules in the training set.
     train_hits_path: Path  # Path to CSV file containing SMILES for the active molecules in the training set.
     save_path: Path  # Path to CSV file where generated molecules will be saved.
     search_type: Literal['random', 'greedy', 'mcts']  # Type of search to perform.
@@ -443,7 +446,8 @@ class TreeSearcher:
 def save_molecules(nodes: list[TreeNode],
                    save_path: Path,
                    model_scoring_fn: Callable[[str], float],
-                   train_hits_similarity_scoring_fn: Callable[[str], float]) -> None:
+                   train_similarity_scoring_fn: Callable[[np.ndarray], float],
+                   train_hits_similarity_scoring_fn: Callable[[np.ndarray], float]) -> None:
     # Create save directory
     save_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -493,7 +497,10 @@ def save_molecules(nodes: list[TreeNode],
                 'num_expansions': node.N,
                 'score': node.P,
                 'model_score': model_scoring_fn(node.fragments[0]),
-                'train_hits_similarity_score': train_hits_similarity_scoring_fn(node.fragments[0]),
+                'train_similarity_score': train_similarity_scoring_fn(
+                    morgan_fingerprint := compute_fingerprint(node.fragments[0], fingerprint_type='morgan')
+                ),
+                'train_hits_similarity_score': train_hits_similarity_scoring_fn(morgan_fingerprint),
                 'Q_value': node.Q(),
                 **construction_dict
             }
@@ -554,6 +561,7 @@ def run_tree_search(args: Args) -> None:
 
     # Load fragments
     fragments = pd.read_csv(args.fragment_path)[args.smiles_column]
+    fragment_set = set(fragments)
 
     # Map fragments to indices
     # TODO: switch to use reagent IDs rather than fragment indices
@@ -567,13 +575,32 @@ def run_tree_search(args: Args) -> None:
     with open(args.fragment_to_model_score_path) as f:
         fragment_to_model_score: dict[str, float] = json.load(f)
 
+    if set(fragment_to_model_score) == fragment_set:
+        raise ValueError('The fragments in fragment_to_model do not match the fragment set.')
+
     # Load mapping from SMILES to train similarity
     with open(args.fragment_to_train_similarity_path) as f:
         fragment_to_train_similarity: dict[str, float] = json.load(f)
 
+    if set(fragment_to_train_similarity) == fragment_set:
+        raise ValueError('The fragments in fragment_to_train_similarity do not match the fragment set.')
+
+    # Load mapping from SMILES to train similarity
+    with open(args.fragment_to_train_hits_similarity_path) as f:
+        fragment_to_train_hits_similarity: dict[str, float] = json.load(f)
+
+    if set(fragment_to_train_hits_similarity) == fragment_set:
+        raise ValueError('The fragments in fragment_to_train_hits_similarity do not match the fragment set.')
+
     # Load mapping from reagents to fragments
     with open(args.reagent_to_fragments_path) as f:
         reagent_to_fragments: dict[str, list[str]] = json.load(f)
+
+    # Load train and compute Morgan fingerprints
+    train = pd.read_csv(args.train_path)[args.smiles_column]
+    train_morgans = compute_fingerprints(train, fingerprint_type='morgan')
+    top_k = 10
+    assert top_k <= len(train_morgans)
 
     # Load train hits and compute Morgan fingerprints
     train_hits = pd.read_csv(args.train_hits_path)[args.smiles_column]
@@ -589,21 +616,52 @@ def run_tree_search(args: Args) -> None:
         binarize_scoring=args.binarize_scoring
     )
 
-    # Define train similarity scoring function
-    @cache
-    def train_hits_similarity_scoring_fn(smiles: str) -> float:
-        if smiles not in fragment_to_train_similarity:
-            morgan_fingerprint = compute_fingerprint(smiles, fingerprint_type='morgan')
-            train_hits_similarity_score = np.max(morgan_fingerprint @ train_hits_tversky)
-        else:
-            train_hits_similarity_score = fragment_to_train_similarity[smiles]
+    # Define train similarity scoring function (top 10 Tanimoto similarity)
+    def train_similarity_scoring_fn(morgan_fingerprint: np.ndarray) -> float:
+        train_distances = pairwise_distances(
+            morgan_fingerprint.reshape(1, -1),
+            train_morgans,
+            metric='jaccard',
+            n_jobs=-1
+        )
+        train_similarities = 1 - train_distances
+        argsort = np.argsort(train_similarities)
+        top_k_mask = argsort == (len(train_morgans) - top_k)
+        train_similarity_score = train_similarities[top_k_mask]
+
+        return train_similarity_score
+
+    # Define train hits similarity scoring function (top 1 Tversky similarity)
+    def train_hits_similarity_scoring_fn(morgan_fingerprint: np.ndarray) -> float:
+        train_hits_similarity_score = np.max(morgan_fingerprint @ train_hits_tversky)
 
         return train_hits_similarity_score
+
+    # Define train scoring function including all comparisons to the training set
+    @cache
+    def train_scoring_fn(smiles: str) -> float:
+        if smiles in fragment_set:
+            train_similarity_score = fragment_to_train_similarity[smiles]
+            train_hits_similarity_score = fragment_to_train_hits_similarity[smiles]
+        else:
+            morgan_fingerprint = compute_fingerprint(smiles, fingerprint_type='morgan')
+            train_similarity_score = train_similarity_scoring_fn(morgan_fingerprint)
+            train_hits_similarity_score = train_hits_similarity_scoring_fn(morgan_fingerprint)
+
+        # Compute train score as a combination of the train similarity and train hits similarity
+        # Strategy: encourage similarity to training set overall (top 10) but penalize similarity to nearest train hit
+        # + 1 to ensure non-negative score since train hits similarity can be at most 1
+        train_score = train_similarity_score - train_hits_similarity_score + 1
+
+        return train_score
 
     # Define scoring function
     @cache
     def scoring_fn(smiles: str) -> float:
-        return max(0, model_scoring_fn(smiles) - train_hits_similarity_scoring_fn(smiles) + 1)  # ensure non-negative score
+        score = model_scoring_fn(smiles) + train_scoring_fn(smiles)
+        score = max(0, score)
+
+        return score
 
     # Define noisy scoring function
     rng = np.random.default_rng(seed=args.rng_seed)
@@ -638,6 +696,7 @@ def run_tree_search(args: Args) -> None:
         nodes=nodes,
         save_path=args.save_path,
         model_scoring_fn=model_scoring_fn,
+        train_similarity_scoring_fn=train_similarity_scoring_fn,
         train_hits_similarity_scoring_fn=train_hits_similarity_scoring_fn
     )
 

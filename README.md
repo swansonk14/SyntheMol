@@ -352,8 +352,19 @@ python map_fragments_to_model_scores.py \
 ```
 python map_fragments_to_train_similarities.py \
     --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
+    --train_hits_path ../data/Screening_data/AB_combined.csv \
+    --similarity_type tanimoto \
+    --top_k 10 \
+    --save_path ../data/AB_combined_fragments_to_train_similarities_tanimoto_top_10.json
+```
+
+```
+python map_fragments_to_train_similarities.py \
+    --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     --train_hits_path ../data/Screening_data/AB_combined_hits.csv \
-    --save_path ../data/AB_combined_fragments_to_train_similarities.json
+    --similarity_type tversky \
+    --top_k 1 \
+    --save_path ../data/AB_combined_fragments_to_train_hits_similarities_tversky_top_1.json
 ```
 
 
@@ -364,13 +375,16 @@ python tree_search.py \
     --model_path ../ckpt/AB_combined_RF_rdkit.pkl \
     --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     --fragment_to_model_score_path ../ckpt/AB_combined_RF_rdkit_fragments_to_model_scores.json \
-    --fragment_to_train_similarity_path ../data/AB_combined_fragments_to_train_similarities.json \
+    --fragment_to_train_similarity_path ../data/AB_combined_fragments_to_train_similarities_tanimoto_top_10.json \
+    --fragment_to_train_hits_similarity_path ../data/../data/AB_combined_fragments_to_train_hits_similarities_tversky_top_1.json \
     --reagent_to_fragments_path ../data/reagents_to_fragments.json \
+    --train_path ../data/Screening_data/AB_combined.csv \
     --train_hits_path ../data/Screening_data/AB_combined_hits.csv \
     --save_path ../generations/tree_search/mcts.csv \
     --search_type mcts \
     --model_type rf \
-    --fingerprint_type rdkit
+    --fingerprint_type rdkit \
+    --fragment_diversity
 ```
 
 
@@ -380,6 +394,7 @@ python tree_search.py \
 python assess_generated_molecules.py \
     --data_path ../generations/tree_search/mcts.csv \
     --save_dir ../generations/tree_search/mcts \
+    --train_path ../data/Screening_data/AB_combined.csv
     --train_hits_path ../data/Screening_data/AB_combined_hits.csv
 ```
 
