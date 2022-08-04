@@ -33,7 +33,7 @@ class Args(Tap):
     reagent_to_fragments_path: Path  # Path to JSON file containing a dictionary mapping from reagents to fragments.
     train_path: Path  # Path to CSV file containing SMILES for the molecules in the training set.
     train_hits_path: Path  # Path to CSV file containing SMILES for the active molecules in the training set.
-    save_path: Path  # Path to CSV file where generated molecules will be saved.
+    save_dir: Path  # Path to directory where the generated molecules will be saved.
     search_type: Literal['random', 'greedy', 'mcts']  # Type of search to perform.
     smiles_column: str = 'smiles'  # Name of the column containing SMILES.
     max_reactions: int = 3  # Maximum number of reactions that can be performed to expand fragments into molecules.
@@ -448,9 +448,6 @@ def save_molecules(nodes: list[TreeNode],
                    model_scoring_fn: Callable[[str], float],
                    train_similarity_scoring_fn: Callable[[np.ndarray], float],
                    train_hits_similarity_scoring_fn: Callable[[np.ndarray], float]) -> None:
-    # Create save directory
-    save_path.parent.mkdir(parents=True, exist_ok=True)
-
     # Convert construction logs from lists to dictionaries
     construction_dicts = []
     max_reaction_num = 0
@@ -692,9 +689,12 @@ def run_tree_search(args: Args) -> None:
     print(f'Number of full molecule, nonzero reaction nodes = {len(nodes):,}')
 
     # Save generated molecules
+    args.save_dir.mkdir(parents=True, exist_ok=True)
+    args.save(args.save_dir / 'args.json')
+
     save_molecules(
         nodes=nodes,
-        save_path=args.save_path,
+        save_path=args.save_dir / 'molecules.csv',
         model_scoring_fn=model_scoring_fn,
         train_similarity_scoring_fn=train_similarity_scoring_fn,
         train_hits_similarity_scoring_fn=train_hits_similarity_scoring_fn
