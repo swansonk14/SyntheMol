@@ -12,6 +12,7 @@ from tap import Tap
 from tqdm import tqdm
 
 from chem_utils.molecular_similarities import compute_max_similarities
+from analyze_molecular_similarities import plot_molecular_similarities
 
 
 class Args(Tap):
@@ -126,6 +127,14 @@ def assess_generated_molecules(args: Args) -> None:
             plt.ylabel('Count')
             plt.title(f'Train Maximum {similarity_type.title()} Similarity Distribution')
             plt.savefig(args.save_dir / f'train_diversity_{similarity_type}.pdf', bbox_inches='tight')
+
+            # Violin plot of diversity compared to train across percentiles (not just nearest neighbor)
+            plot_molecular_similarities(
+                smiles=smiles,
+                reference_smiles=train_hits_smiles,
+                similarity_type=similarity_type,
+                save_path=args.save_dir / f'train_diversity_percentiles_{similarity_type}.pdf'
+            )
 
         # Assess novelty
         results['novelty'] = compute_novelty(smiles=smiles, reference_smiles=train_hits_smiles)
