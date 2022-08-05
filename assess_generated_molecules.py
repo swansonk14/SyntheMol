@@ -116,8 +116,8 @@ def assess_generated_molecules(args: Args) -> None:
                 mols=smiles,
                 reference_mols=train_hits_smiles
             )
-            results[f'train_diversity_{similarity_type}_mean'] = np.mean(train_hits_max_similarities)
-            results[f'train_diversity_{similarity_type}_std'] = np.std(train_hits_max_similarities)
+            results[f'train_hits_diversity_{similarity_type}_mean'] = np.mean(train_hits_max_similarities)
+            results[f'train_hits_diversity_{similarity_type}_std'] = np.std(train_hits_max_similarities)
             print(f'Train diversity {similarity_type} = '
                   f'{results[f"train_hits_diversity_{similarity_type}_mean"]:.3f} +/- '
                   f'{results[f"train_hits_diversity_{similarity_type}_std"]:.3f}')
