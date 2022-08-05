@@ -625,10 +625,10 @@ def run_tree_search(args: Args) -> None:
             metric='jaccard',
             n_jobs=-1
         )
-        train_similarities = 1 - train_distances
+        train_similarities = 1 - train_distances[0]
         argsort = np.argsort(train_similarities)
-        top_k_indices = argsort[:, -top_k]
-        train_similarity_score = train_similarities[np.arange(len(train_similarities)), top_k_indices]
+        top_k_index = argsort[-top_k]
+        train_similarity_score = train_similarities[top_k_index]
 
         return train_similarity_score
 
