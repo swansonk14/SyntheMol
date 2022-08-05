@@ -1,6 +1,7 @@
 """Trains a machine learning classifier model."""
 import pickle
 from pathlib import Path
+from random import Random
 from typing import Literal
 
 import numpy as np
@@ -8,7 +9,6 @@ import pandas as pd
 import torch
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import average_precision_score, roc_auc_score
-from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 from tap import Tap
 from torch.optim.lr_scheduler import ExponentialLR
@@ -24,14 +24,15 @@ from chemprop.utils import build_optimizer, build_lr_scheduler, load_checkpoint,
 
 class Args(Tap):
     data_path: Path  # Path to CSV file containing data.
-    save_path: Path  # Path to a PKL or PT file where the trained model will be saved.
+    save_dir: Path  # Path to a directory where the trained model(s) and results will be saved.
     model_type: Literal['rf', 'mlp', 'chemprop']  # Type of model to train. 'rf' = random forest. 'mlp' = multilayer perceptron.
     fingerprint_type: Literal['morgan', 'rdkit']  # Type of fingerprints to use as input features.
     smiles_column: str = 'smiles'  # The name of the column containing SMILES.
     activity_column: str = 'activity'  # The name of the column containing binary activity values.
+    num_models: int = 1  # The number of models to train using 10-fold cross-validation.
 
     def process_args(self) -> None:
-        self.save_path.parent.mkdir(parents=True, exist_ok=True)
+        self.save_dir.mkdir(parents=True, exist_ok=True)
 
 
 def build_sklearn_model(train_fingerprints: np.ndarray,
@@ -39,7 +40,7 @@ def build_sklearn_model(train_fingerprints: np.ndarray,
                         train_activities: list[int],
                         test_activities: list[int],
                         save_path: Path,
-                        model_type: Literal['rf', 'mlp']) -> None:
+                        model_type: Literal['rf', 'mlp']) -> dict[str, float]:
     """Trains, evaluates, and saves a scikit-learn model."""
     # Build model
     if model_type == 'rf':
@@ -54,14 +55,37 @@ def build_sklearn_model(train_fingerprints: np.ndarray,
     # Train model
     model.fit(train_fingerprints, train_activities)
 
-    # Evaluate model
-    test_probs = model.predict_proba(test_fingerprints)[:, 1]
-    print(f'Test ROC-AUC = {roc_auc_score(test_activities, test_probs):.3f}')
-    print(f'Test PRC-AUC = {average_precision_score(test_activities, test_probs):.3f}')
-
     # Save model
     with open(save_path, 'wb') as f:
         pickle.dump(model, f)
+
+    # Make predictions
+    test_probs = model.predict_proba(test_fingerprints)[:, 1]
+
+    # Evaluate predictions
+    scores = {
+        'roc_auc': roc_auc_score(test_activities, test_probs),
+        'prc_auc': average_precision_score(test_activities, test_probs)
+    }
+
+    return scores
+
+
+def build_data_loader(smiles: list[str],
+                      fingerprints: np.ndarray,
+                      activities: list[int],
+                      shuffle: bool = False) -> MoleculeDataLoader:
+    """Builds a chemprop MoleculeDataLoader."""
+    return MoleculeDataLoader(
+        dataset=MoleculeDataset([
+            MoleculeDatapoint(
+                smiles=[smiles],
+                targets=[float(activity)],
+                features=fingerprint,
+            ) for smiles, fingerprint, activity in zip(smiles, fingerprints, activities)
+        ]),
+        shuffle=shuffle
+    )
 
 
 def build_chemprop_model(train_smiles: list[str],
@@ -73,7 +97,7 @@ def build_chemprop_model(train_smiles: list[str],
                          train_activities: list[int],
                          val_activities: list[int],
                          test_activities: list[int],
-                         save_path: Path) -> None:
+                         save_path: Path) -> dict[str, float]:
     """Trains, evaluates, and saves a chemprop model."""
     # Create args
     args = TrainArgs().parse_args(['--data_path', 'foo.csv', '--dataset_type', 'classification', '--quiet'])
@@ -81,44 +105,23 @@ def build_chemprop_model(train_smiles: list[str],
     args.train_data_size = len(train_smiles)
 
     # Build data loaders
-    train_data_loader = MoleculeDataLoader(
-        dataset=MoleculeDataset([
-            MoleculeDatapoint(
-                smiles=[smiles],
-                targets=[float(activity)],
-                features=fingerprint,
-            ) for smiles, fingerprint, activity in zip(train_smiles, train_fingerprints, train_activities)
-        ]),
-        batch_size=args.batch_size,
-        num_workers=0,
-        shuffle=True,
-        seed=args.seed
+    train_data_loader = build_data_loader(
+        smiles=train_smiles,
+        fingerprints=train_fingerprints,
+        activities=train_activities,
+        shuffle=True
     )
-    val_data_loader = MoleculeDataLoader(
-        dataset=MoleculeDataset([
-            MoleculeDatapoint(
-                smiles=[smiles],
-                targets=[float(activity)],
-                features=fingerprint,
-            ) for smiles, fingerprint, activity in zip(val_smiles, val_fingerprints, val_activities)
-        ]),
-        batch_size=args.batch_size,
-        num_workers=0,
-        shuffle=False,
-        seed=args.seed
+    val_data_loader = build_data_loader(
+        smiles=val_smiles,
+        fingerprints=val_fingerprints,
+        activities=val_activities,
+        shuffle=True
     )
-    test_data_loader = MoleculeDataLoader(
-        dataset=MoleculeDataset([
-            MoleculeDatapoint(
-                smiles=[smiles],
-                targets=[float(activity)],
-                features=fingerprint,
-            ) for smiles, fingerprint, activity in zip(test_smiles, test_fingerprints, test_activities)
-        ]),
-        batch_size=args.batch_size,
-        num_workers=0,
-        shuffle=False,
-        seed=args.seed
+    test_data_loader = build_data_loader(
+        smiles=test_smiles,
+        fingerprints=test_fingerprints,
+        activities=test_activities,
+        shuffle=True
     )
 
     # Build model
@@ -147,34 +150,30 @@ def build_chemprop_model(train_smiles: list[str],
             n_iter=n_iter
         )
 
-        if isinstance(scheduler, ExponentialLR):
-            scheduler.step()
+        val_probs = predict(model=model, data_loader=val_data_loader)
+        val_probs = [val_prob[0] for val_prob in val_probs]
 
-        val_probs = predict(
-            model=model,
-            data_loader=val_data_loader
-        )
         val_score = average_precision_score(val_activities, val_probs)
 
         if val_score > best_score:
             best_score, best_epoch = val_score, epoch
-            save_checkpoint(
-                path=save_path,
-                model=model,
-                args=args
-            )
+            save_checkpoint(path=save_path, model=model, args=args)
 
     # Evaluate on test set using model with best validation score
     print(f'Best validation {args.metric} = {best_score:.6f} on epoch {best_epoch}')
     model = load_checkpoint(save_path, device=args.device)
 
-    test_probs = predict(
-        model=model,
-        data_loader=test_data_loader
-    )
+    # Make predictions
+    test_probs = predict(model=model, data_loader=test_data_loader)
     test_probs = [test_prob[0] for test_prob in test_probs]
-    print(f'Test ROC-AUC = {roc_auc_score(test_activities, test_probs):.3f}')
-    print(f'Test PRC-AUC = {average_precision_score(test_activities, test_probs):.3f}')
+
+    # Evaluate predictions
+    scores = {
+        'roc_auc': roc_auc_score(test_activities, test_probs),
+        'prc_auc': average_precision_score(test_activities, test_probs)
+    }
+
+    return scores
 
 
 def train_model(args: Args) -> None:
@@ -183,60 +182,58 @@ def train_model(args: Args) -> None:
     data = pd.read_csv(args.data_path)
     print(f'Data size = {len(data):,}')
 
-    # Get SMILES
-    smiles = list(data[args.smiles_column])
+    # Compute fingerprints
+    data['fingerprint'] = compute_fingerprints(data[args.smiles_column], fingerprint_type=args.fingerprint_type)
 
-    # Get fingerprints
-    fingerprints = compute_fingerprints(smiles, fingerprint_type=args.fingerprint_type)
+    # Set up cross-validation
+    num_folds = 10
+    indices = np.tile(np.arange(num_folds), 1 + len(data) // num_folds)[:len(data)]
+    random = Random(0)
+    random.shuffle(indices)
 
-    # Get activity
-    activities = list(data[args.activity_column])
+    assert 1 <= args.num_models <= num_folds
 
-    # Split into train and test
-    train_smiles, val_test_smiles, train_fingerprints, val_test_fingerprints, train_activities, val_test_activities = \
-        train_test_split(
-            smiles,
-            fingerprints,
-            activities,
-            test_size=0.2,
-            random_state=0
-        )
-    val_smiles, test_smiles, val_fingerprints, test_fingerprints, val_activities, test_activities = \
-        train_test_split(
-            val_test_smiles,
-            val_test_fingerprints,
-            val_test_activities,
-            test_size=0.5,
-            random_state=0
-        )
+    # Run cross-validation
+    all_scores = []
+    for fold in trange(args.num_models, desc='cross-val'):
+        test_index = fold
+        val_index = (fold + 1) % num_folds
 
-    print(f'Train size = {len(train_smiles):,}')
-    print(f'Validation size = {len(val_smiles):,}')
-    print(f'Test size = {len(test_smiles):,}')
+        test_data = data[indices == test_index]
+        val_data = data[indices == val_index]
+        train_data = data[(indices != test_index) & (indices != val_index)]
 
-    # Build and train model
-    if args.model_type == 'chemprop':
-        build_chemprop_model(
-            train_smiles=train_smiles,
-            val_smiles=val_smiles,
-            test_smiles=test_smiles,
-            train_fingerprints=train_fingerprints,
-            val_fingerprints=val_fingerprints,
-            test_fingerprints=test_fingerprints,
-            train_activities=train_activities,
-            val_activities=val_activities,
-            test_activities=test_activities,
-            save_path=args.save_path
-        )
-    else:
-        build_sklearn_model(
-            train_fingerprints=train_fingerprints,
-            test_fingerprints=test_fingerprints,
-            train_activities=train_activities,
-            test_activities=test_activities,
-            save_path=args.save_path,
-            model_type=args.model_type
-        )
+        # Build and train model
+        if args.model_type == 'chemprop':
+            scores = build_chemprop_model(
+                train_smiles=train_data[args.smiles_column],
+                val_smiles=val_data[args.smiles_column],
+                test_smiles=test_data[args.smiles_column],
+                train_fingerprints=train_data['fingerprint'],
+                val_fingerprints=val_data['fingerprint'],
+                test_fingerprints=test_data['fingerprint'],
+                train_activities=train_data[args.activity_column],
+                val_activities=val_data[args.activity_column],
+                test_activities=test_data[args.activity_column],
+                save_path=args.save_dir / f'model_{fold}.pt'
+            )
+        else:
+            scores = build_sklearn_model(
+                train_fingerprints=train_data['fingerprint'],
+                test_fingerprints=test_data['fingerprint'],
+                train_activities=train_data[args.activity_column],
+                test_activities=test_data[args.activity_column],
+                save_path=args.save_dir / f'model_{fold}.pkl',
+                model_type=args.model_type
+            )
+
+        for score_name, score_value in scores.items():
+            print(f'Model {fold}: Test {score_name} = {score_value:.3f}')
+
+        all_scores.append(scores)
+
+    # Save scores
+    pd.DataFrame(all_scores).to_csv(args.save_dir / 'scores.csv', index=False)
 
 
 if __name__ == '__main__':
