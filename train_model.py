@@ -11,7 +11,6 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import average_precision_score, roc_auc_score
 from sklearn.neural_network import MLPClassifier
 from tap import Tap
-from torch.optim.lr_scheduler import ExponentialLR
 from tqdm import trange
 
 from chem_utils.molecular_fingerprints import compute_fingerprints
@@ -49,7 +48,6 @@ def build_sklearn_model(train_fingerprints: np.ndarray,
         model = MLPClassifier(hidden_layer_sizes=(100, 100, 100), random_state=0)
     else:
         raise ValueError(f'Model type "{model_type}" is not supported.')
-
     print(model)
 
     # Train model
@@ -183,7 +181,7 @@ def train_model(args: Args) -> None:
     print(f'Data size = {len(data):,}')
 
     # Compute fingerprints
-    data['fingerprint'] = compute_fingerprints(data[args.smiles_column], fingerprint_type=args.fingerprint_type)
+    fingerprints = compute_fingerprints(data[args.smiles_column], fingerprint_type=args.fingerprint_type)
 
     # Set up cross-validation
     num_folds = 10
@@ -195,13 +193,23 @@ def train_model(args: Args) -> None:
 
     # Run cross-validation
     all_scores = []
-    for fold in trange(args.num_models, desc='cross-val'):
-        test_index = fold
-        val_index = (fold + 1) % num_folds
+    for model_num in trange(args.num_models, desc='cross-val'):
+        print(f'Model {model_num}')
 
-        test_data = data[indices == test_index]
-        val_data = data[indices == val_index]
-        train_data = data[(indices != test_index) & (indices != val_index)]
+        test_index = model_num
+        val_index = (model_num + 1) % num_folds
+
+        test_mask = indices == test_index
+        val_mask = indices == val_index
+        train_mask = ~(test_mask | val_mask)
+
+        test_data = data[test_mask]
+        val_data = data[val_mask]
+        train_data = data[train_mask]
+
+        test_fingerprints = fingerprints[test_mask]
+        val_fingerprints = fingerprints[val_mask]
+        train_fingerprints = fingerprints[train_mask]
 
         # Build and train model
         if args.model_type == 'chemprop':
@@ -209,31 +217,47 @@ def train_model(args: Args) -> None:
                 train_smiles=train_data[args.smiles_column],
                 val_smiles=val_data[args.smiles_column],
                 test_smiles=test_data[args.smiles_column],
-                train_fingerprints=train_data['fingerprint'],
-                val_fingerprints=val_data['fingerprint'],
-                test_fingerprints=test_data['fingerprint'],
+                train_fingerprints=train_fingerprints,
+                val_fingerprints=val_fingerprints,
+                test_fingerprints=test_fingerprints,
                 train_activities=train_data[args.activity_column],
                 val_activities=val_data[args.activity_column],
                 test_activities=test_data[args.activity_column],
-                save_path=args.save_dir / f'model_{fold}.pt'
+                save_path=args.save_dir / f'model_{model_num}.pt'
             )
         else:
             scores = build_sklearn_model(
-                train_fingerprints=train_data['fingerprint'],
-                test_fingerprints=test_data['fingerprint'],
+                train_fingerprints=train_fingerprints,
+                test_fingerprints=test_fingerprints,
                 train_activities=train_data[args.activity_column],
                 test_activities=test_data[args.activity_column],
-                save_path=args.save_dir / f'model_{fold}.pkl',
+                save_path=args.save_dir / f'model_{model_num}.pkl',
                 model_type=args.model_type
             )
 
+        # Print scores
         for score_name, score_value in scores.items():
-            print(f'Model {fold}: Test {score_name} = {score_value:.3f}')
+            print(f'Test {score_name} = {score_value:.3f}')
+        print()
 
         all_scores.append(scores)
 
-    # Save scores
-    pd.DataFrame(all_scores).to_csv(args.save_dir / 'scores.csv', index=False)
+    # Process and save scores
+    score_names = list(all_scores[0])
+
+    all_scores = pd.DataFrame(all_scores)
+    all_scores['Model'] = [f'Model {model_num}' for model_num in range(args.num_models)]
+    all_scores = all_scores[['Model'] + score_names]
+    all_scores.to_csv(args.save_dir / 'scores.csv', index=False)
+
+    # Process and save summary scores
+    summary_scores = {}
+    for score_name in score_names:
+        summary_scores[f'{score_name}_mean'] = np.mean(all_scores[score_name])
+        summary_scores[f'{score_name}_std'] = np.std(all_scores[score_name])
+
+    summary_scores = pd.DataFrame([summary_scores])
+    summary_scores.to_csv(args.save_dir / 'summary_scores.csv', index=False)
 
 
 if __name__ == '__main__':
