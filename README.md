@@ -332,9 +332,10 @@ python process_data.py \
 ```
 python train_model.py \
     --data_path ../data/Screening_data/AB_combined.csv \
-    --save_path ../ckpt/AB_combined_RF_rdkit.pkl \
+    --save_dir ../ckpt/AB_combined_RF_rdkit \
     --model_type rf \
-    --fingerprint_type rdkit
+    --fingerprint_type rdkit \
+    --num_models 10
 ```
 
 

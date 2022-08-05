@@ -112,14 +112,12 @@ def build_chemprop_model(train_smiles: list[str],
     val_data_loader = build_data_loader(
         smiles=val_smiles,
         fingerprints=val_fingerprints,
-        activities=val_activities,
-        shuffle=True
+        activities=val_activities
     )
     test_data_loader = build_data_loader(
         smiles=test_smiles,
         fingerprints=test_fingerprints,
-        activities=test_activities,
-        shuffle=True
+        activities=test_activities
     )
 
     # Build model
