@@ -6,7 +6,7 @@ from typing import Literal
 import pandas as pd
 from tap import Tap
 
-from predict_with_model import predict_with_model
+from predict_model import predict_model
 
 
 class Args(Tap):
@@ -27,7 +27,7 @@ def map_fragments_to_scores(args: Args) -> None:
     fragments = sorted(set(pd.read_csv(args.fragment_path)[args.smiles_column]))
 
     # Make predictions
-    scores = predict_with_model(
+    scores = predict_model(
         smiles=fragments,
         fingerprint_type=args.fingerprint_type,
         model_type=args.model_type,

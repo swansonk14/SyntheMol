@@ -2,7 +2,7 @@
 import pickle
 from pathlib import Path
 from random import Random
-from typing import Literal
+from typing import Literal, Optional
 
 import numpy as np
 import pandas as pd
@@ -16,7 +16,7 @@ from tqdm import trange
 from chem_utils.molecular_fingerprints import compute_fingerprints
 from chemprop.args import TrainArgs
 from chemprop.data import MoleculeDataLoader, MoleculeDatapoint, MoleculeDataset
-from chemprop.train import get_loss_func, predict, train
+from chemprop.train import get_loss_func, predict as _chemprop_predict, train as chemprop_train
 from chemprop.models import MoleculeModel
 from chemprop.utils import build_optimizer, build_lr_scheduler, load_checkpoint, save_checkpoint
 
@@ -32,6 +32,11 @@ class Args(Tap):
 
     def process_args(self) -> None:
         self.save_dir.mkdir(parents=True, exist_ok=True)
+
+
+def chemprop_predict(*args, **kwargs) -> np.ndarray:
+    """Converts chemprop predictions from list of lists to a 1D numpy array (assumes single prediction task)."""
+    return np.array(_chemprop_predict(*args, **kwargs))[:, 0]
 
 
 def build_sklearn_model(train_fingerprints: np.ndarray,
@@ -69,16 +74,19 @@ def build_sklearn_model(train_fingerprints: np.ndarray,
     return scores
 
 
-def build_data_loader(smiles: list[str],
-                      fingerprints: np.ndarray,
-                      activities: list[int],
-                      shuffle: bool = False) -> MoleculeDataLoader:
+def build_chemprop_data_loader(smiles: list[str],
+                               fingerprints: np.ndarray,
+                               activities: Optional[list[int]] = None,
+                               shuffle: bool = False) -> MoleculeDataLoader:
     """Builds a chemprop MoleculeDataLoader."""
+    if activities is None:
+        activities = [None] * len(smiles)
+
     return MoleculeDataLoader(
         dataset=MoleculeDataset([
             MoleculeDatapoint(
                 smiles=[smiles],
-                targets=[float(activity)],
+                targets=[float(activity)] if activity is not None else None,
                 features=fingerprint,
             ) for smiles, fingerprint, activity in zip(smiles, fingerprints, activities)
         ]),
@@ -103,18 +111,18 @@ def build_chemprop_model(train_smiles: list[str],
     args.train_data_size = len(train_smiles)
 
     # Build data loaders
-    train_data_loader = build_data_loader(
+    train_data_loader = build_chemprop_data_loader(
         smiles=train_smiles,
         fingerprints=train_fingerprints,
         activities=train_activities,
         shuffle=True
     )
-    val_data_loader = build_data_loader(
+    val_data_loader = build_chemprop_data_loader(
         smiles=val_smiles,
         fingerprints=val_fingerprints,
         activities=val_activities
     )
-    test_data_loader = build_data_loader(
+    test_data_loader = build_chemprop_data_loader(
         smiles=test_smiles,
         fingerprints=test_fingerprints,
         activities=test_activities
@@ -136,7 +144,7 @@ def build_chemprop_model(train_smiles: list[str],
     best_epoch = n_iter = 0
     for epoch in trange(args.epochs):
         print(f'Epoch {epoch}')
-        n_iter = train(
+        n_iter = chemprop_train(
             model=model,
             data_loader=train_data_loader,
             loss_func=loss_func,
@@ -146,9 +154,7 @@ def build_chemprop_model(train_smiles: list[str],
             n_iter=n_iter
         )
 
-        val_probs = predict(model=model, data_loader=val_data_loader)
-        val_probs = [val_prob[0] for val_prob in val_probs]
-
+        val_probs = chemprop_predict(model=model, data_loader=val_data_loader)
         val_score = average_precision_score(val_activities, val_probs)
 
         if val_score > best_score:
@@ -160,8 +166,7 @@ def build_chemprop_model(train_smiles: list[str],
     model = load_checkpoint(save_path, device=args.device)
 
     # Make predictions
-    test_probs = predict(model=model, data_loader=test_data_loader)
-    test_probs = [test_prob[0] for test_prob in test_probs]
+    test_probs = chemprop_predict(model=model, data_loader=test_data_loader)
 
     # Evaluate predictions
     scores = {
