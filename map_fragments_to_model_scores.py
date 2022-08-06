@@ -6,6 +6,8 @@ from typing import Literal
 import pandas as pd
 from tap import Tap
 
+from chem_utils.molecular_fingerprints import compute_fingerprints
+
 from predict_model import predict_model
 
 
@@ -26,10 +28,13 @@ def map_fragments_to_scores(args: Args) -> None:
     # Load fragments
     fragments = sorted(set(pd.read_csv(args.fragment_path)[args.smiles_column]))
 
+    # Compute fingerprints
+    fingerprints = compute_fingerprints(fragments, fingerprint_type=args.fingerprint_type)
+
     # Make predictions
     scores = predict_model(
         smiles=fragments,
-        fingerprint_type=args.fingerprint_type,
+        fingerprints=fingerprints,
         model_type=args.model_type,
         model_path=args.model_path
     )

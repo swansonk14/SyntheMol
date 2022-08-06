@@ -75,29 +75,23 @@ def predict_chemprop(smiles: list[str],
 
 
 def predict_model(smiles: list[str],
-                  fingerprint_type: str,
+                  fingerprints: np.ndarray,
                   model_type: str,
                   model_path: Path) -> np.ndarray:
     """Make predictions with a model."""
-    # Compute fingerprints
-    fingerprints = compute_fingerprints(smiles, fingerprint_type=fingerprint_type)
-
     # Map fragments to model scores
-    start_time = time()
     if model_type == 'chemprop':
         preds = predict_chemprop(
             smiles=smiles,
             fingerprints=fingerprints,
-            model_path=model_dir
+            model_path=model_path
         )
     else:
         preds = predict_sklearn(
             fingerprints=fingerprints,
-            model_path=model_dir,
+            model_path=model_path,
             model_type=model_type
         )
-    print(f'Total time to make predictions using {model_type} model '
-          f'with {fingerprint_type} fingerprints = {time() - start_time:.2f}')
 
     return preds
 
@@ -108,6 +102,9 @@ def make_predictions(args: Args) -> None:
     data = pd.read_csv(args.data_path)
     smiles = list(data[args.smiles_column])
 
+    # Compute fingerprints
+    fingerprints = compute_fingerprints(smiles, fingerprint_type=args.fingerprint_type)
+
     # Error handling on model dir/path
     if (args.model_dir is None) == (args.model_path is None):
         raise ValueError('Must provide exactly one of model_dir and model_path.')
@@ -116,19 +113,25 @@ def make_predictions(args: Args) -> None:
     if args.model_path is not None:
         model_paths = [args.model_path]
     else:
-        model_paths = args.model_dir.glob('*.pt' if args.model_type == 'chemprop' else '*.pkl')
+        model_paths = list(args.model_dir.glob('*.pt' if args.model_type == 'chemprop' else '*.pkl'))
 
     # Make predictions
+    start_time = time()
+
     for model_num, model_path in enumerate(tqdm(model_paths, desc='models')):
         preds = predict_model(
             smiles=smiles,
-            fingerprint_type=args.fingerprint_type,
+            fingerprints=fingerprints,
             model_type=args.model_type,
-            model_path=args.model_dir
+            model_path=model_path
         )
 
         # Add predictions to data
         data[f'{args.model_type}_model_{model_num}_preds'] = preds
+
+    s = 's' if len(model_paths) > 1 else ''
+    print(f'Total time to make predictions using {len(model_paths)} {args.model_type} model{s} '
+          f'with {args.fingerprint_type} fingerprints = {time() - start_time:.2f}')
 
     # Save predictions
     data.to_csv(args.save_path, index=False)
