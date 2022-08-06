@@ -21,6 +21,7 @@ from chemprop.utils import load_checkpoint
 from real_reactions import Reaction, REAL_REACTIONS, SYNNET_REACTIONS
 
 
+# TODO: make certain arguments optional if doing random search
 class Args(Tap):
     model_path: Path
     """Path to a directory of model checkpoints or to a specific PKL or PT file containing a trained model."""

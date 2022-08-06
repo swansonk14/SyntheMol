@@ -30,7 +30,8 @@ class Args(Tap):
         self.save_dir.mkdir(parents=True, exist_ok=True)
 
 
-SCORE_TYPES = ['score', 'model_score']
+# TODO: bring back model score if necessary
+SCORE_TYPES = ['score']  # , 'model_score']
 SIMILARITY_TYPES = ['tanimoto', 'tversky']
 
 
