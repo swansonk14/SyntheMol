@@ -7,7 +7,7 @@ from collections import Counter
 from datetime import datetime
 from functools import cache, cached_property, partial
 from pathlib import Path
-from typing import Any, Callable, Literal, Optional
+from typing import Any, Callable, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -25,7 +25,7 @@ from real_reactions import Reaction, REAL_REACTIONS, SYNNET_REACTIONS
 
 
 class Args(Tap):
-    model_path: Path  # Path to PKL file containing a RandomForestClassifier trained on Morgan fingerprints.
+    model_path: Path  # Path to a directory of model checkpoints or to a specific PKL or PT file containing a trained model.
     fragment_path: Path  # Path to CSV file containing molecular building blocks.
     fragment_to_model_score_path: Path  # Path to JSON file containing a dictionary mapping fragments to model prediction scores.
     fragment_to_train_similarity_path: Path  # Path to JSON file containing a dictionary mapping fragments to train similarities (top 10 nearest neighbor Tanimoto).
@@ -514,24 +514,26 @@ def create_model_scoring_fn(model_path: Path,
                             fragment_to_model_score: dict[str, float],
                             binarize_scoring: float) -> Callable[[str], float]:
     """Creates a function that scores a molecule using a model."""
+    # Get model paths
+    if model_path.is_dir():
+        model_paths = [model_path]
+    else:
+        model_paths = list(model_path.glob('*.pt' if model_type == 'chemprop' else '*.pkl'))
+
     # Load model and set up scoring function
     if model_type == 'chemprop':
-        model: MoleculeModel = load_checkpoint(path=model_path)
-        model.eval()
+        models = [load_checkpoint(path=model_path).eval() for model_path in model_paths]
 
         def model_scorer(smiles: str, fingerprint: np.ndarray) -> float:
-            return model(batch=[[smiles]], features_batch=[fingerprint]).item()
+            return float(np.mean(model(batch=[[smiles]], features_batch=[fingerprint]).item() for model in models))
     else:
-        with open(model_path, 'rb') as f:
-            if model_type == 'rf':
-                model: RandomForestClassifier = pickle.load(f)
-            elif model_type == 'mlp':
-                model: MLPClassifier = pickle.load(f)
-            else:
-                raise ValueError(f'Model type "{model_type}" is not supported.')
+        models = []
+        for model_path in model_paths:
+            with open(model_path, 'rb') as f:
+                models.append(pickle.load(f))
 
         def model_scorer(smiles: str, fingerprint: np.ndarray) -> float:
-            return model.predict_proba([fingerprint])[0, 1]
+            return float(np.mean(model.predict_proba([fingerprint])[0, 1] for model in models))
 
     @cache
     def model_scoring_fn(smiles: str) -> float:

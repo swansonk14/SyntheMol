@@ -19,8 +19,7 @@ from train_model import build_chemprop_data_loader, chemprop_predict
 
 class Args(Tap):
     data_path: Path  # Path to a CSV file containing SMILES.
-    model_dir: Optional[Path] = None  # Path to a directory containing PKL or PT files with trained models. (Do not use with model_path.)
-    model_path: Optional[Path] = None  # Path to a PKL or PT fil containing a trained model. (Do not use with model_dir.)
+    model_path: Path = None  # Path to a directory of model checkpoints or to a specific PKL or PT file containing a trained model.
     save_path: Optional[Path] = None  # Path to a JSON file where a dictionary mapping fragments to model scores will be saved. If None, defaults to data_path.
     smiles_column: str = 'smiles'  # Name of the column containing SMILES.
     model_type: Literal['rf', 'mlp', 'chemprop']  # Type of model to train. 'rf' = random forest. 'mlp' = multilayer perceptron.
@@ -96,42 +95,53 @@ def predict_model(smiles: list[str],
     return preds
 
 
+def predict_ensemble(smiles: list[str],
+                     fingerprint_type: str,
+                     model_type: str,
+                     model_path: Path,
+                     average_preds: bool = True) -> np.ndarray:
+    """Make predictions with an ensemble of models."""
+    # Compute fingerprints
+    fingerprints = compute_fingerprints(smiles, fingerprint_type=fingerprint_type)
+
+    # Get model paths
+    if model_path.is_dir():
+        model_paths = [model_path]
+    else:
+        model_paths = list(model_path.glob('*.pt' if model_type == 'chemprop' else '*.pkl'))
+
+    preds = np.array([
+        predict_model(
+            smiles=smiles,
+            fingerprints=fingerprints,
+            model_type=model_type,
+            model_path=model_path
+        ) for model_path in tqdm(model_paths, desc='models')
+    ])
+
+    if average_preds:
+        preds = np.mean(preds, axis=0)
+
+    return preds
+
+
 def make_predictions(args: Args) -> None:
     """Make predictions with a model and save them to a file."""
     # Load SMILES
     data = pd.read_csv(args.data_path)
     smiles = list(data[args.smiles_column])
 
-    # Compute fingerprints
-    fingerprints = compute_fingerprints(smiles, fingerprint_type=args.fingerprint_type)
-
-    # Error handling on model dir/path
-    if (args.model_dir is None) == (args.model_path is None):
-        raise ValueError('Must provide exactly one of model_dir and model_path.')
-
-    # Get model paths
-    if args.model_path is not None:
-        model_paths = [args.model_path]
-    else:
-        model_paths = list(args.model_dir.glob('*.pt' if args.model_type == 'chemprop' else '*.pkl'))
-
     # Make predictions
-    start_time = time()
+    all_preds = predict_ensemble(
+        smiles=smiles,
+        fingerprint_type=args.fingerprint_type,
+        model_type=args.model_type,
+        model_path=args.model_path,
+        average_preds=False
+    )
 
-    for model_num, model_path in enumerate(tqdm(model_paths, desc='models')):
-        preds = predict_model(
-            smiles=smiles,
-            fingerprints=fingerprints,
-            model_type=args.model_type,
-            model_path=model_path
-        )
-
-        # Add predictions to data
+    for model_num, preds in enumerate(all_preds):
         data[f'{args.model_type}_model_{model_num}_preds'] = preds
-
-    s = 's' if len(model_paths) > 1 else ''
-    print(f'Total time to make predictions using {len(model_paths)} {args.model_type} model{s} '
-          f'with {args.fingerprint_type} fingerprints = {time() - start_time:.2f}')
 
     # Save predictions
     data.to_csv(args.save_path, index=False)

@@ -6,14 +6,12 @@ from typing import Literal
 import pandas as pd
 from tap import Tap
 
-from chem_utils.molecular_fingerprints import compute_fingerprints
-
-from predict_model import predict_model
+from predict_model import predict_ensemble
 
 
 class Args(Tap):
     fragment_path: Path  # Path to a CSV file containing fragments.
-    model_path: Path  # Path to a PKL or PT file containing a trained model.
+    model_path: Path  # Path to a directory of model checkpoints or to a specific PKL or PT file containing a trained model.
     save_path: Path  # Path to a JSON file where a dictionary mapping fragments to model scores will be saved.
     smiles_column: str = 'smiles'  # Name of the column containing SMILES.
     model_type: Literal['rf', 'mlp', 'chemprop']  # Type of model to train. 'rf' = random forest. 'mlp' = multilayer perceptron.
@@ -28,13 +26,10 @@ def map_fragments_to_scores(args: Args) -> None:
     # Load fragments
     fragments = sorted(set(pd.read_csv(args.fragment_path)[args.smiles_column]))
 
-    # Compute fingerprints
-    fingerprints = compute_fingerprints(fragments, fingerprint_type=args.fingerprint_type)
-
     # Make predictions
-    scores = predict_model(
+    scores = predict_ensemble(
         smiles=fragments,
-        fingerprints=fingerprints,
+        fingerprint_type=args.fingerprint_type,
         model_type=args.model_type,
         model_path=args.model_path
     )
