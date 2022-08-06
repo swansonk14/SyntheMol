@@ -8,19 +8,69 @@ from tap import Tap
 
 
 class Args(Tap):
-    data_path: Path  # Path to CSV file containing ensemble predictions on a test set.
-    save_path: Path  # Path to PDF or PNG file where results plot will be saved.
+    chemprop_data_path: Path  # Path to CSV file containing ensemble predictions on a test set.
+    rf_data_path: Path
     activity_column: str = 'activity'  # Name of the column containing true activity values.
     preds_column_suffix: str = 'preds'  # Suffix of the names of the columns containing predictions.
-
-    def process_args(self) -> None:
-        self.save_path.parent.mkdir(parents=True, exist_ok=True)
 
 
 def evaluate_ensemble_confidence(args: Args) -> None:
     """Evaluate the confidence of an ensemble for selecting molecules."""
     # Load data
-    data = pd.read_csv(args.data_path)
+    chemprop_data = pd.read_csv(args.chemprop_data_path)
+    rf_data = pd.read_csv(args.rf_data_path)
+
+    chemprop_preds_columns = [column for column in chemprop_data.columns if column.endswith(args.preds_column_suffix)]
+    rf_preds_columns = [column for column in rf_data.columns if column.endswith(args.preds_column_suffix)]
+
+    chemprop_preds = chemprop_data[chemprop_preds_columns].to_numpy()
+    rf_preds = rf_data[rf_preds_columns].to_numpy()
+
+    chemprop_percentiles = chemprop_preds.argsort(axis=0).argsort(axis=0) / (len(chemprop_data) - 1)
+    rf_percentiles = rf_preds.argsort(axis=0).argsort(axis=0) / (len(rf_data) - 1)
+
+    model_num = 0
+
+    hit_mask = chemprop_data[args.activity_column] == 1
+
+    # agree = np.abs(chemprop_percentiles[:, model_num] - rf_percentiles[:, model_num]) <= 0.05
+    agree = np.abs(chemprop_percentiles[:, model_num] - chemprop_percentiles[:, model_num + 2]) <= 0.05
+
+    print(sum(chemprop_data[args.activity_column] == 1) / len(chemprop_data))
+    print(sum(chemprop_data[args.activity_column][agree] == 1) / sum(agree))
+
+    print('Chemprop')
+    print(f'ROC-AUC = {roc_auc_score(chemprop_data[args.activity_column][agree], chemprop_percentiles[:, model_num][agree]):.3f}')
+    print(f'PRC-AUC = {average_precision_score(chemprop_data[args.activity_column][agree], chemprop_percentiles[:, model_num][agree]):.3f}')
+    print()
+
+
+    print('RF')
+    print(f'ROC-AUC = {roc_auc_score(chemprop_data[args.activity_column][agree], rf_percentiles[:, model_num][agree]):.3f}')
+    print(f'PRC-AUC = {average_precision_score(chemprop_data[args.activity_column][agree], rf_percentiles[:, model_num][agree]):.3f}')
+    print()
+
+    print('Ensemble')
+    print(f'ROC-AUC = {roc_auc_score(chemprop_data[args.activity_column][agree], (chemprop_percentiles[:, model_num] + rf_percentiles[:, model_num])[agree]):.3f}')
+    print(f'PRC-AUC = {average_precision_score(chemprop_data[args.activity_column][agree], (chemprop_percentiles[:, model_num] + rf_percentiles[:, model_num])[agree]):.3f}')
+    print()
+
+    exit()
+
+    import matplotlib.pyplot as plt
+    plt.clf()
+    # plt.scatter(chemprop_percentiles[:, model_num][~hit_mask], np.abs(chemprop_percentiles[:, model_num] - rf_percentiles[:, model_num])[~hit_mask], label='nonhit', color='blue')
+    # plt.scatter(chemprop_percentiles[:, model_num][hit_mask], np.abs(chemprop_percentiles[:, model_num] - rf_percentiles[:, model_num])[hit_mask], label='hit', color='red')
+    plt.scatter(chemprop_percentiles[:, model_num][~hit_mask], rf_percentiles[:, model_num][~hit_mask], label='nonhit', color='blue')
+    plt.scatter(chemprop_percentiles[:, model_num][hit_mask], rf_percentiles[:, model_num][hit_mask], label='hit', color='red')
+    plt.xlabel('Chemprop Percentile')
+    # plt.ylabel('Absolute Value Percentile Difference')
+    plt.ylabel('RF Percentile')
+    plt.legend()
+    plt.show()
+
+    exit()
+
 
     # Get preds
     preds_columns = [column for column in data.columns if column.endswith(args.preds_column_suffix)]

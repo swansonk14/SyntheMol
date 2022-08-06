@@ -106,9 +106,12 @@ def predict_ensemble(smiles: list[str],
 
     # Get model paths
     if model_path.is_dir():
-        model_paths = [model_path]
-    else:
         model_paths = list(model_path.glob('*.pt' if model_type == 'chemprop' else '*.pkl'))
+
+        if len(model_paths) == 0:
+            raise ValueError(f'Could not find any models in directory {model_path}.')
+    else:
+        model_paths = [model_path]
 
     preds = np.array([
         predict_model(
