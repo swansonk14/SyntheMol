@@ -48,13 +48,13 @@ def evaluate_ensemble_confidence(args: Args) -> None:
     print(np.mean(nonhit_stds))
     print()
 
-    preds = all_preds[:, 5]
+    preds = all_preds.mean(axis=1)
     print(f'ROC-AUC = {roc_auc_score(data[args.activity_column], preds):.3f}')
     print(f'PRC-AUC = {average_precision_score(data[args.activity_column], preds):.3f}')
     print(f'Positive enrichment = {sum(data[args.activity_column] == 1) / len(data):.3f}')
     print()
 
-    high_score_mask = preds >= 0.95
+    high_score_mask = preds >= 0.98
     # for std in np.arange(0.35, 0.0, -0.05):
     for std in np.arange(0.05, 0.0, -0.005):
         std_mask = preds_std <= std
@@ -66,6 +66,8 @@ def evaluate_ensemble_confidence(args: Args) -> None:
         print(f'PRC-AUC = {average_precision_score(data[args.activity_column][mask], preds[mask]):.3f}')
         print(f'Positive enrichment = {sum(activities == 1) / len(activities):.3f}')
         print()
+
+    # exit()
 
     import matplotlib.pyplot as plt
     for model_num in range(len(preds_columns)):
