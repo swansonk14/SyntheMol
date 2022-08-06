@@ -26,6 +26,10 @@ def evaluate_ensemble_confidence(args: Args) -> None:
     preds_columns = [column for column in data.columns if column.endswith(args.preds_column_suffix)]
     all_preds = data[preds_columns].to_numpy()
 
+    # Convert preds scores into percentiles for comparability
+    ranking = all_preds.argsort(axis=0).argsort(axis=0)
+    all_preds = ranking / (len(data) - 1)  # percentiles
+
     # Compute variance
     preds_std = np.std(all_preds, axis=1)
 
@@ -33,8 +37,61 @@ def evaluate_ensemble_confidence(args: Args) -> None:
     pred_column = preds_columns[0]
 
     # Compute performance of first model as a function of std percentile among ensemble
-    percentiles = np.arange(0, 101, 10)
+    # percentiles = np.arange(0, 101, 10)
+    percentiles = [0, 90, 95, 100]
     percentile_stds = np.percentile(preds_std, percentiles)
+
+    hit_mask = data[args.activity_column] == 1
+    hit_stds = preds_std[hit_mask]
+    nonhit_stds = preds_std[~hit_mask]
+    print(np.mean(hit_stds))
+    print(np.mean(nonhit_stds))
+    print()
+
+    preds = all_preds[:, 5]
+    print(f'ROC-AUC = {roc_auc_score(data[args.activity_column], preds):.3f}')
+    print(f'PRC-AUC = {average_precision_score(data[args.activity_column], preds):.3f}')
+    print(f'Positive enrichment = {sum(data[args.activity_column] == 1) / len(data):.3f}')
+    print()
+
+    high_score_mask = preds >= 0.95
+    # for std in np.arange(0.35, 0.0, -0.05):
+    for std in np.arange(0.05, 0.0, -0.005):
+        std_mask = preds_std <= std
+        mask = high_score_mask & std_mask
+        print(f'std = {std:.3f}')
+        activities = data[args.activity_column][mask]
+        print(activities.value_counts())
+        print(f'ROC-AUC = {roc_auc_score(data[args.activity_column][mask], preds[mask]):.3f}')
+        print(f'PRC-AUC = {average_precision_score(data[args.activity_column][mask], preds[mask]):.3f}')
+        print(f'Positive enrichment = {sum(activities == 1) / len(activities):.3f}')
+        print()
+
+    import matplotlib.pyplot as plt
+    for model_num in range(len(preds_columns)):
+        plt.clf()
+        # plt.scatter(all_preds.mean(axis=1), preds_std, color='blue', s=5)
+        # plt.scatter(all_preds[:, model_num], preds_std, color='blue', s=5)
+        plt.scatter(all_preds.mean(axis=1)[~hit_mask], nonhit_stds, label='nonhit', color='blue', s=5)
+        plt.scatter(all_preds.mean(axis=1)[hit_mask], hit_stds, label='hit', color='red', s=5)
+        # plt.hist(nonhit_stds, density=True, bins=100, label='nonhit', alpha=0.5)
+        # plt.hist(hit_stds, density=True, bins=100, label='hit', alpha=0.5)
+        # plt.xlabel('Prediction Score')
+        plt.xlabel('Ranking')
+        plt.ylabel('Standard Deviation')
+        plt.legend()
+        plt.show()
+        exit()
+    exit()
+
+    # for model_num in range(len(preds_columns)):
+    #     print(roc_auc_score(data[args.activity_column], all_preds[:, model_num]))
+    #     print(average_precision_score(data[args.activity_column], all_preds[:, model_num]))
+    #     print()
+    #
+    # print(roc_auc_score(data[args.activity_column], preds_std))
+    # print(average_precision_score(data[args.activity_column], preds_std))
+
 
     for i in range(len(percentiles) - 1):
         print(f'Std percentiles {percentiles[i]} to {percentiles[i + 1]}')
