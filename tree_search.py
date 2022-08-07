@@ -88,7 +88,8 @@ class TreeNode:
                  node_id: Optional[int] = None,
                  fragments: Optional[tuple[str]] = None,
                  reagent_counts: Optional[Counter] = None,
-                 construction_log: Optional[tuple[dict[str, Any]]] = None) -> None:
+                 construction_log: Optional[tuple[dict[str, Any]]] = None,
+                 rollout_num: Optional[int] = None) -> None:
         """Initializes the TreeNode object.
 
         :param c_puct: The hyperparameter that encourages exploration.
@@ -99,6 +100,7 @@ class TreeNode:
                          are the fragments that are about to be added.
         :param reagent_counts: A Counter mapping reagent indices to the number of times they appear in this node.
         :param construction_log: A tuple of dictionaries containing information about each reaction.
+        :param rollout_num: The number of the rollout on which this node was created.
         """
         self.c_puct = c_puct
         self.scoring_fn = scoring_fn
@@ -110,6 +112,7 @@ class TreeNode:
         self.W = 0.0  # The sum of the leaf node values for leaf nodes that descend from this node.
         self.N = 0  # The number of times this node has been expanded.
         self.children: list[TreeNode] = []
+        self.rollout_num = rollout_num
 
     @classmethod
     def compute_score(cls, fragments: tuple[str], scoring_fn: Callable[[str], float]) -> float:
@@ -214,8 +217,9 @@ class TreeSearcher:
         self.rng = np.random.default_rng(seed=rng_seed)
         self.fragment_diversity = fragment_diversity
 
+        self.rollout_num = 0
         self.TreeNodeClass = partial(TreeNode, c_puct=c_puct, scoring_fn=scoring_fn)
-        self.root = self.TreeNodeClass(node_id=1)
+        self.root = self.TreeNodeClass(node_id=1, rollout_num=0)
         self.state_map: dict[TreeNode, TreeNode] = {self.root: self.root}
         self.reagent_counts = Counter()
 
@@ -329,7 +333,8 @@ class TreeSearcher:
                 self.TreeNodeClass(
                     fragments=(product,),
                     reagent_counts=node.reagent_counts,
-                    construction_log=node.construction_log + (reaction_log,)
+                    construction_log=node.construction_log + (reaction_log,),
+                    rollout_num=self.rollout_num
                 )
                 for product in products
             ]
@@ -355,7 +360,8 @@ class TreeSearcher:
             self.TreeNodeClass(
                 fragments=node.fragments + (next_fragment,),
                 reagent_counts=node.reagent_counts + Counter({self.fragment_to_id[next_fragment]: 1}),
-                construction_log=node.construction_log
+                construction_log=node.construction_log,
+                rollout_num=self.rollout_num
             )
             for next_fragment in next_fragments
         ]
@@ -455,14 +461,15 @@ class TreeSearcher:
 
         :return: A list of TreeNode objects sorted from highest to lowest reward.
         """
-        for _ in trange(self.n_rollout):
+        for rollout_num in trange(self.n_rollout):
+            self.rollout_num = rollout_num + 1
             self.rollout(node=self.root)
 
         # Get all the nodes representing fully constructed molecules that are not initial building blocks
         nodes = [node for _, node in self.state_map.items() if node.num_fragments == 1 and node.num_reactions > 0]
 
-        # Sort by highest reward and break ties by preferring less unmasked results
-        nodes = sorted(nodes, key=lambda node: node.P, reverse=True)
+        # Sort by highest score and break ties by using node ID
+        nodes = sorted(nodes, key=lambda node: (node.P, node.node_id), reverse=True)
 
         return nodes
 
@@ -500,7 +507,7 @@ def save_molecules(nodes: list[TreeNode], save_path: Path) -> None:
         construction_dicts.append(construction_dict)
 
     # Specify column order for CSV file
-    columns = ['smiles', 'node_id', 'num_expansions', 'score', 'Q_value', 'num_reactions']
+    columns = ['smiles', 'node_id', 'num_expansions', 'rollout_num', 'score', 'Q_value', 'num_reactions']
 
     for reaction_num in range(1, max_reaction_num + 1):
         columns.append(f'reaction_{reaction_num}_id')
@@ -517,6 +524,7 @@ def save_molecules(nodes: list[TreeNode], save_path: Path) -> None:
                 'smiles': node.fragments[0],
                 'node_id': node.node_id,
                 'num_expansions': node.N,
+                'rollout_num': node.rollout_num,
                 'score': node.P,
                 'Q_value': node.Q(),
                 **construction_dict
