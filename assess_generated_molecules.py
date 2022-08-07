@@ -156,14 +156,6 @@ def assess_generated_molecules(args: Args) -> None:
             plt.title(f'Train Top 10 {similarity_type.title()} Similarity Distribution')
             plt.savefig(args.save_dir / f'train_diversity_{similarity_type}.pdf', bbox_inches='tight')
 
-            # Violin plot of diversity compared to train across percentiles (not just nearest neighbor)
-            plot_molecular_similarities(
-                smiles=smiles,
-                reference_smiles=train_smiles,
-                similarity_type=similarity_type,
-                save_path=args.save_dir / f'train_diversity_percentiles_{similarity_type}.pdf'
-            )
-
     # Distribution of number of reactions
     reaction_counts = Counter(data['num_reactions'])
     min_reactions, max_reactions = min(reaction_counts), max(reaction_counts)

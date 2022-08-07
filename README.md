@@ -426,7 +426,7 @@ python filter_molecules.py \
 python filter_molecules.py \
     --data_path ../../combinatorial_antibiotics/generations/tree_search/mcts/molecules_filtered.csv \
     --save_path ../../combinatorial_antibiotics/generations/tree_search/mcts/molecules_filtered.csv \
-    --filter_column model_score \
+    --filter_column score \
     --min_value 0.2
 ```
 
@@ -444,7 +444,7 @@ Select top molecule from each cluster. (Command from [chem_utils](https://github
 python select_from_clusters.py \
     --data_path ../../combinatorial_antibiotics/generations/tree_search/mcts/molecules_filtered.csv \
     --save_path ../../combinatorial_antibiotics/generations/tree_search/mcts/molecules_selected_100.csv \
-    --value_column model_score
+    --value_column score
 ```
 
 Visualize selected molecules. (Command from [chem_utils](https://github.com/swansonk14/chem_utils).)

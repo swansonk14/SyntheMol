@@ -661,6 +661,9 @@ def run_tree_search(args: Args) -> None:
 
             return train_similarity_score
 
+        # TODO: maybe make this train similarity score exponential b/c
+        # TODO: we only want to penalize significantly when the similarity is very high
+        # TODO: but otherwise we don't care too much (i.e., not a linear relationship)
         # Define train hits similarity scoring function (top 1 Tversky similarity)
         def train_hits_similarity_scoring_fn(morgan_fingerprint: np.ndarray) -> float:
             train_hits_similarity_score = np.max(morgan_fingerprint @ train_hits_tversky)
