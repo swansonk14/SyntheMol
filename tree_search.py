@@ -77,6 +77,8 @@ class Args(Tap):
     """Seed for random number generators."""
     fragment_diversity: bool = False
     """Whether to encourage the use of diverse fragments by modifying the score."""
+    debug: bool = False
+    """Whether to print out additional statements for debugging."""
 
 
 class TreeNode:
@@ -185,7 +187,8 @@ class TreeSearcher:
                  num_expand_nodes: Optional[int],
                  reactions: list[Reaction],
                  rng_seed: int,
-                 fragment_diversity: bool) -> None:
+                 fragment_diversity: bool,
+                 debug: bool) -> None:
         """Creates the TreeSearcher object.
 
         :param search_type: Type of search to perform.
@@ -199,6 +202,7 @@ class TreeSearcher:
         :param reactions: A list of chemical reactions that can be used to combine molecular fragments.
         :param rng_seed: Seed for the random number generator.
         :param fragment_diversity: Whether to encourage the use of diverse fragments by modifying the score.
+        :param debug: Whether to print out additional statements for debugging.
         """
         self.search_type = search_type
         self.fragment_to_id = fragment_to_id
@@ -216,6 +220,7 @@ class TreeSearcher:
         self.reactions = reactions
         self.rng = np.random.default_rng(seed=rng_seed)
         self.fragment_diversity = fragment_diversity
+        self.debug = debug
 
         self.rollout_num = 0
         self.TreeNodeClass = partial(TreeNode, c_puct=c_puct, scoring_fn=scoring_fn)
@@ -385,6 +390,15 @@ class TreeSearcher:
         :param node: An TreeNode representing the root of the MCTS search.
         :return: The value (reward) of the rollout.
         """
+        # Debugging
+        if self.debug:
+            print(f'Fragments = {node.fragments}')
+            print(f'Num fragments = {node.num_fragments}')
+            print(f'Num unique reagents = {len(node.unique_reagents)}')
+            print(f'Num reactions = {node.num_reactions}')
+            print(f'Score = {node.P}')
+            print()
+
         # Stop the search if we've reached the maximum number of reactions
         if node.num_reactions >= self.max_reactions:
             return node.P
@@ -463,13 +477,17 @@ class TreeSearcher:
         """
         for rollout_num in trange(self.n_rollout):
             self.rollout_num = rollout_num + 1
+
+            if self.debug:
+                print(f'Rollout {self.rollout_num}')
+
             self.rollout(node=self.root)
 
         # Get all the nodes representing fully constructed molecules that are not initial building blocks
         nodes = [node for _, node in self.state_map.items() if node.num_fragments == 1 and node.num_reactions > 0]
 
         # Sort by highest score and break ties by using node ID
-        nodes = sorted(nodes, key=lambda node: (node.P, node.node_id), reverse=True)
+        nodes = sorted(nodes, key=lambda node: (node.P, -node.node_id), reverse=True)
 
         return nodes
 
@@ -722,7 +740,8 @@ def run_tree_search(args: Args) -> None:
         num_expand_nodes=args.num_expand_nodes,
         reactions=reactions,
         rng_seed=args.rng_seed,
-        fragment_diversity=args.fragment_diversity
+        fragment_diversity=args.fragment_diversity,
+        debug=args.debug
     )
 
     # Search for molecules
