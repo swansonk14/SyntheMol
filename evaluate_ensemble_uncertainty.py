@@ -111,6 +111,22 @@ def evaluate_ensemble_uncertainty(args: Args) -> None:
         ensemble_pred_uncertainty_sorted = ensemble_pred[uncertainty_argsort]
         activities_uncertainty_sorted = activities[uncertainty_argsort]
 
+        # Plot uncertainty vs score
+        hit_mask = activities == 1
+        non_hit_mask = activities == 0
+
+        ensemble_percentiles = ensemble_pred.argsort().argsort() / (num_molecules - 1)
+
+        plt.clf()
+        plt.scatter(ensemble_percentiles[non_hit_mask], uncertainty[non_hit_mask], color='blue', label='non-hit')
+        plt.scatter(ensemble_percentiles[hit_mask], uncertainty[hit_mask], color='red', label='hit')
+        plt.xlabel('Ensemble Prediction Score Percentile')
+        plt.ylabel(f'{args.model_comparison.title()}-Model {args.uncertainty_basis.title()} Uncertainty')
+        plt.title(f'{model_name} Uncertainty vs Prediction Score Percentile')
+        plt.legend()
+        plt.gcf().set_size_inches(12, 9.5)
+        plt.savefig(args.save_dir / f'{model_name}_uncertainty_vs_score.pdf', bbox_inches='tight')
+
         # Evaluate at different uncertainty levels
         roc_aucs, prc_aucs, hit_ratios = [], [], []
         top_k_hit_ratio_dict = {top_k: [] for top_k in args.top_ks}
@@ -152,12 +168,13 @@ def evaluate_ensemble_uncertainty(args: Args) -> None:
 
         # Plot hit ratios
         plt.clf()
-        plt.plot(np.arange(len(hit_ratios)), hit_ratios, color='blue', label='Hit ratio')
-        plt.hlines(y=hit_ratio, xmin=0, xmax=len(hit_ratios), linestyles='--', color='blue')
 
         for top_k, top_k_hit_ratios in top_k_hit_ratio_dict.items():
             p = plt.plot(np.arange(len(top_k_hit_ratios)), top_k_hit_ratios, label=f'Top {top_k} hit ratio')
             plt.hlines(y=ensemble_top_k_hit_ratios[top_k], xmin=0, xmax=len(top_k_hit_ratios), linestyles='--', color=p[0].get_color())
+
+        plt.plot(np.arange(len(hit_ratios)), hit_ratios, color='blue', label='Hit ratio')
+        plt.hlines(y=hit_ratio, xmin=0, xmax=len(hit_ratios), linestyles='--', color='blue')
 
         plt.xlabel('Number of molecules removed by uncertainty')
         plt.ylabel('Hit ratio')
