@@ -75,14 +75,20 @@ def evaluate_ensemble_uncertainty(args: Args) -> None:
 
         num_models = len(model_preds)
 
-        print(f'{model_name} {num_models} models')
-        print(f'ROC-AUC = {np.mean(model_roc_aucs):.3f} +/- {np.std(model_roc_aucs):.3f} '
-              f'vs {ensemble_roc_auc:.3f} ensemble')
-        print(f'PRC-AUC = {np.mean(model_prc_aucs):.3f} +/- {np.std(model_prc_aucs):.3f} '
-              f'vs {ensemble_prc_auc:.3f} ensemble')
-        for top_k, ensemble_top_k_hit_ratio in ensemble_top_k_hit_ratios.items():
-            print(f'Ensemble top {top_k} hit ratio = {ensemble_top_k_hit_ratio:.3f}')
-        print()
+        # Plot model and ensemble AUCs
+        width = 0.8
+        for auc_name, model_aucs, ensemble_auc in [('ROC-AUC', model_roc_aucs, ensemble_roc_auc),
+                                                   ('PRC-AUC', model_prc_aucs, ensemble_prc_auc)]:
+            plt.clf()
+            plt.bar([f'Model {i + 1}' for i in range(num_models)], model_aucs, width=width, color='blue')
+            plt.hlines(y=ensemble_auc, xmin=0 - width / 2, xmax=num_models - width / 2, linestyles='--', color='red', label=f'Ensemble {auc_name}')
+            plt.ylabel(auc_name)
+            plt.title(f'{model_name} Model and Ensemble {auc_name}')
+            plt.legend()
+            plt.ylim(top=1.0)
+            plt.ylim(bottom=0.5 if auc_name == 'ROC-AUC' else 0.0)
+            plt.gcf().set_size_inches(12, 9.5)
+            plt.savefig(args.save_dir / f'{model_name}_{auc_name}.pdf', bbox_inches='tight')
 
         # Compute model uncertainty
         if args.model_comparison == 'intra':
