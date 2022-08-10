@@ -1,5 +1,6 @@
 """Evaluate the confidence of an ensemble for selecting molecules."""
 from pathlib import Path
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,6 +17,8 @@ class Args(Tap):
     preds_column_suffix: str = 'preds'  # Suffix of the names of the columns containing predictions.
     smiles_column: str = 'smiles'  # Name of the column containing SMILES.
     top_k: int = 100  # Number of top scoring molecules to select for computing hit ratios.
+    uncertainty_basis: Literal['score', 'percentile']  # The basis on which to compute the uncertainty.
+    """Either the raw model score or the percentile rank of the score compared to all other scores in the dataset."""
 
 
 def evaluate_ensemble_confidence(args: Args) -> None:
@@ -75,7 +78,13 @@ def evaluate_ensemble_confidence(args: Args) -> None:
 
         # Compute intra-model uncertainty and evaluate
         model_percentiles = model_preds.argsort(axis=1).argsort(axis=1) / (num_molecules - 1)
-        uncertainty = np.std(model_percentiles, axis=0)
+
+        if args.uncertainty_basis == 'score':
+            uncertainty = np.std(model_preds, axis=0)
+        elif args.uncertainty_basis == 'percentile':
+            uncertainty = np.std(model_percentiles, axis=0)
+        else:
+            raise ValueError(f'Uncertainty basis "{args.uncertainty_basis}" is not supported.')
 
         uncertainty_argsort = np.argsort(-uncertainty)  # sort from highest to lowest uncertainty
         ensemble_pred_uncertainty_sorted = ensemble_pred[uncertainty_argsort]
