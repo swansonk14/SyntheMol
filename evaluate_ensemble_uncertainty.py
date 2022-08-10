@@ -20,6 +20,7 @@ class Args(Tap):
     top_ks: list[int] = [10, 25, 50, 75, 100, 150, 200, 500]  # Number of top scoring molecules to select for computing hit ratios.
     uncertainty_basis: Literal['score', 'percentile'] = 'percentile'  # The basis on which to compute the uncertainty.
     """Either the raw model score or the percentile rank of the score compared to all other scores in the dataset."""
+    model_comparison: Literal['intra', 'inter'] = 'intra'  # Whether to compare between models of the same type or different types.
 
     def process_args(self) -> None:
         self.save_dir.mkdir(parents=True, exist_ok=True)
@@ -83,15 +84,28 @@ def evaluate_ensemble_uncertainty(args: Args) -> None:
             print(f'Ensemble top {top_k} hit ratio = {ensemble_top_k_hit_ratio:.3f}')
         print()
 
-        # Compute intra-model uncertainty
-        model_percentiles = model_preds.argsort(axis=1).argsort(axis=1) / (num_molecules - 1)
-
-        if args.uncertainty_basis == 'score':
-            uncertainty = np.std(model_preds, axis=0)
-        elif args.uncertainty_basis == 'percentile':
-            uncertainty = np.std(model_percentiles, axis=0)
+        # Compute model uncertainty
+        if args.model_comparison == 'intra':
+            if args.uncertainty_basis == 'score':
+                uncertainty = np.std(model_preds, axis=0)
+            elif args.uncertainty_basis == 'percentile':
+                model_percentiles = model_preds.argsort(axis=1).argsort(axis=1) / (num_molecules - 1)
+                uncertainty = np.std(model_percentiles, axis=0)
+            else:
+                raise ValueError(f'Uncertainty basis "{args.uncertainty_basis}" is not supported.')
+        elif args.model_comparison == 'inter':
+            if args.uncertainty_basis == 'score':
+                diffs = np.abs(chemprop_preds - rf_preds)
+                uncertainty = np.mean(diffs, axis=0)
+            elif args.uncertainty_basis == 'percentile':
+                chemprop_percentiles = chemprop_preds.argsort(axis=1).argsort(axis=1) / (num_molecules - 1)
+                rf_percentiles = rf_preds.argsort(axis=1).argsort(axis=1) / (num_molecules - 1)
+                diffs = np.abs(chemprop_percentiles - rf_percentiles)
+                uncertainty = np.mean(diffs, axis=0)
+            else:
+                raise ValueError(f'Uncertainty basis "{args.uncertainty_basis}" is not supported.')
         else:
-            raise ValueError(f'Uncertainty basis "{args.uncertainty_basis}" is not supported.')
+            raise ValueError(f'Model comparison "{args.model_comparison}" is not supported.')
 
         uncertainty_argsort = np.argsort(-uncertainty)  # sort from highest to lowest uncertainty
         ensemble_pred_uncertainty_sorted = ensemble_pred[uncertainty_argsort]
@@ -133,6 +147,7 @@ def evaluate_ensemble_uncertainty(args: Args) -> None:
         plt.ylabel('AUC')
         plt.title(f'{model_name}: AUCs by uncertainty for {num_models} model ensemble')
         plt.legend()
+        # TODO: bigger figure size
         plt.savefig(args.save_dir / f'{model_name}_aucs.pdf', bbox_inches='tight')
 
         # Plot hit ratios
