@@ -30,6 +30,9 @@ def evaluate_ensemble_confidence(args: Args) -> None:
     # Get activities
     activities = chemprop_data[args.activity_column]
 
+    # Get number of molecules
+    num_molecules = len(activities)
+
     # Get predictions
     chemprop_preds_columns = [column for column in chemprop_data.columns if column.endswith(args.preds_column_suffix)]
     chemprop_preds = chemprop_data[chemprop_preds_columns].to_numpy().transpose()  # (num_models, num_molecules)
@@ -56,16 +59,15 @@ def evaluate_ensemble_confidence(args: Args) -> None:
         print()
 
         # Compute intra-model uncertainty and evaluate
-        # TODO: percentiles instead of raw scores?
-        uncertainty = np.std(model_preds, axis=0)
+        model_percentiles = model_preds.argsort(axis=1).argsort(axis=1) / (num_molecules - 1)
+        uncertainty = np.std(model_percentiles, axis=0)
 
         uncertainty_argsort = np.argsort(-uncertainty)  # sort from highest to lowest uncertainty
         ensemble_pred_uncertainty_sorted = ensemble_pred[uncertainty_argsort]
         activities_uncertainty_sorted = activities[uncertainty_argsort]
-        breakpoint()
 
         roc_aucs, prc_aucs = [], []
-        for i in trange(len(activities)):
+        for i in trange(num_molecules):
             filtered_ensemble_pred = ensemble_pred_uncertainty_sorted[i:]
             filtered_activities = activities_uncertainty_sorted[i:]
 
