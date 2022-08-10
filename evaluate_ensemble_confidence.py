@@ -1,10 +1,12 @@
 """Evaluate the confidence of an ensemble for selecting molecules."""
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.metrics import average_precision_score, roc_auc_score
 from tap import Tap
+from tqdm import trange
 
 
 class Args(Tap):
@@ -37,21 +39,52 @@ def evaluate_ensemble_confidence(args: Args) -> None:
     rf_preds = rf_data[rf_preds_columns].to_numpy().transpose()  # (num_models, num_molecules)
     rf_ensemble_pred = rf_preds.mean(axis=0)
 
-    # Compute metrics for individual models and ensembles
+    # Evaluate models and uncertainty measures
     for model_name, model_preds, ensemble_pred in [('chemprop', chemprop_preds, chemprop_ensemble_pred),
                                                    ('RF', rf_preds, rf_ensemble_pred)]:
-        roc_auc_scores = [roc_auc_score(activities, preds) for preds in model_preds]
-        prc_auc_scores = [average_precision_score(activities, preds) for preds in model_preds]
-        ensemble_roc_auc_score = roc_auc_score(activities, ensemble_pred)
-        ensemble_prc_auc_score = average_precision_score(activities, ensemble_pred)
+        # Compute metrics for individual models and ensembles
+        model_roc_aucs = [roc_auc_score(activities, preds) for preds in model_preds]
+        model_prc_aucs = [average_precision_score(activities, preds) for preds in model_preds]
+        ensemble_roc_auc = roc_auc_score(activities, ensemble_pred)
+        ensemble_prc_auc = average_precision_score(activities, ensemble_pred)
 
         print(f'{model_name} {len(model_preds)} models')
-        print(f'ROC-AUC = {np.mean(roc_auc_scores):.3f} +/- {np.std(roc_auc_scores):.3f} '
-              f'vs {ensemble_roc_auc_score:.3f} ensemble')
-        print(f'PRC-AUC = {np.mean(prc_auc_scores):.3f} +/- {np.std(prc_auc_scores):.3f} '
-              f'vs {ensemble_prc_auc_score:.3f} ensemble')
+        print(f'ROC-AUC = {np.mean(model_roc_aucs):.3f} +/- {np.std(model_roc_aucs):.3f} '
+              f'vs {ensemble_roc_auc:.3f} ensemble')
+        print(f'PRC-AUC = {np.mean(model_prc_aucs):.3f} +/- {np.std(model_prc_aucs):.3f} '
+              f'vs {ensemble_prc_auc:.3f} ensemble')
         print()
 
+        # Compute intra-model uncertainty and evaluate
+        # TODO: percentiles instead of raw scores?
+        uncertainty = np.std(model_preds, axis=0)
+
+        uncertainty_argsort = np.argsort(-uncertainty)  # sort from highest to lowest uncertainty
+        ensemble_pred_uncertainty_sorted = ensemble_pred[uncertainty_argsort]
+        activities_uncertainty_sorted = activities[uncertainty_argsort]
+        breakpoint()
+
+        roc_aucs, prc_aucs = [], []
+        for i in trange(len(activities)):
+            filtered_ensemble_pred = ensemble_pred_uncertainty_sorted[i:]
+            filtered_activities = activities_uncertainty_sorted[i:]
+
+            if len(set(filtered_activities)) == 1:
+                break
+
+            roc_aucs.append(roc_auc_score(filtered_activities, filtered_ensemble_pred))
+            prc_aucs.append(average_precision_score(filtered_activities, filtered_ensemble_pred))
+
+        plt.clf()
+        plt.plot(np.arange(len(roc_aucs)), roc_aucs, color='blue', label='ROC-AUC')
+        plt.plot(np.arange(len(prc_aucs)), prc_aucs, color='red', label='PRC-AUC')
+        plt.hlines(y=ensemble_roc_auc, xmin=0, xmax=len(roc_aucs), linestyles='--', color='blue', label='Ensemble ROC-AUC')
+        plt.hlines(y=ensemble_prc_auc, xmin=0, xmax=len(prc_aucs), linestyles='--', color='red', label='Ensemble PRC-AUC')
+        plt.xlabel('Number of molecules removed by confidence')
+        plt.ylabel('AUC')
+        plt.title(f'AUC by confidence for {model_name} ensemble')
+        plt.legend()
+        plt.show()
 
 
 # def evaluate_ensemble_confidence(args: Args) -> None:
