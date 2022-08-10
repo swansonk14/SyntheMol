@@ -147,22 +147,23 @@ def evaluate_ensemble_uncertainty(args: Args) -> None:
         plt.ylabel('AUC')
         plt.title(f'{model_name}: AUCs by uncertainty for {num_models} model ensemble')
         plt.legend()
-        # TODO: bigger figure size
+        plt.gcf().set_size_inches(12, 9.5)
         plt.savefig(args.save_dir / f'{model_name}_aucs.pdf', bbox_inches='tight')
 
         # Plot hit ratios
         plt.clf()
         plt.plot(np.arange(len(hit_ratios)), hit_ratios, color='blue', label='Hit ratio')
-        plt.hlines(y=hit_ratio, xmin=0, xmax=len(hit_ratios), linestyles='--', color='blue', label='Full data hit ratio')
+        plt.hlines(y=hit_ratio, xmin=0, xmax=len(hit_ratios), linestyles='--', color='blue')
 
         for top_k, top_k_hit_ratios in top_k_hit_ratio_dict.items():
             p = plt.plot(np.arange(len(top_k_hit_ratios)), top_k_hit_ratios, label=f'Top {top_k} hit ratio')
-            plt.hlines(y=ensemble_top_k_hit_ratios[top_k], xmin=0, xmax=len(top_k_hit_ratios), linestyles='--', color=p[0].get_color(), label=f'Full data top {top_k} hit ratio')
+            plt.hlines(y=ensemble_top_k_hit_ratios[top_k], xmin=0, xmax=len(top_k_hit_ratios), linestyles='--', color=p[0].get_color())
 
         plt.xlabel('Number of molecules removed by uncertainty')
         plt.ylabel('Hit ratio')
         plt.title(f'{model_name}: hit ratios by uncertainty for {num_models} model ensemble')
         plt.legend(loc='upper left')
+        plt.gcf().set_size_inches(12, 9.5)
         plt.savefig(args.save_dir / f'{model_name}_hit_ratios.pdf', bbox_inches='tight')
 
 
