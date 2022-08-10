@@ -111,21 +111,22 @@ def evaluate_ensemble_uncertainty(args: Args) -> None:
         ensemble_pred_uncertainty_sorted = ensemble_pred[uncertainty_argsort]
         activities_uncertainty_sorted = activities[uncertainty_argsort]
 
-        # Plot uncertainty vs score
+        # Plot uncertainty vs score/percentile
         hit_mask = activities == 1
         non_hit_mask = activities == 0
 
         ensemble_percentiles = ensemble_pred.argsort().argsort() / (num_molecules - 1)
 
-        plt.clf()
-        plt.scatter(ensemble_percentiles[non_hit_mask], uncertainty[non_hit_mask], color='blue', label='non-hit')
-        plt.scatter(ensemble_percentiles[hit_mask], uncertainty[hit_mask], color='red', label='hit')
-        plt.xlabel('Ensemble Prediction Score Percentile')
-        plt.ylabel(f'{args.model_comparison.title()}-Model {args.uncertainty_basis.title()} Uncertainty')
-        plt.title(f'{model_name} Uncertainty vs Prediction Score Percentile')
-        plt.legend()
-        plt.gcf().set_size_inches(12, 9.5)
-        plt.savefig(args.save_dir / f'{model_name}_uncertainty_vs_score.pdf', bbox_inches='tight')
+        for x_axis, x_axis_data in [('score', ensemble_pred), ('percentile', ensemble_percentiles)]:
+            plt.clf()
+            plt.scatter(x_axis_data[non_hit_mask], uncertainty[non_hit_mask], color='blue', label='non-hit')
+            plt.scatter(x_axis_data[hit_mask], uncertainty[hit_mask], color='red', label='hit')
+            plt.xlabel(f'Ensemble Prediction {x_axis.title()}')
+            plt.ylabel(f'{args.model_comparison.title()}-Model {args.uncertainty_basis.title()} Uncertainty')
+            plt.title(f'{model_name} Uncertainty vs Prediction')
+            plt.legend()
+            plt.gcf().set_size_inches(12, 9.5)
+            plt.savefig(args.save_dir / f'{model_name}_uncertainty_vs_{x_axis}.pdf', bbox_inches='tight')
 
         # Evaluate at different uncertainty levels
         roc_aucs, prc_aucs, hit_ratios = [], [], []
