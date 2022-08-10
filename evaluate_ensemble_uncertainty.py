@@ -1,4 +1,4 @@
-"""Evaluate the confidence of an ensemble for selecting molecules."""
+"""Evaluate the uncertainty of an ensemble for selecting molecules."""
 from pathlib import Path
 from typing import Literal
 
@@ -11,18 +11,22 @@ from tqdm import trange
 
 
 class Args(Tap):
-    chemprop_data_path: Path  # Path to CSV file containing ensemble predictions on a test set.
-    rf_data_path: Path
+    chemprop_data_path: Path  # Path to CSV file containing chemprop ensemble predictions on a test set.
+    rf_data_path: Path  # Path to CSV file containing random forest ensemble predictions on a test set.
+    save_dir: Path  # Path to directory where plots will be saved.
     activity_column: str = 'activity'  # Name of the column containing true activity values.
     preds_column_suffix: str = 'preds'  # Suffix of the names of the columns containing predictions.
     smiles_column: str = 'smiles'  # Name of the column containing SMILES.
-    top_k: int = 100  # Number of top scoring molecules to select for computing hit ratios.
-    uncertainty_basis: Literal['score', 'percentile']  # The basis on which to compute the uncertainty.
+    top_ks: list[int] = [10, 25, 50, 75, 100, 150, 200, 500]  # Number of top scoring molecules to select for computing hit ratios.
+    uncertainty_basis: Literal['score', 'percentile'] = 'percentile'  # The basis on which to compute the uncertainty.
     """Either the raw model score or the percentile rank of the score compared to all other scores in the dataset."""
 
+    def process_args(self) -> None:
+        self.save_dir.mkdir(parents=True, exist_ok=True)
 
-def evaluate_ensemble_confidence(args: Args) -> None:
-    """Evaluate the confidence of an ensemble for selecting molecules."""
+
+def evaluate_ensemble_uncertainty(args: Args) -> None:
+    """Evaluate the uncertainty of an ensemble for selecting molecules."""
     # Load data
     chemprop_data = pd.read_csv(args.chemprop_data_path)
     rf_data = pd.read_csv(args.rf_data_path)
@@ -62,9 +66,11 @@ def evaluate_ensemble_confidence(args: Args) -> None:
         ensemble_roc_auc = roc_auc_score(activities, ensemble_pred)
         ensemble_prc_auc = average_precision_score(activities, ensemble_pred)
 
-        top_k_indices = ensemble_pred.argsort()[-args.top_k:]
-        top_k_activities = activities[top_k_indices]
-        top_k_hit_ratio = np.mean(top_k_activities)
+        ensemble_top_k_hit_ratios = {}
+        for top_k in args.top_ks:
+            top_k_indices = ensemble_pred.argsort()[-top_k:]
+            top_k_activities = activities[top_k_indices]
+            ensemble_top_k_hit_ratios[top_k] = np.mean(top_k_activities)
 
         num_models = len(model_preds)
 
@@ -73,10 +79,11 @@ def evaluate_ensemble_confidence(args: Args) -> None:
               f'vs {ensemble_roc_auc:.3f} ensemble')
         print(f'PRC-AUC = {np.mean(model_prc_aucs):.3f} +/- {np.std(model_prc_aucs):.3f} '
               f'vs {ensemble_prc_auc:.3f} ensemble')
-        print(f'Ensemble top {args.top_k} hit ratio = {top_k_hit_ratio:.3f}')
+        for top_k, ensemble_top_k_hit_ratio in ensemble_top_k_hit_ratios.items():
+            print(f'Ensemble top {top_k} hit ratio = {ensemble_top_k_hit_ratio:.3f}')
         print()
 
-        # Compute intra-model uncertainty and evaluate
+        # Compute intra-model uncertainty
         model_percentiles = model_preds.argsort(axis=1).argsort(axis=1) / (num_molecules - 1)
 
         if args.uncertainty_basis == 'score':
@@ -90,37 +97,60 @@ def evaluate_ensemble_confidence(args: Args) -> None:
         ensemble_pred_uncertainty_sorted = ensemble_pred[uncertainty_argsort]
         activities_uncertainty_sorted = activities[uncertainty_argsort]
 
-        roc_aucs, prc_aucs, hit_ratios, top_k_hit_ratios = [], [], [], []
+        # Evaluate at different uncertainty levels
+        roc_aucs, prc_aucs, hit_ratios = [], [], []
+        top_k_hit_ratio_dict = {top_k: [] for top_k in args.top_ks}
+
         for i in trange(num_molecules):
+            # Filter ensemble preds and activities by uncertainty level
             filtered_ensemble_pred = ensemble_pred_uncertainty_sorted[i:]
             filtered_activities = activities_uncertainty_sorted[i:]
 
-            if len(filtered_ensemble_pred) >= args.top_k:
-                filtered_top_k_indices = filtered_ensemble_pred.argsort()[-args.top_k:]
-                filtered_top_k_activities = filtered_activities[filtered_top_k_indices]
-                top_k_hit_ratios.append(np.mean(filtered_top_k_activities))
+            # Compute hit ratio
+            hit_ratios.append(np.mean(filtered_activities))
 
+            # Compute top k hit ratios
+            for top_k in args.top_ks:
+                if len(filtered_ensemble_pred) >= top_k:
+                    filtered_top_k_indices = filtered_ensemble_pred.argsort()[-top_k:]
+                    filtered_top_k_activities = filtered_activities[filtered_top_k_indices]
+                    top_k_hit_ratio_dict[top_k].append(np.mean(filtered_top_k_activities))
+
+            # Compute AUCs
             if len(set(filtered_activities)) == 1:
                 break
 
             roc_aucs.append(roc_auc_score(filtered_activities, filtered_ensemble_pred))
             prc_aucs.append(average_precision_score(filtered_activities, filtered_ensemble_pred))
-            hit_ratios.append(np.mean(filtered_activities))
 
+        # Plot AUCs
         plt.clf()
         plt.plot(np.arange(len(roc_aucs)), roc_aucs, color='blue', label='ROC-AUC')
         plt.plot(np.arange(len(prc_aucs)), prc_aucs, color='red', label='PRC-AUC')
-        plt.plot(np.arange(len(hit_ratios)), hit_ratios, color='orange', label='Hit ratio')
-        plt.plot(np.arange(len(top_k_hit_ratios)), top_k_hit_ratios, color='purple', label=f'Top {args.top_k} hit ratio')
         plt.hlines(y=ensemble_roc_auc, xmin=0, xmax=len(roc_aucs), linestyles='--', color='blue', label='Ensemble ROC-AUC')
         plt.hlines(y=ensemble_prc_auc, xmin=0, xmax=len(prc_aucs), linestyles='--', color='red', label='Ensemble PRC-AUC')
-        plt.hlines(y=hit_ratio, xmin=0, xmax=len(hit_ratios), linestyles='--', color='orange', label='Full data hit ratio')
-        plt.hlines(y=top_k_hit_ratio, xmin=0, xmax=len(top_k_hit_ratios), linestyles='--', color='purple', label=f'Full data top {args.top_k} hit ratio')
-        plt.xlabel('Number of molecules removed by confidence')
-        plt.ylabel('AUC or hit ratio')
-        plt.title(f'{model_name}: AUCs and hit ratios by confidence for {num_models} model ensemble')
+        plt.xlabel('Number of molecules removed by uncertainty')
+        plt.ylabel('AUC')
+        plt.title(f'{model_name}: AUCs by uncertainty for {num_models} model ensemble')
         plt.legend()
-        plt.show()
+        plt.savefig(args.save_dir / f'{model_name}_aucs.pdf', bbox_inches='tight')
+
+        # Plot hit ratios
+        plt.clf()
+        plt.plot(np.arange(len(hit_ratios)), hit_ratios, color='blue', label='Hit ratio')
+        plt.hlines(y=hit_ratio, xmin=0, xmax=len(hit_ratios), linestyles='--', color='blue', label='Full data hit ratio')
+
+        for top_k, top_k_hit_ratios in top_k_hit_ratio_dict.items():
+            p = plt.plot(np.arange(len(top_k_hit_ratios)), top_k_hit_ratios, label=f'Top {top_k} hit ratio')
+            plt.hlines(y=ensemble_top_k_hit_ratios[top_k], xmin=0, xmax=len(top_k_hit_ratios), linestyles='--', color=p[0].get_color(), label=f'Full data top {top_k} hit ratio')
+
+        plt.xlabel('Number of molecules removed by uncertainty')
+        plt.ylabel('Hit ratio')
+        plt.title(f'{model_name}: hit ratios by uncertainty for {num_models} model ensemble')
+        plt.legend(loc='upper left')
+        plt.savefig(args.save_dir / f'{model_name}_hit_ratios.pdf', bbox_inches='tight')
+
+
 
 
 
@@ -274,4 +304,4 @@ def evaluate_ensemble_confidence(args: Args) -> None:
 
 
 if __name__ == '__main__':
-    evaluate_ensemble_confidence(Args().parse_args())
+    evaluate_ensemble_uncertainty(Args().parse_args())
