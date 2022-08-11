@@ -133,3 +133,12 @@ dmypy.json
 
 # Mac
 .DS_Store
+
+# Folders
+ckpt
+data
+features
+generations
+papers
+plots
+preds

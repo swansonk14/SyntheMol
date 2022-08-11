@@ -27,10 +27,10 @@ class Args(Tap):
     """Path to a directory of model checkpoints or to a specific PKL or PT file containing a trained model."""
     fragment_path: Path
     """Path to CSV file containing molecular building blocks."""
-    fragment_to_model_score_path: Path
-    """Path to JSON file containing a dictionary mapping fragments to model prediction scores."""
     reagent_to_fragments_path: Path
     """Path to JSON file containing a dictionary mapping from reagents to fragments."""
+    fragment_to_model_score_path: Path
+    """Path to JSON file containing a dictionary mapping fragments to model prediction scores."""
     train_similarity: bool = False
     """Whether to incorporate similarity to the train set as part of the MCTS score."""
     fragment_to_train_similarity_path: Optional[Path] = None
@@ -623,19 +623,19 @@ def run_tree_search(args: Args) -> None:
     if len(fragment_set) != len(fragment_to_id.values()):
         raise ValueError('Fragment IDs are not unique.')
 
-    # Load mapping from SMILES to model scores
-    with open(args.fragment_to_model_score_path) as f:
-        fragment_to_model_score: dict[str, float] = json.load(f)
-
-    if set(fragment_to_model_score) != fragment_set:
-        raise ValueError('The fragments in fragment_to_model do not match the fragment set.')
-
     # Load mapping from reagents to fragments
     with open(args.reagent_to_fragments_path) as f:
         reagent_to_fragments: dict[str, list[str]] = json.load(f)
 
     if not ({fragment for fragments in reagent_to_fragments.values() for fragment in fragments} <= fragment_set):
         raise ValueError('The fragments in reagent_to_fragments is not a subset of the fragment set.')
+
+    # Load mapping from SMILES to model scores
+    with open(args.fragment_to_model_score_path) as f:
+        fragment_to_model_score: dict[str, float] = json.load(f)
+
+    if set(fragment_to_model_score) != fragment_set:
+        raise ValueError('The fragments in fragment_to_model do not match the fragment set.')
 
     # Define model scoring function
     model_scoring_fn = create_model_scoring_fn(
