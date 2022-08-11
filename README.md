@@ -7,6 +7,8 @@ Install conda environment.
 conda env create -f environment.yml
 ```
 
+Note: If there are any conda installation or version issues, `environment-frozen.yml` lists the explicit versions of the full list of installed packages used to run this code.
+
 Activate conda environment.
 ```
 conda activate combinatorial_antibiotics
@@ -144,8 +146,6 @@ Train 10 random forest and 10 chemprop models using 10-fold cross-validation on 
 
 Note: For both random forest and chemprop models, we used CPU-only machines (no GPUs).
 
-TODO: left off with reproducibility here
-
 Random forest
 ```
 python train_model.py \
@@ -155,6 +155,8 @@ python train_model.py \
     --fingerprint_type rdkit \
     --num_models 10
 ```
+
+TODO: left off with reproducibility here
 
 Chemprop
 ```
@@ -280,8 +282,6 @@ python nearest_neighbor.py \
 
 ### Filter based on model score
 
-TODO: need to update chem_utils to do this
-
 Filter to only keep molecules with the top 20% of model scores using [chem_utils](https://github.com/swansonk14/chem_utils).
 
 Random forest
@@ -290,7 +290,7 @@ python filter_molecules.py \
     --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_2k/molecules.csv \
     --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_2k/molecules_top_20_percent.csv \
     --filter_column score \
-    --max_proportion 0.2
+    --top_proportion 0.2
 ```
 
 Chemprop
@@ -299,7 +299,7 @@ python filter_molecules.py \
     --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_2k/molecules.csv \
     --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_2k/molecules_top_20_percent.csv \
     --filter_column score \
-    --max_proportion 0.2
+    --top_proportion 0.2
 ```
 
 
