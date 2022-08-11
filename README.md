@@ -142,13 +142,15 @@ Number of non-hits = 13,054
 
 Train 10 random forest and 10 chemprop models using 10-fold cross-validation on the AB training data. Both models use a set of 200 RDKit features.
 
+Note: For both random forest and chemprop models, we used CPU-only machines (no GPUs).
+
 TODO: left off with reproducibility here
 
 Random forest
 ```
 python train_model.py \
-    --data_path ../data/Screening_data/AB_combined.csv \
-    --save_dir ../ckpt/AB_combined_RF_rdkit \
+    --data_path data/screening_data/AB_combined.csv \
+    --save_dir ckpt/AB_combined_RF_rdkit \
     --model_type rf \
     --fingerprint_type rdkit \
     --num_models 10
@@ -157,8 +159,8 @@ python train_model.py \
 Chemprop
 ```
 python train_model.py \
-    --data_path ../data/Screening_data/AB_combined.csv \
-    --save_dir ../ckpt/AB_combined_chemprop_rdkit \
+    --data_path data/screening_data/AB_combined.csv \
+    --save_dir ckpt/AB_combined_chemprop_rdkit \
     --model_type chemprop \
     --fingerprint_type rdkit \
     --num_models 10
@@ -170,9 +172,9 @@ python train_model.py \
 Random forest
 ```
 python map_fragments_to_model_scores.py \
-    --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
-    --model_path ../ckpt/AB_combined_RF_rdkit.pkl \
-    --save_path ../ckpt/AB_combined_RF_rdkit_fragments_to_model_scores.json \
+    --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
+    --model_path ckpt/AB_combined_RF_rdkit.pkl \
+    --save_path ckpt/AB_combined_RF_rdkit_fragments_to_model_scores.json \
     --model_type rf \
     --fingerprint_type rdkit
 ```
@@ -180,9 +182,9 @@ python map_fragments_to_model_scores.py \
 Chemprop
 ```
 python map_fragments_to_model_scores.py \
-    --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
-    --model_path ../ckpt/AB_combined_chemprop_rdkit.pt \
-    --save_path ../ckpt/AB_combined_chemprop_rdkit_fragments_to_model_scores.json \
+    --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
+    --model_path ckpt/AB_combined_chemprop_rdkit.pt \
+    --save_path ckpt/AB_combined_chemprop_rdkit_fragments_to_model_scores.json \
     --model_type chemprop \
     --fingerprint_type rdkit
 ```
@@ -214,7 +216,7 @@ python tree_search.py \
     --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     --reagent_to_fragments_path data/reagents_to_fragments.json \
     --fragment_to_model_score_path ckpt/MCTS_AB_combined_chemprop_rdkit_fragments_to_model_scores.json \
-    --save_dir generations/tree_search/mcts_AB_combined_chemprop_rdkit_2k \
+    --save_dir generations/mcts_AB_combined_chemprop_rdkit_2k \
     --search_type mcts \
     --model_type chemprop \
     --fingerprint_type rdkit \
@@ -232,8 +234,8 @@ Optionally, assess various quantities about the generated molecules.
 Random forest
 ```
 python assess_generated_molecules.py \
-    --data_path generations/tree_search/mcts_AB_combined_RF_rdkit_2k/molecules.csv \
-    --save_dir generations/tree_search/mcts_AB_combined_RF_rdkit_2k \
+    --data_path generations/mcts_AB_combined_RF_rdkit_2k/molecules.csv \
+    --save_dir generations/mcts_AB_combined_RF_rdkit_2k \
     --train_path data/screening_data/AB_combined.csv
     --train_hits_path data/screening_data/AB_combined_hits.csv
 ```
@@ -241,8 +243,8 @@ python assess_generated_molecules.py \
 Chemprop
 ```
 python assess_generated_molecules.py \
-    --data_path generations/tree_search/mcts_AB_combined_chemprop_rdkit_2k/molecules.csv \
-    --save_dir generations/tree_search/mcts_AB_combined_chemprop_rdkit_2k \
+    --data_path generations/mcts_AB_combined_chemprop_rdkit_2k/molecules.csv \
+    --save_dir generations/mcts_AB_combined_chemprop_rdkit_2k \
     --train_path data/screening_data/AB_combined.csv
     --train_hits_path data/screening_data/AB_combined_hits.csv
 ```
@@ -255,57 +257,131 @@ Run a series of filtering steps to select molecules for experimental testing
 
 ### Train hit nearest neighbor
 
-Compute the nearest neighbor Tversky distance to train set using [chem_utils](https://github.com/swansonk14/chem_utils).
+Compute the nearest neighbor Tversky similarity to train hits using [chem_utils](https://github.com/swansonk14/chem_utils).
 
-TODO: left off standardizing commands here
-
+Random forest
 ```
 python nearest_neighbor.py \
-    --data_path ../../combinatorial_antibiotics/generations/tree_search/mcts/molecules.csv \
-    --reference_data_path ../../combinatorial_antibiotics/data/Screening_data/AB_combined_hits.csv \
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_2k/molecules.csv \
+    --reference_data_path ../../combinatorial_antibiotics/data/screening_data/AB_combined_hits.csv \
     --reference_name train_hits \
     --metrics tversky
 ```
 
-Filter to only keep molecules with similarity <= 0.4 and model score >= 0.2 (Command from [chem_utils](https://github.com/swansonk14/chem_utils).)
+Chemprop
+```
+python nearest_neighbor.py \
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_2k/molecules.csv \
+    --reference_data_path ../../combinatorial_antibiotics/data/screening_data/AB_combined_hits.csv \
+    --reference_name train_hits \
+    --metrics tversky
+```
 
+
+### Filter based on model score
+
+TODO: need to update chem_utils to do this
+
+Filter to only keep molecules with the top 20% of model scores using [chem_utils](https://github.com/swansonk14/chem_utils).
+
+Random forest
 ```
 python filter_molecules.py \
-    --data_path ../../combinatorial_antibiotics/generations/tree_search/mcts/molecules.csv \
-    --save_path ../../combinatorial_antibiotics/generations/tree_search/mcts/molecules_filtered.csv \
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_2k/molecules.csv \
+    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_2k/molecules_top_20_percent.csv \
+    --filter_column score \
+    --max_proportion 0.2
+```
+
+Chemprop
+```
+python filter_molecules.py \
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_2k/molecules.csv \
+    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_2k/molecules_top_20_percent.csv \
+    --filter_column score \
+    --max_proportion 0.2
+```
+
+
+### Filter based on similarity to train hits
+
+Filter to only keep molecules with nearest neighbor Tverksy similarity to the train hits <= 0.4 using [chem_utils](https://github.com/swansonk14/chem_utils).
+
+Random forest
+```
+python filter_molecules.py \
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_2k/molecules_top_20_percent.csv \
+    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_2k/molecules_top_20_percent_tversky_below_0.4.csv \
     --filter_column train_hits_tversky_nearest_neighbor_similarity \
     --max_value 0.4
 ```
 
+Chemprop
 ```
 python filter_molecules.py \
-    --data_path ../../combinatorial_antibiotics/generations/tree_search/mcts/molecules_filtered.csv \
-    --save_path ../../combinatorial_antibiotics/generations/tree_search/mcts/molecules_filtered.csv \
-    --filter_column score \
-    --min_value 0.2
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_2k/molecules_top_20_percent.csv \
+    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_2k/molecules_top_20_percent_tversky_below_0.4.csv \
+    --filter_column train_hits_tversky_nearest_neighbor_similarity \
+    --max_value 0.4
 ```
 
-Cluster molecules. (Command from [chem_utils](https://github.com/swansonk14/chem_utils).)
 
+### Cluster molecules
+
+Cluster molecules based on their Morgan fingerprint using [chem_utils](https://github.com/swansonk14/chem_utils).
+
+Random forest
 ```
 python cluster_molecules.py \
-    --data_path ../../combinatorial_antibiotics/generations/tree_search/mcts/molecules_filtered.csv \
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_2k/molecules_top_20_percent_tversky_below_0.4.csv \
     --num_clusters 100
 ```
 
-Select top molecule from each cluster. (Command from [chem_utils](https://github.com/swansonk14/chem_utils).)
+Chemprop
+```
+python cluster_molecules.py \
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_2k/molecules_top_20_percent_tversky_below_0.4.csv \
+    --num_clusters 100
+```
 
+
+### Select molecules from clusters
+
+Select the top scoring molecule from each cluster using [chem_utils](https://github.com/swansonk14/chem_utils).
+
+Random forest
 ```
 python select_from_clusters.py \
-    --data_path ../../combinatorial_antibiotics/generations/tree_search/mcts/molecules_filtered.csv \
-    --save_path ../../combinatorial_antibiotics/generations/tree_search/mcts/molecules_selected_100.csv \
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_2k/molecules_top_20_percent_tversky_below_0.4.csv \
+    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_2k/molecules_top_20_percent_tversky_below_0.4_selected_100.csv \
     --value_column score
 ```
 
-Visualize selected molecules. (Command from [chem_utils](https://github.com/swansonk14/chem_utils).)
+Chemprop
+```
+python select_from_clusters.py \
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_2k/molecules_top_20_percent_tversky_below_0.4.csv \
+    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_2k/molecules_top_20_percent_tversky_below_0.4_selected_100.csv \
+    --value_column score
+```
 
+We now have 100 molecules selected from each model's search that meet our desired train hit similarity and model score criteria.
+
+
+### Visualize molecules
+
+Optionally, visualize the selecting molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
+
+Random forest
 ```
 python visualize_molecules.py \
-    --data_path ../../combinatorial_antibiotics/generations/tree_search/mcts/molecules_selected_100.csv \
-    --save_dir ../../combinatorial_antibiotics/generations/tree_search/mcts/molecules_selected_100
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_2k/molecules_top_20_percent_tversky_below_0.4_selected_100.csv \
+    --save_dir ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_2k/molecules_top_20_percent_tversky_below_0.4_selected_100
+```
+
+Random forest
+```
+python visualize_molecules.py \
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_2k/molecules_top_20_percent_tversky_below_0.4_selected_100.csv \
+    --save_dir ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_2k/molecules_top_20_percent_tversky_below_0.4_selected_100
 ```
