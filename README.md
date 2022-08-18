@@ -39,6 +39,24 @@ cd ../combinatorial_antibiotics
 
 ## Process Data
 
+### Count REAL reactions and reagents
+
+Count all REAL reactions and reagents in the 4.5 billion REAL database.
+```
+python count_real_database.py \
+    --data_dir ../data/Enamine_REAL_SMILES \
+    --save_dir ../data/Enamine_REAL_counts
+```
+
+Count the top 10 unique reactions and reagents in the 4.5 billion REAL database. (Note: Reactions 22, 11, 527, and 240690 represent similar reactants + products, so we consider them one reaction.)
+```
+python count_real_database.py \
+    --data_dir ../data/Enamine_REAL_SMILES \
+    --reactions 275592 22 11 527 240690 2430 2708 2230 2718 40 1458 271948 27 \
+    --save_dir ../data/Enamine_REAL_counts_top_10
+```
+
+
 ### Download Building Blocks
 
 All data, raw and processed, is available in this Google Drive folder: https://drive.google.com/drive/folders/1sbl1gL1d3acVJ1RZVtJV90uLgW1j6ee9?usp=sharing. Any references to data paths are relative to this directory.

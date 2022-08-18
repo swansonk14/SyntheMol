@@ -218,7 +218,7 @@ python count_real_database.py \
     --save_dir ../data/Enamine_REAL_counts
 ```
 
-Count the top 10 unique reactions and reagents in the 4.5 billion REAL database. (Note: Reactions 22, 11, 527, and 240690 represent the same reactants + products, so we consider them one reaction.)
+Count the top 10 unique reactions and reagents in the 4.5 billion REAL database. (Note: Reactions 22, 11, 527, and 240690 represent similar reactants + products, so we consider them one reaction.)
 ```
 python count_real_database.py \
     --data_dir ../data/Enamine_REAL_SMILES \

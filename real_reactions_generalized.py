@@ -7,13 +7,15 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 from scipy.special import comb
 
+from collections import deque
+
 
 Molecule = Union[str, Chem.Mol]  # Either a SMILES string or an RDKit Mol object
 
 
 class CarbonChainChecker:
     """Checks whether a SMARTS match with two fragments contains a path
-     from one fragment to the other with only non-aromatic C-C connections."""
+     from one fragment to the other with only non-aromatic carbon atoms."""
 
     def __init__(self, smarts: str) -> None:
         """Initializes the carbon chain checker.
@@ -75,36 +77,28 @@ class CarbonChainChecker:
             # Get the starting atom from its index
             atom = mol.GetAtomWithIdx(start_atom_index)
 
-            # Iterate through the neighbors, checking for only non-aromatic C-C until reaching an end atom
-            while True:
-                # Get the neighboring atoms
-                neighbors = atom.GetNeighbors()
-                neighbor_h_count = sum(neighbor.GetAtomicNum() == 1 for neighbor in neighbors)
+            # Do a breadth-first search from the start atom to try to find a path with only carbons to an end atom
+            queue = deque([atom])
+            while queue:
+                # Get the next atom in the queue
+                atom = queue.pop()
 
-                # Check if this atom is carbon, non-aromatic, and all single bonds (i.e., four neighbors) with two Hs
-                if atom.GetAtomicNum() != 6 or atom.GetIsAromatic() or len(neighbors) != 4 or neighbor_h_count != 2:
-                    break
-
-                # Check if we've reached an end atom and return True if so since we've satisfied the criterion
-                if atom.GetIdx() in end_atom_indices:
-                    return True
-
-                # Add this atom to visited atoms
+                # Add the atom to the visited set to avoid visiting it again
                 visited_atoms.add(atom.GetIdx())
 
-                # Move on to the next carbon atom in the chain (if there is one)
-                next_atoms = [
-                    neighbor
-                    for neighbor in neighbors
-                    if neighbor.GetIdx() not in visited_atoms and neighbor.GetAtomicNum() == 6
-                ]
+                # Loop through neighboring atoms
+                for neighbor_atom in atom.GetNeighbors():
+                    # Check if we've reached an end atom and return True if so since we've found a path of carbon atoms
+                    if neighbor_atom.GetIdx() in end_atom_indices:
+                        return True
 
-                if len(next_atoms) != 1:
-                    break
+                    # Add neighbor atom to the queue if it is not visited and is a non-aromatic carbon
+                    if (neighbor_atom.GetIdx() not in visited_atoms
+                            and neighbor_atom.GetAtomicNum() == 6
+                            and not neighbor_atom.GetIsAromatic()):
+                        queue.append(neighbor_atom)
 
-                atom = next_atoms[0]
-
-        # If we get here, then there is no path that satisfies the carbon chain criterion so return False
+        # If we get here, then there is no path that is all non-aromatic carbon atoms so return False
         return False
 
     def __hash__(self) -> int:
