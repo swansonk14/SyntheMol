@@ -2,24 +2,31 @@
 Reference: https://docs.google.com/document/d/1LDgRXf4P-uOXQEmgJPgVhuOK32I2u0FXSB8tzDenN6U/edit?usp=sharing
 """
 from reactions import (
+    alkyl_checker,
+    aryl_checker,
     CarbonChainChecker,
     count_three_reagents_with_two_same,
     count_two_different_reagents,
     count_two_same_reagents,
+    h_checker,
     QueryMol,
-    Reaction
+    Reaction,
+    RGroupChecker
 )
 
 # TODO: for all these reactions, they may match more REAL reactions than the ones noted
+# TODO: do product QueryMols need checkers?
 REAL_REACTIONS = [
     Reaction(
         reagents=[
-            QueryMol('CC(C)(C)OC(=O)[N:1]([*:2])[*:3].[*:4][N:5]([H])[*:6]', checker_class=CarbonChainChecker),
+            QueryMol(
+                smarts := 'CC(C)(C)OC(=O)[N:1]([*:2])[*:3].[*:4][N:5]([H])[*:6]',
+                checker=CarbonChainChecker(smarts=smarts)
+            ),
             QueryMol('[OH1][C:7]([*:8])=[O:9]'),
             QueryMol('[OH1][C:10]([*:11])=[O:12]')
         ],
-        product=QueryMol('[*:4][N:5]([*:6])[C:7](=[O:9])[*:8].[*:3][N:1]([*:2])[C:10](=[O:12])[*:11]',
-                         checker_class=CarbonChainChecker),
+        product=QueryMol('[*:4][N:5]([*:6])[C:7](=[O:9])[*:8].[*:3][N:1]([*:2])[C:10](=[O:12])[*:11]'),
         reaction_id=1,
         real_ids={275592},
         counting_fn=count_three_reagents_with_two_same
@@ -37,20 +44,26 @@ REAL_REACTIONS = [
     ),
     Reaction(
         reagents=[
-            QueryMol('[*:1][N:2]([H])[*:3]'),  # TODO: change to H2 and add Ar restriction to R group
-            QueryMol('[*:4][N:5]([H])[*:6]')  # TODO: change to Alk, H restriction for both R groups
+            QueryMol(
+                smarts := '[*:1][N:2]([H])[H:3]',
+                checker=RGroupChecker(smarts=smarts, checkers={aryl_checker})
+            ),
+            QueryMol(
+                smarts := '[*:4][N:5]([H])[*:6]',
+                checker=RGroupChecker(smarts=smarts, checkers={alkyl_checker, h_checker})
+            )
         ],
-        product=QueryMol('O=C([N:2]([*:1])[*:3])[N:5]([*:4])[*:6]'),  # TODO: change
+        product=QueryMol('O=C([N:2]([*:1])[H:3])[N:5]([*:4])[*:6]'),
         reaction_id=3,
         real_ids={2430},
         counting_fn=count_two_same_reagents
     ),
     Reaction(
         reagents=[
-            QueryMol('[*:1][N:2]([H])[*:3]'),  # TODO: change to H2
-            QueryMol('[*:4][N:5]([H])[*:6]')  # TODO: change to H2
+            QueryMol('[*:1][N:2]([H])[H:3]'),
+            QueryMol('[*:4][N:5]([H])[H:6]')
         ],
-        product=QueryMol('O=C([N:2]([*:1])[*:3])[N:5]([*:4])[*:6]'),  # TODO: change
+        product=QueryMol('O=C([N:2]([*:1])[H:3])[N:5]([*:4])[H:6]'),
         reaction_id=4,
         real_ids={2708},
         counting_fn=count_two_same_reagents
@@ -60,7 +73,7 @@ REAL_REACTIONS = [
             QueryMol('[*:1][N:2]([H])[*:3]'),  # TODO: change to Alk, Ar, cycle restriction for both R groups
             QueryMol('[F,Cl,Br,I][*:4]')  # TODO: change to Alk restriction for R group
         ],
-        product=QueryMol('[*:1][N:2]([*:3])[*:4]'),  # TODO: change
+        product=QueryMol('[*:1][N:2]([*:3])[*:4]'),
         reaction_id=5,
         real_ids={2230},
         counting_fn=count_two_different_reagents
@@ -70,7 +83,7 @@ REAL_REACTIONS = [
             QueryMol('[*:1][N:2]([H])[*:3]'),  # TODO: change to H2 and Ar restriction for R group
             QueryMol('[*:4][N:5]([H])[*:6]')  # TODO: change to H2 and Alk restriction for R group
         ],
-        product=QueryMol('O=C(C(=O)[N:2]([*:1])[*:3])[N:5]([*:4])[*:6]'),  # TODO: change
+        product=QueryMol('O=C(C(=O)[N:2]([*:1])[*:3])[N:5]([*:4])[*:6]'),
         reaction_id=6,
         real_ids={2718},
         counting_fn=count_two_same_reagents
@@ -80,7 +93,7 @@ REAL_REACTIONS = [
             QueryMol('[*:1][N:2]([H])[*:3]'),  # TODO: change to Alk, H restriction for R groups
             QueryMol('[O:4]=[S:5](=[O:6])([F,Cl,Br,I])[*:7]')
         ],
-        product=QueryMol('[O:4]=[S:5](=[O:6])([*:7])[N:2]([*:1])[*:3]'),  # TODO: change
+        product=QueryMol('[O:4]=[S:5](=[O:6])([*:7])[N:2]([*:1])[*:3]'),
         reaction_id=7,
         real_ids={40},
         counting_fn=count_two_different_reagents
@@ -90,7 +103,7 @@ REAL_REACTIONS = [
             QueryMol('[O:1]=[C:2]([OH1:3])[*:4]'),
             QueryMol('[F,Cl,Br,I][*:5]')  # TODO: change to Alk restriction for R group
         ],
-        product=QueryMol('[O:1]=[C:2]([*:4])[O:3][*:5]'),  # TODO: change
+        product=QueryMol('[O:1]=[C:2]([*:4])[O:3][*:5]'),
         reaction_id=8,
         real_ids={1458},
         counting_fn=count_two_different_reagents
@@ -100,7 +113,7 @@ REAL_REACTIONS = [
             QueryMol('[*:1][N:2]([H])[*:3]'),  # TODO: change to Alk restriction for R groups?
             QueryMol('[*:4][N:5]([H])[*:6]')  # TODO: change to H2
         ],
-        product=QueryMol('O=C(C(=O)[N:2]([*:1])[*:3])[N:5]([*:4])[*:6]'),  # TODO: change
+        product=QueryMol('O=C(C(=O)[N:2]([*:1])[*:3])[N:5]([*:4])[*:6]'),
         reaction_id=9,
         real_ids={2718},
         counting_fn=count_two_same_reagents
@@ -110,7 +123,7 @@ REAL_REACTIONS = [
             QueryMol('[*:1][N:2]([H])[*:3]'),  # TODO: change to Alk for (both?) R groups
             QueryMol('[F,Cl,Br,I][*:4]')  # TODO: change to Ar for R group
         ],
-        product=QueryMol('[*:1][N:2]([*:3])[*:4]'),  # TODO: change
+        product=QueryMol('[*:1][N:2]([*:3])[*:4]'),
         reaction_id=10,
         real_ids={27},
         counting_fn=count_two_different_reagents

@@ -15,7 +15,7 @@ from reactions import (
 )
 
 
-class CarbonChainChecker:
+class CarbonPathChecker:
     """Checks whether a SMARTS match with two fragments contains a path
      from one fragment to the other with only non-aromatic carbon atoms."""
 
@@ -107,18 +107,18 @@ class CarbonChainChecker:
         return hash(self.smarts)
 
     def __eq__(self, other: Any) -> bool:
-        return isinstance(other, CarbonChainChecker) and self.smarts == other.smarts
+        return isinstance(other, CarbonPathChecker) and self.smarts == other.smarts
 
 
 REAL_REACTIONS = [
     Reaction(
         reagents=[
-            QueryMol('CC(C)(C)OC(=O)[N:1]([*:2])[*:3].[*:4][N:5]([H])[*:6]', checker_class=CarbonChainChecker),
+            QueryMol('CC(C)(C)OC(=O)[N:1]([*:2])[*:3].[*:4][N:5]([H])[*:6]', checker=CarbonPathChecker),
             QueryMol('[OH1][C:7]([*:8])=[O:9]'),
             QueryMol('[OH1][C:10]([*:11])=[O:12]')
         ],
         product=QueryMol('[*:4][N:5]([*:6])[C:7](=[O:9])[*:8].[*:3][N:1]([*:2])[C:10](=[O:12])[*:11]',
-                         checker_class=CarbonChainChecker),
+                         checker=CarbonPathChecker),
         reaction_id=1,
         real_ids={275592},
         counting_fn=count_three_reagents_with_two_same

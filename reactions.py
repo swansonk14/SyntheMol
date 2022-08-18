@@ -1,5 +1,6 @@
 """Contains classes representing chemical reactions, including reagents and products."""
 import re
+from collections import deque
 from functools import cache
 from typing import Any, Callable, Optional, Union
 
@@ -93,16 +94,16 @@ class CarbonChainChecker:
                 visited_atoms.add(atom.GetIdx())
 
                 # Move on to the next carbon atom in the chain (if there is one)
-                next_atoms = [
+                new_neighbors = [
                     neighbor
                     for neighbor in neighbors
                     if neighbor.GetIdx() not in visited_atoms and neighbor.GetAtomicNum() == 6
                 ]
 
-                if len(next_atoms) != 1:
+                if len(new_neighbors) != 1:
                     break
 
-                atom = next_atoms[0]
+                atom = new_neighbors[0]
 
         # If we get here, then there is no path that satisfies the carbon chain criterion so return False
         return False
@@ -112,6 +113,111 @@ class CarbonChainChecker:
 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, CarbonChainChecker) and self.smarts == other.smarts
+
+
+def aryl_checker(r_group_start_atom: Chem.Atom, matched_atoms: list[int]) -> bool:
+    """Checkers whether an R group of a molecule is an aryl group."""
+    # Do a breadth-first search from the R group start atom and check that the group is aryl
+    queue = deque([r_group_start_atom])
+    visited_atoms = set(matched_atoms)
+    has_aromatic_ring = False
+
+    while queue:
+        # Get the next atom in the queue
+        atom = queue.pop()
+
+        # Check whether the atom is aromatic and if so, whether it is carbon
+        if atom.GetIsAromatic():
+            has_aromatic_ring = True
+
+            if atom.GetAtomicNum() != 6:
+                return False
+
+        # Add atom to visited atoms
+        visited_atoms.add(atom.GetIdx())
+
+        # Add unvisited neighbors to the queue
+        queue += [neighbor for neighbor in atom.GetNeighbors() if neighbor.GetIdx() not in visited_atoms]
+
+    return has_aromatic_ring
+
+
+def alkyl_checker(r_group_start_atom: Chem.Atom, matched_atoms: list[int]) -> bool:
+    """Checkers whether an R group of a molecule is an alkyl group."""
+    # Do a search from the R group start atom and check that the group is alkyl
+    queue = deque([r_group_start_atom])
+    visited_atoms = set(matched_atoms)
+
+    while queue:
+        # Get the next atom in the queue
+        atom = queue.pop()
+
+        # Check that atom satisfies alkyl property (must be carbon with all single bonds so 4 neighbors with >= 2 Hs)
+        neighbors = atom.GetNeighbors()
+        neighbor_h_count = sum(neighbor.GetAtomicNum() == 1 for neighbor in neighbors)
+
+        if atom.GetAtomicNum() != 6 or atom.GetIsAromatic() or len(neighbors) != 4 or neighbor_h_count >= 2:
+            return False
+
+        # Add the atom to the visited set
+        visited_atoms.add(atom.GetIdx())
+
+        # Add neighboring carbon atoms to the queue if not already visited
+        queue += [
+            neighbor
+            for neighbor in neighbors
+            if neighbor.GetIdx() not in visited_atoms and neighbor.GetAtomicNum() == 6
+        ]
+
+    # If we get here, then all atoms in the R group satisfy the alkyl property
+    return True
+
+
+def h_checker(r_group_start_atom: Chem.Atom, matched_atoms: list[int]) -> bool:
+    """Checkers whether an R group of a molecule is a hydrogen atom."""
+    return r_group_start_atom.GetAtomicNum() == 1
+
+
+class RGroupChecker:
+    """Checkers whether each R group in a molecule satisfies at least one checker."""
+
+    def __init__(self, smarts: str, checkers: set[Callable[[Chem.Atom, list[int]], bool]]) -> None:
+        self.smarts = smarts
+        self.checkers = checkers
+
+        mol = Chem.MolFromSmarts(self.smarts)
+
+        # Get the indices of all the "*" atoms, i.e., the beginning of side chains
+        self.r_group_start_atom_indices = {
+            atom.GetIdx()
+            for atom in mol.GetAtoms()
+            if atom.GetAtomicNum() == 0
+        }
+
+    def __call__(self, mol: Chem.Mol, matched_atoms: list[int]) -> bool:
+        """Checks whether a molecule that has matched to the SMARTS has R groups that satisfy the checkers.
+
+        Each R group must match at least one checker.
+
+        :param mol: The Mol object of the molecule that matches the SMARTS query.
+        :param matched_atoms: A list of indices of atoms in the molecule that match the SMARTS query.
+                              The ith element of this list is the index of the atom in the molecule
+                              that matches the atom at index i in the SMARTS query.
+                              (Note: This is technically an RDKit vect object, but it can be treated like a list.)
+        :return: Whether each R group in the matched molecule satisfies at least one checker.
+        """
+        return all(
+            any(
+                checker(mol.GetAtomWithIdx(r_group_start_atom_index), matched_atoms)
+                for checker in self.checkers
+            ) for r_group_start_atom_index in self.r_group_start_atom_indices
+        )
+
+    def __hash__(self) -> int:
+        return hash(self.smarts) + sum(hash(checker) for checker in self.checkers)
+
+    def __eq__(self, other: Any) -> bool:
+        return isinstance(other, RGroupChecker) and self.smarts == other.smarts and self.checkers == other.checkers
 
 
 def count_one_reagent(num_r1: int) -> int:
@@ -198,23 +304,21 @@ class QueryMol:
 
     def __init__(self,
                  smarts: str,
-                 checker_class: Optional[type] = None) -> None:
+                 checker: Optional[Union[RGroupChecker, CarbonChainChecker]] = None) -> None:
         """Initializes the QueryMol.
 
         :param smarts: A SMARTS string representing the molecular query.
-        :param checker_class: A class that is used as an extra checker for any molecules that match the SMARTS query.
+        :param checker: An extra checker for any molecules that match the SMARTS query.
         """
         self.smarts_with_atom_mapping = smarts if ':' in smarts else None
         self.smarts = strip_atom_mapping(smarts)
         self.query_mol = Chem.MolFromSmarts(self.smarts)
+        self.checker = checker
 
         self.params = Chem.SubstructMatchParameters()
 
-        if checker_class is not None:
-            self.checker = checker_class(self.smarts)
+        if self.checker is not None:
             self.params.setExtraFinalCheck(self.checker)
-        else:
-            self.checker = None
 
     # TODO: cache this (might need to switch to only using strings)
     @cache
