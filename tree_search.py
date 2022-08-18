@@ -18,7 +18,9 @@ from tqdm import trange
 
 from chem_utils.molecular_fingerprints import compute_fingerprint, compute_fingerprints
 from chemprop.utils import load_checkpoint
-from real_reactions import Reaction, REAL_REACTIONS, SYNNET_REACTIONS
+from reactions import Reaction
+from real_reactions import REAL_REACTIONS
+from synnet_reactions import SYNNET_REACTIONS
 
 
 # TODO: make certain arguments optional if doing random search

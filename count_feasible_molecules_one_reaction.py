@@ -5,7 +5,8 @@ import pandas as pd
 from tap import Tap
 from tqdm import tqdm
 
-from real_reactions import convert_to_mol, REAL_REACTIONS
+from reactions import convert_to_mol
+from real_reactions import REAL_REACTIONS
 
 
 class Args(Tap):

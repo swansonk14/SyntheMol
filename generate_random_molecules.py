@@ -10,7 +10,9 @@ from rdkit import Chem
 from tap import Tap
 from tqdm import trange
 
-from real_reactions import convert_to_mol, Reaction, REAL_REACTIONS, SYNNET_REACTIONS
+from reactions import convert_to_mol, Reaction
+from real_reactions import REAL_REACTIONS
+from synnet_reactions import SYNNET_REACTIONS
 
 
 class Args(Tap):
