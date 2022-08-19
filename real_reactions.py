@@ -70,8 +70,14 @@ REAL_REACTIONS = [
     ),
     Reaction(
         reagents=[
-            QueryMol('[*:1][N:2]([H])[*:3]'),  # TODO: change to Alk, Ar, cycle restriction for both R groups
-            QueryMol('[F,Cl,Br,I][*:4]')  # TODO: change to Alk restriction for R group
+            QueryMol(
+                smarts := '[*:1][N:2]([H])[*:3]',
+                checker=RGroupChecker(smarts=smarts, checkers={alkyl_checker, aryl_checker})  # TODO: add cycle checker
+            ),
+            QueryMol(
+                smarts := '[F,Cl,Br,I][*:4]',
+                checker=RGroupChecker(smarts=smarts, checkers={alkyl_checker})
+            )
         ],
         product=QueryMol('[*:1][N:2]([*:3])[*:4]'),
         reaction_id=5,
@@ -80,17 +86,26 @@ REAL_REACTIONS = [
     ),
     Reaction(
         reagents=[
-            QueryMol('[*:1][N:2]([H])[*:3]'),  # TODO: change to H2 and Ar restriction for R group
-            QueryMol('[*:4][N:5]([H])[*:6]')  # TODO: change to H2 and Alk restriction for R group
+            QueryMol(
+                smarts := '[*:1][N:2]([H])[H:3]',
+                checker=RGroupChecker(smarts=smarts, checkers={aryl_checker})
+            ),
+            QueryMol(
+                smarts := '[*:4][N:5]([H])[H:6]',
+                checker=RGroupChecker(smarts=smarts, checkers={alkyl_checker})
+            )
         ],
-        product=QueryMol('O=C(C(=O)[N:2]([*:1])[*:3])[N:5]([*:4])[*:6]'),
+        product=QueryMol('O=C(C(=O)[N:2]([*:1])[H:3])[N:5]([*:4])[H:6]'),
         reaction_id=6,
         real_ids={2718},
         counting_fn=count_two_same_reagents
     ),
     Reaction(
         reagents=[
-            QueryMol('[*:1][N:2]([H])[*:3]'),  # TODO: change to Alk, H restriction for R groups
+            QueryMol(
+                smarts := '[*:1][N:2]([H])[*:3]',
+                checker=RGroupChecker(smarts=smarts, checkers={alkyl_checker, h_checker})
+            ),
             QueryMol('[O:4]=[S:5](=[O:6])([F,Cl,Br,I])[*:7]')
         ],
         product=QueryMol('[O:4]=[S:5](=[O:6])([*:7])[N:2]([*:1])[*:3]'),
@@ -101,7 +116,10 @@ REAL_REACTIONS = [
     Reaction(
         reagents=[
             QueryMol('[O:1]=[C:2]([OH1:3])[*:4]'),
-            QueryMol('[F,Cl,Br,I][*:5]')  # TODO: change to Alk restriction for R group
+            QueryMol(
+                smarts := '[F,Cl,Br,I][*:5]',
+                checker=RGroupChecker(smarts=smarts, checkers={alkyl_checker})
+            )
         ],
         product=QueryMol('[O:1]=[C:2]([*:4])[O:3][*:5]'),
         reaction_id=8,
@@ -110,18 +128,27 @@ REAL_REACTIONS = [
     ),
     Reaction(
         reagents=[
-            QueryMol('[*:1][N:2]([H])[*:3]'),  # TODO: change to Alk restriction for R groups?
-            QueryMol('[*:4][N:5]([H])[*:6]')  # TODO: change to H2
+            QueryMol(
+                smarts := '[*:1][N:2]([H])[*:3]',
+                checker=RGroupChecker(smarts=smarts, checkers={alkyl_checker})
+            ),
+            QueryMol('[*:4][N:5]([H])[H:6]')
         ],
-        product=QueryMol('O=C(C(=O)[N:2]([*:1])[*:3])[N:5]([*:4])[*:6]'),
+        product=QueryMol('O=C(C(=O)[N:2]([*:1])[*:3])[N:5]([*:4])[H:6]'),
         reaction_id=9,
         real_ids={2718},
         counting_fn=count_two_same_reagents
     ),
     Reaction(
         reagents=[
-            QueryMol('[*:1][N:2]([H])[*:3]'),  # TODO: change to Alk for (both?) R groups
-            QueryMol('[F,Cl,Br,I][*:4]')  # TODO: change to Ar for R group
+            QueryMol(
+                smarts := '[*:1][N:2]([H])[*:3]',
+                checker=RGroupChecker(smarts=smarts, checkers={alkyl_checker})
+            ),
+            QueryMol(
+                smarts := '[F,Cl,Br,I][*:4]',
+                checker=RGroupChecker(smarts=smarts, checkers={aryl_checker})
+            )
         ],
         product=QueryMol('[*:1][N:2]([*:3])[*:4]'),
         reaction_id=10,
