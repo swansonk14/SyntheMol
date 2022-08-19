@@ -4,7 +4,7 @@ Reference: https://docs.google.com/document/d/1LDgRXf4P-uOXQEmgJPgVhuOK32I2u0FXS
 from reactions import (
     alkyl_checker,
     aryl_checker,
-    CarbonChainChecker,
+    CarbonPathChecker,
     count_three_reagents_with_two_same,
     count_two_different_reagents,
     count_two_same_reagents,
@@ -22,7 +22,7 @@ REAL_REACTIONS = [
         reagents=[
             QueryMol(
                 smarts='CC(C)(C)OC(=O)[N:1]([*:2])[*:3].[*:4][N:5]([H])[*:6]',
-                checker_class=CarbonChainChecker
+                checker_class=CarbonPathChecker
             ),
             QueryMol('[OH1][C:7]([*:8])=[O:9]'),
             QueryMol('[OH1][C:10]([*:11])=[O:12]')

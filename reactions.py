@@ -12,7 +12,8 @@ from scipy.special import comb
 Molecule = Union[str, Chem.Mol]  # Either a SMILES string or an RDKit Mol object
 
 
-class CarbonChainChecker:
+# TODO: does this need to be a path checker instead of a chain checker?
+class CarbonPathChecker:
     """Checks whether a SMARTS match with two fragments contains a path
      from one fragment to the other with only non-aromatic C-C connections."""
 
@@ -44,6 +45,20 @@ class CarbonChainChecker:
             if atom.GetAtomicNum() == 0
         }
 
+    @staticmethod
+    def is_ch2(atom: Chem.Atom) -> bool:
+        if atom.GetAtomicNum() != 6 or atom.GetIsAromatic():
+            return False
+
+        neighbors = atom.GetNeighbors()
+
+        if len(neighbors) != 4:
+            return False
+
+        num_h_neighbors = sum(neighbor.GetAtomicNum() == 1 for neighbor in neighbors)
+
+        return num_h_neighbors == 2
+
     def __call__(self, mol: Chem.Mol, matched_atoms: list[int]) -> bool:
         """Checks whether a molecule that has matched to the SMARTS query satisfies the carbon chain criterion.
 
@@ -60,11 +75,11 @@ class CarbonChainChecker:
         # Get start and end indices in the molecule of the side chains that being with carbon atoms
         start_atom_indices = {
             atom_index for start_atom in self.start_atoms
-            if mol.GetAtomWithIdx(atom_index := matched_atoms[start_atom]).GetAtomicNum() == 6
+            if self.is_ch2(mol.GetAtomWithIdx(atom_index := matched_atoms[start_atom]))
         }
         end_atom_indices = {
             atom_index for end_atom in self.end_atoms
-            if mol.GetAtomWithIdx(atom_index := matched_atoms[end_atom]).GetAtomicNum() == 6
+            if self.is_ch2(mol.GetAtomWithIdx(atom_index := matched_atoms[end_atom]))
         }
 
         # If none of the side chains of a fragment begin with carbon, return False since there is no path of carbons
@@ -76,34 +91,24 @@ class CarbonChainChecker:
             # Get the starting atom from its index
             atom = mol.GetAtomWithIdx(start_atom_index)
 
-            # Iterate through the neighbors, checking for only non-aromatic C-C until reaching an end atom
-            while True:
-                # Get the neighboring atoms
-                neighbors = atom.GetNeighbors()
-                neighbor_h_count = sum(neighbor.GetAtomicNum() == 1 for neighbor in neighbors)
+            # Do a breadth-first search from the start atom to try to find a path with only CH2 to an end atom
+            queue = deque([atom])
+            while queue:
+                # Get the next atom in the queue
+                atom = queue.pop()
 
-                # Check if this atom is carbon, non-aromatic, and all single bonds (i.e., four neighbors) with two Hs
-                if atom.GetAtomicNum() != 6 or atom.GetIsAromatic() or len(neighbors) != 4 or neighbor_h_count != 2:
-                    break
-
-                # Check if we've reached an end atom and return True if so since we've satisfied the criterion
-                if atom.GetIdx() in end_atom_indices:
-                    return True
-
-                # Add this atom to visited atoms
+                # Add the atom to the visited set to avoid visiting it again
                 visited_atoms.add(atom.GetIdx())
 
-                # Move on to the next carbon atom in the chain (if there is one)
-                new_neighbors = [
-                    neighbor
-                    for neighbor in neighbors
-                    if neighbor.GetIdx() not in visited_atoms and neighbor.GetAtomicNum() == 6
-                ]
+                # Loop through neighboring atoms
+                for neighbor in atom.GetNeighbors():
+                    # Check if we've reached an end atom and return True if so since we've found a path of carbon atoms
+                    if neighbor.GetIdx() in end_atom_indices:
+                        return True
 
-                if len(new_neighbors) != 1:
-                    break
-
-                atom = new_neighbors[0]
+                    # Add neighbor atom to the queue if it is not visited and is a CH2
+                    if neighbor.GetIdx() not in visited_atoms and self.is_ch2(neighbor):
+                        queue.append(neighbor)
 
         # If we get here, then there is no path that satisfies the carbon chain criterion so return False
         return False
@@ -112,7 +117,7 @@ class CarbonChainChecker:
         return hash(self.smarts)
 
     def __eq__(self, other: Any) -> bool:
-        return isinstance(other, CarbonChainChecker) and self.smarts == other.smarts
+        return isinstance(other, CarbonPathChecker) and self.smarts == other.smarts
 
     def __str__(self) -> str:
         return self.__class__.__name__

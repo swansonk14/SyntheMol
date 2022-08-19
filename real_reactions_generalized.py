@@ -1,12 +1,8 @@
 """SMARTS representations of the **generalized** REAL reactions.
 Reference: https://docs.google.com/document/d/1jEFqvKT4bFe4Il90Pg53AHCtQQf5eA46RST4ZWQJhyI/edit?usp=sharing
 """
-from collections import deque
-from typing import Any
-
-from rdkit import Chem
-
 from reactions import (
+    CarbonPathChecker,
     count_three_reagents_with_two_same,
     count_two_different_reagents,
     count_two_same_reagents,
@@ -15,110 +11,20 @@ from reactions import (
 )
 
 
-class CarbonPathChecker:
-    """Checks whether a SMARTS match with two fragments contains a path
-     from one fragment to the other with only non-aromatic carbon atoms."""
-
-    def __init__(self, smarts: str) -> None:
-        """Initializes the carbon chain checker.
-
-        Note: This is dependent on RDKit assigning atom indices in the order of the atoms in the SMARTS.
-
-        :param smarts: A SMARTS string containing the query. Must contain precisely two fragments.
-        """
-        if sum(char == '.' for char in smarts) != 1:
-            raise ValueError('SMARTS must contain precisely two fragments (separate by ".").')
-
-        self.smarts = smarts
-
-        first_smarts, second_smarts = smarts.split('.')
-        first_mol, second_mol = Chem.MolFromSmarts(first_smarts), Chem.MolFromSmarts(second_smarts)
-        first_num_atoms = first_mol.GetNumAtoms()
-
-        # Get the indices of all the "*" atoms, i.e., the beginning of side chains
-        self.start_atoms = {
-            atom.GetIdx()
-            for atom in first_mol.GetAtoms()
-            if atom.GetAtomicNum() == 0
-        }
-        self.end_atoms = {
-            atom.GetIdx() + first_num_atoms
-            for atom in second_mol.GetAtoms()
-            if atom.GetAtomicNum() == 0
-        }
-
-    def __call__(self, mol: Chem.Mol, matched_atoms: list[int]) -> bool:
-        """Checks whether a molecule that has matched to the SMARTS query satisfies the carbon chain criterion.
-
-        :param mol: The Mol object of the molecule that matches the SMARTS query.
-        :param matched_atoms: A list of indices of atoms in the molecule that match the SMARTS query.
-                              The ith element of this list is the index of the atom in the molecule
-                              that matches the atom at index i in the SMARTS query.
-                              (Note: This is technically an RDKit vect object, but it can be treated like a list.)
-        :return: Whether the matched molecule satisfies the carbon chain criterion.
-        """
-        # Initialize a set of visited atoms
-        visited_atoms = set(matched_atoms)
-
-        # Get start and end indices in the molecule of the side chains that being with carbon atoms
-        start_atom_indices = {
-            atom_index for start_atom in self.start_atoms
-            if mol.GetAtomWithIdx(atom_index := matched_atoms[start_atom]).GetAtomicNum() == 6
-        }
-        end_atom_indices = {
-            atom_index for end_atom in self.end_atoms
-            if mol.GetAtomWithIdx(atom_index := matched_atoms[end_atom]).GetAtomicNum() == 6
-        }
-
-        # If none of the side chains of a fragment begin with carbon, return False since there is no path of carbons
-        if len(start_atom_indices) == 0 or len(end_atom_indices) == 0:
-            return False
-
-        # Loop over the atoms that begin side chains
-        for start_atom_index in start_atom_indices:
-            # Get the starting atom from its index
-            atom = mol.GetAtomWithIdx(start_atom_index)
-
-            # Do a breadth-first search from the start atom to try to find a path with only carbons to an end atom
-            queue = deque([atom])
-            while queue:
-                # Get the next atom in the queue
-                atom = queue.pop()
-
-                # Add the atom to the visited set to avoid visiting it again
-                visited_atoms.add(atom.GetIdx())
-
-                # Loop through neighboring atoms
-                for neighbor_atom in atom.GetNeighbors():
-                    # Check if we've reached an end atom and return True if so since we've found a path of carbon atoms
-                    if neighbor_atom.GetIdx() in end_atom_indices:
-                        return True
-
-                    # Add neighbor atom to the queue if it is not visited and is a non-aromatic carbon
-                    if (neighbor_atom.GetIdx() not in visited_atoms
-                            and neighbor_atom.GetAtomicNum() == 6
-                            and not neighbor_atom.GetIsAromatic()):
-                        queue.append(neighbor_atom)
-
-        # If we get here, then there is no path that is all non-aromatic carbon atoms so return False
-        return False
-
-    def __hash__(self) -> int:
-        return hash(self.smarts)
-
-    def __eq__(self, other: Any) -> bool:
-        return isinstance(other, CarbonPathChecker) and self.smarts == other.smarts
-
-
 REAL_REACTIONS = [
     Reaction(
         reagents=[
-            QueryMol('CC(C)(C)OC(=O)[N:1]([*:2])[*:3].[*:4][N:5]([H])[*:6]', checker=CarbonPathChecker),
+            QueryMol(
+                smarts='CC(C)(C)OC(=O)[N:1]([*:2])[*:3].[*:4][N:5]([H])[*:6]',
+                checker_class=CarbonPathChecker
+            ),
             QueryMol('[OH1][C:7]([*:8])=[O:9]'),
             QueryMol('[OH1][C:10]([*:11])=[O:12]')
         ],
-        product=QueryMol('[*:4][N:5]([*:6])[C:7](=[O:9])[*:8].[*:3][N:1]([*:2])[C:10](=[O:12])[*:11]',
-                         checker=CarbonPathChecker),
+        product=QueryMol(
+            smarts='[*:4][N:5]([*:6])[C:7](=[O:9])[*:8].[*:3][N:1]([*:2])[C:10](=[O:12])[*:11]',
+            checker_class=CarbonPathChecker
+        ),
         reaction_id=1,
         real_ids={275592},
         counting_fn=count_three_reagents_with_two_same
