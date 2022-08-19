@@ -8,6 +8,7 @@ from reactions import (
     count_three_reagents_with_two_same,
     count_two_different_reagents,
     count_two_same_reagents,
+    cycle_checker,
     h_checker,
     QueryMol,
     Reaction,
@@ -72,7 +73,7 @@ REAL_REACTIONS = [
         reagents=[
             QueryMol(
                 smarts := '[*:1][N:2]([H])[*:3]',
-                checker=RGroupChecker(smarts=smarts, checkers={alkyl_checker, aryl_checker})  # TODO: add cycle checker
+                checker=RGroupChecker(smarts=smarts, checkers={alkyl_checker, aryl_checker, cycle_checker})
             ),
             QueryMol(
                 smarts := '[F,Cl,Br,I][*:4]',

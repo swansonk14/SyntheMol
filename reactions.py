@@ -116,7 +116,7 @@ class CarbonChainChecker:
 
 
 def aryl_checker(r_group_start_atom: Chem.Atom, matched_atoms: list[int]) -> bool:
-    """Checkers whether an R group of a molecule is an aryl group."""
+    """Checks whether an R group of a molecule is an aryl group."""
     # Do a breadth-first search from the R group start atom and check that the group is aryl
     queue = deque([r_group_start_atom])
     visited_atoms = set(matched_atoms)
@@ -143,7 +143,7 @@ def aryl_checker(r_group_start_atom: Chem.Atom, matched_atoms: list[int]) -> boo
 
 
 def alkyl_checker(r_group_start_atom: Chem.Atom, matched_atoms: list[int]) -> bool:
-    """Checkers whether an R group of a molecule is an alkyl group."""
+    """Checks whether an R group of a molecule is an alkyl group."""
     # Do a search from the R group start atom and check that the group is alkyl
     queue = deque([r_group_start_atom])
     visited_atoms = set(matched_atoms)
@@ -174,12 +174,41 @@ def alkyl_checker(r_group_start_atom: Chem.Atom, matched_atoms: list[int]) -> bo
 
 
 def h_checker(r_group_start_atom: Chem.Atom, matched_atoms: list[int]) -> bool:
-    """Checkers whether an R group of a molecule is a hydrogen atom."""
+    """Checks whether an R group of a molecule is a hydrogen atom."""
     return r_group_start_atom.GetAtomicNum() == 1
 
 
+def cycle_checker(r_group_start_atom: Chem.Atom, matched_atoms: list[int]) -> bool:
+    """Checks whether an R group of a molecule is a cycle."""
+    # Do a search from the R group start atom to get all the atoms in the R group
+    queue = deque([r_group_start_atom])
+    visited_atoms = set(matched_atoms)
+    r_group_atoms = [r_group_start_atom]
+
+    while queue:
+        # Get the next atom in the queue
+        atom = queue.pop()
+
+        # Check if atom is in ring
+        if not atom.IsInRing():
+            return False
+
+        # Add the atom to the visited set and the R group set
+        visited_atoms.add(atom.GetIdx())
+        r_group_atoms.append(atom)
+
+        # Add the unvisited neighbors that are not hydrogen
+        queue += [neighbor for neighbor in atom.GetNeighbors() if neighbor.GetAtomicNum() != 1]
+
+    # Check that all R group atoms are in one ring
+    num_r_group_atoms = len(r_group_atoms)
+
+    return all(atom.IsInRingSize(num_r_group_atoms) for atom in r_group_atoms)
+
+
+# TODO: can the R groups connect to each other? If so, then the checkers need to change.
 class RGroupChecker:
-    """Checkers whether each R group in a molecule satisfies at least one checker."""
+    """Checks whether each R group in a molecule satisfies at least one checker."""
 
     def __init__(self, smarts: str, checkers: set[Callable[[Chem.Atom, list[int]], bool]]) -> None:
         self.smarts = smarts
