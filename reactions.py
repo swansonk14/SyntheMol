@@ -156,21 +156,20 @@ def alkyl_checker(mol: Chem.Mol, matched_atoms: list[int], r_group_start_atom: C
         # Get the next atom in the queue
         atom = queue.pop()
 
-        # Check that atom satisfies alkyl property (must be carbon with all single bonds so 4 neighbors with >= 2 Hs)
+        # Check that atom satisfies alkyl property (must be carbon with all single bonds so 4 neighbors)
         neighbors = atom.GetNeighbors()
-        neighbor_h_count = sum(neighbor.GetAtomicNum() == 1 for neighbor in neighbors)
 
-        if atom.GetAtomicNum() != 6 or atom.GetIsAromatic() or len(neighbors) != 4 or neighbor_h_count >= 2:
+        if atom.GetAtomicNum() != 6 or atom.GetIsAromatic() or len(neighbors) != 4:
             return False
 
         # Add the atom to the visited set
         visited_atoms.add(atom.GetIdx())
 
-        # Add neighboring carbon atoms to the queue if not already visited
+        # Add neighboring atoms (skipping hydrogens) to the queue if not already visited
         queue += [
             neighbor
             for neighbor in neighbors
-            if neighbor.GetIdx() not in visited_atoms and neighbor.GetAtomicNum() == 6
+            if neighbor.GetIdx() not in visited_atoms and neighbor.GetAtomicNum() != 1
         ]
 
     # If we get here, then all atoms in the R group satisfy the alkyl property
@@ -186,11 +185,7 @@ def cycle_checker(mol: Chem.Mol, matched_atoms: list[int], r_group_start_atom: C
     """Checks whether an R group of a molecule is a cycle."""
     # Do a search from the R group start atom to get all the atoms in the R group
     visited_atoms = set(matched_atoms)
-    queue = deque([
-        neighbor
-        for neighbor in r_group_start_atom.GetNeighbors()
-        if neighbor.GetIdx() not in visited_atoms and neighbor.GetAtomicNum() != 1
-    ])
+    queue = deque([r_group_start_atom])
 
     while queue:
         # Get the next atom in the queue
@@ -211,7 +206,7 @@ def cycle_checker(mol: Chem.Mol, matched_atoms: list[int], r_group_start_atom: C
         ]
 
     # Get R group atoms
-    r_group_atoms = visited_atoms - set(matched_atoms)
+    r_group_atoms = (visited_atoms - set(matched_atoms)) | {r_group_start_atom.GetIdx()}
 
     # Get molecule ring info
     rings = mol.GetRingInfo()
@@ -234,7 +229,7 @@ class RGroupChecker:
         mol = Chem.MolFromSmarts(self.smarts)
 
         # Get the indices of all the "*" atoms, i.e., the beginning of side chains
-        self.r_group_start_atom_indices = {
+        self.r_group_start_atom_smarts_indices = {
             atom.GetIdx()
             for atom in mol.GetAtoms()
             if atom.GetAtomicNum() == 0
@@ -252,11 +247,16 @@ class RGroupChecker:
                               (Note: This is technically an RDKit vect object, but it can be treated like a list.)
         :return: Whether each R group in the matched molecule satisfies at least one checker.
         """
+        r_group_start_atom_mol_indices = {
+            matched_atoms[r_group_start_atom_smarts_index]
+            for r_group_start_atom_smarts_index in self.r_group_start_atom_smarts_indices
+        }
+
         return all(
             any(
-                checker(mol, matched_atoms, mol.GetAtomWithIdx(r_group_start_atom_index))
+                checker(mol, matched_atoms, mol.GetAtomWithIdx(r_group_start_atom_mol_index))
                 for checker in self.checkers
-            ) for r_group_start_atom_index in self.r_group_start_atom_indices
+            ) for r_group_start_atom_mol_index in r_group_start_atom_mol_indices
         )
 
     def __hash__(self) -> int:
