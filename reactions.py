@@ -115,7 +115,7 @@ class CarbonChainChecker:
         return isinstance(other, CarbonChainChecker) and self.smarts == other.smarts
 
 
-def aryl_checker(r_group_start_atom: Chem.Atom, matched_atoms: list[int]) -> bool:
+def aryl_checker(mol: Chem.Mol, matched_atoms: list[int], r_group_start_atom: Chem.Atom) -> bool:
     """Checks whether an R group of a molecule is an aryl group."""
     # Do a breadth-first search from the R group start atom and check that the group is aryl
     queue = deque([r_group_start_atom])
@@ -142,7 +142,7 @@ def aryl_checker(r_group_start_atom: Chem.Atom, matched_atoms: list[int]) -> boo
     return has_aromatic_ring
 
 
-def alkyl_checker(r_group_start_atom: Chem.Atom, matched_atoms: list[int]) -> bool:
+def alkyl_checker(mol: Chem.Mol, matched_atoms: list[int], r_group_start_atom: Chem.Atom) -> bool:
     """Checks whether an R group of a molecule is an alkyl group."""
     # Do a search from the R group start atom and check that the group is alkyl
     queue = deque([r_group_start_atom])
@@ -173,17 +173,20 @@ def alkyl_checker(r_group_start_atom: Chem.Atom, matched_atoms: list[int]) -> bo
     return True
 
 
-def h_checker(r_group_start_atom: Chem.Atom, matched_atoms: list[int]) -> bool:
+def h_checker(mol: Chem.Mol, matched_atoms: list[int], r_group_start_atom: Chem.Atom) -> bool:
     """Checks whether an R group of a molecule is a hydrogen atom."""
     return r_group_start_atom.GetAtomicNum() == 1
 
 
-def cycle_checker(r_group_start_atom: Chem.Atom, matched_atoms: list[int]) -> bool:
+def cycle_checker(mol: Chem.Mol, matched_atoms: list[int], r_group_start_atom: Chem.Atom) -> bool:
     """Checks whether an R group of a molecule is a cycle."""
     # Do a search from the R group start atom to get all the atoms in the R group
-    queue = deque([r_group_start_atom])
     visited_atoms = set(matched_atoms)
-    r_group_atoms = [r_group_start_atom]
+    queue = deque([
+        neighbor
+        for neighbor in r_group_start_atom.GetNeighbors()
+        if neighbor.GetIdx() not in visited_atoms and neighbor.GetAtomicNum() != 1
+    ])
 
     while queue:
         # Get the next atom in the queue
@@ -193,24 +196,35 @@ def cycle_checker(r_group_start_atom: Chem.Atom, matched_atoms: list[int]) -> bo
         if not atom.IsInRing():
             return False
 
-        # Add the atom to the visited set and the R group set
+        # Add the atom to the visited set
         visited_atoms.add(atom.GetIdx())
-        r_group_atoms.append(atom)
 
         # Add the unvisited neighbors that are not hydrogen
-        queue += [neighbor for neighbor in atom.GetNeighbors() if neighbor.GetAtomicNum() != 1]
+        queue += [
+            neighbor
+            for neighbor in atom.GetNeighbors()
+            if neighbor.GetIdx() not in visited_atoms and neighbor.GetAtomicNum() != 1
+        ]
 
-    # Check that all R group atoms are in one ring
-    num_r_group_atoms = len(r_group_atoms)
+    # Get R group atoms
+    r_group_atoms = visited_atoms - set(matched_atoms)
 
-    return all(atom.IsInRingSize(num_r_group_atoms) for atom in r_group_atoms)
+    # Get molecule ring info
+    rings = mol.GetRingInfo()
+
+    # Ensure that at least one ring contains all the atoms in the R group
+    for atom_ring in rings.AtomRings():
+        if r_group_atoms <= set(atom_ring):
+            return True
+
+    return False
 
 
 # TODO: can the R groups connect to each other? If so, then the checkers need to change.
 class RGroupChecker:
     """Checks whether each R group in a molecule satisfies at least one checker."""
 
-    def __init__(self, smarts: str, checkers: set[Callable[[Chem.Atom, list[int]], bool]]) -> None:
+    def __init__(self, smarts: str, checkers: set[Callable[[Chem.Mol, list[int], Chem.Atom], bool]]) -> None:
         self.smarts = smarts
         self.checkers = checkers
 
@@ -237,7 +251,7 @@ class RGroupChecker:
         """
         return all(
             any(
-                checker(mol.GetAtomWithIdx(r_group_start_atom_index), matched_atoms)
+                checker(mol, matched_atoms, mol.GetAtomWithIdx(r_group_start_atom_index))
                 for checker in self.checkers
             ) for r_group_start_atom_index in self.r_group_start_atom_indices
         )
