@@ -118,6 +118,7 @@ class CarbonChainChecker:
         return self.__class__.__name__
 
 
+# TODO: should this restrict just to aromatic rings and not allow other atoms?
 def aryl_checker(mol: Chem.Mol, matched_atoms: list[int], r_group_start_atom: Chem.Atom) -> bool:
     """Checks whether an R group of a molecule is an aryl group."""
     # Do a breadth-first search from the R group start atom and check that the group is aryl
@@ -370,7 +371,7 @@ class QueryMol:
             if checker_kwargs is None:
                 checker_kwargs = dict()
 
-            self.checker = checker_class(smart=self.smarts, **checker_kwargs)
+            self.checker = checker_class(smarts=self.smarts, **checker_kwargs)
             self.params.setExtraFinalCheck(self.checker)
         else:
             self.checker = None

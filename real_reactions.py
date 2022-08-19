@@ -21,8 +21,8 @@ REAL_REACTIONS = [
     Reaction(
         reagents=[
             QueryMol(
-                smarts := 'CC(C)(C)OC(=O)[N:1]([*:2])[*:3].[*:4][N:5]([H])[*:6]',
-                checker=CarbonChainChecker(smarts=smarts)
+                smarts='CC(C)(C)OC(=O)[N:1]([*:2])[*:3].[*:4][N:5]([H])[*:6]',
+                checker_class=CarbonChainChecker
             ),
             QueryMol('[OH1][C:7]([*:8])=[O:9]'),
             QueryMol('[OH1][C:10]([*:11])=[O:12]')
@@ -46,12 +46,14 @@ REAL_REACTIONS = [
     Reaction(
         reagents=[
             QueryMol(
-                smarts := '[*:1][N:2]([H])[H:3]',
-                checker=RGroupChecker(smarts=smarts, checkers={aryl_checker})
+                smarts='[*:1][N:2]([H])[H:3]',
+                checker_class=RGroupChecker,
+                checker_kwargs={'checkers': {aryl_checker}}
             ),
             QueryMol(
-                smarts := '[*:4][N:5]([H])[*:6]',
-                checker=RGroupChecker(smarts=smarts, checkers={alkyl_checker, h_checker})
+                smarts='[*:4][N:5]([H])[*:6]',
+                checker_class=RGroupChecker,
+                checker_kwargs={'checkers': {alkyl_checker, h_checker}}
             )
         ],
         product=QueryMol('O=C([N:2]([*:1])[H:3])[N:5]([*:4])[*:6]'),
@@ -72,12 +74,14 @@ REAL_REACTIONS = [
     Reaction(
         reagents=[
             QueryMol(
-                smarts := '[*:1][N:2]([H])[*:3]',
-                checker=RGroupChecker(smarts=smarts, checkers={alkyl_checker, aryl_checker, cycle_checker})
+                smarts='[*:1][N:2]([H])[*:3]',
+                checker_class=RGroupChecker,
+                checker_kwargs={'checkers': {alkyl_checker, aryl_checker, cycle_checker}}
             ),
             QueryMol(
-                smarts := '[F,Cl,Br,I][*:4]',
-                checker=RGroupChecker(smarts=smarts, checkers={alkyl_checker})
+                smarts='[F,Cl,Br,I][*:4]',
+                checker_class=RGroupChecker,
+                checker_kwargs={'checkers': {alkyl_checker}}
             )
         ],
         product=QueryMol('[*:1][N:2]([*:3])[*:4]'),
@@ -88,12 +92,14 @@ REAL_REACTIONS = [
     Reaction(
         reagents=[
             QueryMol(
-                smarts := '[*:1][N:2]([H])[H:3]',
-                checker=RGroupChecker(smarts=smarts, checkers={aryl_checker})
+                smarts='[*:1][N:2]([H])[H:3]',
+                checker_class=RGroupChecker,
+                checker_kwargs={'checkers': {aryl_checker}}
             ),
             QueryMol(
-                smarts := '[*:4][N:5]([H])[H:6]',
-                checker=RGroupChecker(smarts=smarts, checkers={alkyl_checker})
+                smarts='[*:4][N:5]([H])[H:6]',
+                checker_class=RGroupChecker,
+                checker_kwargs={'checkers': {alkyl_checker}}
             )
         ],
         product=QueryMol('O=C(C(=O)[N:2]([*:1])[H:3])[N:5]([*:4])[H:6]'),
@@ -104,8 +110,9 @@ REAL_REACTIONS = [
     Reaction(
         reagents=[
             QueryMol(
-                smarts := '[*:1][N:2]([H])[*:3]',
-                checker=RGroupChecker(smarts=smarts, checkers={alkyl_checker, h_checker})
+                smarts='[*:1][N:2]([H])[*:3]',
+                checker_class=RGroupChecker,
+                checker_kwargs={'checkers': {alkyl_checker, h_checker}}
             ),
             QueryMol('[O:4]=[S:5](=[O:6])([F,Cl,Br,I])[*:7]')
         ],
@@ -116,13 +123,14 @@ REAL_REACTIONS = [
     ),
     Reaction(
         reagents=[
-            QueryMol('[O:1]=[C:2]([OH1:3])[*:4]'),
+            QueryMol('[OH1:1][C:2]([*:3])=[O:4]'),
             QueryMol(
-                smarts := '[F,Cl,Br,I][*:5]',
-                checker=RGroupChecker(smarts=smarts, checkers={alkyl_checker})
+                smarts='[F,Cl,Br,I][*:5]',
+                checker_class=RGroupChecker,
+                checker_kwargs={'checkers': {alkyl_checker}}
             )
         ],
-        product=QueryMol('[O:1]=[C:2]([*:4])[O:3][*:5]'),
+        product=QueryMol('[O:4]=[C:2]([*:3])[O:1][*:5]'),
         reaction_id=8,
         real_ids={1458},
         counting_fn=count_two_different_reagents
@@ -130,8 +138,9 @@ REAL_REACTIONS = [
     Reaction(
         reagents=[
             QueryMol(
-                smarts := '[*:1][N:2]([H])[*:3]',
-                checker=RGroupChecker(smarts=smarts, checkers={alkyl_checker})
+                smarts='[*:1][N:2]([H])[*:3]',
+                checker_class=RGroupChecker,
+                checker_kwargs={'checkers': {alkyl_checker}}
             ),
             QueryMol('[*:4][N:5]([H])[H:6]')
         ],
@@ -143,12 +152,14 @@ REAL_REACTIONS = [
     Reaction(
         reagents=[
             QueryMol(
-                smarts := '[*:1][N:2]([H])[*:3]',
-                checker=RGroupChecker(smarts=smarts, checkers={alkyl_checker})
+                smarts='[*:1][N:2]([H])[*:3]',
+                checker_class=RGroupChecker,
+                checker_kwargs={'checkers': {alkyl_checker}}
             ),
             QueryMol(
-                smarts := '[F,Cl,Br,I][*:4]',
-                checker=RGroupChecker(smarts=smarts, checkers={aryl_checker})
+                smarts='[F,Cl,Br,I][*:4]',
+                checker_class=RGroupChecker,
+                checker_kwargs={'checkers': {aryl_checker}}
             )
         ],
         product=QueryMol('[*:1][N:2]([*:3])[*:4]'),
