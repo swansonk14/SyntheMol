@@ -37,13 +37,16 @@ def map_reagents_to_fragments(fragments: list[str], synnet_rxn: bool = False) ->
     fragments = sorted(set(fragments))
 
     # Convert fragment SMILES to mols
-    fragment_mols = [convert_to_mol(fragment, add_hs=True) for fragment in tqdm(fragments, desc='SMILES to mol')]
+    fragment_mols = [
+        convert_to_mol(fragment, add_hs=True)
+        for fragment in tqdm(fragments, desc='SMILES to mol')
+    ]
 
     # Map reagents to fragments
     reagent_to_fragments = {}
 
-    for reaction in tqdm(reactions, desc='Mapping reagents to fragments'):
-        for reagent in reaction.reagents:
+    for reaction in tqdm(reactions, desc='Looping reactions'):
+        for reagent in tqdm(reaction.reagents, desc='Looping reagents', leave=False):
             reagent_str = str(reagent)
 
             if reagent_str in reagent_to_fragments:
@@ -51,7 +54,8 @@ def map_reagents_to_fragments(fragments: list[str], synnet_rxn: bool = False) ->
 
             reagent_to_fragments[reagent_str] = [
                 fragment
-                for fragment, fragment_mol in tqdm(zip(fragments, fragment_mols), total=len(fragments), leave=False)
+                for fragment, fragment_mol in tqdm(zip(fragments, fragment_mols),
+                                                   total=len(fragments), desc='Matching fragments', leave=False)
                 if reagent.has_substruct_match(fragment_mol)
             ]
 
@@ -68,6 +72,10 @@ def run_map_reagents_to_fragments(args: Args) -> None:
         fragments=fragment_data[args.smiles_column],
         synnet_rxn=args.synnet_rxn
     )
+
+    # Print statistics
+    for reagent, fragments in reagent_to_fragments.items():
+        print(f'Reagent {reagent} matches {len(fragments):,} fragments')
 
     # Save data
     with open(args.save_path, 'w') as f:

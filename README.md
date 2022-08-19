@@ -105,8 +105,8 @@ Note: This step is crucial to prevent errors in running reactions. Salts can cau
 Map reagents (reactants) to REAL fragments (building blocks). This pre-computation step saves time when generating molecules.
 ```
 python map_reagents_to_fragments.py \
-    --fragment_path ../data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
-    --save_path ../data/reagents_to_fragments.json
+    --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
+    --save_path data/reagents_to_fragments.json
 ```
 
 

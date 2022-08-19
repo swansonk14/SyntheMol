@@ -59,7 +59,7 @@ REAL_REACTIONS = [
         product=QueryMol('O=C([N:2]([*:1])[H:3])[N:5]([*:4])[*:6]'),
         reaction_id=3,
         real_ids={2430},
-        counting_fn=count_two_same_reagents
+        counting_fn=count_two_different_reagents
     ),
     Reaction(
         reagents=[
@@ -105,7 +105,7 @@ REAL_REACTIONS = [
         product=QueryMol('O=C(C(=O)[N:2]([*:1])[H:3])[N:5]([*:4])[H:6]'),
         reaction_id=6,
         real_ids={2718},
-        counting_fn=count_two_same_reagents
+        counting_fn=count_two_different_reagents
     ),
     Reaction(
         reagents=[
@@ -147,7 +147,7 @@ REAL_REACTIONS = [
         product=QueryMol('O=C(C(=O)[N:2]([*:1])[*:3])[N:5]([*:4])[H:6]'),
         reaction_id=9,
         real_ids={2718},
-        counting_fn=count_two_same_reagents
+        counting_fn=count_two_different_reagents
     ),
     Reaction(
         reagents=[
