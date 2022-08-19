@@ -37,12 +37,12 @@ class CarbonPathChecker:
         self.start_atoms = {
             atom.GetIdx()
             for atom in first_mol.GetAtoms()
-            if atom.GetAtomicNum() == 0
+            if '*' in atom.GetSmarts()
         }
         self.end_atoms = {
             atom.GetIdx() + first_num_atoms
             for atom in second_mol.GetAtoms()
-            if atom.GetAtomicNum() == 0
+            if '*' in atom.GetSmarts()
         }
 
     @staticmethod
@@ -237,7 +237,7 @@ class RGroupChecker:
         self.r_group_start_atom_smarts_indices = {
             atom.GetIdx()
             for atom in mol.GetAtoms()
-            if atom.GetAtomicNum() == 0
+            if '*' in atom.GetSmarts()
         }
 
     def __call__(self, mol: Chem.Mol, matched_atoms: list[int]) -> bool:
