@@ -114,6 +114,9 @@ class CarbonChainChecker:
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, CarbonChainChecker) and self.smarts == other.smarts
 
+    def __str__(self) -> str:
+        return self.__class__.__name__
+
 
 def aryl_checker(mol: Chem.Mol, matched_atoms: list[int], r_group_start_atom: Chem.Atom) -> bool:
     """Checks whether an R group of a molecule is an aryl group."""
@@ -220,7 +223,6 @@ def cycle_checker(mol: Chem.Mol, matched_atoms: list[int], r_group_start_atom: C
     return False
 
 
-# TODO: can the R groups connect to each other? If so, then the checkers need to change.
 class RGroupChecker:
     """Checks whether each R group in a molecule satisfies at least one checker."""
 
@@ -261,6 +263,9 @@ class RGroupChecker:
 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, RGroupChecker) and self.smarts == other.smarts and self.checkers == other.checkers
+
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__}({",".join(sorted(checker.__name__ for checker in self.checkers))})'
 
 
 def count_one_reagent(num_r1: int) -> int:
@@ -347,21 +352,28 @@ class QueryMol:
 
     def __init__(self,
                  smarts: str,
-                 checker: Optional[Union[RGroupChecker, CarbonChainChecker]] = None) -> None:
+                 checker_class: Optional[type] = None,
+                 checker_kwargs: Optional[dict[str, Any]] = None) -> None:
         """Initializes the QueryMol.
 
         :param smarts: A SMARTS string representing the molecular query.
-        :param checker: An extra checker for any molecules that match the SMARTS query.
+        :param checker_class: An extra checker class for any molecules that match the SMARTS query.
+        :param checker_kwargs: Additional keyword arguments (outside of smarts) for the checker.
         """
-        self.smarts_with_atom_mapping = smarts if ':' in smarts else None
+        self.smarts_with_atom_mapping = smarts
         self.smarts = strip_atom_mapping(smarts)
         self.query_mol = Chem.MolFromSmarts(self.smarts)
-        self.checker = checker
 
         self.params = Chem.SubstructMatchParameters()
 
-        if self.checker is not None:
+        if checker_class is not None:
+            if checker_kwargs is None:
+                checker_kwargs = dict()
+
+            self.checker = checker_class(smart=self.smarts, **checker_kwargs)
             self.params.setExtraFinalCheck(self.checker)
+        else:
+            self.checker = None
 
     # TODO: cache this (might need to switch to only using strings)
     @cache
@@ -382,6 +394,13 @@ class QueryMol:
     def __eq__(self, other: Any) -> bool:
         """Determines equality with another object. Note: The equality depends on the SMARTS *without* atom mapping."""
         return isinstance(other, QueryMol) and self.smarts == other.smarts and self.checker == other.checker
+
+    def __str__(self) -> str:
+        """Gets a string representation of the QueryMol."""
+        if self.checker is None:
+            return self.smarts
+
+        return f'{self.smarts}_{self.checker}'
 
 
 class Reaction:

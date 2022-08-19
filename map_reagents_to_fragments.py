@@ -21,7 +21,7 @@ class Args(Tap):
         self.save_path.parent.mkdir(parents=True, exist_ok=True)
 
 
-def map_reagents_to_fragments(fragments: list[str], synnet_rxn: bool) -> dict[str, list[str]]:
+def map_reagents_to_fragments(fragments: list[str], synnet_rxn: bool = False) -> dict[str, list[str]]:
     """Maps REAL reagents to fragments that match those reagents.
 
     :param fragments: A list of molecular fragments (SMILES).
@@ -44,10 +44,12 @@ def map_reagents_to_fragments(fragments: list[str], synnet_rxn: bool) -> dict[st
 
     for reaction in tqdm(reactions, desc='Mapping reagents to fragments'):
         for reagent in reaction.reagents:
-            if reagent.smarts in reagent_to_fragments:
+            reagent_str = str(reagent)
+
+            if reagent_str in reagent_to_fragments:
                 continue
 
-            reagent_to_fragments[reagent.smarts] = [
+            reagent_to_fragments[reagent_str] = [
                 fragment
                 for fragment, fragment_mol in tqdm(zip(fragments, fragment_mols), total=len(fragments), leave=False)
                 if reagent.has_substruct_match(fragment_mol)

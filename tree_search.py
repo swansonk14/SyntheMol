@@ -281,8 +281,8 @@ class TreeSearcher:
         # TODO: cache this? or allow duplicates?
         available_fragments = list(dict.fromkeys(
             fragment
-            for reagent in sorted(unfilled_reagents, key=lambda reagent: reagent.smarts)
-            for fragment in self.reagent_to_fragments[reagent.smarts]
+            for reagent in sorted(unfilled_reagents, key=lambda reagent: str(reagent))
+            for fragment in self.reagent_to_fragments[str(reagent)]
         ))
 
         return available_fragments

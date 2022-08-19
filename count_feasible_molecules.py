@@ -70,9 +70,9 @@ def count_feasible_molecules(args: Args) -> None:
             # Loop over reagents, treating each one as the source of the current molecule in turn
             for molecule_reagent_index in molecule_index_range:
                 # Get molecule SMILES and weights
-                reagent_smarts = reaction.reagents[molecule_reagent_index].smarts
-                molecule_smiles = [molecule['smiles'] for molecule in reagent_to_molecules[reagent_smarts]]
-                molecule_weights = np.array([molecule['weight'] for molecule in reagent_to_molecules[reagent_smarts]])
+                reagent_str = str(reaction.reagents[molecule_reagent_index])
+                molecule_smiles = [molecule['smiles'] for molecule in reagent_to_molecules[reagent_str]]
+                molecule_weights = np.array([molecule['weight'] for molecule in reagent_to_molecules[reagent_str]])
                 normed_molecule_weights = molecule_weights / np.sum(molecule_weights)
 
                 # Count and sample SMILES for the molecule
@@ -88,8 +88,8 @@ def count_feasible_molecules(args: Args) -> None:
                 # Count and sample SMILES for the remaining fragments
                 for fragment_reagent_index in reagent_indices - {molecule_reagent_index}:
                     # Get fragment SMILES
-                    reagent_smarts = reaction.reagents[fragment_reagent_index].smarts
-                    fragment_smiles = reagent_to_fragments[reagent_smarts]
+                    reagent_str = str(reaction.reagents[fragment_reagent_index])
+                    fragment_smiles = reagent_to_fragments[reagent_str]
 
                     # Count and sample SMILES for the fragment
                     reagent_index_to_data[fragment_reagent_index] = {

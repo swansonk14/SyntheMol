@@ -80,8 +80,8 @@ def sample_next_fragment(fragments: list[str],
     # Get all the fragments that match the other reagents
     available_fragments = list(dict.fromkeys(
         fragment
-        for reagent in sorted(unfilled_reagents, key=lambda reagent: reagent.smarts)
-        for fragment in reagent_to_fragments[reagent.smarts]
+        for reagent in sorted(unfilled_reagents, key=lambda reagent: str(reagent))
+        for fragment in reagent_to_fragments[str(reagent)]
     ))
     selected_fragment = random_choice(available_fragments)
 
