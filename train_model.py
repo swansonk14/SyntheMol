@@ -25,7 +25,7 @@ class Args(Tap):
     data_path: Path  # Path to CSV file containing data.
     save_dir: Path  # Path to a directory where the trained model(s) and results will be saved.
     model_type: Literal['rf', 'mlp', 'chemprop']  # Type of model to train. 'rf' = random forest. 'mlp' = multilayer perceptron.
-    fingerprint_type: Literal['morgan', 'rdkit']  # Type of fingerprints to use as input features.
+    fingerprint_type: Optional[Literal['morgan', 'rdkit']] = None  # Type of fingerprints to use as input features.
     smiles_column: str = 'smiles'  # The name of the column containing SMILES.
     activity_column: str = 'activity'  # The name of the column containing binary activity values.
     num_models: int = 1  # The number of models to train using 10-fold cross-validation.
@@ -75,21 +75,27 @@ def build_sklearn_model(train_fingerprints: np.ndarray,
 
 
 def build_chemprop_data_loader(smiles: list[str],
-                               fingerprints: np.ndarray,
+                               fingerprints: Optional[np.ndarray],
                                activities: Optional[list[int]] = None,
                                shuffle: bool = False) -> MoleculeDataLoader:
     """Builds a chemprop MoleculeDataLoader."""
+    if fingerprints is None:
+        fingerprints = [None] * len(smiles)
+
     if activities is None:
         activities = [None] * len(smiles)
+    else:
+        activities = [[float(activity)] for activity in activities]
 
     return MoleculeDataLoader(
         dataset=MoleculeDataset([
             MoleculeDatapoint(
                 smiles=[smiles],
-                targets=[float(activity)] if activity is not None else None,
+                targets=activity,
                 features=fingerprint,
             ) for smiles, fingerprint, activity in zip(smiles, fingerprints, activities)
         ]),
+        num_workers=0,  # Needed for deterministic behavior and faster when training/testing on CPU only
         shuffle=shuffle
     )
 
@@ -97,18 +103,38 @@ def build_chemprop_data_loader(smiles: list[str],
 def build_chemprop_model(train_smiles: list[str],
                          val_smiles: list[str],
                          test_smiles: list[str],
-                         train_fingerprints: np.ndarray,
-                         val_fingerprints: np.ndarray,
-                         test_fingerprints: np.ndarray,
+                         fingerprint_type: Optional[str],
+                         train_fingerprints: Optional[np.ndarray],
+                         val_fingerprints: Optional[np.ndarray],
+                         test_fingerprints: Optional[np.ndarray],
                          train_activities: list[int],
                          val_activities: list[int],
                          test_activities: list[int],
                          save_path: Path) -> dict[str, float]:
     """Trains, evaluates, and saves a chemprop model."""
     # Create args
-    args = TrainArgs().parse_args(['--data_path', 'foo.csv', '--dataset_type', 'classification', '--quiet'])
+    arg_list = [
+        '--data_path', 'foo.csv',
+        '--dataset_type', 'classification',
+        '--quiet'
+    ]
+
+    match fingerprint_type:
+        case 'morgan':
+            arg_list += ['--features_generator', 'morgan']
+        case 'rdkit':
+            arg_list += ['--features_generator', 'rdkit_2d_normalized', '--no_features_scaling']
+        case None:
+            pass
+        case _:
+            raise ValueError(f'Fingerprint type "{fingerprint_type}" is not supported.')
+
+    args = TrainArgs().parse_args(arg_list)
     args.task_names = ['activity']
     args.train_data_size = len(train_smiles)
+
+    if fingerprint_type is not None:
+        args.features_size = train_fingerprints.shape[1]
 
     # Build data loaders
     train_data_loader = build_chemprop_data_loader(
@@ -161,7 +187,7 @@ def build_chemprop_model(train_smiles: list[str],
             best_score, best_epoch = val_score, epoch
             save_checkpoint(path=save_path, model=model, args=args)
 
-    # Evaluate on test set using model with best validation score
+    # Evaluate on test set using model with the best validation score
     print(f'Best validation {args.metric} = {best_score:.6f} on epoch {best_epoch}')
     model = load_checkpoint(save_path, device=args.device)
 
@@ -179,12 +205,19 @@ def build_chemprop_model(train_smiles: list[str],
 
 def train_model(args: Args) -> None:
     """Trains a machine learning classifier model."""
+    # Check compatibility of model and fingerprint type
+    if args.model_type != 'chemprop' and args.fingerprint_type is None:
+        raise ValueError('Must define fingerprint_type if using sklearn model.')
+
     # Load data
     data = pd.read_csv(args.data_path)
     print(f'Data size = {len(data):,}')
 
     # Compute fingerprints
-    fingerprints = compute_fingerprints(data[args.smiles_column], fingerprint_type=args.fingerprint_type)
+    if args.fingerprint_type is not None:
+        fingerprints = compute_fingerprints(data[args.smiles_column], fingerprint_type=args.fingerprint_type)
+    else:
+        fingerprints = None
 
     # Set up cross-validation
     num_folds = 10
@@ -210,9 +243,12 @@ def train_model(args: Args) -> None:
         val_data = data[val_mask]
         train_data = data[train_mask]
 
-        test_fingerprints = fingerprints[test_mask]
-        val_fingerprints = fingerprints[val_mask]
-        train_fingerprints = fingerprints[train_mask]
+        if fingerprints is not None:
+            test_fingerprints = fingerprints[test_mask]
+            val_fingerprints = fingerprints[val_mask]
+            train_fingerprints = fingerprints[train_mask]
+        else:
+            test_fingerprints = val_fingerprints = train_fingerprints = None
 
         # Build and train model
         if args.model_type == 'chemprop':
@@ -220,6 +256,7 @@ def train_model(args: Args) -> None:
                 train_smiles=train_data[args.smiles_column],
                 val_smiles=val_data[args.smiles_column],
                 test_smiles=test_data[args.smiles_column],
+                fingerprint_type=args.fingerprint_type,
                 train_fingerprints=train_fingerprints,
                 val_fingerprints=val_fingerprints,
                 test_fingerprints=test_fingerprints,

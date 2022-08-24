@@ -1,7 +1,7 @@
 """Map fragments to model prediction scores."""
 import json
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Optional
 
 import pandas as pd
 from tap import Tap
@@ -15,7 +15,7 @@ class Args(Tap):
     save_path: Path  # Path to a JSON file where a dictionary mapping fragments to model scores will be saved.
     smiles_column: str = 'smiles'  # Name of the column containing SMILES.
     model_type: Literal['rf', 'mlp', 'chemprop']  # Type of model to train. 'rf' = random forest. 'mlp' = multilayer perceptron.
-    fingerprint_type: Literal['morgan', 'rdkit']  # Type of fingerprints to use as input features.
+    fingerprint_type: Optional[Literal['morgan', 'rdkit']] = None  # Type of fingerprints to use as input features.
 
     def process_args(self) -> None:
         self.save_path.parent.mkdir(parents=True, exist_ok=True)

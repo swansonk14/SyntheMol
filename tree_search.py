@@ -65,7 +65,7 @@ class Args(Tap):
     """The number of tree nodes to expand when extending the child nodes in the search tree."""
     model_type: Literal['rf', 'mlp', 'chemprop']
     """Type of model to train. 'rf' = random forest. 'mlp' = multilayer perceptron."""
-    fingerprint_type: Literal['morgan', 'rdkit']
+    fingerprint_type: Optional[Literal['morgan', 'rdkit']] = None
     """Type of fingerprints to use as input features."""
     synnet_rxn: bool = False
     """Whether to include SynNet reactions in addition to REAL reactions."""
@@ -558,10 +558,14 @@ def save_molecules(nodes: list[TreeNode], save_path: Path) -> None:
 
 def create_model_scoring_fn(model_path: Path,
                             model_type: str,
-                            fingerprint_type: str,
+                            fingerprint_type: Optional[str],
                             fragment_to_model_score: dict[str, float],
                             binarize_scoring: float) -> Callable[[str], float]:
     """Creates a function that scores a molecule using a model."""
+    # Check compatibility of model and fingerprint type
+    if model_type != 'chemprop' and fingerprint_type is None:
+        raise ValueError('Must define fingerprint_type if using sklearn model.')
+
     # Get model paths
     if model_path.is_dir():
         model_paths = list(model_path.glob('*.pt' if model_type == 'chemprop' else '*.pkl'))
@@ -575,8 +579,10 @@ def create_model_scoring_fn(model_path: Path,
     if model_type == 'chemprop':
         models = [load_checkpoint(path=model_path).eval() for model_path in model_paths]
 
-        def model_scorer(smiles: str, fingerprint: np.ndarray) -> float:
-            return float(np.mean([model(batch=[[smiles]], features_batch=[fingerprint]).item() for model in models]))
+        def model_scorer(smiles: str, fingerprint: Optional[np.ndarray]) -> float:
+            fingerprint = [fingerprint] if fingerprint is not None else None
+
+            return float(np.mean([model(batch=[[smiles]], features_batch=fingerprint).item() for model in models]))
     else:
         models = []
         for model_path in model_paths:
@@ -589,7 +595,11 @@ def create_model_scoring_fn(model_path: Path,
     @cache
     def model_scoring_fn(smiles: str) -> float:
         if smiles not in fragment_to_model_score:
-            fingerprint = compute_fingerprint(smiles, fingerprint_type=fingerprint_type)
+            if fingerprint_type is not None:
+                fingerprint = compute_fingerprint(smiles, fingerprint_type=fingerprint_type)
+            else:
+                fingerprint = None
+
             model_score = model_scorer(smiles=smiles, fingerprint=fingerprint)
         else:
             model_score = fragment_to_model_score[smiles]

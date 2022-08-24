@@ -1,7 +1,6 @@
 """Make predictions with a model."""
 import pickle
 from pathlib import Path
-from time import time
 from typing import Literal, Optional
 
 import numpy as np
@@ -23,7 +22,7 @@ class Args(Tap):
     save_path: Optional[Path] = None  # Path to a JSON file where a dictionary mapping fragments to model scores will be saved. If None, defaults to data_path.
     smiles_column: str = 'smiles'  # Name of the column containing SMILES.
     model_type: Literal['rf', 'mlp', 'chemprop']  # Type of model to train. 'rf' = random forest. 'mlp' = multilayer perceptron.
-    fingerprint_type: Literal['morgan', 'rdkit']  # Type of fingerprints to use as input features.
+    fingerprint_type: Optional[Literal['morgan', 'rdkit']] = None  # Type of fingerprints to use as input features.
 
     def process_args(self) -> None:
         if self.save_path is None:
@@ -52,7 +51,7 @@ def predict_sklearn(fingerprints: np.ndarray,
 
 
 def predict_chemprop(smiles: list[str],
-                     fingerprints: np.ndarray,
+                     fingerprints: Optional[np.ndarray],
                      model_path: Path) -> np.ndarray:
     """Make predictions with a chemprop model."""
     # Build data loader
@@ -74,7 +73,7 @@ def predict_chemprop(smiles: list[str],
 
 
 def predict_model(smiles: list[str],
-                  fingerprints: np.ndarray,
+                  fingerprints: Optional[np.ndarray],
                   model_type: str,
                   model_path: Path) -> np.ndarray:
     """Make predictions with a model."""
@@ -96,13 +95,20 @@ def predict_model(smiles: list[str],
 
 
 def predict_ensemble(smiles: list[str],
-                     fingerprint_type: str,
+                     fingerprint_type: Optional[str],
                      model_type: str,
                      model_path: Path,
                      average_preds: bool = True) -> np.ndarray:
     """Make predictions with an ensemble of models."""
+    # Check compatibility of model and fingerprint type
+    if model_type != 'chemprop' and fingerprint_type is None:
+        raise ValueError('Must define fingerprint_type if using sklearn model.')
+
     # Compute fingerprints
-    fingerprints = compute_fingerprints(smiles, fingerprint_type=fingerprint_type)
+    if fingerprint_type is not None:
+        fingerprints = compute_fingerprints(smiles, fingerprint_type=fingerprint_type)
+    else:
+        fingerprints = None
 
     # Get model paths
     if model_path.is_dir():
