@@ -116,6 +116,7 @@ def build_chemprop_model(train_smiles: list[str],
     arg_list = [
         '--data_path', 'foo.csv',
         '--dataset_type', 'classification',
+        '--save_dir', 'foo',
         '--quiet'
     ]
 
@@ -136,6 +137,10 @@ def build_chemprop_model(train_smiles: list[str],
     if fingerprint_type is not None:
         args.features_size = train_fingerprints.shape[1]
 
+    # Ensure reproducibility
+    torch.manual_seed(0)
+    torch.use_deterministic_algorithms(True)
+
     # Build data loaders
     train_data_loader = build_chemprop_data_loader(
         smiles=train_smiles,
@@ -155,9 +160,7 @@ def build_chemprop_model(train_smiles: list[str],
     )
 
     # Build model
-    torch.manual_seed(args.seed)
     model = MoleculeModel(args)
-    model = model.to(args.device)
     print(model)
 
     # Get loss function, optimizer, and learning rate scheduler

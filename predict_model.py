@@ -5,6 +5,7 @@ from typing import Literal, Optional
 
 import numpy as np
 import pandas as pd
+import torch
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
 from tap import Tap
@@ -54,6 +55,10 @@ def predict_chemprop(smiles: list[str],
                      fingerprints: Optional[np.ndarray],
                      model_path: Path) -> np.ndarray:
     """Make predictions with a chemprop model."""
+    # Ensure reproducibility
+    torch.manual_seed(0)
+    torch.use_deterministic_algorithms(True)
+
     # Build data loader
     data_loader = build_chemprop_data_loader(
         smiles=smiles,

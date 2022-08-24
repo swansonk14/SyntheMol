@@ -11,6 +11,7 @@ from typing import Any, Callable, Literal, Optional
 
 import numpy as np
 import pandas as pd
+import torch
 from rdkit import Chem
 from sklearn.metrics import pairwise_distances
 from tap import Tap
@@ -577,6 +578,10 @@ def create_model_scoring_fn(model_path: Path,
 
     # Load model and set up scoring function
     if model_type == 'chemprop':
+        # Ensure reproducibility
+        torch.manual_seed(0)
+        torch.use_deterministic_algorithms(True)
+
         models = [load_checkpoint(path=model_path).eval() for model_path in model_paths]
 
         def model_scorer(smiles: str, fingerprint: Optional[np.ndarray]) -> float:
