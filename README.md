@@ -476,3 +476,15 @@ python visualize_molecules.py \
     --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_2k/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4_selected_100.csv \
     --save_dir ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_2k/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4_selected_100
 ```
+
+
+### Map Molecules to REAL IDs
+
+Map generated molecules to REAL IDs in the format expected by Enamine.
+
+```
+python map_generated_molecules_to_real_ids.py \
+    --data_path generations/mcts_AB_combined_chemprop_rdkit_2k/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4_selected_100.csv \
+    --smiles_save_path generations/mcts_AB_combined_chemprop_rdkit_2k/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4_selected_100_real_ids.csv \
+    --sdf_save_path generations/mcts_AB_combined_chemprop_rdkit_2k/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4_selected_100_real_ids.sdf \
+```
