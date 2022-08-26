@@ -287,7 +287,18 @@ python tree_search.py \
     --max_reactions 1
 ```
 
-TODO: random search
+Random search
+```
+python tree_search.py \
+    --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
+    --reagent_to_fragments_path data/reagents_to_fragments.json \
+    --save_dir generations/random \
+    --search_type random \
+    --n_rollout 5000 \
+    --max_reactions 1
+```
+
+TODO: fill out rest of random search procedure
 
 
 ## Assess Generated Molecules

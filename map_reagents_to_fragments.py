@@ -1,6 +1,7 @@
 """Maps REAL reagents to fragments that match those reagents."""
 import json
 from pathlib import Path
+from typing import Iterable
 
 import pandas as pd
 from tap import Tap
@@ -21,7 +22,7 @@ class Args(Tap):
         self.save_path.parent.mkdir(parents=True, exist_ok=True)
 
 
-def map_reagents_to_fragments(fragments: list[str], synnet_rxn: bool = False) -> dict[str, list[str]]:
+def map_reagents_to_fragments(fragments: Iterable[str], synnet_rxn: bool = False) -> dict[str, list[str]]:
     """Maps REAL reagents to fragments that match those reagents.
 
     :param fragments: A list of molecular fragments (SMILES).

@@ -19,43 +19,56 @@ from tqdm import trange
 
 from chem_utils.molecular_fingerprints import compute_fingerprint, compute_fingerprints
 from chemprop.utils import load_checkpoint
+from map_reagents_to_fragments import map_reagents_to_fragments
 from reactions import Reaction
 from real_reactions import REAL_REACTIONS
 from synnet_reactions import SYNNET_REACTIONS
 
 
-# TODO: make certain arguments optional if doing random search
 class Args(Tap):
-    model_path: Path
-    """Path to a directory of model checkpoints or to a specific PKL or PT file containing a trained model."""
+    # Required args
     fragment_path: Path
     """Path to CSV file containing molecular building blocks."""
-    reagent_to_fragments_path: Path
-    """Path to JSON file containing a dictionary mapping from reagents to fragments."""
-    fragment_to_model_score_path: Path
-    """Path to JSON file containing a dictionary mapping fragments to model prediction scores."""
-    train_similarity: bool = False
-    """Whether to incorporate similarity to the train set as part of the MCTS score."""
-    fragment_to_train_similarity_path: Optional[Path] = None
-    """Path to JSON file containing a dictionary mapping fragments to train similarities
-     (top 10 nearest neighbor Tanimoto). Only used if train_similarity is True."""
-    fragment_to_train_hits_similarity_path: Optional[Path] = None
-    """Path to JSON file containing a dictionary mapping fragments to train hits similarities
-     (nearest neighbor Tversky). Only used if train_similarity is True."""
-    train_path: Optional[Path] = None
-    """Path to CSV file containing SMILES for the molecules in the training set.
-    Only used if train_similarity is True."""
-    train_hits_path: Optional[Path] = None
-    """Path to CSV file containing SMILES for the active molecules in the training set.
-    Only used if train_similarity is True."""
-    save_dir: Path
-    """Path to directory where the generated molecules will be saved."""
     search_type: Literal['random', 'greedy', 'mcts']
     """Type of search to perform."""
+    save_dir: Path
+    """Path to directory where the generated molecules will be saved."""
+
+    # Model args
+    model_path: Optional[Path] = None
+    """Path to a directory of model checkpoints or to a specific PKL or PT file containing a trained model."""
+    model_type: Optional[Literal['rf', 'mlp', 'chemprop']] = None
+    """Type of model to train. 'rf' = random forest. 'mlp' = multilayer perceptron."""
+    fingerprint_type: Optional[Literal['morgan', 'rdkit']] = None
+    """Type of fingerprints to use as input features."""
+    fragment_to_model_score_path: Optional[Path] = None
+    """Path to JSON file containing a dictionary mapping fragments to model prediction scores."""
+
+    # Data args
+    reagent_to_fragments_path: Optional[Path] = None
+    """Path to JSON file containing a dictionary mapping from reagents to fragments."""
     smiles_column: str = 'smiles'
     """Name of the column containing SMILES."""
     fragment_id_column: str = 'Reagent_ID'
     """Name of the column in fragment_path that contains fragment IDs."""
+
+    # Train similarity args
+    train_similarity: bool = False
+    """Whether to incorporate similarity to the train set as part of the MCTS score."""
+    train_path: Optional[Path] = None
+    """Path to CSV file containing SMILES for the molecules in the training set.
+    Only used if train_similarity is True."""
+    fragment_to_train_similarity_path: Optional[Path] = None
+    """Path to JSON file containing a dictionary mapping fragments to train similarities
+     (top 10 nearest neighbor Tanimoto). Only used if train_similarity is True."""
+    train_hits_path: Optional[Path] = None
+    """Path to CSV file containing SMILES for the active molecules in the training set.
+    Only used if train_similarity is True."""
+    fragment_to_train_hits_similarity_path: Optional[Path] = None
+    """Path to JSON file containing a dictionary mapping fragments to train hits similarities
+     (nearest neighbor Tversky). Only used if train_similarity is True."""
+
+    # Search args
     max_reactions: int = 3
     """Maximum number of reactions that can be performed to expand fragments into molecules."""
     n_rollout: int = 100
@@ -64,10 +77,6 @@ class Args(Tap):
     """The hyperparameter that encourages exploration."""
     num_expand_nodes: Optional[int] = None
     """The number of tree nodes to expand when extending the child nodes in the search tree."""
-    model_type: Literal['rf', 'mlp', 'chemprop']
-    """Type of model to train. 'rf' = random forest. 'mlp' = multilayer perceptron."""
-    fingerprint_type: Optional[Literal['morgan', 'rdkit']] = None
-    """Type of fingerprints to use as input features."""
     synnet_rxn: bool = False
     """Whether to include SynNet reactions in addition to REAL reactions."""
     binarize_scoring: float = 0
@@ -560,7 +569,7 @@ def save_molecules(nodes: list[TreeNode], save_path: Path) -> None:
 def create_model_scoring_fn(model_path: Path,
                             model_type: str,
                             fingerprint_type: Optional[str],
-                            fragment_to_model_score: dict[str, float],
+                            fragment_to_model_score: Optional[dict[str, float]],
                             binarize_scoring: float) -> Callable[[str], float]:
     """Creates a function that scores a molecule using a model."""
     # Check compatibility of model and fingerprint type
@@ -599,7 +608,7 @@ def create_model_scoring_fn(model_path: Path,
 
     @cache
     def model_scoring_fn(smiles: str) -> float:
-        if smiles not in fragment_to_model_score:
+        if fragment_to_model_score is None or smiles not in fragment_to_model_score:
             if fingerprint_type is not None:
                 fingerprint = compute_fingerprint(smiles, fingerprint_type=fingerprint_type)
             else:
@@ -619,10 +628,39 @@ def create_model_scoring_fn(model_path: Path,
 
 def run_tree_search(args: Args) -> None:
     """Generate molecules combinatorially by performing a tree search."""
+    # Validate arguments
+    model_based_search = args.search_type in {'mcts', 'greedy'}
+
+    if model_based_search:
+        if args.model_type is None:
+            raise ValueError('Must specify model_type when using model-based search.')
+
+        if args.model_path is None:
+            raise ValueError('Must specify model_path when using model-based search.')
+
+        if args.fragment_to_model_score_path is None:
+            print('For faster searching, please provide a fragment_to_model_score_path.')
+    else:
+        if args.model_type is not None:
+            raise ValueError('Do not include model_type when using non-model-based search.')
+
+        if args.model_path is not None:
+            raise ValueError('Do not include model_path when using non-model-based search.')
+
+        if args.train_similarity:
+            raise ValueError('Do not use train similarity when using non-model-based search.')
+
+        if args.noise:
+            raise ValueError('Do not use noise when using non-model-based search.')
+
+    if args.reagent_to_fragments_path is None:
+        print('For faster searching, please provide a reagent_to_fragments_path.')
+
     # Create save directory and save arguments
     args.save_dir.mkdir(parents=True, exist_ok=True)
     args.save(args.save_dir / 'args.json')
 
+    # Decide which reaction set to use
     if args.synnet_rxn:
         reactions = REAL_REACTIONS + SYNNET_REACTIONS
     else:
@@ -641,27 +679,40 @@ def run_tree_search(args: Args) -> None:
         raise ValueError('Fragment IDs are not unique.')
 
     # Load mapping from reagents to fragments
-    with open(args.reagent_to_fragments_path) as f:
-        reagent_to_fragments: dict[str, list[str]] = json.load(f)
+    if args.reagent_to_fragments_path is not None:
+        with open(args.reagent_to_fragments_path) as f:
+            reagent_to_fragments: dict[str, list[str]] = json.load(f)
+    else:
+        reagent_to_fragments = map_reagents_to_fragments(
+            fragments=fragment_set,
+            synnet_rxn=args.synnet_rxn
+        )
 
     if not ({fragment for fragments in reagent_to_fragments.values() for fragment in fragments} <= fragment_set):
         raise ValueError('The fragments in reagent_to_fragments is not a subset of the fragment set.')
 
     # Load mapping from SMILES to model scores
-    with open(args.fragment_to_model_score_path) as f:
-        fragment_to_model_score: dict[str, float] = json.load(f)
+    if args.fragment_to_model_score_path is not None:
+        with open(args.fragment_to_model_score_path) as f:
+            fragment_to_model_score: dict[str, float] = json.load(f)
 
-    if set(fragment_to_model_score) != fragment_set:
-        raise ValueError('The fragments in fragment_to_model do not match the fragment set.')
+        if set(fragment_to_model_score) != fragment_set:
+            raise ValueError('The fragments in fragment_to_model do not match the fragment set.')
+    else:
+        fragment_to_model_score = None
 
     # Define model scoring function
-    model_scoring_fn = create_model_scoring_fn(
-        model_path=args.model_path,
-        model_type=args.model_type,
-        fingerprint_type=args.fingerprint_type,
-        fragment_to_model_score=fragment_to_model_score,
-        binarize_scoring=args.binarize_scoring
-    )
+    if model_based_search:
+        model_scoring_fn = create_model_scoring_fn(
+            model_path=args.model_path,
+            model_type=args.model_type,
+            fingerprint_type=args.fingerprint_type,
+            fragment_to_model_score=fragment_to_model_score,
+            binarize_scoring=args.binarize_scoring
+        )
+    else:
+        def model_scoring_fn(smiles: str) -> float:
+            return 0.0
 
     if args.train_similarity:
         # Load mapping from SMILES to train similarity
