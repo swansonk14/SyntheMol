@@ -369,7 +369,8 @@ python nearest_neighbor.py \
     --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit/molecules.csv \
     --reference_data_path ../../combinatorial_antibiotics/data/chembl/chembl_antibacterial_antibiotic.csv \
     --reference_name chembl_antibacterial_antibiotic \
-    --metrics tversky
+    --metrics tversky \
+    --reference_smiles_column canonical_smiles
 ```
 
 Chemprop
@@ -378,7 +379,8 @@ python nearest_neighbor.py \
     --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop/molecules.csv \
     --reference_data_path ../../combinatorial_antibiotics/data/chembl/chembl_antibacterial_antibiotic.csv \
     --reference_name chembl_antibacterial_antibiotic \
-    --metrics tversky
+    --metrics tversky \
+    --reference_smiles_column canonical_smiles
 ```
 
 Chemprop with RDKit
@@ -387,7 +389,76 @@ python nearest_neighbor.py \
     --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit/molecules.csv \
     --reference_data_path ../../combinatorial_antibiotics/data/chembl/chembl_antibacterial_antibiotic.csv \
     --reference_name chembl_antibacterial_antibiotic \
-    --metrics tversky
+    --metrics tversky \
+    --reference_smiles_column canonical_smiles
+```
+
+
+### Filter by Similarity to Train Hits
+
+Filter to only keep molecules with nearest neighbor Tverksy similarity to the train hits <= 0.5 using [chem_utils](https://github.com/swansonk14/chem_utils).
+
+TODO: check these similarities
+
+Random forest
+```
+python filter_molecules.py \
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit/molecules.csv \
+    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit/molecules_train_sim_below_0.5.csv \
+    --filter_column train_hits_tversky_nearest_neighbor_similarity \
+    --max_value 0.5
+```
+
+Chemprop
+```
+python filter_molecules.py \
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop/molecules.csv \
+    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop/molecules_train_sim_below_0.5.csv \
+    --filter_column train_hits_tversky_nearest_neighbor_similarity \
+    --max_value 0.5
+```
+
+Chemprop with RDKit
+```
+python filter_molecules.py \
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit/molecules.csv \
+    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit/molecules_train_sim_below_0.5.csv \
+    --filter_column train_hits_tversky_nearest_neighbor_similarity \
+    --max_value 0.5
+```
+
+
+### Filter by Similarity to ChEMBL Antibiotics
+
+Filter to only keep molecules with nearest neighbor Tverksy similarity to the ChEMBL antibiotics <= 0.5 using [chem_utils](https://github.com/swansonk14/chem_utils).
+
+TODO: check if we want to do this
+
+Random forest
+```
+python filter_molecules.py \
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit/molecules_train_sim_below_0.5.csv \
+    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5.csv \
+    --filter_column chembl_antibacterial_antibiotic_tversky_nearest_neighbor_similarity \
+    --max_value 0.5
+```
+
+Chemprop
+```
+python filter_molecules.py \
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop/molecules_train_sim_below_0.5.csv \
+    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop/molecules_train_sim_below_0.5_chembl_sim_below_0.5.csv \
+    --filter_column chembl_antibacterial_antibiotic_tversky_nearest_neighbor_similarity \
+    --max_value 0.5
+```
+
+Chemprop with RDKit
+```
+python filter_molecules.py \
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit/molecules_train_sim_below_0.5.csv \
+    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5.csv \
+    --filter_column chembl_antibacterial_antibiotic_tversky_nearest_neighbor_similarity \
+    --max_value 0.5
 ```
 
 
@@ -398,8 +469,8 @@ Filter to only keep molecules with the top 20% of model scores using [chem_utils
 Random forest
 ```
 python filter_molecules.py \
-    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit/molecules.csv \
-    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit/molecules_top_20_percent.csv \
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5.csv \
+    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
     --filter_column score \
     --top_proportion 0.2
 ```
@@ -407,8 +478,8 @@ python filter_molecules.py \
 Chemprop
 ```
 python filter_molecules.py \
-    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop/molecules.csv \
-    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop/molecules_top_20_percent.csv \
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop/molecules_train_sim_below_0.5_chembl_sim_below_0.5.csv \
+    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
     --filter_column score \
     --top_proportion 0.2
 ```
@@ -416,78 +487,10 @@ python filter_molecules.py \
 Chemprop with RDKit
 ```
 python filter_molecules.py \
-    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit/molecules.csv \
-    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit/molecules_top_20_percent.csv \
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5.csv \
+    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
     --filter_column score \
     --top_proportion 0.2
-```
-
-
-### Filter by Similarity to Train Hits
-
-Filter to only keep molecules with nearest neighbor Tverksy similarity to the train hits <= 0.4 using [chem_utils](https://github.com/swansonk14/chem_utils).
-
-TODO: check these similarities
-
-Random forest
-```
-python filter_molecules.py \
-    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit/molecules_top_20_percent.csv \
-    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit/molecules_top_20_percent_train_sim_below_0.4.csv \
-    --filter_column train_hits_tversky_nearest_neighbor_similarity \
-    --max_value 0.4
-```
-
-Chemprop
-```
-python filter_molecules.py \
-    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop/molecules_top_20_percent.csv \
-    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop/molecules_top_20_percent_train_sim_below_0.4.csv \
-    --filter_column train_hits_tversky_nearest_neighbor_similarity \
-    --max_value 0.4
-```
-
-Chemprop with RDKit
-```
-python filter_molecules.py \
-    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit/molecules_top_20_percent.csv \
-    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit/molecules_top_20_percent_train_sim_below_0.4.csv \
-    --filter_column train_hits_tversky_nearest_neighbor_similarity \
-    --max_value 0.4
-```
-
-
-### Filter by Similarity to ChEMBL Antibiotics
-
-Filter to only keep molecules with nearest neighbor Tverksy similarity to the ChEMBL antibiotics <= 0.4 using [chem_utils](https://github.com/swansonk14/chem_utils).
-
-TODO: check if we want to do this
-
-Random forest
-```
-python filter_molecules.py \
-    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit/molecules_top_20_percent_train_sim_below_0.4.csv \
-    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4.csv \
-    --filter_column chembl_antibacterial_antibiotic_tversky_nearest_neighbor_similarity \
-    --max_value 0.4
-```
-
-Chemprop
-```
-python filter_molecules.py \
-    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop/molecules_top_20_percent_train_sim_below_0.4.csv \
-    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4.csv \
-    --filter_column chembl_antibacterial_antibiotic_tversky_nearest_neighbor_similarity \
-    --max_value 0.4
-```
-
-Chemprop with RDKit
-```
-python filter_molecules.py \
-    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit/molecules_top_20_percent_train_sim_below_0.4.csv \
-    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4.csv \
-    --filter_column chembl_antibacterial_antibiotic_tversky_nearest_neighbor_similarity \
-    --max_value 0.4
 ```
 
 
@@ -498,22 +501,22 @@ Cluster molecules based on their Morgan fingerprint using [chem_utils](https://g
 Random forest
 ```
 python cluster_molecules.py \
-    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4.csv \
-    --num_clusters 100
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
+    --num_clusters 300
 ```
 
 Chemprop
 ```
 python cluster_molecules.py \
-    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4.csv \
-    --num_clusters 100
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
+    --num_clusters 300
 ```
 
 Chemprop with RDKit
 ```
 python cluster_molecules.py \
-    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4.csv \
-    --num_clusters 100
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
+    --num_clusters 300
 ```
 
 
@@ -524,24 +527,24 @@ Select the top scoring molecule from each cluster using [chem_utils](https://git
 Random forest
 ```
 python select_from_clusters.py \
-    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4.csv \
-    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4_selected_100.csv \
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
+    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300.csv \
     --value_column score
 ```
 
 Chemprop
 ```
 python select_from_clusters.py \
-    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4.csv \
-    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4_selected_100.csv \
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
+    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300.csv \
     --value_column score
 ```
 
 Chemprop with RDKit
 ```
 python select_from_clusters.py \
-    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4.csv \
-    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4_selected_100.csv \
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
+    --save_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300.csv \
     --value_column score
 ```
 
@@ -555,22 +558,22 @@ Optionally, visualize the selecting molecules using [chem_utils](https://github.
 Random forest
 ```
 python visualize_molecules.py \
-    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4_selected_100.csv \
-    --save_dir ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4_selected_100
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300.csv \
+    --save_dir ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300
 ```
 
 Chemprop
 ```
 python visualize_molecules.py \
-    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4_selected_100.csv \
-    --save_dir ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4_selected_100
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300.csv \
+    --save_dir ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300
 ```
 
 Chemprop with RDKit
 ```
 python visualize_molecules.py \
-    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4_selected_100.csv \
-    --save_dir ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4_selected_100
+    --data_path ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300.csv \
+    --save_dir ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300
 ```
 
 
@@ -578,26 +581,34 @@ python visualize_molecules.py \
 
 Map generated molecules to REAL IDs in the format expected by Enamine.
 
+TODO: either remove the reaction counts limitation or add commands to perform the database counting
+
 Random forest
 ```
 python map_generated_molecules_to_real_ids.py \
-    --data_path generations/mcts_AB_combined_RF_rdkit/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4_selected_100.csv \
-    --smiles_save_path generations/mcts_AB_combined_RF_rdkit/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4_selected_100_real_ids.csv \
-    --sdf_save_path generations/mcts_AB_combined_RF_rdkit/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4_selected_100_real_ids.sdf \
+    --data_path generations/mcts_AB_combined_RF_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300.csv \
+    --smiles_save_path generations/mcts_AB_combined_RF_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300_real_ids.csv \
+    --sdf_save_path generations/mcts_AB_combined_RF_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300_real_ids.sdf \
+    --reaction_counts_path data/Enamine_REAL_counts/reaction_counts.csv \
+    --reaction_percent_min 0.001
 ```
 
 Chemprop
 ```
 python map_generated_molecules_to_real_ids.py \
-    --data_path generations/mcts_AB_combined_chemprop/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4_selected_100.csv \
-    --smiles_save_path generations/mcts_AB_combined_chemprop/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4_selected_100_real_ids.csv \
-    --sdf_save_path generations/mcts_AB_combined_chemprop/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4_selected_100_real_ids.sdf \
+    --data_path generations/mcts_AB_combined_chemprop/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300.csv \
+    --smiles_save_path generations/mcts_AB_combined_chemprop/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300_real_ids.csv \
+    --sdf_save_path generations/mcts_AB_combined_chemprop/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300_real_ids.sdf \
+    --reaction_counts_path data/Enamine_REAL_counts/reaction_counts.csv \
+    --reaction_percent_min 0.001
 ```
 
 Chemprop with RDKit
 ```
 python map_generated_molecules_to_real_ids.py \
-    --data_path generations/mcts_AB_combined_chemprop_rdkit/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4_selected_100.csv \
-    --smiles_save_path generations/mcts_AB_combined_chemprop_rdkit/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4_selected_100_real_ids.csv \
-    --sdf_save_path generations/mcts_AB_combined_chemprop_rdkit/molecules_top_20_percent_train_sim_below_0.4_chembl_sim_below_0.4_selected_100_real_ids.sdf \
+    --data_path generations/mcts_AB_combined_chemprop_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300.csv \
+    --smiles_save_path generations/mcts_AB_combined_chemprop_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300_real_ids.csv \
+    --sdf_save_path generations/mcts_AB_combined_chemprop_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300_real_ids.sdf \
+    --reaction_counts_path data/Enamine_REAL_counts/reaction_counts.csv \
+    --reaction_percent_min 0.001
 ```
