@@ -204,7 +204,7 @@ python train_model.py \
 
 ### Map Fragments to Model Scores
 
-TODO: left off with reproducibility here.
+TODO: check reproducibility
 
 Random forest
 ```
@@ -409,8 +409,6 @@ python nearest_neighbor.py \
 
 Filter to only keep molecules with nearest neighbor Tverksy similarity to the train hits <= 0.5 using [chem_utils](https://github.com/swansonk14/chem_utils).
 
-TODO: check these similarities
-
 Random forest
 ```
 python filter_molecules.py \
@@ -442,8 +440,6 @@ python filter_molecules.py \
 ### Filter by Similarity to ChEMBL Antibiotics
 
 Filter to only keep molecules with nearest neighbor Tverksy similarity to the ChEMBL antibiotics <= 0.5 using [chem_utils](https://github.com/swansonk14/chem_utils).
-
-TODO: check if we want to do this
 
 Random forest
 ```
