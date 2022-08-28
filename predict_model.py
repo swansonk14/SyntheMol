@@ -159,10 +159,10 @@ def make_predictions(args: Args) -> None:
     model_string = f'{args.model_type}{f"_{args.fingerprint_type}" if args.fingerprint_type is not None else ""}'
 
     if args.average_preds:
+        data[f'{model_string}_ensemble_preds'] = all_preds
+    else:
         for model_num, preds in enumerate(all_preds):
             data[f'{model_string}_model_{model_num}_preds'] = preds
-    else:
-        data[f'{model_string}_ensemble_preds'] = all_preds
 
     # Save predictions
     data.to_csv(args.save_path, index=False)
