@@ -24,7 +24,7 @@ TYPE_COL = 'Type'
 USECOLS = [REACTION_COL] + REAGENT_COLS + [TYPE_COL]
 
 
-def map_reactions_for_file(path: Path) -> tuple[int, dict[int, dict[int, dict[str, set[int]]]]]:
+def map_reactions_for_file(path: Path) -> tuple[str, int, dict[int, dict[int, dict[str, set[int]]]]]:
     """Computes the mapping for a single file."""
     # Create mapping from reaction ID to reagent number to reaction type to valid reagent IDs
     reaction_to_reagents: dict[int, dict[int, dict[str, set[int]]]] = \
@@ -51,31 +51,41 @@ def map_reactions_for_file(path: Path) -> tuple[int, dict[int, dict[int, dict[st
         for reaction, reagent_mapping in reaction_to_reagents.items()
     }
 
-    return len(data), reaction_to_reagents
+    # Get data name
+    name = path.stem.split('.')[0]
+
+    return name, len(data), reaction_to_reagents
 
 
 def map_real_reactions_to_reagents(args: Args) -> None:
     """Determines which REAL reagents can be used in which REAL reactions."""
-    # Create list of all mappings
-    all_reaction_to_reagents = []
-
     # Get paths to data files
     data_paths = sorted(args.data_dir.rglob('*.cxsmiles.bz2'))
+    print(f'Number of files = {len(data_paths):,}')
+
+    # Create combined dictionary
+    combined_reaction_to_reagents = defaultdict(lambda: defaultdict(lambda: defaultdict(set)))
 
     # Loop through all REAL database files
+    num_files = total_size = 0
     with tqdm(total=31000000000, desc='Mapping') as pbar:
         with Pool() as pool:
-            for data_size, reaction_to_reagents in pool.imap(map_reactions_for_file, data_paths):
-                all_reaction_to_reagents.append(reaction_to_reagents)
+            for name, data_size, reaction_to_reagents in pool.imap(map_reactions_for_file, data_paths):
+                num_files += 1
+                total_size += data_size
+                print(f'{name}: file num = {num_files:,} / {len(data_paths):,} | '
+                      f'num mols = {data_size:,} | cumulative num mols = {total_size:,}')
+                print()
+
+                # Merge dictionary with combined dictionary
+                for reaction, reagent_mapping in reaction_to_reagents.items():
+                    for reagent_index, reaction_type_to_reagent_ids in reagent_mapping.items():
+                        for reaction_type, reagent_ids in reaction_type_to_reagent_ids.items():
+                            combined_reaction_to_reagents[reaction][reagent_index][reaction_type] |= reagent_ids
+
                 pbar.update(data_size)
 
-    # Merge dictionaries
-    combined_reaction_to_reagents = defaultdict(lambda: defaultdict(lambda: defaultdict(set)))
-    for reaction_to_reagents in tqdm(all_reaction_to_reagents, desc='Merging'):
-        for reaction, reagent_mapping in reaction_to_reagents.items():
-            for reagent_index, reaction_type_to_reagent_ids in reagent_mapping.items():
-                for reaction_type, reagent_ids in reaction_type_to_reagent_ids.items():
-                    combined_reaction_to_reagents[reaction][reagent_index][reaction_type] |= reagent_ids
+    print(f'Total number of molecules = {total_size:,}')
 
     # Convert sets to sorted lists for JSON serializability
     combined_reaction_to_reagents = {
