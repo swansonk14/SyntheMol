@@ -13,6 +13,7 @@ from tqdm import tqdm
 class Args(Tap):
     data_dir: Path  # Path to directory with CXSMILES files containing the REAL database.
     save_path: Path  # Path to JSON file where mapping will be saved.
+    parallel: bool = False  # Whether to run the script in parallel across files rather than sequentially.
 
     def process_args(self) -> None:
         self.save_path.parent.mkdir(parents=True, exist_ok=True)
@@ -66,26 +67,36 @@ def map_real_reactions_to_reagents(args: Args) -> None:
     # Create combined dictionary
     combined_reaction_to_reagents = defaultdict(lambda: defaultdict(lambda: defaultdict(set)))
 
+    # Set up map function
+    if args.parallel:
+        pool = Pool()
+        map_fn = pool.imap
+    else:
+        pool = None
+        map_fn = map
+
     # Loop through all REAL database files
     num_files = total_size = 0
     with tqdm(total=31000000000, desc='Mapping') as pbar:
-        with Pool() as pool:
-            for name, data_size, reaction_to_reagents in pool.imap(map_reactions_for_file, data_paths):
-                num_files += 1
-                total_size += data_size
-                print(f'{name}: file num = {num_files:,} / {len(data_paths):,} | '
-                      f'num mols = {data_size:,} | cumulative num mols = {total_size:,}')
-                print()
+        for name, data_size, reaction_to_reagents in map_fn(map_reactions_for_file, data_paths):
+            num_files += 1
+            total_size += data_size
+            print(f'{name}: file num = {num_files:,} / {len(data_paths):,} | '
+                  f'num mols = {data_size:,} | cumulative num mols = {total_size:,}')
+            print()
 
-                # Merge dictionary with combined dictionary
-                for reaction, reagent_mapping in reaction_to_reagents.items():
-                    for reagent_index, reaction_type_to_reagent_ids in reagent_mapping.items():
-                        for reaction_type, reagent_ids in reaction_type_to_reagent_ids.items():
-                            combined_reaction_to_reagents[reaction][reagent_index][reaction_type] |= reagent_ids
+            # Merge dictionary with combined dictionary
+            for reaction, reagent_mapping in reaction_to_reagents.items():
+                for reagent_index, reaction_type_to_reagent_ids in reagent_mapping.items():
+                    for reaction_type, reagent_ids in reaction_type_to_reagent_ids.items():
+                        combined_reaction_to_reagents[reaction][reagent_index][reaction_type] |= reagent_ids
 
-                pbar.update(data_size)
+            pbar.update(data_size)
 
     print(f'Total number of molecules = {total_size:,}')
+
+    if pool is not None:
+        pool.close()
 
     # Convert sets to sorted lists for JSON serializability
     combined_reaction_to_reagents = {
