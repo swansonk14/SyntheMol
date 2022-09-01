@@ -65,6 +65,30 @@ All molecules were successfully converted from SDF to SMILES, and among those 13
 Note: This seems to be because the SMILES are not capturing any stereochemistry information even though it is annotated with the `CFG` tag in the SDF file (although 3D coordinates are missing).
 
 
+### Download REAL space
+
+Download the reagent and reaction IDs used for the full REAL space of 31B compounds (as of 8/30/22).
+
+```
+lftp -c "open -p 21 -u username,password ftp-rdb-fr.chem-space.com; mirror -c --parallel=16 . data/Enamine_REAL_space"
+```
+
+In the above command, replace `username` and `password` with the appropriate values.
+
+
+### Map REAL Reactions to Reagents
+
+Determine which reagents are valid in which REAL reactions.
+
+```
+python map_real_reactions_to_reagents.py \
+    --data_dir data/Enamine_REAL_space \
+    --save_path data/reactions_to_reagents.json
+```
+
+TODO: in the future, could also try to determine valid reaction sites
+
+
 ### Remove Salts
 
 Remove the salts from the building blocks using [chem_utils](https://github.com/swansonk14/chem_utils). This will also canonicalize the SMILES using RDKit's canonicalization method.

@@ -19,30 +19,38 @@ class Args(Tap):
 
 REACTION_COL = 'reaction'
 REAGENT_COLS = ['reagent1', 'reagent2', 'reagent3', 'reagent4']
-USECOLS = [REACTION_COL] + REAGENT_COLS
+TYPE_COL = 'Type'
+USECOLS = [REACTION_COL] + REAGENT_COLS + [TYPE_COL]
 
 
 def map_real_reactions_to_reagents(args: Args) -> None:
     """Determines which REAL reagents can be used in which REAL reactions."""
-    # Create mapping from reaction ID to reagent number to valid reagent IDs
-    reaction_to_reagent_to_ids: dict[int, dict[int, set[int]]] = defaultdict(lambda: defaultdict(set))
+    # Create mapping from reaction ID to reagent number to reaction type to valid reagent IDs
+    reaction_to_reagent_to_ids: dict[int, dict[int, dict[str, set[int]]]] = \
+        defaultdict(lambda: defaultdict(lambda: defaultdict(set)))
 
     # Loop through all REAL database files
-    for path in tqdm(list(args.data_dir.glob('*.cxsmiles'))):
+    for path in tqdm(list(args.data_dir.rglob('*.cxsmiles.bz2'))):
         # Load REAL data file (ensures cols are in the order of USECOLS for itertuples below)
         data = pd.read_csv(path, sep='\t', usecols=USECOLS)[USECOLS]
 
         # Update mapping
-        for reaction, reagent_1, reagent_2, reagent_3, reagent_4 in data.itertuples(index=False):
+        file_name = path.stem.split('.')[0]
+        for reaction, reagent_1, reagent_2, reagent_3, reagent_4, reaction_type in tqdm(data.itertuples(index=False),
+                                                                                        total=len(data), leave=False,
+                                                                                        desc=file_name):
             for reagent_index, reagent in enumerate([reagent_1, reagent_2, reagent_3, reagent_4]):
                 if not np.isnan(reagent):
-                    reaction_to_reagent_to_ids[reaction][reagent_index].add(int(reagent))
+                    reaction_to_reagent_to_ids[reaction][reagent_index][reaction_type].add(int(reagent))
 
     # Convert to JSON serializable
     reaction_to_reagent_to_ids = {
         reaction: {
-            reagent_index: sorted(reagent_ids)
-            for reagent_index, reagent_ids in reagent_mapping.items()
+            reagent_index: {
+                reaction_type: sorted(reagent_ids)
+                for reaction_type, reagent_ids in reaction_type_to_reagent_ids.items()
+            }
+            for reagent_index, reaction_type_to_reagent_ids in reagent_mapping.items()
         }
         for reaction, reagent_mapping in reaction_to_reagent_to_ids.items()
     }
