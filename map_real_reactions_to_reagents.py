@@ -30,18 +30,19 @@ def map_real_reactions_to_reagents(args: Args) -> None:
         defaultdict(lambda: defaultdict(lambda: defaultdict(set)))
 
     # Loop through all REAL database files
-    for path in tqdm(list(args.data_dir.rglob('*.cxsmiles.bz2'))):
-        # Load REAL data file (ensures cols are in the order of USECOLS for itertuples below)
-        data = pd.read_csv(path, sep='\t', usecols=USECOLS)[USECOLS]
+    with tqdm(total=31000000000) as pbar:
+        for path in sorted(args.data_dir.rglob('*.cxsmiles.bz2')):
+            # Load REAL data file (ensures cols are in the order of USECOLS for itertuples below)
+            data = pd.read_csv(path, sep='\t', usecols=USECOLS)[USECOLS]
 
-        # Update mapping
-        file_name = path.stem.split('.')[0]
-        for reaction, reagent_1, reagent_2, reagent_3, reagent_4, reaction_type in tqdm(data.itertuples(index=False),
-                                                                                        total=len(data), leave=False,
-                                                                                        desc=file_name):
-            for reagent_index, reagent in enumerate([reagent_1, reagent_2, reagent_3, reagent_4]):
-                if not np.isnan(reagent):
-                    reaction_to_reagent_to_ids[reaction][reagent_index][reaction_type].add(int(reagent))
+            # Update mapping
+            for reaction, reagent_1, reagent_2, reagent_3, reagent_4, reaction_type in data.itertuples(index=False):
+                for reagent_index, reagent in enumerate([reagent_1, reagent_2, reagent_3, reagent_4]):
+                    if not np.isnan(reagent):
+                        reaction_to_reagent_to_ids[reaction][reagent_index][reaction_type].add(int(reagent))
+
+            # Update progress bar
+            pbar.update(len(data))
 
     # Convert to JSON serializable
     reaction_to_reagent_to_ids = {
