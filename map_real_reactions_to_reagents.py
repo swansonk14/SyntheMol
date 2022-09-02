@@ -1,6 +1,6 @@
 """Determines which REAL reagents can be used in which REAL reactions."""
 import json
-from multiprocessing import get_context
+from multiprocessing import Pool
 from collections import defaultdict
 from pathlib import Path
 
@@ -69,7 +69,7 @@ def map_real_reactions_to_reagents(args: Args) -> None:
 
     # Set up map function
     if args.parallel:
-        pool = get_context('spawn').Pool()
+        pool = Pool()
         map_fn = pool.imap
     else:
         pool = None
