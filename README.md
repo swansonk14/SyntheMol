@@ -86,6 +86,8 @@ python map_real_reactions_to_reagents.py \
     --save_path data/reactions_to_reagents.json
 ```
 
+Total number of molecules = 31,507,987,117
+
 TODO: in the future, could also try to determine valid reaction sites
 
 
