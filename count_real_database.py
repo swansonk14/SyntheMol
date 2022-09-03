@@ -10,6 +10,8 @@ import pandas as pd
 from tap import Tap
 from tqdm import tqdm
 
+from constants import REAL_REACTION_COL, REAL_REAGENT_COLS
+
 
 class Args(Tap):
     data_dir: Path  # Path to directory with CXSMILES files containing the REAL database.
@@ -20,18 +22,7 @@ class Args(Tap):
         self.save_dir.mkdir(parents=True, exist_ok=True)
 
 
-REACTION_COL = 'reaction'
-REAGENT_COLS = ['reagent1', 'reagent2', 'reagent3', 'reagent4']
-USECOLS = [REACTION_COL] + REAGENT_COLS
-
-
-def save_counts_as_json(counts: dict[int, int], count_name: str, save_dir: Path) -> None:
-    """Save counts as JSON."""
-    with open(save_dir / f'{count_name.lower()}_counts.json', 'w') as f:
-        json.dump(counts, f, indent=4, sort_keys=True)
-
-
-def save_counts_as_csv(counts: dict[int, int], count_name: str, save_dir: Path) -> pd.DataFrame:
+def save_counts_as_csv(counts: dict[int, int], count_name: str, save_path: Path) -> pd.DataFrame:
     """Save counts as CSV with additional statistics."""
     # Build DataFrame with counts
     counts_data = pd.DataFrame(data=[
@@ -53,7 +44,7 @@ def save_counts_as_csv(counts: dict[int, int], count_name: str, save_dir: Path) 
     counts_data['cumulative_percent'] = counts_data['cumulative_count'] / num_molecules
 
     # Save counts
-    counts_data.to_csv(save_dir / f'{count_name.lower()}_counts.csv', index=False)
+    counts_data.to_csv(save_path, index=False)
 
     return counts_data
 
@@ -75,10 +66,15 @@ def plot_counts(counts_data: pd.DataFrame, count_name: str, save_dir: Path) -> N
 def save_counts(counts: dict[int, int], count_name: str, save_dir: Path) -> None:
     """Saves counts as JSON, CSV, and PDF plot."""
     # Save counts as JSON
-    save_counts_as_json(counts=counts, count_name=count_name, save_dir=save_dir)
+    with open(save_dir / f'{count_name.lower()}_counts.json', 'w') as f:
+        json.dump(counts, f, indent=4, sort_keys=True)
 
     # Save counts as CSV and get back DataFrame
-    counts_data = save_counts_as_csv(counts=counts, count_name=count_name, save_dir=save_dir)
+    counts_data = save_counts_as_csv(
+        counts=counts,
+        count_name=count_name,
+        save_path=save_dir / f'{count_name.lower()}_counts.csv'
+    )
 
     # Plot counts and save as PDF
     plot_counts(counts_data=counts_data, count_name=count_name, save_dir=save_dir)
@@ -93,18 +89,19 @@ def count_real_database(args: Args) -> None:
 
     # Loop through all REAL database files
     for path in tqdm(list(args.data_dir.glob('*.cxsmiles')), desc='Counting'):
-        # Load REAL data file (ensures cols are in the order of USECOLS for itertuples below)
-        data = pd.read_csv(path, sep='\t', usecols=USECOLS)[USECOLS]
+        # Load REAL data file (ensures cols are in the order of usecols for itertuples below)
+        usecols = [REAL_REACTION_COL] + REAL_REAGENT_COLS
+        data = pd.read_csv(path, sep='\t', usecols=usecols)[usecols]
 
         # Optionally, limit the set of reactions that are counted
         if args.reactions is not None:
-            data = data[data[REACTION_COL].isin(args.reactions)]
+            data = data[data[REAL_REACTION_COL].isin(args.reactions)]
 
         # Update reaction counts
-        reaction_counts.update(data[REACTION_COL])
+        reaction_counts.update(data[REAL_REACTION_COL])
 
         # Update reagent counts
-        for reagent_col in REAGENT_COLS:
+        for reagent_col in REAL_REAGENT_COLS:
             reagent_counts.update(data[reagent_col].dropna())
 
         # Update reagent counts by reaction

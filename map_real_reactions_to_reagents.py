@@ -1,13 +1,20 @@
 """Determines which REAL reagents can be used in which REAL reactions."""
 import json
-from multiprocessing import get_context
 from collections import defaultdict
+from multiprocessing import get_context
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from tap import Tap
 from tqdm import tqdm
+
+from constants import (
+    REAL_REACTION_COL,
+    REAL_REAGENT_COLS,
+    REAL_SPACE_SIZE,
+    REAL_TYPE_COL
+)
 
 
 class Args(Tap):
@@ -19,20 +26,15 @@ class Args(Tap):
         self.save_path.parent.mkdir(parents=True, exist_ok=True)
 
 
-REACTION_COL = 'reaction'
-REAGENT_COLS = ['reagent1', 'reagent2', 'reagent3', 'reagent4']
-TYPE_COL = 'Type'
-USECOLS = [REACTION_COL] + REAGENT_COLS + [TYPE_COL]
-
-
 def map_reactions_for_file(path: Path) -> tuple[str, int, dict[int, dict[int, dict[str, set[int]]]]]:
     """Computes the mapping for a single file."""
     # Create mapping from reaction ID to reagent number to reaction type to valid reagent IDs
     reaction_to_reagents: dict[int, dict[int, dict[str, set[int]]]] = \
         defaultdict(lambda: defaultdict(lambda: defaultdict(set)))
 
-    # Load REAL data file (ensures cols are in the order of USECOLS for itertuples below)
-    data = pd.read_csv(path, sep='\t', usecols=USECOLS)[USECOLS]
+    # Load REAL data file (ensures cols are in the order of usecols for itertuples below)
+    usecols = [REAL_REACTION_COL] + REAL_REAGENT_COLS + [REAL_TYPE_COL]
+    data = pd.read_csv(path, sep='\t', usecols=usecols)[usecols]
 
     # Update mapping
     for reaction, reagent_1, reagent_2, reagent_3, reagent_4, reaction_type in data.itertuples(index=False):
@@ -76,9 +78,9 @@ def map_real_reactions_to_reagents(args: Args) -> None:
         pool = None
         map_fn = map
 
-    # Loop through all REAL database files
+    # Loop through all REAL space files
     num_files = total_size = 0
-    with tqdm(total=31000000000, desc='Mapping') as pbar:
+    with tqdm(total=REAL_SPACE_SIZE) as progress_bar:
         for name, data_size, reaction_to_reagents in map_fn(map_reactions_for_file, data_paths):
             num_files += 1
             total_size += data_size
@@ -92,7 +94,8 @@ def map_real_reactions_to_reagents(args: Args) -> None:
                     for reaction_type, reagent_ids in reaction_type_to_reagent_ids.items():
                         combined_reaction_to_reagents[reaction][reagent_index][reaction_type] |= reagent_ids
 
-            pbar.update(data_size)
+            # Update progress bar
+            progress_bar.update(data_size)
 
     print(f'Total number of molecules = {total_size:,}')
 

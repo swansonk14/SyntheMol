@@ -146,7 +146,7 @@ REAL_REACTIONS = [
         ],
         product=QueryMol('O=C(C(=O)[N:2]([*:1])[*:3])[N:5]([*:4])[H:6]'),
         reaction_id=9,
-        real_ids={2718},
+        real_ids={271948},
         counting_fn=count_two_different_reagents
     ),
     Reaction(
