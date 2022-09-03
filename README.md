@@ -83,13 +83,25 @@ Determine which reagents are valid in which REAL reactions.
 ```
 python map_real_reactions_to_reagents.py \
     --data_dir data/Enamine_REAL_space \
-    --save_path data/reactions_to_reagents.json
+    --save_path data/reactions_to_reagents_REAL_space.json \
+    --parallel
 ```
 
 Total number of molecules = 31,507,987,117
 
 TODO: in the future, could also try to determine valid reaction sites
 
+
+### Count REAL Reactions
+
+Determine which reactions are most common in REAL space.
+
+```
+python count_real_space.py \
+    --data_dir data/Enamine_REAL_space \
+    --save_path data/reaction_counts_REAL_space.csv \
+    --parallel
+```
 
 ### Remove Salts
 

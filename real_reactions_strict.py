@@ -1,4 +1,4 @@
-"""SMARTS representations of the REAL reactions.
+"""SMARTS representations of the strictly defined most common REAL reactions.
 Reference: https://docs.google.com/document/d/1LDgRXf4P-uOXQEmgJPgVhuOK32I2u0FXSB8tzDenN6U/edit?usp=sharing
 """
 from reactions import (
