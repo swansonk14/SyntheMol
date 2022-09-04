@@ -273,7 +273,7 @@ Random forest
 python tree_search.py \
     --model_path ckpt/AB_combined_RF_rdkit \
     --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
-    --reagent_to_fragments_path data/reagents_to_fragments.json \
+    --reaction_to_reagents_path data/reaction_to_reagents_REAL_space.json \
     --fragment_to_model_score_path ckpt/AB_combined_RF_rdkit/fragments_to_model_scores.json \
     --save_dir generations/mcts_AB_combined_RF_rdkit \
     --search_type mcts \
@@ -289,7 +289,7 @@ Chemprop
 python tree_search.py \
     --model_path ckpt/AB_combined_chemprop \
     --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
-    --reagent_to_fragments_path data/reagents_to_fragments.json \
+    --reaction_to_reagents_path data/reaction_to_reagents_REAL_space.json \
     --fragment_to_model_score_path ckpt/AB_combined_chemprop/fragments_to_model_scores.json \
     --save_dir generations/mcts_AB_combined_chemprop \
     --search_type mcts \
@@ -304,7 +304,7 @@ Chemprop with RDKit
 python tree_search.py \
     --model_path ckpt/AB_combined_chemprop_rdkit \
     --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
-    --reagent_to_fragments_path data/reagents_to_fragments.json \
+    --reaction_to_reagents_path data/reaction_to_reagents_REAL_space.json \
     --fragment_to_model_score_path ckpt/AB_combined_chemprop_rdkit/fragments_to_model_scores.json \
     --save_dir generations/mcts_AB_combined_chemprop_rdkit \
     --search_type mcts \
@@ -319,7 +319,7 @@ Random search
 ```
 python tree_search.py \
     --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
-    --reagent_to_fragments_path data/reagents_to_fragments.json \
+    --reaction_to_reagents_path data/reaction_to_reagents_REAL_space.json \
     --save_dir generations/random \
     --search_type random \
     --n_rollout 5000 \
