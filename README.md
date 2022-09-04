@@ -268,6 +268,8 @@ python map_fragments_to_model_scores.py \
 
 Run MCTS with the random forest and chemprop models to generate molecules with one reaction.
 
+TODO: switch 5000 to 20000 if those runs work out
+
 Random forest
 ```
 python tree_search.py \
@@ -338,7 +340,7 @@ Random forest
 python assess_generated_molecules.py \
     --data_path generations/mcts_AB_combined_RF_rdkit/molecules.csv \
     --save_dir generations/mcts_AB_combined_RF_rdkit \
-    --train_path data/screening_data/AB_combined.csv
+    --train_path data/screening_data/AB_combined.csv \
     --train_hits_path data/screening_data/AB_combined_hits.csv
 ```
 
@@ -347,7 +349,7 @@ Chemprop
 python assess_generated_molecules.py \
     --data_path generations/mcts_AB_combined_chemprop/molecules.csv \
     --save_dir generations/mcts_AB_combined_chemprop \
-    --train_path data/screening_data/AB_combined.csv
+    --train_path data/screening_data/AB_combined.csv \
     --train_hits_path data/screening_data/AB_combined_hits.csv
 ```
 
@@ -356,7 +358,7 @@ Chemprop with RDKit
 python assess_generated_molecules.py \
     --data_path generations/mcts_AB_combined_chemprop_rdkit/molecules.csv \
     --save_dir generations/mcts_AB_combined_chemprop_rdkit \
-    --train_path data/screening_data/AB_combined.csv
+    --train_path data/screening_data/AB_combined.csv \
     --train_hits_path data/screening_data/AB_combined_hits.csv
 ```
 
