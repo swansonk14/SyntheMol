@@ -83,7 +83,7 @@ Determine which reagents are valid in which REAL reactions.
 ```
 python map_real_reactions_to_reagents.py \
     --data_dir data/Enamine_REAL_space \
-    --save_path data/reactions_to_reagents_REAL_space.json \
+    --save_path data/reaction_to_reagents_REAL_space.json \
     --parallel
 ```
 
@@ -117,16 +117,6 @@ python canonicalize_smiles.py \
 This removes 25 molecules whose salts cannot be stripped, leaving 138,060 molecules.
 
 Note: This step is crucial to prevent errors in running reactions. Salts can cause reactions to create products that are the same as the reactants, leading to undesired infinite loops during molecule generation.
-
-
-### Map Reagents to Fragments
-
-Map reagents (reactants) to REAL fragments (building blocks). This pre-computation step saves time when generating molecules.
-```
-python map_reagents_to_fragments.py \
-    --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
-    --save_path data/reagents_to_fragments.json
-```
 
 
 ### Process AB Training Data
@@ -626,16 +616,14 @@ python visualize_molecules.py \
 
 Map generated molecules to REAL IDs in the format expected by Enamine.
 
-TODO: either remove the reaction counts limitation or add commands to perform the database counting
+TODO: How to select between "M" and "S" type for ID.
 
 Random forest
 ```
 python map_generated_molecules_to_real_ids.py \
     --data_path generations/mcts_AB_combined_RF_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300.csv \
     --smiles_save_path generations/mcts_AB_combined_RF_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300_real_ids.csv \
-    --sdf_save_path generations/mcts_AB_combined_RF_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300_real_ids.sdf \
-    --reaction_counts_path data/Enamine_REAL_counts/reaction_counts.csv \
-    --reaction_percent_min 0.001
+    --sdf_save_path generations/mcts_AB_combined_RF_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300_real_ids.sdf
 ```
 
 Chemprop
@@ -643,9 +631,7 @@ Chemprop
 python map_generated_molecules_to_real_ids.py \
     --data_path generations/mcts_AB_combined_chemprop/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300.csv \
     --smiles_save_path generations/mcts_AB_combined_chemprop/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300_real_ids.csv \
-    --sdf_save_path generations/mcts_AB_combined_chemprop/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300_real_ids.sdf \
-    --reaction_counts_path data/Enamine_REAL_counts/reaction_counts.csv \
-    --reaction_percent_min 0.001
+    --sdf_save_path generations/mcts_AB_combined_chemprop/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300_real_ids.sdf
 ```
 
 Chemprop with RDKit
@@ -653,7 +639,5 @@ Chemprop with RDKit
 python map_generated_molecules_to_real_ids.py \
     --data_path generations/mcts_AB_combined_chemprop_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300.csv \
     --smiles_save_path generations/mcts_AB_combined_chemprop_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300_real_ids.csv \
-    --sdf_save_path generations/mcts_AB_combined_chemprop_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300_real_ids.sdf \
-    --reaction_counts_path data/Enamine_REAL_counts/reaction_counts.csv \
-    --reaction_percent_min 0.001
+    --sdf_save_path generations/mcts_AB_combined_chemprop_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_300_real_ids.sdf
 ```

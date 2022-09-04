@@ -2,7 +2,7 @@
 import re
 from collections import deque
 from functools import cache
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Iterable, Literal, Optional, Union
 
 from rdkit import Chem
 from rdkit.Chem import AllChem
@@ -381,6 +381,27 @@ class QueryMol:
         else:
             self.checker = None
 
+        # Set/list of SMILES that are allowed to match this QueryMol
+        self._allow_set = None
+        self._allow_list = None
+
+    @property
+    def allowed_smiles(self) -> list[str]:
+        """Gets a sorted list of allowed SMILES for this QueryMol."""
+        return self._allow_list
+
+    @allowed_smiles.setter
+    def allowed_smiles(self, allowed_smiles: Iterable[str]) -> None:
+        """Sets the set/list of allowed SMILES for this QueryMol.
+
+        :param allowed_smiles: An iterable of SMILES that are allowed for this QueryMol.
+        """
+        if self._allow_set is not None:
+            raise ValueError('Allowed SMILES has already been set.')
+
+        self._allow_set = set(allowed_smiles)
+        self._allow_list = sorted(self._allow_set)
+
     # TODO: cache this (might need to switch to only using strings)
     @cache
     def has_substruct_match(self, mol: Molecule) -> bool:
@@ -393,6 +414,32 @@ class QueryMol:
 
         return mol.HasSubstructMatch(self.query_mol, self.params)
 
+    @cache
+    def has_match(self, smiles: str, mode: Literal['substructure', 'allow_set']) -> bool:
+        """Determines whether the provided molecule matches this QueryMol.
+
+        Note: Caching assumes that self.allow_set does not change.
+
+        :param smiles: A SMILES string.
+        :param mode: Method of determining whether the molecule matches this QueryMol.
+                     substructure: Checks whether this QueryMol is a substructure of the molecule using SMARTS matching.
+                     allow_set: Checks whether this QueryMol's allow_list includes the SMILES of the molecule.
+                                Note: Uses exact string matching with no SMILES canonicalization.
+        :return: True if the molecule matches this QueryMol, False otherwise.
+        """
+        match mode:
+            case 'substructure':
+                return self.has_substruct_match(smiles)
+            case 'allow_set':
+                if self._allow_set is None:
+                    raise ValueError('Cannot use "allow_set" mode when self.allow_set is None.')
+
+                return smiles in self._allow_set
+            case _:
+                raise ValueError(f'Mode "{mode}" is not supported.')
+
+    # TODO: this doesn't work when using allow_list for has_match since QueryMols with the same SMARTS
+    # TODO: in different reactions will have different allow_lists
     def __hash__(self) -> int:
         """Gets the hash of the QueryMol. Note: The hash depends on the SMARTS *without* atom mapping."""
         return hash(self.smarts)
@@ -460,3 +507,17 @@ class Reaction:
             raise ValueError('Counting function is not provided for this reaction.')
 
         return self.counting_fn(*num_rs, diff=diff)
+
+
+def set_allowed_reaction_smiles(reactions: list[Reaction],
+                                reaction_to_reagents: dict[int, dict[int, set[str]]]) -> None:
+    """Sets the allowed SMILES for each reaction/reagent in a list of Reactions.
+
+    Note: Modifies Reactions in place.
+
+    :param reactions: A list of Reactions whose allowed SMILES will be set.
+    :param reaction_to_reagents: A dictionary mapping from reaction ID to reagent index to a set of allowed SMILES.
+    """
+    for reaction in reactions:
+        for reagent_index, reagent in enumerate(reaction.reagents):
+            reagent.allowed_smiles = reaction_to_reagents[reaction.id][reagent_index]

@@ -19,8 +19,7 @@ from tqdm import trange
 
 from chem_utils.molecular_fingerprints import compute_fingerprint, compute_fingerprints
 from chemprop.utils import load_checkpoint
-from map_reagents_to_fragments import map_reagents_to_fragments
-from reactions import Reaction
+from reactions import Reaction, set_allowed_reaction_smiles
 from real_reactions import REAL_REACTIONS
 from synnet_reactions import SYNNET_REACTIONS
 
@@ -29,6 +28,8 @@ class Args(Tap):
     # Required args
     fragment_path: Path
     """Path to CSV file containing molecular building blocks."""
+    reaction_to_reagents_path: Path
+    """Path to JSON file containing mapping from REAL reactions to allowed reagents."""
     search_type: Literal['random', 'greedy', 'mcts']
     """Type of search to perform."""
     save_dir: Path
@@ -45,8 +46,6 @@ class Args(Tap):
     """Path to JSON file containing a dictionary mapping fragments to model prediction scores."""
 
     # Data args
-    reagent_to_fragments_path: Optional[Path] = None
-    """Path to JSON file containing a dictionary mapping from reagents to fragments."""
     smiles_column: str = 'smiles'
     """Name of the column containing SMILES."""
     fragment_id_column: str = 'Reagent_ID'
@@ -69,9 +68,9 @@ class Args(Tap):
      (nearest neighbor Tversky). Only used if train_similarity is True."""
 
     # Search args
-    max_reactions: int = 3
+    max_reactions: int = 1
     """Maximum number of reactions that can be performed to expand fragments into molecules."""
-    n_rollout: int = 100
+    n_rollout: int = 3
     """The number of times to run the tree search."""
     c_puct: float = 10.0
     """The hyperparameter that encourages exploration."""
@@ -190,8 +189,7 @@ class TreeSearcher:
 
     def __init__(self,
                  search_type: Literal['random', 'greedy', 'mcts'],
-                 fragment_to_id: dict[str, int],
-                 reagent_to_fragments: dict[str, list[str]],
+                 fragment_smiles_to_id: dict[str, int],
                  max_reactions: int,
                  scoring_fn: Callable[[str], float],
                  n_rollout: int,
@@ -204,8 +202,7 @@ class TreeSearcher:
         """Creates the TreeSearcher object.
 
         :param search_type: Type of search to perform.
-        :param fragment_to_id: A dictionary mapping fragment SMILES to their IDs.
-        :param reagent_to_fragments: A dictionary mapping a reagent SMARTS to all fragment SMILES that match that reagent.
+        :param fragment_smiles_to_id: A dictionary mapping fragment SMILES to their IDs.
         :param max_reactions: The maximum number of reactions to use to construct a molecule.
         :param scoring_fn: A function that takes as input a SMILES representing a molecule and returns a score.
         :param n_rollout: The number of times to run the tree search.
@@ -217,12 +214,13 @@ class TreeSearcher:
         :param debug: Whether to print out additional statements for debugging.
         """
         self.search_type = search_type
-        self.fragment_to_id = fragment_to_id
-        self.reagent_to_fragments = reagent_to_fragments
+        self.fragment_smiles_to_id = fragment_smiles_to_id
+        # TODO: maybe just allow all building blocks?
         self.all_fragments = list(dict.fromkeys(
             fragment
-            for reagent in reagent_to_fragments
-            for fragment in self.reagent_to_fragments[reagent]
+            for reaction in REAL_REACTIONS
+            for reagent in reaction.reagents
+            for fragment in reagent.allowed_smiles
         ))
         self.max_reactions = max_reactions
         self.scoring_fn = scoring_fn
@@ -255,16 +253,19 @@ class TreeSearcher:
             [
                 reagent_index
                 for reagent_index, reagent in enumerate(reaction.reagents)
-                if reagent.has_substruct_match(fragment)
+                if reagent.has_match(fragment, mode='allow_set')
             ]
             for fragment in fragments
         ]
 
     # TODO: documentation
     def get_next_fragments(self, fragments: tuple[str]) -> list[str]:
-        # For each reaction these fragments can participate in, get all the unfilled reagents
-        unfilled_reagents = set()
+        # Initialize list of allowed fragments
+        available_fragments = []
+
+        # Loop through each reaction
         for reaction in self.reactions:
+            # Get indices of the reagents in this reaction
             reagent_indices = set(range(reaction.num_reagents))
 
             # Skip reaction if there's no room to add more reagents
@@ -281,19 +282,12 @@ class TreeSearcher:
                 matched_reagent_indices = set(matched_reagent_indices)
 
                 if len(matched_reagent_indices) == len(fragments):
-                    unfilled_reagents |= {reaction.reagents[index] for index in
-                                          reagent_indices - matched_reagent_indices}
+                    for index in sorted(reagent_indices - matched_reagent_indices):
+                        available_fragments += reaction.reagents[index].allowed_smiles
 
-        if len(unfilled_reagents) == 0:
-            return []
-
-        # Get all the fragments that match the other reagents
-        # TODO: cache this? or allow duplicates?
-        available_fragments = list(dict.fromkeys(
-            fragment
-            for reagent in sorted(unfilled_reagents, key=lambda reagent: str(reagent))
-            for fragment in self.reagent_to_fragments[str(reagent)]
-        ))
+        # Remove duplicates but maintain order for reproducibility and avoid sorting sets for speed
+        # Note: requires Python 3.7+ for ordered dictionaries
+        available_fragments = list(dict.fromkeys(available_fragments))
 
         return available_fragments
 
@@ -342,7 +336,7 @@ class TreeSearcher:
             # Create reaction log
             reaction_log = {
                 'reaction_id': reaction.id,
-                'reagent_ids': [self.fragment_to_id.get(fragment, -1) for fragment in fragments],
+                'reagent_ids': [self.fragment_smiles_to_id.get(fragment, -1) for fragment in fragments],
                 'reagent_smiles': [fragment for fragment in fragments]
             }
 
@@ -376,7 +370,7 @@ class TreeSearcher:
         new_nodes += [
             self.TreeNodeClass(
                 fragments=node.fragments + (next_fragment,),
-                reagent_counts=node.reagent_counts + Counter({self.fragment_to_id[next_fragment]: 1}),
+                reagent_counts=node.reagent_counts + Counter({self.fragment_smiles_to_id[next_fragment]: 1}),
                 construction_log=node.construction_log,
                 rollout_num=self.rollout_num
             )
@@ -626,6 +620,39 @@ def create_model_scoring_fn(model_path: Path,
     return model_scoring_fn
 
 
+def load_and_set_allowed_reaction_smiles(reaction_to_reagents_path: Path,
+                                         fragment_id_to_smiles: dict[int, str]) -> None:
+    """Sets the allowed reaction SMILES for each reaction in REAL_REACTIONS.
+
+    :param reaction_to_reagents_path: Path to JSON file containing mapping from REAL reactions to allowed reagents.
+    :param fragment_id_to_smiles: Dictionary mapping from fragment ID to fragment SMILES
+    """
+    # Load mapping from reactions to allowed reagent IDs
+    with open(reaction_to_reagents_path) as f:
+        # Dictionary mapping from reaction number to reagent number to reaction type (M or S) to set of reagent IDs
+        reaction_to_reagent_ids: dict[int, dict[int, dict[str, set[int]]]] = json.load(f)
+
+    # Map from reactions to reagent SMILES, merging reaction types
+    reaction_to_reagent_smiles: dict[int, dict[int, set[str]]] = {
+        int(reaction): {
+            int(reagent): {
+                fragment_id_to_smiles[reagent_id]
+                for reagent_id_set in reaction_type_to_reagent_ids.values()
+                for reagent_id in reagent_id_set
+                if reagent_id in fragment_id_to_smiles
+            }
+            for reagent, reaction_type_to_reagent_ids in reagent_to_reaction_type.items()
+        }
+        for reaction, reagent_to_reaction_type in reaction_to_reagent_ids.items()
+    }
+
+    # Set the allowed SMILES for each reagent in each reaction
+    set_allowed_reaction_smiles(
+        reactions=REAL_REACTIONS,
+        reaction_to_reagents=reaction_to_reagent_smiles
+    )
+
+
 def run_tree_search(args: Args) -> None:
     """Generate molecules combinatorially by performing a tree search."""
     # Validate arguments
@@ -653,8 +680,8 @@ def run_tree_search(args: Args) -> None:
         if args.noise:
             raise ValueError('Do not use noise when using non-model-based search.')
 
-    if args.reagent_to_fragments_path is None:
-        print('For faster searching, please provide a reagent_to_fragments_path.')
+    if args.max_reactions > 1:
+        raise NotImplementedError('Multiple reactions not yet implemented when using reaction_to_reagents.')
 
     # Create save directory and save arguments
     args.save_dir.mkdir(parents=True, exist_ok=True)
@@ -671,25 +698,19 @@ def run_tree_search(args: Args) -> None:
     fragment_data.drop_duplicates(subset=[args.smiles_column], inplace=True)
 
     # Map fragments to indices
-    fragment_to_id = dict(zip(fragment_data[args.smiles_column], fragment_data[args.fragment_id_column]))
-    fragment_set = set(fragment_to_id)
+    fragment_smiles_to_id = dict(zip(fragment_data[args.smiles_column], fragment_data[args.fragment_id_column]))
+    fragment_id_to_smiles = dict(zip(fragment_data[args.fragment_id_column], fragment_data[args.smiles_column]))
+    fragment_set = set(fragment_smiles_to_id)
 
     # Ensure unique fragment IDs
-    if len(fragment_set) != len(fragment_to_id.values()):
+    if len(fragment_set) != len(fragment_smiles_to_id.values()):
         raise ValueError('Fragment IDs are not unique.')
 
-    # Load mapping from reagents to fragments
-    if args.reagent_to_fragments_path is not None:
-        with open(args.reagent_to_fragments_path) as f:
-            reagent_to_fragments: dict[str, list[str]] = json.load(f)
-    else:
-        reagent_to_fragments = map_reagents_to_fragments(
-            fragments=fragment_set,
-            synnet_rxn=args.synnet_rxn
-        )
-
-    if not ({fragment for fragments in reagent_to_fragments.values() for fragment in fragments} <= fragment_set):
-        raise ValueError('The fragments in reagent_to_fragments is not a subset of the fragment set.')
+    # Set the allowed reaction SMILES
+    load_and_set_allowed_reaction_smiles(
+        reaction_to_reagents_path=args.reaction_to_reagents_path,
+        fragment_id_to_smiles=fragment_id_to_smiles
+    )
 
     # Load mapping from SMILES to model scores
     if args.fragment_to_model_score_path is not None:
@@ -799,8 +820,7 @@ def run_tree_search(args: Args) -> None:
     # Set up TreeSearcher
     tree_searcher = TreeSearcher(
         search_type=args.search_type,
-        fragment_to_id=fragment_to_id,
-        reagent_to_fragments=reagent_to_fragments,
+        fragment_smiles_to_id=fragment_smiles_to_id,
         max_reactions=args.max_reactions,
         scoring_fn=noisy_scoring_fn if args.noise else scoring_fn,
         n_rollout=args.n_rollout,
