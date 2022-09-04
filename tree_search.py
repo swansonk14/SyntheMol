@@ -253,7 +253,7 @@ class TreeSearcher:
             [
                 reagent_index
                 for reagent_index, reagent in enumerate(reaction.reagents)
-                if reagent.has_match(fragment, mode='allow_set')
+                if reagent.has_match(fragment)
             ]
             for fragment in fragments
         ]

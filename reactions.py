@@ -381,12 +381,11 @@ class QueryMol:
         else:
             self.checker = None
 
-        # Set/list of SMILES that are allowed to match this QueryMol
-        self._allow_set = None
-        self._allow_list = None
+        # SMILES that are allowed to match this QueryMol
+        self._allow_set = self._allow_list = self._allow_tuple = None
 
     @property
-    def allowed_smiles(self) -> list[str]:
+    def allowed_smiles(self) -> Optional[list[str]]:
         """Gets a sorted list of allowed SMILES for this QueryMol."""
         return self._allow_list
 
@@ -394,15 +393,19 @@ class QueryMol:
     def allowed_smiles(self, allowed_smiles: Iterable[str]) -> None:
         """Sets the set/list of allowed SMILES for this QueryMol.
 
+        Note: Filters allowed SMILES based on match to SMARTS.
+
         :param allowed_smiles: An iterable of SMILES that are allowed for this QueryMol.
         """
         if self._allow_set is not None:
             raise ValueError('Allowed SMILES has already been set.')
 
-        self._allow_set = set(allowed_smiles)
+        self._allow_set = {smiles for smiles in allowed_smiles if self.has_substruct_match(smiles)}
         self._allow_list = sorted(self._allow_set)
+        self._allow_tuple = tuple(self._allow_list)
 
     # TODO: cache this (might need to switch to only using strings)
+    # TODO: replace uses of this with uses of has_match
     @cache
     def has_substruct_match(self, mol: Molecule) -> bool:
         """Determines whether the provided molecule includes this QueryMol as a substructure.
@@ -415,38 +418,36 @@ class QueryMol:
         return mol.HasSubstructMatch(self.query_mol, self.params)
 
     @cache
-    def has_match(self, smiles: str, mode: Literal['substructure', 'allow_set']) -> bool:
+    def has_match(self, smiles: str) -> bool:
         """Determines whether the provided molecule matches this QueryMol.
+
+        Always checks for SMARTS match and additionally checks for match in self.allowed_set
+        if self.allowed_set is not None.
 
         Note: Caching assumes that self.allow_set does not change.
 
         :param smiles: A SMILES string.
-        :param mode: Method of determining whether the molecule matches this QueryMol.
-                     substructure: Checks whether this QueryMol is a substructure of the molecule using SMARTS matching.
-                     allow_set: Checks whether this QueryMol's allow_list includes the SMILES of the molecule.
-                                Note: Uses exact string matching with no SMILES canonicalization.
         :return: True if the molecule matches this QueryMol, False otherwise.
         """
-        match mode:
-            case 'substructure':
-                return self.has_substruct_match(smiles)
-            case 'allow_set':
-                if self._allow_set is None:
-                    raise ValueError('Cannot use "allow_set" mode when self.allow_set is None.')
+        if self._allow_set is not None and smiles not in self._allow_set:
+            return False
 
-                return smiles in self._allow_set
-            case _:
-                raise ValueError(f'Mode "{mode}" is not supported.')
+        return self.has_substruct_match(smiles)
 
     # TODO: this doesn't work when using allow_list for has_match since QueryMols with the same SMARTS
     # TODO: in different reactions will have different allow_lists
     def __hash__(self) -> int:
         """Gets the hash of the QueryMol. Note: The hash depends on the SMARTS *without* atom mapping."""
-        return hash(self.smarts)
+        allow_tuple = self._allow_tuple if self._allow_tuple is not None else tuple()
+
+        return hash((self.smarts, *allow_tuple))
 
     def __eq__(self, other: Any) -> bool:
         """Determines equality with another object. Note: The equality depends on the SMARTS *without* atom mapping."""
-        return isinstance(other, QueryMol) and self.smarts == other.smarts and self.checker == other.checker
+        return isinstance(other, QueryMol) and \
+               self.smarts == other.smarts and \
+               self.checker == other.checker and \
+               self._allow_tuple == other._allow_tuple
 
     def __str__(self) -> str:
         """Gets a string representation of the QueryMol."""
