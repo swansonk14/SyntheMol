@@ -204,9 +204,11 @@ def assess_generated_molecules(args: Args) -> None:
 
     reactions = sorted(reaction_counter)
     reaction_counts = [reaction_counter[reaction] for reaction in reactions]
+    xticks = np.arange(len(reaction_counts))
 
     plt.clf()
-    plt.bar(reactions, reaction_counts)
+    plt.bar(xticks, reaction_counts)
+    plt.xticks(ticks=xticks, labels=reactions, rotation=45)
     plt.xlabel('Reaction')
     plt.ylabel('Count (# molecules containing the reaction)')
     plt.title('Reaction Counts')
