@@ -89,8 +89,6 @@ python map_real_reactions_to_reagents.py \
 
 Total number of molecules = 31,507,987,117
 
-TODO: in the future, could also try to determine valid reaction sites
-
 
 ### Count REAL Reactions
 
@@ -543,8 +541,6 @@ done
 
 Map generated molecules to REAL IDs in the format expected by Enamine.
 
-TODO: How to select between "M" and "S" type for ID.
-
 ```bash
 #!/bin/bash
 
@@ -552,7 +548,6 @@ for NAME in mcts_AB_combined_RF_rdkit mcts_AB_combined_chemprop mcts_AB_combined
 do
 python map_generated_molecules_to_real_ids.py \
     --data_path generations/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
-    --smiles_save_path generations/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50_real_ids.csv \
-    --sdf_save_path generations/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50_real_ids.sdf
+    --save_dir generations/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50_real_ids
 done
 ```
