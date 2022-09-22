@@ -2,6 +2,12 @@
 
 ## Installation
 
+Download code.
+```bash
+git clone git@github.com:swansonk14/combinatorial_antibiotics.git
+cd combinatorial_antibiotics
+```
+
 Install conda environment.
 ```bash
 conda env create -f environment.yml
@@ -39,32 +45,6 @@ cd ../combinatorial_antibiotics
 
 ## Process Data
 
-### Download Building Blocks
-
-All data, raw and processed, is available in this Google Drive folder: https://drive.google.com/drive/folders/1sbl1gL1d3acVJ1RZVtJV90uLgW1j6ee9?usp=sharing. Any references to data paths are relative to this directory.
-
-Download the REAL Enamine building blocks SDF file from https://enamine.net/compound-collections/real-compounds/real-database
-
-Note: The building blocks SDF file appears to have been removed from their website but can be found in the Google Drive folder as `2021q3-4_Enamine_REAL_reagents_SDF.sdf`
-
-The `2021q3-4_Enamine_REAL_reagents_SDF.sdf` file contains 138,085 molecules.
-
-
-### SDF to SMILES
-
-Convert the building blocks from SDF to (unique) SMILES using [chem_utils](https://github.com/swansonk14/chem_utils).
-```bash
-python sdf_to_smiles.py \
-    --data_path ../../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SDF.sdf \
-    --save_path ../../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SMILES.csv \
-    --properties Reagent_ID Catalog_ID
-```
-
-All molecules were successfully converted from SDF to SMILES, and among those 134,609 are unique.
-
-Note: This seems to be because the SMILES are not capturing any stereochemistry information even though it is annotated with the `CFG` tag in the SDF file (although 3D coordinates are missing).
-
-
 ### Download REAL space
 
 Download the reagent and reaction IDs used for the full REAL space of 31B compounds (as of 8/30/22).
@@ -101,6 +81,34 @@ python count_real_space.py \
     --parallel
 ```
 
+
+### Download Building Blocks
+
+All data, raw and processed, is available in this Google Drive folder: https://drive.google.com/drive/folders/1sbl1gL1d3acVJ1RZVtJV90uLgW1j6ee9?usp=sharing. Any references to data paths are relative to this directory.
+
+Download the REAL Enamine building blocks SDF file from https://enamine.net/compound-collections/real-compounds/real-database
+
+Note: The building blocks SDF file appears to have been removed from their website but can be found in the Google Drive folder as `2021q3-4_Enamine_REAL_reagents_SDF.sdf`
+
+The `2021q3-4_Enamine_REAL_reagents_SDF.sdf` file contains 138,085 molecules.
+
+
+### SDF to SMILES
+
+Convert the building blocks from SDF to (unique) SMILES using [chem_utils](https://github.com/swansonk14/chem_utils).
+```bash
+python sdf_to_smiles.py \
+    --data_path ../../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SDF.sdf \
+    --save_path ../../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SMILES.csv \
+    --properties Reagent_ID Catalog_ID \
+    --deduplicate
+```
+
+All 138,085 molecules were successfully converted from SDF to SMILES, and among those 134,609 are unique.
+
+Note: This seems to be because the SMILES are not capturing any stereochemistry information even though it is annotated with the `CFG` tag in the SDF file (although 3D coordinates are missing).
+
+
 ### Remove Salts
 
 Remove the salts from the building blocks using [chem_utils](https://github.com/swansonk14/chem_utils). This will also canonicalize the SMILES using RDKit's canonicalization method.
@@ -112,7 +120,7 @@ python canonicalize_smiles.py \
     --delete_disconnected_mols
 ```
 
-This removes 25 molecules whose salts cannot be stripped, leaving 138,060 molecules.
+This removes 25 molecules whose salts cannot be stripped, leaving 134,584 molecules.
 
 Note: This step is crucial to prevent errors in running reactions. Salts can cause reactions to create products that are the same as the reactants, leading to undesired infinite loops during molecule generation.
 

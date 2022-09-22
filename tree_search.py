@@ -695,7 +695,7 @@ def run_tree_search(args: Args) -> None:
 
     # Load fragments
     fragment_data = pd.read_csv(args.fragment_path)
-    fragment_data.drop_duplicates(subset=[args.smiles_column], inplace=True)
+    fragment_data.drop_duplicates(subset=args.smiles_column, inplace=True)
 
     # Map fragments to indices
     fragment_smiles_to_id = dict(zip(fragment_data[args.smiles_column], fragment_data[args.fragment_id_column]))
