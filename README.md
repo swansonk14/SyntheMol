@@ -100,8 +100,7 @@ Convert the building blocks from SDF to (unique) SMILES using [chem_utils](https
 python sdf_to_smiles.py \
     --data_path ../../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SDF.sdf \
     --save_path ../../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SMILES.csv \
-    --properties Reagent_ID Catalog_ID \
-    --deduplicate
+    --properties Reagent_ID Catalog_ID
 ```
 
 All 138,085 molecules were successfully converted from SDF to SMILES, and among those 134,609 are unique.
@@ -120,7 +119,7 @@ python canonicalize_smiles.py \
     --delete_disconnected_mols
 ```
 
-This removes 25 molecules whose salts cannot be stripped, leaving 134,584 molecules.
+This removes 25 molecules whose salts cannot be stripped, leaving 138,060 molecules.
 
 Note: This step is crucial to prevent errors in running reactions. Salts can cause reactions to create products that are the same as the reactants, leading to undesired infinite loops during molecule generation.
 
