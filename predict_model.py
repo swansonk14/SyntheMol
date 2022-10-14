@@ -22,6 +22,7 @@ class Args(Tap):
     model_path: Path  # Path to a directory of model checkpoints or to a specific PKL or PT file containing a trained model.
     save_path: Optional[Path] = None  # Path to a JSON file where a dictionary mapping fragments to model scores will be saved. If None, defaults to data_path.
     smiles_column: str = 'smiles'  # Name of the column containing SMILES.
+    preds_column_prefix: Optional[str] = None  # Prefix for the column containing model predictions.
     model_type: Literal['rf', 'mlp', 'chemprop']  # Type of model to train. 'rf' = random forest. 'mlp' = multilayer perceptron.
     fingerprint_type: Optional[Literal['morgan', 'rdkit']] = None  # Type of fingerprints to use as input features.
     average_preds: bool = False  # Whether to average predictions across models for an ensemble model.
@@ -157,12 +158,13 @@ def make_predictions(args: Args) -> None:
 
     # Define model string
     model_string = f'{args.model_type}{f"_{args.fingerprint_type}" if args.fingerprint_type is not None else ""}'
+    preds_string = f'{f"{args.preds_column_prefix}_" if args.preds_column_prefix is not None else ""}{model_string}'
 
     if args.average_preds:
-        data[f'{model_string}_ensemble_preds'] = all_preds
+        data[f'{preds_string}_ensemble_preds'] = all_preds
     else:
         for model_num, preds in enumerate(all_preds):
-            data[f'{model_string}_model_{model_num}_preds'] = preds
+            data[f'{preds_string}_model_{model_num}_preds'] = preds
 
     # Save predictions
     data.to_csv(args.save_path, index=False)
