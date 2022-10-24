@@ -35,7 +35,7 @@ def get_valid_real_space_reactant_combinations_for_file(path: Path, reactions: l
     valid_reactants = {}
 
     # Loop through reactions
-    for reaction in tqdm(reactions):
+    for reaction in reactions:
         # Limit data to reaction
         reaction_data = data[data[REAL_REACTION_COL] == reaction]
 
