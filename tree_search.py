@@ -125,7 +125,6 @@ class TreeNode:
         # TODO: maybe change sum (really mean) to max since we don't care about finding the best leaf node, just the best node along the way?
         self.W = 0.0  # The sum of the leaf node values for leaf nodes that descend from this node.
         self.N = 0  # The number of times this node has been expanded.
-        self.children: list[TreeNode] = []
         self.rollout_num = rollout_num
 
     @classmethod
@@ -377,6 +376,9 @@ class TreeSearcher:
             for next_fragment in next_fragments
         ]
 
+        # Remove duplicates (and keep first instance of each duplicate)
+        new_nodes = list(dict.fromkeys(new_nodes[::-1]))
+
         return new_nodes
 
     def compute_mcts_score(self, node: TreeNode, total_visit_count: int) -> float:
@@ -409,65 +411,55 @@ class TreeSearcher:
         if node.num_reactions >= self.max_reactions:
             return node.P
 
-        # TODO: prevent exploration of a subtree that has been fully explored
-        # Expand if this node has never been visited
-        if len(node.children) == 0:
-            # Expand the node both by running reactions with the current fragments and adding new fragments
-            new_nodes = self.expand_node(node=node)
+        # Expand the node both by running reactions with the current fragments and adding new fragments
+        new_nodes = self.expand_node(node=node)
 
-            if len(new_nodes) == 0:
-                if node.num_fragments == 1:
-                    return node.P
-                else:
-                    raise ValueError('Failed to expand a partially expanded node.')
+        if len(new_nodes) == 0:
+            if node.num_fragments == 1:
+                return node.P
+            else:
+                raise ValueError('Failed to expand a partially expanded node.')
 
-            # Add the expanded nodes as children
-            child_set = set()
-            for new_node in new_nodes:
+        # Check the state map and merge with an existing node if available
+        new_nodes = [self.state_map.get(new_node, new_node) for new_node in new_nodes]
 
-                # Check whether this node was already added as a child
-                if new_node not in child_set:
+        # Add nodes with complete molecules to the state map
+        for new_node in new_nodes:
+            if new_node.num_fragments == 1 and new_node not in self.state_map:
+                new_node.node_id = len(self.state_map)
+                self.state_map[new_node] = new_node
+                self.reagent_counts.update(new_node.unique_reagents)
 
-                    # Check the state map and merge with an existing node if available
-                    new_node = self.state_map.setdefault(new_node, new_node)
-
-                    # Assign node ID as order in which the node was added
-                    if new_node.node_id is None:
-                        new_node.node_id = len(self.state_map)
-
-                        # Increment reagent counts if this node is a full molecule
-                        if new_node.num_fragments == 1:
-                            self.reagent_counts.update(new_node.unique_reagents)
-
-                    # Add the new node as a child of the tree node
-                    node.children.append(new_node)
-                    child_set.add(new_node)
-
-        # TODO: think more about balancing reaction nodes vs additional fragment nodes
-
-        # Select a child node based on the search type
+        # Select a node based on the search type
         if self.search_type == 'random':
-            selected_node = self.random_choice(node.children)
+            selected_node = self.random_choice(new_nodes)
 
         elif self.search_type == 'greedy':
             # Randomly sample from top k
             # TODO: better method?
             top_k = 100
-            sorted_children = sorted(node.children, key=lambda child: child.P, reverse=True)
-            selected_node = self.random_choice(sorted_children[:top_k])
+            sorted_nodes = sorted(new_nodes, key=lambda child: child.P, reverse=True)
+            selected_node = self.random_choice(sorted_nodes[:top_k])
 
         elif self.search_type == 'mcts':
-            total_visit_count = sum(child.N for child in node.children)
+            total_visit_count = sum(new_node.N for new_node in new_nodes)
             # TODO: incorporate fragment counts into greedy search?
             selected_node = max(
-                node.children,
+                new_nodes,
                 key=partial(self.compute_mcts_score, total_visit_count=total_visit_count)
             )
 
         else:
             raise ValueError(f'Search type "{self.search_type}" is not supported.')
 
-        # Unroll the child node
+        # Check the state map and merge with an existing node if available
+        selected_node = self.state_map.setdefault(selected_node, selected_node)
+
+        # Assign node ID as order in which the node was added
+        if selected_node.node_id is None:
+            selected_node.node_id = len(self.state_map)
+
+        # Unroll the selected node
         v = self.rollout(node=selected_node)
         selected_node.W += v
         selected_node.N += 1
