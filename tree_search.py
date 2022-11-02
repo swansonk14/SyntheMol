@@ -12,6 +12,7 @@ from typing import Any, Callable, Literal, Optional
 import numpy as np
 import pandas as pd
 import torch
+# from memory_profiler import profile
 from rdkit import Chem
 from sklearn.metrics import pairwise_distances
 from tap import Tap
@@ -336,8 +337,7 @@ class TreeSearcher:
             # Create reaction log
             reaction_log = {
                 'reaction_id': reaction.id,
-                'reagent_ids': [self.fragment_smiles_to_id.get(fragment, -1) for fragment in fragments],
-                'reagent_smiles': [fragment for fragment in fragments]
+                'reagent_ids': tuple(self.fragment_smiles_to_id.get(fragment, -1) for fragment in fragments),
             }
 
             product_nodes += [
@@ -503,7 +503,11 @@ class TreeSearcher:
         return len(self.state_map)
 
 
-def save_molecules(nodes: list[TreeNode], save_path: Path) -> None:
+def save_molecules(
+        nodes: list[TreeNode],
+        fragment_id_to_smiles: dict[int, str],
+        save_path: Path
+) -> None:
     # Convert construction logs from lists to dictionaries
     construction_dicts = []
     max_reaction_num = 0
@@ -522,11 +526,10 @@ def save_molecules(nodes: list[TreeNode], save_path: Path) -> None:
                 len(reaction_log['reagent_ids'])
             )
 
-            for reagent_index, (reagent_id, reagent_smiles) in enumerate(zip(reaction_log['reagent_ids'],
-                                                                             reaction_log['reagent_smiles'])):
+            for reagent_index, reagent_id in enumerate(reaction_log['reagent_ids']):
                 reagent_num = reagent_index + 1
                 construction_dict[f'reagent_{reaction_num}_{reagent_num}_id'] = reagent_id
-                construction_dict[f'reagent_{reaction_num}_{reagent_num}_smiles'] = reagent_smiles
+                construction_dict[f'reagent_{reaction_num}_{reagent_num}_smiles'] = fragment_id_to_smiles[reagent_id]
 
         construction_dicts.append(construction_dict)
 
@@ -560,6 +563,7 @@ def save_molecules(nodes: list[TreeNode], save_path: Path) -> None:
     data.to_csv(save_path, index=False)
 
 
+@profile
 def create_model_scoring_fn(model_path: Path,
                             model_type: str,
                             fingerprint_type: Optional[str],
@@ -620,6 +624,7 @@ def create_model_scoring_fn(model_path: Path,
     return model_scoring_fn
 
 
+@profile
 def load_and_set_allowed_reaction_smiles(reaction_to_reagents_path: Path,
                                          fragment_id_to_smiles: dict[int, str]) -> None:
     """Sets the allowed reaction SMILES for each reaction in REAL_REACTIONS.
@@ -653,6 +658,7 @@ def load_and_set_allowed_reaction_smiles(reaction_to_reagents_path: Path,
     )
 
 
+@profile
 def run_tree_search(args: Args) -> None:
     """Generate molecules combinatorially by performing a tree search."""
     # Validate arguments
@@ -850,7 +856,11 @@ def run_tree_search(args: Args) -> None:
     pd.DataFrame(data=[stats]).to_csv(args.save_dir / 'stats.csv', index=False)
 
     # Save generated molecules
-    save_molecules(nodes=nodes, save_path=args.save_dir / 'molecules.csv')
+    save_molecules(
+        nodes=nodes,
+        fragment_id_to_smiles=fragment_id_to_smiles,
+        save_path=args.save_dir / 'molecules.csv'
+    )
 
 
 if __name__ == '__main__':
