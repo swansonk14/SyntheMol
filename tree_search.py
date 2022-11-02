@@ -12,7 +12,6 @@ from typing import Any, Callable, Literal, Optional
 import numpy as np
 import pandas as pd
 import torch
-# from memory_profiler import profile
 from rdkit import Chem
 from sklearn.metrics import pairwise_distances
 from tap import Tap
@@ -555,7 +554,6 @@ def save_molecules(
     data.to_csv(save_path, index=False)
 
 
-@profile
 def create_model_scoring_fn(model_path: Path,
                             model_type: str,
                             fingerprint_type: Optional[str],
@@ -616,7 +614,6 @@ def create_model_scoring_fn(model_path: Path,
     return model_scoring_fn
 
 
-@profile
 def load_and_set_allowed_reaction_smiles(reaction_to_reagents_path: Path,
                                          fragment_id_to_smiles: dict[int, str]) -> None:
     """Sets the allowed reaction SMILES for each reaction in REAL_REACTIONS.
@@ -650,7 +647,6 @@ def load_and_set_allowed_reaction_smiles(reaction_to_reagents_path: Path,
     )
 
 
-@profile
 def run_tree_search(args: Args) -> None:
     """Generate molecules combinatorially by performing a tree search."""
     # Validate arguments
