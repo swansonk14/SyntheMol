@@ -370,8 +370,8 @@ class TreeSearcher:
             for next_fragment in next_fragments
         ]
 
-        # Remove duplicates (and keep first instance of each duplicate)
-        new_nodes = list(dict.fromkeys(new_nodes[::-1]))
+        # Remove duplicates
+        new_nodes = list(dict.fromkeys(new_nodes))
 
         return new_nodes
 
