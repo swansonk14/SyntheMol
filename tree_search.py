@@ -100,7 +100,7 @@ class TreeNode:
                  scoring_fn: Callable[[str], float],
                  node_id: Optional[int] = None,
                  fragments: Optional[tuple[str]] = None,
-                 reagent_counts: Optional[Counter] = None,
+                 unique_reagents: Optional[set[int]] = None,
                  construction_log: Optional[tuple[dict[str, Any]]] = None,
                  rollout_num: Optional[int] = None) -> None:
         """Initializes the TreeNode object.
@@ -111,7 +111,7 @@ class TreeNode:
         :param fragments: A tuple of SMILES containing the fragments for the next reaction.
                          The first element is the currently constructed molecule while the remaining elements
                          are the fragments that are about to be added.
-        :param reagent_counts: A Counter mapping reagent indices to the number of times they appear in this node.
+        :param unique_reagents: A set of reagent indices used in this node.
         :param construction_log: A tuple of dictionaries containing information about each reaction.
         :param rollout_num: The number of the rollout on which this node was created.
         """
@@ -119,7 +119,7 @@ class TreeNode:
         self.scoring_fn = scoring_fn
         self.node_id = node_id
         self.fragments = fragments if fragments is not None else tuple()
-        self.reagent_counts = reagent_counts if reagent_counts is not None else Counter()
+        self.unique_reagents = unique_reagents if unique_reagents is not None else set()
         self.construction_log = construction_log if construction_log is not None else tuple()
         # TODO: maybe change sum (really mean) to max since we don't care about finding the best leaf node, just the best node along the way?
         self.W = 0.0  # The sum of the leaf node values for leaf nodes that descend from this node.
@@ -167,11 +167,6 @@ class TreeNode:
         :return: The number of reactions used so far to generate the current molecule.
         """
         return len(self.construction_log)
-
-    @cached_property
-    def unique_reagents(self) -> set[int]:
-        """A set of unique reagents in this node. (Note: The value is cached, so it assumes the node is immutable.)"""
-        return set(self.reagent_counts)
 
     def __hash__(self) -> int:
         return hash(self.fragments)
@@ -341,7 +336,7 @@ class TreeSearcher:
             product_nodes += [
                 self.TreeNodeClass(
                     fragments=(product,),
-                    reagent_counts=node.reagent_counts,
+                    unique_reagents=node.unique_reagents,
                     construction_log=node.construction_log + (reaction_log,),
                     rollout_num=self.rollout_num
                 )
@@ -368,7 +363,7 @@ class TreeSearcher:
         new_nodes += [
             self.TreeNodeClass(
                 fragments=node.fragments + (next_fragment,),
-                reagent_counts=node.reagent_counts + Counter({self.fragment_smiles_to_id[next_fragment]: 1}),
+                unique_reagents=node.unique_reagents | {next_fragment},
                 construction_log=node.construction_log,
                 rollout_num=self.rollout_num
             )

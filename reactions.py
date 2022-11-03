@@ -2,7 +2,7 @@
 import re
 from collections import deque
 from functools import cache
-from typing import Any, Callable, Iterable, Literal, Optional, Union
+from typing import Any, Callable, Iterable, Optional, Union
 
 from rdkit import Chem
 from rdkit.Chem import AllChem
