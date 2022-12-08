@@ -1,6 +1,5 @@
 """Plot a molecule's synergy vs prediction score."""
 from pathlib import Path
-from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,27 +7,31 @@ import pandas as pd
 from rdkit import Chem
 from tap import Tap
 
+from constants import PREDICTION_SETS
+
 
 class Args(Tap):
-    synergy_path: Path  # Path to Excel file containing molecule synergy.
-    preds_path: Path  # Path to CSV file containing MCTS generated molecules with prediction scores.
-    prediction_set: Literal['rf', 'chemprop', 'chemprop_rdkit', 'random']  # Name of the prediction set whose molecules will be plotted.
-    save_path: Path  # Path to PDF/PNG file where the plot will be saved.
+    results_path: Path  # Path to Excel file containing molecule synergy.
+    save_dir: Path  # Path to directory where the plots will be saved.
+
+    synergy_page_name: str = 'Synergy'  # Name of Excel sheet containing synergy data.
     synergy_smiles_column: str = 'Smile'  # Column name containing SMILES strings in the synergy data.
+    synergy_prediction_set_column: str = 'prediction_set'  # Column name containing prediction set in the synergy data.
     synergy_column: str = 'FICi(16)'  # Name of the column containing synergy.
     synergy_threshold: float = 0.5  # Threshold for synergy values to be plotted.
+    preds_page_name: str = 'Hits'  # Name of Excel sheet containing prediction data.
     preds_smiles_column: str = 'smiles'  # Column name containing SMILES strings in the prediction data.
     preds_score_column: str = 'score'  # Column name containing prediction scores in the prediction data.
 
     def process_args(self) -> None:
-        self.save_path.parent.mkdir(parents=True, exist_ok=True)
+        self.save_dir.mkdir(parents=True, exist_ok=True)
 
 
 def plot_synergy_vs_score(args: Args) -> None:
     """Plot a molecule's synergy vs prediction score."""
     # Load data
-    synergy = pd.read_excel(args.synergy_path)
-    preds = pd.read_csv(args.preds_path)
+    synergy = pd.read_excel(args.results_path, sheet_name=args.synergy_page_name)
+    preds = pd.read_excel(args.results_path, sheet_name=args.preds_page_name)
 
     print(f'Size of synergy data = {len(synergy):,}')
     print(f'Size of prediction data = {len(preds):,}')
@@ -36,13 +39,10 @@ def plot_synergy_vs_score(args: Args) -> None:
     # Canonicalize synergy SMILES
     synergy[args.preds_smiles_column] = [Chem.MolToSmiles(Chem.MolFromSmiles(smiles)) for smiles in synergy['Smile']]
 
-    # Limit synergy data to molecules in the prediction set
-    synergy = synergy[synergy[args.preds_smiles_column].isin(preds[args.preds_smiles_column])]
-
     # Get all tested SMILES
     tested_smiles = set(synergy[args.preds_smiles_column])
 
-    print(f'Number of unique tested molecules = {len(tested_smiles):,}')
+    print(f'Number of unique molecules = {len(tested_smiles):,}')
 
     # Map SMILES to prediction scores
     smiles_to_score = {
@@ -55,37 +55,46 @@ def plot_synergy_vs_score(args: Args) -> None:
     # Sort synergy data by prediction score
     synergy = synergy.sort_values(args.preds_score_column).reset_index(drop=True)
 
-    # Create mask for molecules with activity
-    activity_mask = np.array([
-        isinstance(syn, float) and not np.isnan(syn)
-        for syn in synergy[args.synergy_column]
-    ])
-
-    print(f'Number of molecules with activity = {sum(activity_mask):,}')
-
-    # Create mask for molecules with synergy
-    synergy_mask = np.array([
-        isinstance(syn, float) and not np.isnan(syn) and syn <= args.synergy_threshold
-        for syn in synergy[args.synergy_column]
-    ])
-
-    print(f'Number of molecules with synergy = {sum(synergy_mask):,}')
-
     # Plot synergy vs score
-    plt.clf()
-    plt.scatter(synergy[~synergy_mask].index, synergy[~synergy_mask][args.preds_score_column],
-                color='blue', label='No Activity')
-    plt.scatter(synergy[activity_mask].index, synergy[activity_mask][args.preds_score_column],
-                color='orange', label='Activity')
-    plt.scatter(synergy[synergy_mask].index, synergy[synergy_mask][args.preds_score_column],
-                color='red', label='Activity + Synergy')
-    plt.xlabel('Molecule Index')
-    plt.ylabel('Prediction Score')
-    plt.title(f'{args.prediction_set} Prediction Score vs Activity/Synergy with SPR-741')
-    plt.legend()
+    for prediction_set in PREDICTION_SETS:
+        # Limit synergy data to prediction set
+        prediction_set_synergy = synergy[synergy[args.synergy_prediction_set_column] == prediction_set].reset_index(drop=True)
 
-    args.save_path.parent.mkdir(parents=True, exist_ok=True)
-    plt.savefig(args.save_path, bbox_inches='tight')
+        print(f'\n{prediction_set}')
+        print(f'Number of molecules = {len(prediction_set_synergy):,}')
+
+        # Create mask for molecules with activity
+        activity_mask = np.array([
+            isinstance(syn, float) and not np.isnan(syn)
+            for syn in prediction_set_synergy[args.synergy_column]
+        ])
+
+        print(f'Number of molecules with activity = {sum(activity_mask):,}')
+
+        # Create mask for molecules with synergy
+        synergy_mask = np.array([
+            isinstance(syn, float) and not np.isnan(syn) and syn <= args.synergy_threshold
+            for syn in prediction_set_synergy[args.synergy_column]
+        ])
+
+        print(f'Number of molecules with synergy = {sum(synergy_mask):,}')
+
+        plt.clf()
+        plt.scatter(prediction_set_synergy[~synergy_mask].index,
+                    prediction_set_synergy[~synergy_mask][args.preds_score_column],
+                    color='blue', label='No Activity')
+        plt.scatter(prediction_set_synergy[activity_mask].index,
+                    prediction_set_synergy[activity_mask][args.preds_score_column],
+                    color='orange', label='Activity')
+        plt.scatter(prediction_set_synergy[synergy_mask].index,
+                    prediction_set_synergy[synergy_mask][args.preds_score_column],
+                    color='red', label='Activity + Synergy')
+        plt.xlabel('Molecule Index')
+        plt.ylabel('Prediction Score')
+        plt.title(f'{prediction_set} Prediction Score vs Activity/Synergy with SPR-741')
+        plt.legend()
+
+        plt.savefig(args.save_dir / f'{prediction_set}.pdf', bbox_inches='tight')
 
 
 if __name__ == '__main__':

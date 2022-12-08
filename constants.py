@@ -4,3 +4,4 @@ REAL_REACTION_COL = 'reaction'
 REAL_REAGENT_COLS = ['reagent1', 'reagent2', 'reagent3', 'reagent4']
 REAL_TYPE_COL = 'Type'
 REAL_SMILES_COL = 'smiles'
+PREDICTION_SETS = ['rf', 'chemprop', 'chemprop_rdkit', 'random']
