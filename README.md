@@ -558,3 +558,52 @@ python map_generated_molecules_to_real_ids.py \
     --save_dir generations/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50_real_ids
 done
 ```
+
+## Train Toxicity Model
+
+Perform these steps from the chemprop repo.
+
+Generate RDKit features for toxicity data.
+```bash
+python scripts/save_features.py \
+    --data_path data/clintox.csv \
+    --save_path features/clintox.npz
+```
+
+Train chemprop + RDKit model on toxicity data.
+```bash
+python train.py \
+    --data_path data/clintox.csv \
+    --dataset_type classification \
+    --metric prc-auc \
+    --extra_metrics auc \
+    --num_folds 10 \
+    --features_path features/clintox.npz \
+    --no_features_scaling \
+    --save_dir ckpt/clintox \
+    --quiet
+```
+
+```
+Overall test prc-auc = 0.707140 +/- 0.062722
+Overall test auc = 0.882426 +/- 0.040230
+```
+
+Generate RDKit features for synthesized molecules
+```bash
+python scripts/save_features.py \
+    --data_path ../combinatorial_antibiotics/generations/enamine_synthesized_results_formatted.csv \
+    --save_path ../combinatorial_antibiotics/generations/enamine_synthesized_results_formatted.npz \
+    --smiles_column smiles
+```
+
+Make predictions on synthesized molecules.
+```bash
+python predict.py \
+    --test_path ../combinatorial_antibiotics/generations/enamine_synthesized_results_formatted.csv \
+    --preds_path ../combinatorial_antibiotics/generations/enamine_synthesized_results_formatted.csv \
+    --checkpoint_dir ckpt/clintox \
+    --features_path ../combinatorial_antibiotics/generations/enamine_synthesized_results_formatted.npz \
+    --no_features_scaling \
+    --smiles_column smiles
+```
