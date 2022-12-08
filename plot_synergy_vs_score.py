@@ -11,15 +11,15 @@ from constants import PREDICTION_SETS
 
 
 class Args(Tap):
-    results_path: Path  # Path to Excel file containing molecule synergy.
+    data_path: Path  # Path to Excel file containing molecule synergy.
     save_dir: Path  # Path to directory where the plots will be saved.
 
-    synergy_page_name: str = 'Synergy'  # Name of Excel sheet containing synergy data.
+    synergy_sheet_name: str = 'Synergy'  # Name of Excel sheet containing synergy data.
     synergy_smiles_column: str = 'Smile'  # Column name containing SMILES strings in the synergy data.
     synergy_prediction_set_column: str = 'prediction_set'  # Column name containing prediction set in the synergy data.
     synergy_column: str = 'FICi(16)'  # Name of the column containing synergy.
     synergy_threshold: float = 0.5  # Threshold for synergy values to be plotted.
-    preds_page_name: str = 'Hits'  # Name of Excel sheet containing prediction data.
+    preds_sheet_name: str = 'Hits'  # Name of Excel sheet containing prediction data.
     preds_smiles_column: str = 'smiles'  # Column name containing SMILES strings in the prediction data.
     preds_score_column: str = 'score'  # Column name containing prediction scores in the prediction data.
 
@@ -30,8 +30,8 @@ class Args(Tap):
 def plot_synergy_vs_score(args: Args) -> None:
     """Plot a molecule's synergy vs prediction score."""
     # Load data
-    synergy = pd.read_excel(args.results_path, sheet_name=args.synergy_page_name)
-    preds = pd.read_excel(args.results_path, sheet_name=args.preds_page_name)
+    synergy = pd.read_excel(args.data_path, sheet_name=args.synergy_sheet_name)
+    preds = pd.read_excel(args.data_path, sheet_name=args.preds_sheet_name)
 
     print(f'Size of synergy data = {len(synergy):,}')
     print(f'Size of prediction data = {len(preds):,}')
@@ -94,7 +94,7 @@ def plot_synergy_vs_score(args: Args) -> None:
         plt.title(f'{prediction_set} Prediction Score vs Activity/Synergy with SPR-741')
         plt.legend()
 
-        plt.savefig(args.save_dir / f'{prediction_set}.pdf', bbox_inches='tight')
+        plt.savefig(args.save_dir / f'{prediction_set}_synergy.pdf', bbox_inches='tight')
 
 
 if __name__ == '__main__':
