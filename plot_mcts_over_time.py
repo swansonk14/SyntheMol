@@ -11,6 +11,7 @@ from tap import Tap
 def plot_mcts_over_time(
         data_path: Path,
         save_path: Path,
+        model_name: str,
         plot_type: Literal['histogram', 'line'] = 'histogram',
         increment: int = 50000,
         min_score: Optional[float] = None,
@@ -19,6 +20,7 @@ def plot_mcts_over_time(
 
     :param data_path: Path to CSV file containing MCTS generated molecules.
     :param save_path: Path to PDF/PNG file where plot will be saved.
+    :param model_name: The name of the model used during MCTS.
     :param plot_type: The type of plot to generate.
     :param increment: The number of rollouts between each plot.
     :param min_score: If provided, only molecules with scores >= this threshold are plotted.
@@ -62,7 +64,7 @@ def plot_mcts_over_time(
         raise ValueError(f'Invalid plot type: {plot_type}')
 
     # Save plot
-    plt.title('MCTS Score Over Rollouts')
+    plt.title(f'{model_name} MCTS Score Over Rollouts')
     save_path.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(save_path, bbox_inches='tight')
 
@@ -71,6 +73,7 @@ if __name__ == '__main__':
     class Args(Tap):
         data_path: Path  # Path to CSV file containing MCTS generated molecules.
         save_path: Path  # Path to PDF/PNG file where plot will be saved.
+        model_name: str  # The name of the model used during MCTS.
         plot_type: Literal['histogram', 'line'] = 'histogram'  # The type of plot to generate.
         increment: int = 50000  # The number of rollouts between each plot.
         min_score: Optional[float] = None  # If provided, only molecules with scores >= this threshold are plotted.

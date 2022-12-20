@@ -753,7 +753,8 @@ TODO: maybe use actual random sample rather than randomly generated sample?
 ```bash
 python plot_fragment_vs_molecule_scores.py \
     --data_path generations/random_ids_20k/molecules.csv \
-    --score_name rf_rdkit_ensemble_preds \
+    --score_column rf_rdkit_ensemble_preds \
+    --fragment_to_score_path ckpt/AB_combined_RF_rdkit/fragments_to_model_scores.json \
     --title "Random Forest Full Molecule vs Average Fragment Scores" \
     --save_path plots/paper/full_vs_fragment_scores/rf_rdkit_full_vs_fragment_scores.pdf
 ```
@@ -761,7 +762,8 @@ python plot_fragment_vs_molecule_scores.py \
 ```bash
 python plot_fragment_vs_molecule_scores.py \
     --data_path generations/random_ids_20k/molecules.csv \
-    --score_name chemprop_ensemble_preds \
+    --score_column chemprop_ensemble_preds \
+    --fragment_to_score_path ckpt/AB_combined_chemprop/fragments_to_model_scores.json \
     --title "Chemprop Full Molecule vs Average Fragment Scores" \
     --save_path plots/paper/full_vs_fragment_scores/chemprop_full_vs_fragment_scores.pdf
 ```
@@ -769,11 +771,46 @@ python plot_fragment_vs_molecule_scores.py \
 ```bash
 python plot_fragment_vs_molecule_scores.py \
     --data_path generations/random_ids_20k/molecules.csv \
-    --score_name chemprop_rdkit_ensemble_preds \
+    --score_column chemprop_rdkit_ensemble_preds \
+    --fragment_to_score_path ckpt/AB_combined_chemprop_rdkit/fragments_to_model_scores.json \
     --title "Chemprop RDKit Full Molecule vs Average Fragment Scores" \
     --save_path plots/paper/full_vs_fragment_scores/chemprop_rdkit_full_vs_fragment_scores.pdf
 ```
 
 ### MCTS Analysis
+
+TODO: Fragment counts before and after fragment diversity (need to do a 20k run without fragment diversity)
+
+Score of molecules binned by rollout.
+TODO: make this look nicer
+```bash
+python plot_mcts_over_time.py \
+    --data_path generations/mcts_AB_combined_rf_rdkit_ids_20k/molecules.csv \
+    --save_path plots/paper/mcts_over_time/mcts_over_time_rf_rdkit_line.pdf \
+    --model_name "Random Forest" \
+    --plot_type line \
+    --increment 500
+```
+
+```bash
+python plot_mcts_over_time.py \
+    --data_path generations/mcts_AB_combined_chemprop_ids_20k/molecules.csv \
+    --save_path plots/paper/mcts_over_time/mcts_over_time_chemprop_line.pdf \
+    --model_name "Chemprop" \
+    --plot_type line \
+    --increment 500
+```
+
+```bash
+python plot_mcts_over_time.py \
+    --data_path generations/mcts_AB_combined_chemprop_rdkit_ids_20k/molecules.csv \
+    --save_path plots/paper/mcts_over_time/mcts_over_time_chemprop_rdkit_line.pdf \
+    --model_name "Chemprop RDKit" \
+    --plot_type line \
+    --increment 500
+```
+
+TODO: show how often MCTS finds molecules with full molecule score higher than fragment score and see if this is more often than random chance
+But maybe not since the numbers don't support this
 
 ### Generated Sets
