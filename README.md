@@ -726,6 +726,54 @@ python plot_model_generalization.py \
 
 ### Model on REAL Data
 
+Plot fragment score distribution for each model.
+```bash
+python plot_fragment_scores.py \
+    --fragment_to_score_path ckpt/AB_combined_RF_rdkit/fragments_to_model_scores.json \
+    --title "Random Forest Fragment Score Distribution" \
+    --save_path plots/paper/fragment_scores/rf_fragment_scores.pdf
+```
+
+```bash
+python plot_fragment_scores.py \
+    --fragment_to_score_path ckpt/AB_combined_chemprop/fragments_to_model_scores.json \
+    --title "Chemprop Fragment Score Distribution" \
+    --save_path plots/paper/fragment_scores/chemprop_fragment_scores.pdf
+```
+
+```bash
+python plot_fragment_scores.py \
+    --fragment_to_score_path ckpt/AB_combined_chemprop_rdkit/fragments_to_model_scores.json \
+    --title "Chemprop RDKit Fragment Score Distribution" \
+    --save_path plots/paper/fragment_scores/chemprop_rdkit_fragment_scores.pdf
+```
+
+Plot fragment vs full molecule scores for random sample of REAL molecules.
+TODO: maybe use actual random sample rather than randomly generated sample?
+```bash
+python plot_fragment_vs_molecule_scores.py \
+    --data_path generations/random_ids_20k/molecules.csv \
+    --score_name rf_rdkit_ensemble_preds \
+    --title "Random Forest Full Molecule vs Average Fragment Scores" \
+    --save_path plots/paper/full_vs_fragment_scores/rf_rdkit_full_vs_fragment_scores.pdf
+```
+
+```bash
+python plot_fragment_vs_molecule_scores.py \
+    --data_path generations/random_ids_20k/molecules.csv \
+    --score_name chemprop_ensemble_preds \
+    --title "Chemprop Full Molecule vs Average Fragment Scores" \
+    --save_path plots/paper/full_vs_fragment_scores/chemprop_full_vs_fragment_scores.pdf
+```
+
+```bash
+python plot_fragment_vs_molecule_scores.py \
+    --data_path generations/random_ids_20k/molecules.csv \
+    --score_name chemprop_rdkit_ensemble_preds \
+    --title "Chemprop RDKit Full Molecule vs Average Fragment Scores" \
+    --save_path plots/paper/full_vs_fragment_scores/chemprop_rdkit_full_vs_fragment_scores.pdf
+```
+
 ### MCTS Analysis
 
 ### Generated Sets
