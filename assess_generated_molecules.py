@@ -12,7 +12,6 @@ from tap import Tap
 from tqdm import tqdm
 
 from chem_utils.molecular_similarities import compute_top_similarities
-from analyze_molecular_similarities import plot_molecular_similarities
 
 
 class Args(Tap):

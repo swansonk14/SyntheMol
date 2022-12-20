@@ -178,12 +178,12 @@ Download lists of known antibiotic-related compounds from ChEMBL using the follo
 - [antibacterial](https://www.ebi.ac.uk/chembl/g/#search_results/compounds/query=antibacterial)
 - [antibiotic](https://www.ebi.ac.uk/chembl/g/#search_results/compounds/query=antibiotic)
 
-The results of the queries on August 8, 2022 are available in the Google Drive folder in the `chembl` subfolder.
+The results of the queries on August 8, 2022, are available in the Google Drive folder in the `chembl` subfolder.
 
 The files are:
 
-- `antibacterial.csv` with 604 molecules
-- `antibiotic.csv` with 636 molecules
+- `chembl_antibacterial.csv` with 604 molecules (589 with SMILES)
+- `chembl_antibiotic.csv` with 636 molecules (587 with SMILES)
 
 These four files can be combined, processed, and deduplicated to form a single collection of antibiotic-related compounds:
 
@@ -607,3 +607,125 @@ python predict.py \
     --no_features_scaling \
     --smiles_column smiles
 ```
+
+## Plots
+
+### Data Plots
+
+Plot data values for each training set.
+```bash
+python plot_regression_values.py \
+    --data_path data/screening_data/AB_original/AB_2560_normalized.csv \
+    --rep1_column Rep_1 \
+    --rep2_column Rep_2 \
+    --save_dir plots/paper/AB_2560_normalized
+```
+
+```bash
+python plot_regression_values.py \
+    --data_path data/screening_data/AB_original/AB_Mar27_normalized.csv \
+    --rep1_column Rep_1 \
+    --rep2_column Rep_2 \
+    --save_dir plots/paper/AB_Mar27_normalized
+```
+
+```bash
+python plot_regression_values.py \
+    --data_path data/screening_data/AB_original/For_gen_AB_DRH.csv \
+    --rep1_column Rep_1 \
+    --rep2_column Rep_2 \
+    --save_dir plots/paper/For_gen_AB_DRH
+```
+
+Plot t-SNE of training data and ChEMBL antibiotics using [chem_utils](https://github.com/swansonk14/chem_utils).
+```bash
+python dimensionality_reduction.py \
+    --data_paths ../../combinatorial_antibiotics/data/screening_data/AB_original/AB_2560_normalized.csv \
+    ../../combinatorial_antibiotics/data/screening_data/AB_original/AB_Mar27_normalized.csv \
+    ../../combinatorial_antibiotics/data/screening_data/AB_original/For_gen_AB_DRH.csv \
+    ../../combinatorial_antibiotics/data/chembl/chembl_antibacterial_antibiotic.csv \
+    ../../combinatorial_antibiotics/data/screening_data/AB_2560_hits.csv \
+    ../../combinatorial_antibiotics/data/screening_data/AB_Mar27_hits.csv \
+    ../../combinatorial_antibiotics/data/screening_data/For_gen_AB_DRH_hits.csv \
+    --max_molecules 2000 \
+    --data_names AB_2560_normalized AB_Mar27_normalized For_gen_AB_DRH chembl_antibiotic \
+     AB_2560_normalized_hits AB_Mar27_normalized_hits For_gen_AB_DRH_hits  \
+    --highlight_data_names AB_2560_normalized_hits AB_Mar27_normalized_hits For_gen_AB_DRH_hits \
+    --smiles_columns SMILES SMILES SMILES canonical_smiles smiles smiles smiles \
+    --save_path ../../combinatorial_antibiotics/plots/paper/tsne/train_vs_train_hits_vs_chembl.pdf
+```
+
+### REAL plots
+
+Visualize REAL reactions using [chem_utils](https://github.com/swansonk14/chem_utils)..
+```bash
+python visualize_reactions.py \
+    --data_path ../../combinatorial_antibiotics/data/real_reaction_smarts.csv \
+    --save_dir ../../combinatorial_antibiotics/plots/paper/real_reactions \
+    --name_column reaction_id
+```
+
+Plot REAL reaction and reactant counts.
+TODO: count reactants and plot
+```bash
+python plot_real_counts.py \
+    --reaction_counts_path data/reaction_counts_REAL_space.csv \
+    --save_dir plots/paper/real_counts
+```
+
+Plot molecular weight distribution of REAL and train molecules.
+TODO: need actual sample of REAL space, not REAL database
+```bash
+python property_distribution.py \
+    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_SMILES_sampled.csv \
+    ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
+    --property mol_weight \
+    --max_value 1000 \
+    --save_path ../../combinatorial_antibiotics/plots/paper/mol_weight_train_vs_real.pdf
+```
+
+Plot logP distribution of REAL and train molecules.
+TODO: need actual sample of REAL space, not REAL database
+```bash
+python property_distribution.py \
+    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_SMILES_sampled.csv \
+    ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
+    --property logp \
+    --min_value -10 \
+    --max_value 10 \
+    --save_path ../../combinatorial_antibiotics/plots/paper/logp_train_vs_real.pdf
+```
+
+TODO: coverage of train and train hits by fragments
+Do Tversky similarity between training set and fragments with fragment as reference but look for greatest similarity for each fragment across training molecules to show the greatest degree to which each fragment appears in a training molecule
+
+Plot t-SNE of training data and REAL space sample using [chem_utils](https://github.com/swansonk14/chem_utils).
+TODO: need actual sample of REAL space, not REAL database.
+```bash
+python dimensionality_reduction.py \
+    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_SMILES_sampled.csv \
+    ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
+    ../../combinatorial_antibiotics/data/screening_data/AB_combined_hits.csv \
+    --max_molecules 2000 \
+    --data_names Enamine_REAL train train_hits \
+    --highlight_data_names train_hits \
+    --save_path ../../combinatorial_antibiotics/plots/paper/tsne/train_vs_train_hits_vs_real.pdf
+```
+
+### Model on Training Data
+
+TODO: AUC and PRC-AUC curves for random and scaffold splits
+
+Plot model generalization between training sets.
+TODO: update/fill in numbers and implement confusion matrix
+```bash
+python plot_model_generalization.py \
+    --save_dir plots/paper/model_generalization
+```
+
+
+### Model on REAL Data
+
+### MCTS Analysis
+
+### Generated Sets

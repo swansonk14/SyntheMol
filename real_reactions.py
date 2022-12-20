@@ -110,3 +110,20 @@ REAL_REACTIONS = [
         reaction_id=27
     )
 ]
+
+
+if __name__ == '__main__':
+    # Save reaction SMARTS and reaction IDs in a CSV file
+    import pandas as pd
+
+    smarts, reaction_ids = [], []
+
+    for reaction in REAL_REACTIONS:
+        smarts.append(
+            f'{".".join(f"({reagent.smarts_with_atom_mapping})" for reagent in reaction.reagents)}'
+            f'>>({reaction.product.smarts_with_atom_mapping})'
+        )
+        reaction_ids.append(reaction.id)
+
+    df = pd.DataFrame({'smarts': smarts, 'reaction_id': reaction_ids})
+    df.to_csv('data/real_reaction_smarts.csv', index=False)
