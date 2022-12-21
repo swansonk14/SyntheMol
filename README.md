@@ -90,6 +90,7 @@ Randomly sample REAL space molecules.
 python sample_real_space.py \
     --data_dir data/Enamine_REAL_space \
     --save_path data/Enamine_REAL_space_smiles_sampled.csv \
+    --num_molecules 100000 \
     --parallel
 ```
 
@@ -629,6 +630,7 @@ python plot_regression_values.py \
     --data_path data/screening_data/AB_original/AB_2560_normalized.csv \
     --rep1_column Rep_1 \
     --rep2_column Rep_2 \
+    --remove_outliers \
     --save_dir plots/paper/AB_2560_normalized
 ```
 
@@ -637,6 +639,7 @@ python plot_regression_values.py \
     --data_path data/screening_data/AB_original/AB_Mar27_normalized.csv \
     --rep1_column Rep_1 \
     --rep2_column Rep_2 \
+    --remove_outliers \
     --save_dir plots/paper/AB_Mar27_normalized
 ```
 
@@ -645,6 +648,7 @@ python plot_regression_values.py \
     --data_path data/screening_data/AB_original/For_gen_AB_DRH.csv \
     --rep1_column Rep_1 \
     --rep2_column Rep_2 \
+    --remove_outliers \
     --save_dir plots/paper/For_gen_AB_DRH
 ```
 
@@ -832,7 +836,7 @@ TODO: assess_generated_molecules.py analyses for 20k and 50 for each model
 TODO: images of generated molecules with indications of synthesis success and experimental scores
 
 t-SNE for each step of filtering using [chem_utils](https://github.com/swansonk14/chem_utils).
-TODO: Note: Replace RF_rdkit with chemrop and chemprop_rdkit and replace highlight_data_names, display_data_names, and save_path for each step of filtering.
+TODO: Note: Replace RF_rdkit with chemrop and chemprop_rdkit and replace highlight_data_names, display_data_names, and save_path and color from red to brown for each step of filtering.
 ```bash
 python dimensionality_reduction.py \
     --data_paths ../../combinatorial_antibiotics/data/chembl/chembl_antibacterial_antibiotic.csv \
@@ -861,8 +865,12 @@ python dimensionality_reduction.py \
     ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
     ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
     ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
-    --data_names train train_hits random_forest chemprop chemprop_rdkit \
+    ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_ids_20k/molecules.csv \
+    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_ids_20k/molecules.csv \
+    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_ids_20k/molecules.csv \
+    --data_names train train_hits random_forest chemprop chemprop_rdkit random_forest_full chemprop_full chemprop_rdkit_full \
     --max_molecules 2000 \
     --highlight_data_names random_forest chemprop chemprop_rdkit \
+    --display_data_names train train_hits random_forest chemprop chemprop_rdkit \
     --save_path ../../combinatorial_antibiotics/plots/paper/tsne/train_vs_train_hits_vs_generated_selected.pdf
 ```

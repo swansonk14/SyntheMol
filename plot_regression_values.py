@@ -27,9 +27,9 @@ def plot_regression_values(args: Args) -> None:
     data['mean'] = (data[args.rep1_column] + data[args.rep2_column]) / 2
     data.sort_values(by='mean', inplace=True)
 
-    # Optionally remove outliers (5 points with largest mean inhibition)
+    # Optionally remove outliers (3 points with largest mean inhibition)
     if args.remove_outliers:
-        data = data.iloc[:-5]
+        data = data.iloc[:-3]
 
     # Compute binary activity threshold
     mean = data['mean'].mean()
