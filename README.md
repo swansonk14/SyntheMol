@@ -119,7 +119,7 @@ python canonicalize_smiles.py \
     --delete_disconnected_mols
 ```
 
-This removes 25 molecules whose salts cannot be stripped, leaving 138,060 molecules.
+This removes 25 molecules whose salts cannot be stripped, leaving 138,060 molecules, of which 132,479 are unique.
 
 Note: This step is crucial to prevent errors in running reactions. Salts can cause reactions to create products that are the same as the reactants, leading to undesired infinite loops during molecule generation.
 
@@ -432,8 +432,7 @@ python nearest_neighbor.py \
     --data_path ../../combinatorial_antibiotics/generations/${NAME}/molecules.csv \
     --reference_data_path ../../combinatorial_antibiotics/data/chembl/chembl_antibacterial_antibiotic.csv \
     --reference_name chembl_antibacterial_antibiotic \
-    --metrics tversky \
-    --reference_smiles_column canonical_smiles
+    --metrics tversky
 done
 ```
 
@@ -640,18 +639,19 @@ python plot_regression_values.py \
 Plot t-SNE of training data and ChEMBL antibiotics using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python dimensionality_reduction.py \
-    --data_paths ../../combinatorial_antibiotics/data/screening_data/AB_original/AB_2560_normalized.csv \
+    --data_paths ../../combinatorial_antibiotics/data/chembl/chembl_antibacterial_antibiotic.csv \
+    ../../combinatorial_antibiotics/data/screening_data/AB_original/AB_2560_normalized.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_original/AB_Mar27_normalized.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_original/For_gen_AB_DRH.csv \
-    ../../combinatorial_antibiotics/data/chembl/chembl_antibacterial_antibiotic.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_2560_hits.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_Mar27_hits.csv \
     ../../combinatorial_antibiotics/data/screening_data/For_gen_AB_DRH_hits.csv \
     --max_molecules 2000 \
-    --data_names AB_2560_normalized AB_Mar27_normalized For_gen_AB_DRH chembl_antibiotic \
+    --colors red orange blue purple orange blue purple \
+    --data_names chembl_antibiotic AB_2560_normalized AB_Mar27_normalized For_gen_AB_DRH \
      AB_2560_normalized_hits AB_Mar27_normalized_hits For_gen_AB_DRH_hits  \
     --highlight_data_names AB_2560_normalized_hits AB_Mar27_normalized_hits For_gen_AB_DRH_hits \
-    --smiles_columns SMILES SMILES SMILES canonical_smiles smiles smiles smiles \
+    --smiles_columns smiles SMILES SMILES SMILES smiles smiles smiles \
     --save_path ../../combinatorial_antibiotics/plots/paper/tsne/train_vs_train_hits_vs_chembl.pdf
 ```
 
@@ -786,31 +786,71 @@ TODO: make this look nicer
 ```bash
 python plot_mcts_over_time.py \
     --data_path generations/mcts_AB_combined_rf_rdkit_ids_20k/molecules.csv \
-    --save_path plots/paper/mcts_over_time/mcts_over_time_rf_rdkit_line.pdf \
+    --save_path plots/paper/mcts_over_time/mcts_over_time_rf_rdkit_violin.pdf \
     --model_name "Random Forest" \
-    --plot_type line \
-    --increment 500
+    --plot_type violin \
+    --increment 2000
 ```
 
 ```bash
 python plot_mcts_over_time.py \
     --data_path generations/mcts_AB_combined_chemprop_ids_20k/molecules.csv \
-    --save_path plots/paper/mcts_over_time/mcts_over_time_chemprop_line.pdf \
+    --save_path plots/paper/mcts_over_time/mcts_over_time_chemprop_violin.pdf \
     --model_name "Chemprop" \
-    --plot_type line \
-    --increment 500
+    --plot_type violin \
+    --increment 2000
 ```
 
 ```bash
 python plot_mcts_over_time.py \
     --data_path generations/mcts_AB_combined_chemprop_rdkit_ids_20k/molecules.csv \
-    --save_path plots/paper/mcts_over_time/mcts_over_time_chemprop_rdkit_line.pdf \
+    --save_path plots/paper/mcts_over_time/mcts_over_time_chemprop_rdkit_violin.pdf \
     --model_name "Chemprop RDKit" \
-    --plot_type line \
-    --increment 500
+    --plot_type violin \
+    --increment 2000
 ```
 
 TODO: show how often MCTS finds molecules with full molecule score higher than fragment score and see if this is more often than random chance
 But maybe not since the numbers don't support this
 
 ### Generated Sets
+
+TODO: assess_generated_molecules.py analyses for 20k and 50 for each model
+
+TODO: images of generated molecules with indications of synthesis success and experimental scores
+
+t-SNE for each step of filtering using [chem_utils](https://github.com/swansonk14/chem_utils).
+TODO: Note: Replace RF_rdkit with chemrop and chemprop_rdkit and replace highlight_data_names, display_data_names, and save_path for each step of filtering.
+```bash
+python dimensionality_reduction.py \
+    --data_paths ../../combinatorial_antibiotics/data/chembl/chembl_antibacterial_antibiotic.csv \
+    ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
+    ../../combinatorial_antibiotics/data/screening_data/AB_combined_hits.csv \
+    ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_ids_20k/molecules.csv \
+    ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_ids_20k/molecules_train_sim_below_0.5.csv \
+    ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5.csv \
+    ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
+    ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
+    --data_names chembl_antibiotic train train_hits random_forest random_forest_train_sim random_forest_train_sim_chembl_sim \
+    random_forest_train_sim_chembl_sim_top_score random_forest_train_sim_chembl_sim_top_score_selected \
+    --max_molecules 2000 \
+    --colors orange blue purple red red red red red \
+    --highlight_data_names random_forest \
+    --display_data_names chembl_antibiotic train train_hits random_forest \
+    --save_path ../../combinatorial_antibiotics/plots/paper/tsne/random_forest.pdf
+```
+
+t-SNE for final generated sets using [chem_utils](https://github.com/swansonk14/chem_utils).
+TODO: maybe include full generated sets and/or random REAL to contextualize generated molecules (otherwise might cluster)
+```bash
+python dimensionality_reduction.py \
+    --data_paths ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
+    ../../combinatorial_antibiotics/data/screening_data/AB_combined_hits.csv \
+    ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
+    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
+    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
+    --data_names train train_hits random_forest chemprop chemprop_rdkit \
+    --max_molecules 2000 \
+    --highlight_data_names random_forest chemprop chemprop_rdkit \
+    --save_path ../../combinatorial_antibiotics/plots/paper/tsne/train_vs_train_hits_vs_generated_selected.pdf
+```

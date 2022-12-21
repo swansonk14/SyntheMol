@@ -38,25 +38,25 @@ def merge_chembl_downloads(args: Args) -> None:
     del data[args.smiles_column]
 
     # Compute canonical smiles
-    data['canonical_smiles'] = [Chem.MolToSmiles(Chem.MolFromSmiles(smiles)) for smiles in data['chembl_smiles']]
+    data['smiles'] = [Chem.MolToSmiles(Chem.MolFromSmiles(smiles)) for smiles in data['chembl_smiles']]
 
     # Map SMILES to labels
     smiles_to_labels = defaultdict(set)
-    for smiles, label in zip(data['canonical_smiles'], data['label']):
+    for smiles, label in zip(data['smiles'], data['label']):
         smiles_to_labels[smiles].add(label)
 
     # Deduplicate by canonical SMILES
-    data.drop_duplicates(subset='canonical_smiles', inplace=True)
+    data.drop_duplicates(subset='smiles', inplace=True)
 
     # Add labels to rows
-    data['labels'] = [';'.join(sorted(smiles_to_labels[smiles])) for smiles in data['canonical_smiles']]
+    data['labels'] = [';'.join(sorted(smiles_to_labels[smiles])) for smiles in data['smiles']]
     del data['label']
 
     # Sort by canonical SMILES
-    data.sort_values(by='canonical_smiles', inplace=True)
+    data.sort_values(by='smiles', inplace=True)
 
     # Change order of columns
-    new_columns = ['canonical_smiles', 'chembl_smiles', 'labels']
+    new_columns = ['smiles', 'chembl_smiles', 'labels']
     data = data[new_columns + list(data.columns)[:-len(new_columns)]]
 
     print(f'Merged data size = {len(data):,}')

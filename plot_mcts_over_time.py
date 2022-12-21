@@ -12,7 +12,7 @@ def plot_mcts_over_time(
         data_path: Path,
         save_path: Path,
         model_name: str,
-        plot_type: Literal['histogram', 'line'] = 'histogram',
+        plot_type: Literal['histogram', 'line', 'violin'] = 'histogram',
         increment: int = 50000,
         min_score: Optional[float] = None,
 ) -> None:
@@ -60,6 +60,18 @@ def plot_mcts_over_time(
         plt.errorbar(rollouts, means, yerr=stds, fmt='-o', capsize=5)
         plt.xlabel('Rollout')
         plt.ylabel('Score')
+    elif plot_type == 'violin':
+        # Violin plot of scores by rollout bin
+        rollouts, scores = [], []
+
+        for rollout_num in range(0, num_rollouts, increment):
+            rollout_data = data[(data['rollout_num'] > rollout_num) & (data['rollout_num'] <= rollout_num + increment)]
+            rollouts.append(rollout_num)
+            scores.append(rollout_data['score'])
+
+        plt.violinplot(scores, rollouts, widths=0.95 * increment, showmedians=True)
+        plt.xlabel('Rollout')
+        plt.ylabel('Score')
     else:
         raise ValueError(f'Invalid plot type: {plot_type}')
 
@@ -74,7 +86,7 @@ if __name__ == '__main__':
         data_path: Path  # Path to CSV file containing MCTS generated molecules.
         save_path: Path  # Path to PDF/PNG file where plot will be saved.
         model_name: str  # The name of the model used during MCTS.
-        plot_type: Literal['histogram', 'line'] = 'histogram'  # The type of plot to generate.
+        plot_type: Literal['histogram', 'line', 'violin'] = 'histogram'  # The type of plot to generate.
         increment: int = 50000  # The number of rollouts between each plot.
         min_score: Optional[float] = None  # If provided, only molecules with scores >= this threshold are plotted.
 
