@@ -13,7 +13,7 @@ from count_real_database import save_counts_as_csv
 
 class Args(Tap):
     data_dir: Path  # Path to directory with CXSMILES files containing the REAL database.
-    save_path: Path  # Path to CSV file with reaction counts will be saved.
+    save_path: Path  # Path to CSV file where reaction counts will be saved.
     parallel: bool = False  # Whether to run the script in parallel across files rather than sequentially.
 
     def process_args(self) -> None:
@@ -37,7 +37,7 @@ def count_real_space(args: Args) -> None:
     data_paths = sorted(args.data_dir.rglob('*.cxsmiles.bz2'))
     print(f'Number of files = {len(data_paths):,}')
 
-    # Create combined dictionary
+    # Create combined counter
     combined_reaction_counts = Counter()
 
     # Set up map function

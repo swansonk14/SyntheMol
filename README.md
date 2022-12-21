@@ -82,6 +82,18 @@ python count_real_space.py \
 ```
 
 
+### Sample REAL Molecules
+
+Randomly sample REAL space molecules.
+
+```bash
+python sample_real_space.py \
+    --data_dir data/Enamine_REAL_space \
+    --save_path data/Enamine_REAL_space_smiles_sampled.csv \
+    --parallel
+```
+
+
 ### Download Building Blocks
 
 All data, raw and processed, is available in this Google Drive folder: https://drive.google.com/drive/folders/1sbl1gL1d3acVJ1RZVtJV90uLgW1j6ee9?usp=sharing. Any references to data paths are relative to this directory.
