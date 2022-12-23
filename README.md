@@ -690,10 +690,9 @@ python plot_real_counts.py \
 ```
 
 Plot molecular weight distribution of REAL and train molecules.
-TODO: need actual sample of REAL space, not REAL database
 ```bash
 python property_distribution.py \
-    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_SMILES_sampled.csv \
+    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_space_smiles_sampled.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
     --property mol_weight \
     --max_value 1000 \
@@ -701,10 +700,9 @@ python property_distribution.py \
 ```
 
 Plot logP distribution of REAL and train molecules.
-TODO: need actual sample of REAL space, not REAL database
 ```bash
 python property_distribution.py \
-    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_SMILES_sampled.csv \
+    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_space_smiles_sampled.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
     --property logp \
     --min_value -10 \

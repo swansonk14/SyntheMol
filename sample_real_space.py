@@ -8,7 +8,7 @@ import pandas as pd
 from tap import Tap
 from tqdm import tqdm
 
-from constants import REAL_SMILES_COL, REAL_SPACE_SIZE
+from constants import REAL_SPACE_SIZE
 
 
 class Args(Tap):
@@ -21,17 +21,19 @@ class Args(Tap):
         self.save_path.parent.mkdir(parents=True, exist_ok=True)
 
 
-def sample_real_space_for_file(path: Path, sample_proportion: float) -> tuple[list[str], int]:
+def sample_real_space_for_file(path: Path, sample_proportion: float) -> tuple[pd.DataFrame, int]:
     """Sample molecules uniformly at random from a single REAL space file proportional to the file size."""
     # Load REAL data file
-    data = pd.read_csv(path, sep='\t', usecols=[REAL_SMILES_COL])
+    data = pd.read_csv(path, sep='\t')
 
-    # Sample molecules
+    # Sample rows
     rng = np.random.default_rng(seed=abs(hash(path.stem)))
     probs = rng.uniform(size=len(data))
-    sampled_smiles = list(data[REAL_SMILES_COL][probs < sample_proportion])
+    sampled_data = data.iloc[probs < sample_proportion]
+    print(probs)
+    print(sampled_data)
 
-    return sampled_smiles, len(data)
+    return sampled_data, len(data)
 
 
 def sample_real_space(args: Args) -> None:
@@ -42,10 +44,8 @@ def sample_real_space(args: Args) -> None:
 
     # Determine sample proportion and double it to ensure we get enough molecules
     sample_proportion = args.num_molecules / REAL_SPACE_SIZE * 2
+    sample_proportion = 0.75
     print(f'Sample proportion = {sample_proportion:.3e}')
-
-    # Create combined SMILES list
-    combined_smiles = []
 
     # Set up map function
     if args.parallel:
@@ -58,10 +58,11 @@ def sample_real_space(args: Args) -> None:
     sample_real_space_for_file_partial = partial(sample_real_space_for_file, sample_proportion=sample_proportion)
 
     # Loop through all REAL space files
+    data = []
     with tqdm(total=REAL_SPACE_SIZE) as progress_bar:
-        for sampled_smiles, data_size in map_fn(sample_real_space_for_file_partial, data_paths):
-            # Merge SMILES
-            combined_smiles.extend(sampled_smiles)
+        for sampled_data, data_size in map_fn(sample_real_space_for_file_partial, data_paths):
+            # Gather sampled data
+            data.append(sampled_data)
 
             # Update progress bar
             progress_bar.update(data_size)
@@ -69,15 +70,15 @@ def sample_real_space(args: Args) -> None:
     if pool is not None:
         pool.close()
 
-    print(f'Number of sampled molecules = {len(combined_smiles):,}')
+    # Merge sampled data
+    data = pd.concat(data, ignore_index=True)
+    print(f'Number of sampled molecules = {len(data):,}')
 
     # Extract desired number of sampled molecules
-    rng = np.random.default_rng(seed=0)
-    sampled_smiles = rng.choice(combined_smiles, size=args.num_molecules, replace=False)
-    print(f'Number of molecules after further sampling = {len(sampled_smiles):,}')
+    data = data.sample(n=args.num_molecules, random_state=0, replace=False)
+    print(f'Number of molecules after further sampling = {len(data):,}')
 
     # Save sampled molecules
-    data = pd.DataFrame({REAL_SMILES_COL: combined_smiles})
     data.to_csv(args.save_path, index=False)
 
 
