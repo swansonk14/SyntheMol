@@ -714,10 +714,9 @@ TODO: coverage of train and train hits by fragments
 Do Tversky similarity between training set and fragments with fragment as reference but look for greatest similarity for each fragment across training molecules to show the greatest degree to which each fragment appears in a training molecule
 
 Plot t-SNE of training data and REAL space sample using [chem_utils](https://github.com/swansonk14/chem_utils).
-TODO: need actual sample of REAL space, not REAL database.
 ```bash
 python dimensionality_reduction.py \
-    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_SMILES_sampled.csv \
+    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_space_smiles_sampled.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined_hits.csv \
     --max_molecules 2000 \
@@ -796,7 +795,6 @@ python plot_fragment_vs_molecule_scores.py \
 TODO: Fragment counts before and after fragment diversity (need to do a 20k run without fragment diversity)
 
 Score of molecules binned by rollout.
-TODO: make this look nicer
 ```bash
 python plot_mcts_over_time.py \
     --data_path generations/mcts_AB_combined_rf_rdkit_ids_20k/molecules.csv \

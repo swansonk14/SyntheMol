@@ -44,7 +44,7 @@ def build_sklearn_model(train_fingerprints: np.ndarray,
                         train_activities: list[int],
                         test_activities: list[int],
                         save_path: Path,
-                        model_type: Literal['rf', 'mlp']) -> dict[str, float]:
+                        model_type: Literal['rf', 'mlp']) -> tuple[dict[str, float], np.ndarray]:
     """Trains, evaluates, and saves a scikit-learn model."""
     # Build model
     if model_type == 'rf':
@@ -62,7 +62,7 @@ def build_sklearn_model(train_fingerprints: np.ndarray,
     with open(save_path, 'wb') as f:
         pickle.dump(model, f)
 
-    # Make predictions
+    # Make test predictions
     test_probs = model.predict_proba(test_fingerprints)[:, 1]
 
     # Evaluate predictions
@@ -71,7 +71,7 @@ def build_sklearn_model(train_fingerprints: np.ndarray,
         'prc_auc': average_precision_score(test_activities, test_probs)
     }
 
-    return scores
+    return scores, test_probs
 
 
 def build_chemprop_data_loader(smiles: list[str],
@@ -110,7 +110,7 @@ def build_chemprop_model(train_smiles: list[str],
                          train_activities: list[int],
                          val_activities: list[int],
                          test_activities: list[int],
-                         save_path: Path) -> dict[str, float]:
+                         save_path: Path) -> tuple[dict[str, float], np.ndarray]:
     """Trains, evaluates, and saves a chemprop model."""
     # Create args
     arg_list = [
@@ -194,7 +194,7 @@ def build_chemprop_model(train_smiles: list[str],
     print(f'Best validation {args.metric} = {best_score:.6f} on epoch {best_epoch}')
     model = load_checkpoint(save_path, device=args.device)
 
-    # Make predictions
+    # Make test predictions
     test_probs = chemprop_predict(model=model, data_loader=test_data_loader)
 
     # Evaluate predictions
@@ -203,7 +203,7 @@ def build_chemprop_model(train_smiles: list[str],
         'prc_auc': average_precision_score(test_activities, test_probs)
     }
 
-    return scores
+    return scores, test_probs
 
 
 def train_model(args: Args) -> None:
@@ -255,7 +255,7 @@ def train_model(args: Args) -> None:
 
         # Build and train model
         if args.model_type == 'chemprop':
-            scores = build_chemprop_model(
+            scores, test_probs = build_chemprop_model(
                 train_smiles=train_data[args.smiles_column],
                 val_smiles=val_data[args.smiles_column],
                 test_smiles=test_data[args.smiles_column],
@@ -269,7 +269,7 @@ def train_model(args: Args) -> None:
                 save_path=args.save_dir / f'model_{model_num}.pt'
             )
         else:
-            scores = build_sklearn_model(
+            scores, test_probs = build_sklearn_model(
                 train_fingerprints=train_fingerprints,
                 test_fingerprints=test_fingerprints,
                 train_activities=train_data[args.activity_column],
@@ -277,6 +277,14 @@ def train_model(args: Args) -> None:
                 save_path=args.save_dir / f'model_{model_num}.pkl',
                 model_type=args.model_type
             )
+
+        # Save test predictions
+        test_df = pd.DataFrame({
+            'smiles': test_data[args.smiles_column],
+            'activity': test_data[args.activity_column],
+            'prediction': test_probs
+        })
+        test_df.to_csv(args.save_dir / f'model_{model_num}_test_preds.csv', index=False)
 
         # Print scores
         for score_name, score_value in scores.items():
