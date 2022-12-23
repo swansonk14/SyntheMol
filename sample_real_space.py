@@ -8,7 +8,7 @@ import pandas as pd
 from tap import Tap
 from tqdm import tqdm
 
-from constants import REAL_SPACE_SIZE
+from constants import REAL_REACTION_COL, REAL_REAGENT_COLS, REAL_SMILES_COL, REAL_SPACE_SIZE
 
 
 class Args(Tap):
@@ -21,10 +21,13 @@ class Args(Tap):
         self.save_path.parent.mkdir(parents=True, exist_ok=True)
 
 
+USE_COLS = [REAL_REACTION_COL] + REAL_REAGENT_COLS + [REAL_SMILES_COL]
+
+
 def sample_real_space_for_file(path: Path, sample_proportion: float) -> tuple[pd.DataFrame, int]:
     """Sample molecules uniformly at random from a single REAL space file proportional to the file size."""
     # Load REAL data file
-    data = pd.read_csv(path, sep='\t')
+    data = pd.read_csv(path, sep='\t', usecols=USE_COLS)
 
     # Sample rows
     rng = np.random.default_rng(seed=abs(hash(path.stem)))
