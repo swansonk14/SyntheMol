@@ -20,10 +20,10 @@ from train_model import build_chemprop_data_loader, chemprop_predict
 class Args(Tap):
     data_path: Path  # Path to a CSV file containing SMILES.
     model_path: Path  # Path to a directory of model checkpoints or to a specific PKL or PT file containing a trained model.
-    save_path: Optional[Path] = None  # Path to a JSON file where a dictionary mapping fragments to model scores will be saved. If None, defaults to data_path.
+    save_path: Optional[Path] = None  # Path to a CSV file where model predicitions will be saved. If None, defaults to data_path.
     smiles_column: str = 'smiles'  # Name of the column containing SMILES.
     preds_column_prefix: Optional[str] = None  # Prefix for the column containing model predictions.
-    model_type: Literal['rf', 'mlp', 'chemprop']  # Type of model to train. 'rf' = random forest. 'mlp' = multilayer perceptron.
+    model_type: Literal['rf', 'mlp', 'chemprop']  # Type of model to use. 'rf' = random forest. 'mlp' = multilayer perceptron.
     fingerprint_type: Optional[Literal['morgan', 'rdkit']] = None  # Type of fingerprints to use as input features.
     average_preds: bool = False  # Whether to average predictions across models for an ensemble model.
 

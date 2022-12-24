@@ -249,7 +249,7 @@ python train_model.py \
 
 | Model          | ROC-AUC         | PRC-AUC         |
 |----------------|-----------------|-----------------|
-| RF RDKit       | 0.825 +/- 0.035 | 0.401 +/- 0.099 |
+| RF RDKit       | 0.835 +/- 0.035 | 0.401 +/- 0.099 |
 | Chemprop       | 0.803 +/- 0.036 | 0.354 +/- 0.086 |
 | Chemprop RDKit | 0.827 +/- 0.028 | 0.388 +/- 0.078 |
 
@@ -727,7 +727,14 @@ python dimensionality_reduction.py \
 
 ### Model on Training Data
 
-TODO: AUC and PRC-AUC curves for random and scaffold splits
+Plot ROC-AUC and PRC-AUC curves for each model. (Replace model paths and names as needed and curve type with ROC or PRC.)
+```bash
+python plot_auc.py \
+    --data_dir ckpt/AB_combined_RF_rdkit \
+    --save_path plots/paper/auc/rf_roc_auc.pdf \
+    --model_name "Random Forest" \
+    --curve_type ROC
+```
 
 Plot model generalization between training sets.
 TODO: update/fill in numbers and implement confusion matrix
