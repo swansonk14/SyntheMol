@@ -47,7 +47,6 @@ def sample_real_space(args: Args) -> None:
 
     # Determine sample proportion and double it to ensure we get enough molecules
     sample_proportion = args.num_molecules / REAL_SPACE_SIZE * 2
-    sample_proportion = 0.75
     print(f'Sample proportion = {sample_proportion:.3e}')
 
     # Set up map function
