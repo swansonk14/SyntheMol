@@ -72,24 +72,25 @@ Total number of molecules = 31,507,987,117
 
 ### Count REAL Reactions
 
-Determine which reactions are most common in REAL space.
+Determine which reactions (and reagents) are most common in REAL space.
 
 ```bash
 python count_real_space.py \
     --data_dir data/Enamine_REAL_space \
-    --save_path data/reaction_counts_REAL_space.csv \
+    --save_dir data/Enamine_REAL_space_counts \
     --parallel
 ```
 
 
 ### Sample REAL Molecules
 
-Randomly sample REAL space molecules.
+Randomly sample REAL space molecules for analysis of a representative sample of REAL space molecules.
 
 ```bash
 python sample_real_space.py \
     --data_dir data/Enamine_REAL_space \
-    --save_path data/Enamine_REAL_space_smiles_sampled.csv \
+    --save_path data/Enamine_REAL_space_sampled.csv \
+    --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     --num_molecules 100000 \
     --parallel
 ```
@@ -551,7 +552,8 @@ for NAME in mcts_AB_combined_RF_rdkit mcts_AB_combined_chemprop mcts_AB_combined
 do
 python visualize_molecules.py \
     --data_path ../../combinatorial_antibiotics/generations/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
-    --save_dir ../../combinatorial_antibiotics/generations/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50
+    --save_dir ../../combinatorial_antibiotics/generations/${NAME}
+mv 1.png molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.png
 done
 ```
 
@@ -568,6 +570,24 @@ do
 python map_generated_molecules_to_real_ids.py \
     --data_path generations/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
     --save_dir generations/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50_real_ids
+done
+```
+
+
+### Assess Selected Molecules
+
+Optionally, assess various quantities about the selected molecules.
+
+```bash
+#!/bin/bash
+
+for NAME in mcts_AB_combined_RF_rdkit mcts_AB_combined_chemprop mcts_AB_combined_chemprop_rdkit random
+do
+python assess_generated_molecules.py \
+    --data_path generations/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
+    --save_dir generations/${NAME}/analysis_molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50 \
+    --train_path data/screening_data/AB_combined.csv \
+    --train_hits_path data/screening_data/AB_combined_hits.csv
 done
 ```
 
@@ -685,38 +705,36 @@ Plot REAL reaction and reactant counts.
 TODO: count reactants and plot
 ```bash
 python plot_real_counts.py \
-    --reaction_counts_path data/reaction_counts_REAL_space.csv \
+    --reaction_counts_path data/Enamine_REAL_space_counts/real_space_reaction_counts.csv \
+    --reagent_counts_path data/Enamine_REAL_space_counts/real_space_reagent_counts.csv \
     --save_dir plots/paper/real_counts
 ```
 
 Plot molecular weight distribution of REAL and train molecules.
 ```bash
 python property_distribution.py \
-    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_space_smiles_sampled.csv \
+    --data_paths ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
     --property mol_weight \
     --max_value 1000 \
-    --save_path ../../combinatorial_antibiotics/plots/paper/mol_weight_train_vs_real.pdf
+    --save_path ../../combinatorial_antibiotics/plots/paper/properties/mol_weight_train_vs_real.pdf
 ```
 
 Plot logP distribution of REAL and train molecules.
 ```bash
 python property_distribution.py \
-    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_space_smiles_sampled.csv \
+    --data_paths ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
     --property logp \
     --min_value -10 \
     --max_value 10 \
-    --save_path ../../combinatorial_antibiotics/plots/paper/logp_train_vs_real.pdf
+    --save_path ../../combinatorial_antibiotics/plots/paper/properties/logp_train_vs_real.pdf
 ```
-
-TODO: coverage of train and train hits by fragments
-Do Tversky similarity between training set and fragments with fragment as reference but look for greatest similarity for each fragment across training molecules to show the greatest degree to which each fragment appears in a training molecule
 
 Plot t-SNE of training data and REAL space sample using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python dimensionality_reduction.py \
-    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_space_smiles_sampled.csv \
+    --data_paths ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined_hits.csv \
     --max_molecules 2000 \
@@ -727,7 +745,7 @@ python dimensionality_reduction.py \
 
 ### Model on Training Data
 
-Plot ROC-AUC and PRC-AUC curves for each model. (Replace model paths and names as needed and curve type with ROC or PRC.)
+Plot ROC-AUC and PRC-AUC curves for each model. (Replace model paths and names and "scaffold" as needed and curve type with ROC or PRC.)
 ```bash
 python plot_auc.py \
     --data_dir ckpt/AB_combined_RF_rdkit \
@@ -737,6 +755,152 @@ python plot_auc.py \
 ```
 
 Plot model generalization between training sets.
+
+Separately process each training set.
+```bash
+#!/bin/bash
+
+for DATA_NAME in AB_2560_normalized AB_Mar27_normalized For_gen_AB_DRH
+do
+python process_data.py \
+    --data_paths data/screening_data/AB_original/${DATA_NAME}.csv \
+    --save_path data/screening_data/AB_original/${DATA_NAME}_binarized.csv
+done
+```
+
+Results of separate data processing.
+```
+AB_2560_normalized
+Data size = 2,371
+Mean activity = 0.9759337199493885
+Std activity = 0.2673771821337539
+Activity threshold of mean - 2 std = 0.4411793556818807
+Number of hits = 130
+Number of non-hits = 2,241
+
+Full data size = 2,371
+Data size after dropping non-conflicting duplicates = 2,371
+Data size after dropping conflicting duplicates = 2,371
+
+Final data size = 2,371
+Number of hits = 130
+Number of non-hits = 2,241
+
+AB_Mar27_normalized
+Data size = 5,376
+Mean activity = 0.9980530249533108
+Std activity = 0.13303517604898704
+Activity threshold of mean - 2 std = 0.7319826728553367
+Number of hits = 112
+Number of non-hits = 5,264
+
+Full data size = 5,376
+Data size after dropping non-conflicting duplicates = 5,376
+Data size after dropping conflicting duplicates = 5,376
+
+Final data size = 5,376
+Number of hits = 112
+Number of non-hits = 5,264
+
+For_gen_AB_DRH
+Data size = 6,680
+Mean activity = 0.9701813713618264
+Std activity = 0.17623388953330232
+Activity threshold of mean - 2 std = 0.6177135922952217
+Number of hits = 294
+Number of non-hits = 6,386
+
+Full data size = 6,680
+Data size after dropping non-conflicting duplicates = 6,648
+Data size after dropping conflicting duplicates = 6,646
+
+Final data size = 6,646
+Number of hits = 292
+Number of non-hits = 6,354
+```
+
+Train models on each training set.
+```bash
+#!/bin/bash
+
+for DATA_NAME in AB_2560_normalized AB_Mar27_normalized For_gen_AB_DRH
+do
+python train_model.py \
+    --data_path data/screening_data/AB_original/${DATA_NAME}_binarized.csv \
+    --save_dir ckpt/${DATA_NAME}_RF_rdkit \
+    --model_type rf \
+    --fingerprint_type rdkit \
+    --num_models 10
+
+python train_model.py \
+    --data_path data/screening_data/AB_original/${DATA_NAME}_binarized.csv \
+    --save_dir ckpt/${DATA_NAME}_chemprop \
+    --model_type chemprop \
+    --num_models 10
+
+python train_model.py \
+    --data_path data/screening_data/AB_original/${DATA_NAME}_binarized.csv \
+    --save_dir ckpt/${DATA_NAME}_chemprop_rdkit \
+    --model_type chemprop \
+    --fingerprint_type rdkit \
+    --num_models 10
+done
+```
+
+Make predictions on other training sets.
+```bash
+#!/bin/bash
+
+for DATA1_NAME in AB_2560_normalized AB_Mar27_normalized For_gen_AB_DRH
+do
+    for DATA2_NAME in AB_2560_normalized AB_Mar27_normalized For_gen_AB_DRH
+    do
+        if [ "$DATA1_NAME" != "$DATA2_NAME" ]
+        then
+            python predict_model.py \
+                --data_path data/screening_data/AB_original/${DATA2_NAME}_binarized.csv \
+                --model_path ckpt/${DATA1_NAME}_RF_rdkit \
+                --save_path ckpt/${DATA1_NAME}_RF_rdkit/${DATA2_NAME}_preds.csv \
+                --model_type rf \
+                --fingerprint_type rdkit \
+                --average_preds
+
+            python compute_auc.py \
+                --data_path ckpt/${DATA1_NAME}_RF_rdkit/${DATA2_NAME}_preds.csv \
+                --pred_column rf_rdkit_ensemble_preds \
+                --true_column activity
+
+            python predict_model.py \
+                --data_path data/screening_data/AB_original/${DATA2_NAME}_binarized.csv \
+                --model_path ckpt/${DATA1_NAME}_chemprop \
+                --save_path ckpt/${DATA1_NAME}_chemprop/${DATA2_NAME}_preds.csv \
+                --model_type chemprop \
+                --average_preds
+
+            python compute_auc.py \
+                --data_path ckpt/${DATA1_NAME}_chemprop/${DATA2_NAME}_preds.csv \
+                --pred_column chemprop_ensemble_preds \
+                --true_column activity
+
+            python predict_model.py \
+                --data_path data/screening_data/AB_original/${DATA2_NAME}_binarized.csv \
+                --model_path ckpt/${DATA1_NAME}_chemprop_rdkit \
+                --save_path ckpt/${DATA1_NAME}_chemprop_rdkit/${DATA2_NAME}_preds.csv \
+                --model_type chemprop \
+                --fingerprint_type rdkit \
+                --average_preds
+
+            python compute_auc.py \
+                --data_path ckpt/${DATA1_NAME}_chemprop_rdkit/${DATA2_NAME}_preds.csv \
+                --pred_column chemprop_rdkit_ensemble_preds \
+                --true_column activity
+        fi
+    done
+done
+```
+
+Plot generalization across training sets as a confusion matrix.
+
 TODO: update/fill in numbers and implement confusion matrix
 ```bash
 python plot_model_generalization.py \
@@ -769,11 +933,38 @@ python plot_fragment_scores.py \
 ```
 
 Plot fragment vs full molecule scores for random sample of REAL molecules.
-TODO: maybe use actual random sample rather than randomly generated sample?
+
+First, make predictions on a random sample of REAL molecules using each model.
+```bash
+#!/bin/bash
+
+python predict_model.py \
+    --data_path data/Enamine_REAL_space_sampled.csv \
+    --model_path ckpt/AB_combined_RF_rdkit \
+    --model_type rf \
+    --fingerprint_type rdkit \
+    --average_preds
+
+python predict_model.py \
+    --data_path data/Enamine_REAL_space_sampled.csv \
+    --model_path ckpt/AB_combined_chemprop \
+    --model_type chemprop \
+    --average_preds
+
+python predict_model.py \
+    --data_path data/Enamine_REAL_space_sampled.csv \
+    --model_path ckpt/AB_combined_chemprop_rdkit \
+    --model_type chemprop \
+    --fingerprint_type rdkit \
+    --average_preds
+```
+
+Then, plot the fragment vs full molecule scores. (Note: Only 97,011 out of 100,000 molecules have all required fragment SMILES.)
 ```bash
 python plot_fragment_vs_molecule_scores.py \
-    --data_path generations/random_ids_20k/molecules.csv \
+    --data_path data/Enamine_REAL_space_sampled.csv \
     --score_column rf_rdkit_ensemble_preds \
+    --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     --fragment_to_score_path ckpt/AB_combined_RF_rdkit/fragments_to_model_scores.json \
     --title "Random Forest Full Molecule vs Average Fragment Scores" \
     --save_path plots/paper/full_vs_fragment_scores/rf_rdkit_full_vs_fragment_scores.pdf
@@ -781,8 +972,9 @@ python plot_fragment_vs_molecule_scores.py \
 
 ```bash
 python plot_fragment_vs_molecule_scores.py \
-    --data_path generations/random_ids_20k/molecules.csv \
+    --data_path data/Enamine_REAL_space_sampled.csv \
     --score_column chemprop_ensemble_preds \
+    --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     --fragment_to_score_path ckpt/AB_combined_chemprop/fragments_to_model_scores.json \
     --title "Chemprop Full Molecule vs Average Fragment Scores" \
     --save_path plots/paper/full_vs_fragment_scores/chemprop_full_vs_fragment_scores.pdf
@@ -790,8 +982,9 @@ python plot_fragment_vs_molecule_scores.py \
 
 ```bash
 python plot_fragment_vs_molecule_scores.py \
-    --data_path generations/random_ids_20k/molecules.csv \
+    --data_path data/Enamine_REAL_space_sampled.csv \
     --score_column chemprop_rdkit_ensemble_preds \
+    --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     --fragment_to_score_path ckpt/AB_combined_chemprop_rdkit/fragments_to_model_scores.json \
     --title "Chemprop RDKit Full Molecule vs Average Fragment Scores" \
     --save_path plots/paper/full_vs_fragment_scores/chemprop_rdkit_full_vs_fragment_scores.pdf
@@ -799,7 +992,7 @@ python plot_fragment_vs_molecule_scores.py \
 
 ### MCTS Analysis
 
-TODO: Fragment counts before and after fragment diversity (need to do a 20k run without fragment diversity)
+Fragment counts before and after fragment diversity. Run `tree_search.py` using same settings as above but without `--fragment_diversity` and run assess_generated_molecules.py and look at `fragment_counts.pdf`.
 
 Score of molecules binned by rollout.
 ```bash
@@ -829,17 +1022,15 @@ python plot_mcts_over_time.py \
     --increment 2000
 ```
 
-TODO: show how often MCTS finds molecules with full molecule score higher than fragment score and see if this is more often than random chance
-But maybe not since the numbers don't support this
 
 ### Generated Sets
 
-TODO: assess_generated_molecules.py analyses for 20k and 50 for each model
+Assess generated molecules (both original 20k and final 50) for each model. This has already been done using assess_generated_molecules.py above.
 
-TODO: images of generated molecules with indications of synthesis success and experimental scores
+TODO: Images of generated molecules with indications of model, synthesis success, and experimental scores.
 
 t-SNE for each step of filtering using [chem_utils](https://github.com/swansonk14/chem_utils).
-TODO: Note: Replace RF_rdkit with chemrop and chemprop_rdkit and replace highlight_data_names, display_data_names, and save_path and color from red to brown for each step of filtering.
+Note: Replace RF_rdkit with chemprop and chemprop_rdkit and replace highlight_data_names, display_data_names, and save_path and color from red to brown for each step of filtering.
 ```bash
 python dimensionality_reduction.py \
     --data_paths ../../combinatorial_antibiotics/data/chembl/chembl_antibacterial_antibiotic.csv \
@@ -856,11 +1047,10 @@ python dimensionality_reduction.py \
     --colors orange blue purple red red red red red \
     --highlight_data_names random_forest \
     --display_data_names chembl_antibiotic train train_hits random_forest \
-    --save_path ../../combinatorial_antibiotics/plots/paper/tsne/random_forest.pdf
+    --save_path ../../combinatorial_antibiotics/plots/paper/tsne/random_forest_filter/random_forest.pdf
 ```
 
 t-SNE for final generated sets using [chem_utils](https://github.com/swansonk14/chem_utils).
-TODO: maybe include full generated sets and/or random REAL to contextualize generated molecules (otherwise might cluster)
 ```bash
 python dimensionality_reduction.py \
     --data_paths ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \

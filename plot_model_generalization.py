@@ -9,22 +9,38 @@ from tap import Tap
 DATASETS = ['AB_2560_normalized', 'Mar27_normalized', 'For_gen_AB_DRH']
 METRIC_TO_MODEL_TO_MATRIX = {
     'PRC-AUC': {
-        # 'random_forest': np.ndarray([[]]),
-        'chemprop': np.ndarray([
-            [0.579, 0.084, 0.365],
-            [0.135, 0.159, 0.106],
-            [0.583, 0.074, 0.306]
+        'random_forest': np.ndarray([
+            [],
+            [],
+            []
         ]),
-        # 'chemprop_rdkit': np.ndarray([[]])
+        'chemprop': np.ndarray([
+            [],
+            [],
+            []
+        ]),
+        'chemprop_rdkit': np.ndarray([
+            [],
+            [],
+            []
+        ])
     },
     'ROC-AUC': {
-        # 'random_forest': np.ndarray([[]]),
-        'chemprop': np.ndarray([
-            [0.822, 0.535, 0.737],
-            [0.631, 0.679, 0.627],
-            [0.882, 0.562, 0.764]
+        'random_forest': np.ndarray([
+            [],
+            [],
+            []
         ]),
-        # 'chemprop_rdkit': np.ndarray([[]])
+        'chemprop': np.ndarray([
+            [],
+            [],
+            []
+        ]),
+        'chemprop_rdkit': np.ndarray([
+            [],
+            [],
+            []
+        ])
     }
 }
 
@@ -41,7 +57,16 @@ def plot_model_generalization(args: Args) -> None:
     for metric, model_to_matrix in METRIC_TO_MODEL_TO_MATRIX.items():
         for model, matrix in model_to_matrix.items():
             plt.clf()
-            # TODO: confusion matrix
+            plt.imshow(matrix, cmap='Blues', vmin=0, vmax=1)
+            for i in range(matrix.shape[0]):
+                for j in range(matrix.shape[1]):
+                    plt.text(j, i, f'{matrix[i, j]:.3f}', ha='center', va='center', color='black')
+            plt.xticks(np.arange(len(DATASETS)), DATASETS, rotation=45)
+            plt.yticks(np.arange(len(DATASETS)), DATASETS)
+            plt.xlabel('Test Dataset')
+            plt.ylabel('Train Dataset')
+            plt.title(f'{model} {metric} Generalization')
+            plt.colorbar()
             plt.savefig(args.save_dir / f'generalization_{model}_{metric}.pdf', bbox_inches='tight')
 
 
