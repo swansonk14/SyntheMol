@@ -34,8 +34,7 @@ def count_real_space_for_file(path: Path) -> tuple[Counter, Counter]:
 
     # Count reagents
     reagent_counts = Counter()
-    for reaction, reagent_1, reagent_2, reagent_3, reagent_4 in data.itertuples(index=False):
-        reagents = [reagent_1, reagent_2, reagent_3, reagent_4]
+    for reagents in data[REAL_REAGENT_COLS].itertuples(index=False):
         unique_reagents = {reagent for reagent in reagents if not np.isnan(reagent)}
         reagent_counts.update(unique_reagents)
 
@@ -81,7 +80,7 @@ def count_real_space(args: Args) -> None:
     )
 
     # Create reagent counts DataFrame
-    combined_regent_counts_data = pd.DataFrame([
+    combined_reagent_counts_data = pd.DataFrame([
         {
             'reagent': reagent,
             'count': count,
@@ -90,10 +89,10 @@ def count_real_space(args: Args) -> None:
     ])
 
     # Sort reagent counts by count from largest to smallest
-    combined_regent_counts_data.sort_values(by='count', ascending=False, inplace=True)
+    combined_reagent_counts_data.sort_values(by='count', ascending=False, inplace=True)
 
     # Save reagent counts
-    combined_regent_counts_data.to_csv(args.save_dir / 'real_space_reagent_counts.csv', index=False)
+    combined_reagent_counts_data.to_csv(args.save_dir / 'real_space_reagent_counts.csv', index=False)
 
 
 if __name__ == '__main__':
