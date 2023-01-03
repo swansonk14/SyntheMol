@@ -702,7 +702,6 @@ python visualize_reactions.py \
 ```
 
 Plot REAL reaction and reactant counts.
-TODO: count reactants and plot
 ```bash
 python plot_real_counts.py \
     --reaction_counts_path data/Enamine_REAL_space_counts/real_space_reaction_counts.csv \
@@ -857,6 +856,7 @@ do
     do
         if [ "$DATA1_NAME" != "$DATA2_NAME" ]
         then
+            echo $DATA1_NAME $DATA2_NAME
             python predict_model.py \
                 --data_path data/screening_data/AB_original/${DATA2_NAME}_binarized.csv \
                 --model_path ckpt/${DATA1_NAME}_RF_rdkit \
@@ -901,7 +901,6 @@ done
 
 Plot generalization across training sets as a confusion matrix.
 
-TODO: update/fill in numbers and implement confusion matrix
 ```bash
 python plot_model_generalization.py \
     --save_dir plots/paper/model_generalization
