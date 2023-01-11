@@ -50,7 +50,7 @@ python dimensionality_reduction.py \
      AB_2560_normalized_hits AB_Mar27_normalized_hits For_gen_AB_DRH_hits  \
     --highlight_data_names AB_2560_normalized_hits AB_Mar27_normalized_hits For_gen_AB_DRH_hits \
     --smiles_columns smiles SMILES SMILES SMILES smiles smiles smiles \
-    --save_path ../../combinatorial_antibiotics/plots/paper/tsne/train_vs_train_hits_vs_chembl.pdf
+    --save_dir ../../combinatorial_antibiotics/plots/paper/tsne/train_vs_train_hits_vs_chembl
 ```
 
 ## Property prediction model
@@ -278,7 +278,7 @@ python dimensionality_reduction.py \
     --max_molecules 2000 \
     --data_names Enamine_REAL train train_hits \
     --highlight_data_names train_hits \
-    --save_path ../../combinatorial_antibiotics/plots/paper/tsne/train_vs_train_hits_vs_real.pdf
+    --save_dir ../../combinatorial_antibiotics/plots/paper/tsne/train_vs_train_hits_vs_real
 ```
 
 
@@ -419,7 +419,7 @@ TODO: Images of generated molecules with indications of model, synthesis success
 ### t-SNE of the filtering steps
 
 t-SNE for each step of filtering using [chem_utils](https://github.com/swansonk14/chem_utils).
-Note: Replace RF_rdkit with chemprop and chemprop_rdkit and replace highlight_data_names, display_data_names, and save_path and color from red to brown for each step of filtering.
+Note: Need to uncomment hack in dimensionality_reduction.py.
 ```bash
 python dimensionality_reduction.py \
     --data_paths ../../combinatorial_antibiotics/data/chembl/chembl_antibacterial_antibiotic.csv \
@@ -432,11 +432,43 @@ python dimensionality_reduction.py \
     ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
     --data_names chembl_antibiotic train train_hits random_forest random_forest_train_sim random_forest_train_sim_chembl_sim \
     random_forest_train_sim_chembl_sim_top_score random_forest_train_sim_chembl_sim_top_score_selected \
-    --max_molecules 2000 \
-    --colors orange blue purple red red red red red \
-    --highlight_data_names random_forest \
-    --display_data_names chembl_antibiotic train train_hits random_forest \
-    --save_path ../../combinatorial_antibiotics/plots/paper/tsne/random_forest_filter/random_forest.pdf
+    --colors orange blue purple brown brown brown brown red \
+    --highlight_data_names random_forest_train_sim_chembl_sim_top_score_selected \
+    --save_dir ../../combinatorial_antibiotics/plots/paper/tsne/random_forest_filter
+```
+
+```bash
+python dimensionality_reduction.py \
+    --data_paths ../../combinatorial_antibiotics/data/chembl/chembl_antibacterial_antibiotic.csv \
+    ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
+    ../../combinatorial_antibiotics/data/screening_data/AB_combined_hits.csv \
+    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_ids_20k/molecules.csv \
+    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_ids_20k/molecules_train_sim_below_0.5.csv \
+    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5.csv \
+    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
+    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
+    --data_names chembl_antibiotic train train_hits chemprop chemprop_train_sim chemprop_train_sim_chembl_sim \
+    chemprop_train_sim_chembl_sim_top_score chemprop_train_sim_chembl_sim_top_score_selected \
+    --colors orange blue purple brown brown brown brown red \
+    --highlight_data_names chemprop_train_sim_chembl_sim_top_score_selected \
+    --save_dir ../../combinatorial_antibiotics/plots/paper/tsne/chemprop_filter
+```
+
+```bash
+python dimensionality_reduction.py \
+    --data_paths ../../combinatorial_antibiotics/data/chembl/chembl_antibacterial_antibiotic.csv \
+    ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
+    ../../combinatorial_antibiotics/data/screening_data/AB_combined_hits.csv \
+    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_ids_20k/molecules.csv \
+    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_ids_20k/molecules_train_sim_below_0.5.csv \
+    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5.csv \
+    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
+    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
+    --data_names chembl_antibiotic train train_hits chemprop_rdkit chemprop_rdkit_train_sim chemprop_rdkit_train_sim_chembl_sim \
+    chemprop_rdkit_train_sim_chembl_sim_top_score chemprop_rdkit_train_sim_chembl_sim_top_score_selected \
+    --colors orange blue purple brown brown brown brown red \
+    --highlight_data_names chemprop_rdkit_train_sim_chembl_sim_top_score_selected \
+    --save_dir ../../combinatorial_antibiotics/plots/paper/tsne/chemprop_rdkit_filter
 ```
 
 ### t-SNE of final generated sets
@@ -456,5 +488,5 @@ python dimensionality_reduction.py \
     --max_molecules 2000 \
     --highlight_data_names random_forest chemprop chemprop_rdkit \
     --display_data_names train train_hits random_forest chemprop chemprop_rdkit \
-    --save_path ../../combinatorial_antibiotics/plots/paper/tsne/train_vs_train_hits_vs_generated_selected.pdf
+    --save_dir ../../combinatorial_antibiotics/plots/paper/tsne/train_vs_train_hits_vs_generated_selected
 ```
