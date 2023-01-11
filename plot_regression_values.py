@@ -52,8 +52,8 @@ def plot_regression_values(args: Args) -> None:
         plt.legend()
         plt.savefig(args.save_dir / f'replicate_{rep_num}.pdf')
 
-        figdata = data[[rep_column]]
-        figdata.to_csv(args.save_dir / f'replicate_{rep_num}.csv', index=False)
+        fig_data = data[[rep_column]]
+        fig_data.to_csv(args.save_dir / f'replicate_{rep_num}.csv', index=False)
 
     # Plot mean (sorted)
     data.sort_values(by='mean', inplace=True)
@@ -69,8 +69,8 @@ def plot_regression_values(args: Args) -> None:
     plt.legend()
     plt.savefig(args.save_dir / 'mean_sorted.pdf')
 
-    figdata = data[['mean']]
-    figdata.to_csv(args.save_dir / 'mean_sorted.csv', index=False)
+    fig_data = data[['mean']]
+    fig_data.to_csv(args.save_dir / 'mean_sorted.csv', index=False)
 
     # Plot mean (unsorted)
     data = data.sample(frac=1, replace=False, random_state=0)
@@ -86,8 +86,8 @@ def plot_regression_values(args: Args) -> None:
     plt.legend()
     plt.savefig(args.save_dir / 'mean_unsorted.pdf')
 
-    figdata = data[['mean']]
-    figdata.to_csv(args.save_dir / 'mean_unsorted.csv', index=False)
+    fig_data = data[['mean']]
+    fig_data.to_csv(args.save_dir / 'mean_unsorted.csv', index=False)
 
     # Plot r1 vs r2
     plt.clf()
@@ -102,8 +102,8 @@ def plot_regression_values(args: Args) -> None:
     plt.legend()
     plt.savefig(args.save_dir / 'replicate_1_vs_2.pdf')
 
-    figdata = data[[args.rep1_column, args.rep2_column]]
-    figdata.to_csv(args.save_dir / 'replicate_1_vs_2.csv', index=False)
+    fig_data = data[[args.rep1_column, args.rep2_column]]
+    fig_data.to_csv(args.save_dir / 'replicate_1_vs_2.csv', index=False)
 
 
 if __name__ == '__main__':

@@ -291,21 +291,21 @@ Plot fragment score distribution for each model.
 python plot_fragment_scores.py \
     --fragment_to_score_path ckpt/AB_combined_RF_rdkit/fragments_to_model_scores.json \
     --title "Random Forest Fragment Score Distribution" \
-    --save_path plots/paper/fragment_scores/rf_fragment_scores.pdf
+    --save_dir plots/paper/fragment_scores/rf_fragment_scores
 ```
 
 ```bash
 python plot_fragment_scores.py \
     --fragment_to_score_path ckpt/AB_combined_chemprop/fragments_to_model_scores.json \
     --title "Chemprop Fragment Score Distribution" \
-    --save_path plots/paper/fragment_scores/chemprop_fragment_scores.pdf
+    --save_dir plots/paper/fragment_scores/chemprop_fragment_scores
 ```
 
 ```bash
 python plot_fragment_scores.py \
     --fragment_to_score_path ckpt/AB_combined_chemprop_rdkit/fragments_to_model_scores.json \
     --title "Chemprop RDKit Fragment Score Distribution" \
-    --save_path plots/paper/fragment_scores/chemprop_rdkit_fragment_scores.pdf
+    --save_dir plots/paper/fragment_scores/chemprop_rdkit_fragment_scores
 ```
 
 ### Fragment vs full molecule scores
@@ -345,7 +345,7 @@ python plot_fragment_vs_molecule_scores.py \
     --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     --fragment_to_score_path ckpt/AB_combined_RF_rdkit/fragments_to_model_scores.json \
     --title "Random Forest Full Molecule vs Average Fragment Scores" \
-    --save_path plots/paper/full_vs_fragment_scores/rf_rdkit_full_vs_fragment_scores.pdf
+    --save_dir plots/paper/full_vs_fragment_scores/rf_rdkit_full_vs_fragment_scores
 ```
 
 ```bash
@@ -355,7 +355,7 @@ python plot_fragment_vs_molecule_scores.py \
     --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     --fragment_to_score_path ckpt/AB_combined_chemprop/fragments_to_model_scores.json \
     --title "Chemprop Full Molecule vs Average Fragment Scores" \
-    --save_path plots/paper/full_vs_fragment_scores/chemprop_full_vs_fragment_scores.pdf
+    --save_dir plots/paper/full_vs_fragment_scores/chemprop_full_vs_fragment_scores
 ```
 
 ```bash
@@ -365,7 +365,7 @@ python plot_fragment_vs_molecule_scores.py \
     --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     --fragment_to_score_path ckpt/AB_combined_chemprop_rdkit/fragments_to_model_scores.json \
     --title "Chemprop RDKit Full Molecule vs Average Fragment Scores" \
-    --save_path plots/paper/full_vs_fragment_scores/chemprop_rdkit_full_vs_fragment_scores.pdf
+    --save_dir plots/paper/full_vs_fragment_scores/chemprop_rdkit_full_vs_fragment_scores
 ```
 
 
@@ -381,7 +381,7 @@ Score of molecules binned by rollout.
 ```bash
 python plot_mcts_over_time.py \
     --data_path generations/mcts_AB_combined_rf_rdkit_ids_20k/molecules.csv \
-    --save_path plots/paper/mcts_over_time/mcts_over_time_rf_rdkit_violin.pdf \
+    --save_dir plots/paper/mcts_over_time/mcts_over_time_rf_rdkit_violin \
     --model_name "Random Forest" \
     --plot_type violin \
     --increment 2000
@@ -390,7 +390,7 @@ python plot_mcts_over_time.py \
 ```bash
 python plot_mcts_over_time.py \
     --data_path generations/mcts_AB_combined_chemprop_ids_20k/molecules.csv \
-    --save_path plots/paper/mcts_over_time/mcts_over_time_chemprop_violin.pdf \
+    --save_dir plots/paper/mcts_over_time/mcts_over_time_chemprop_violin \
     --model_name "Chemprop" \
     --plot_type violin \
     --increment 2000
@@ -399,7 +399,7 @@ python plot_mcts_over_time.py \
 ```bash
 python plot_mcts_over_time.py \
     --data_path generations/mcts_AB_combined_chemprop_rdkit_ids_20k/molecules.csv \
-    --save_path plots/paper/mcts_over_time/mcts_over_time_chemprop_rdkit_violin.pdf \
+    --save_dir plots/paper/mcts_over_time/mcts_over_time_chemprop_rdkit_violin \
     --model_name "Chemprop RDKit" \
     --plot_type violin \
     --increment 2000

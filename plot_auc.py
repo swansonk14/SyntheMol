@@ -101,11 +101,11 @@ def plot_auc(args: Args) -> None:
 
     # Save data
     max_len = max(len(values) for values in coordinates.values())
-    coordinates = pd.DataFrame({
+    fig_data = pd.DataFrame({
         key: np.pad(values, (0, max_len - len(values)), constant_values=np.nan)
         for key, values in coordinates.items()
     })
-    coordinates.to_csv(f'{save_name}.csv', index=False)
+    fig_data.to_csv(f'{save_name}.csv', index=False)
 
 
 if __name__ == '__main__':

@@ -75,12 +75,12 @@ def plot_model_generalization(args: Args) -> None:
             plt.savefig(args.save_dir / f'generalization_{model}_{metric}.pdf', bbox_inches='tight')
 
             # Save matrix data
-            matrix_df = pd.DataFrame(
+            fig_data = pd.DataFrame(
                 data=matrix,
                 index=[f'Train {dataset}' for dataset in DATASETS],
                 columns=[f'Predict {dataset}' for dataset in DATASETS]
             )
-            matrix_df.to_csv(args.save_dir / f'generalization_{model}_{metric}.csv')
+            fig_data.to_csv(args.save_dir / f'generalization_{model}_{metric}.csv')
 
 
 if __name__ == '__main__':

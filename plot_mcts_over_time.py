@@ -10,7 +10,7 @@ from tap import Tap
 
 def plot_mcts_over_time(
         data_path: Path,
-        save_path: Path,
+        save_dir: Path,
         model_name: str,
         plot_type: Literal['histogram', 'line', 'violin'] = 'histogram',
         increment: int = 50000,
@@ -19,7 +19,7 @@ def plot_mcts_over_time(
     """Plots the MCTS results over time.
 
     :param data_path: Path to CSV file containing MCTS generated molecules.
-    :param save_path: Path to PDF/PNG file where plot will be saved.
+    :param save_dir: Path to directory where the plot will be saved.
     :param model_name: The name of the model used during MCTS.
     :param plot_type: The type of plot to generate.
     :param increment: The number of rollouts between each plot.
@@ -77,14 +77,18 @@ def plot_mcts_over_time(
 
     # Save plot
     plt.title(f'{model_name} MCTS Score Over Rollouts')
-    save_path.parent.mkdir(parents=True, exist_ok=True)
-    plt.savefig(save_path, bbox_inches='tight')
+    save_dir.mkdir(parents=True, exist_ok=True)
+    plt.savefig(save_dir / 'mcts_rollout_scores.pdf', bbox_inches='tight')
+
+    # Save data
+    fig_data = data[['rollout_num', 'score']].sort_values('rollout_num')
+    fig_data.to_csv(save_dir / 'mcts_rollout_scores.csv', index=False)
 
 
 if __name__ == '__main__':
     class Args(Tap):
         data_path: Path  # Path to CSV file containing MCTS generated molecules.
-        save_path: Path  # Path to PDF/PNG file where plot will be saved.
+        save_dir: Path  # Path to directory where the plot will be saved.
         model_name: str  # The name of the model used during MCTS.
         plot_type: Literal['histogram', 'line', 'violin'] = 'histogram'  # The type of plot to generate.
         increment: int = 50000  # The number of rollouts between each plot.

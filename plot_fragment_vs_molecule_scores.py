@@ -18,10 +18,10 @@ class Args(Tap):
     fragment_path: Path  # Path to CSV file containing fragment IDs and SMILES.
     fragment_to_score_path: Path  # Path to JSON file containing a dictionary mapping from fragment SMILES to model scores.
     title: str  # Title of the plot to generate
-    save_path: Path  # Path to PDF or PNG file where the plot will be saved.
+    save_dir: Path  # Path to directory where the plot will be saved.
 
     def process_args(self) -> None:
-        self.save_path.parent.mkdir(parents=True, exist_ok=True)
+        self.save_dir.mkdir(parents=True, exist_ok=True)
 
 
 def plot_fragment_vs_molecule_scores(args: Args) -> None:
@@ -60,7 +60,7 @@ def plot_fragment_vs_molecule_scores(args: Args) -> None:
     # Get average fragment scores
     fragment_scores = [
         np.mean([fragment_id_to_score[fragment] for fragment in row[REAL_REAGENT_COLS].dropna()])
-        for _, row in tqdm(data.iterrows(), total=len(data))
+        for _, row in tqdm(data.iterrows(), total=len(data), desc='Average fragment scores')
     ]
 
     # Compute R2
@@ -74,7 +74,14 @@ def plot_fragment_vs_molecule_scores(args: Args) -> None:
     plt.text(0.98, 0.98, f'$R^2 = {r2:.3f}$',
              horizontalalignment='right', verticalalignment='top',
              transform=plt.gca().transAxes)
-    plt.savefig(args.save_path, bbox_inches='tight')
+    plt.savefig(args.save_dir / 'fragment_vs_full_scores.pdf', bbox_inches='tight')
+
+    # Save data
+    fig_data = pd.DataFrame({
+        'full_molecule_score': full_molecule_scores,
+        'fragment_score': fragment_scores,
+    })
+    fig_data.to_csv(args.save_dir / 'fragment_vs_full_scores.csv', index=False)
 
 
 if __name__ == '__main__':
