@@ -27,10 +27,6 @@ def plot_regression_values(args: Args) -> None:
     data['mean'] = (data[args.rep1_column] + data[args.rep2_column]) / 2
     data.sort_values(by='mean', inplace=True)
 
-    # Optionally remove outliers (3 points with largest mean inhibition)
-    if args.remove_outliers:
-        data = data.iloc[:-3]
-
     # Compute binary activity threshold
     mean = data['mean'].mean()
     std = data['mean'].std()
@@ -38,20 +34,22 @@ def plot_regression_values(args: Args) -> None:
     threshold_color = ['red']
     threshold_name = 'mean - 2 * std'
 
+    # Optionally remove outliers (3 points with largest mean inhibition)
+    if args.remove_outliers:
+        data = data.iloc[:-3]
+
     # Get regression values
-    rep1 = data[args.rep1_column]
-    rep2 = data[args.rep2_column]
     index = np.arange(len(data))
 
     # Get data name
     data_name = args.data_path.stem
 
     # Plot r1 and r2
-    for rep_num, rep in [(1, rep1), (2, rep2)]:
+    for rep_num, rep_column in [(1, args.rep1_column), (2, args.rep2_column)]:
         plt.clf()
-        plt.scatter(index, sorted(rep), s=5)
+        plt.scatter(index, sorted(data[rep_column]), s=5)
 
-        plt.hlines(threshold, 0, len(rep), colors=threshold_color, label=threshold_name)
+        plt.hlines(threshold, 0, len(data), colors=threshold_color, label=threshold_name)
 
         plt.xlabel('Molecule Index')
         plt.ylabel('Inhibition')
@@ -59,9 +57,14 @@ def plot_regression_values(args: Args) -> None:
         plt.legend()
         plt.savefig(args.save_dir / f'replicate_{rep_num}.pdf')
 
+        figdata = data[[rep_column]]
+        figdata.to_csv(args.save_dir / f'replicate_{rep_num}.csv', index=False)
+
     # Plot mean (sorted)
+    data.sort_values(by='mean', inplace=True)
+
     plt.clf()
-    plt.scatter(index, sorted(data['mean']), s=5)
+    plt.scatter(index, data['mean'], s=5)
 
     plt.hlines(threshold, 0, len(data), colors=threshold_color, label=threshold_name)
 
@@ -71,13 +74,14 @@ def plot_regression_values(args: Args) -> None:
     plt.legend()
     plt.savefig(args.save_dir / 'mean_sorted.pdf')
 
+    figdata = data[['mean']]
+    figdata.to_csv(args.save_dir / 'mean_sorted.csv', index=False)
+
     # Plot mean (unsorted)
-    mean_values = np.array(sorted(data['mean']))
-    np.random.seed(0)
-    np.random.shuffle(mean_values)
+    data = data.sample(frac=1, replace=False, random_state=0)
 
     plt.clf()
-    plt.scatter(index, mean_values, s=5)
+    plt.scatter(index, data['mean'], s=5)
 
     plt.hlines(threshold, 0, len(data), colors=threshold_color, label=threshold_name)
 
@@ -87,9 +91,12 @@ def plot_regression_values(args: Args) -> None:
     plt.legend()
     plt.savefig(args.save_dir / 'mean_unsorted.pdf')
 
+    figdata = data[['mean']]
+    figdata.to_csv(args.save_dir / 'mean_unsorted.csv', index=False)
+
     # Plot r1 vs r2
     plt.clf()
-    plt.scatter(rep1, rep2, s=5)
+    plt.scatter(data[args.rep1_column], data[args.rep2_column], s=5)
 
     plt.hlines(threshold, 0, threshold, colors=threshold_color, label=threshold_name)
     plt.vlines(threshold, 0, threshold, colors=threshold_color)
@@ -99,6 +106,9 @@ def plot_regression_values(args: Args) -> None:
     plt.title(f'{data_name} Replicate 1 vs 2 Inhibition')
     plt.legend()
     plt.savefig(args.save_dir / 'replicate_1_vs_2.pdf')
+
+    figdata = data[[args.rep1_column, args.rep2_column]]
+    figdata.to_csv(args.save_dir / 'replicate_1_vs_2.csv', index=False)
 
 
 if __name__ == '__main__':

@@ -2,7 +2,10 @@
 
 This file contains instructions for generating plots analyzing the data and results.
 
-## Data Plots
+
+## Data plots
+
+### Data distribution
 
 Plot data values for each training set.
 ```bash
@@ -32,6 +35,8 @@ python plot_regression_values.py \
     --save_dir plots/paper/For_gen_AB_DRH
 ```
 
+### t-SNE of training data and ChEMBL data
+
 Plot t-SNE of training data and ChEMBL antibiotics using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python dimensionality_reduction.py \
@@ -51,17 +56,20 @@ python dimensionality_reduction.py \
     --save_path ../../combinatorial_antibiotics/plots/paper/tsne/train_vs_train_hits_vs_chembl.pdf
 ```
 
+## Property prediction model
 
-## Model on Training Data
+### Model performance on training data
 
-Plot ROC-AUC and PRC-AUC curves for each model. (Replace model paths and names and "scaffold" as needed and curve type with ROC or PRC.)
+Plot ROC-AUC and PRC-AUC curves for each model. (Replace model paths and names as needed and curve type with ROC or PRC.)
 ```bash
 python plot_auc.py \
     --data_dir ckpt/AB_combined_RF_rdkit \
-    --save_path plots/paper/auc/rf_roc_auc.pdf \
+    --save_dir plots/paper/auc \
     --model_name "Random Forest" \
     --curve_type ROC
 ```
+
+### Model generalization
 
 Plot model generalization between training sets.
 
@@ -217,8 +225,9 @@ python plot_model_generalization.py \
 ```
 
 
+## REAL data
 
-## REAL plots
+### REAL reactions
 
 Visualize REAL reactions using [chem_utils](https://github.com/swansonk14/chem_utils)..
 ```bash
@@ -228,6 +237,8 @@ python visualize_reactions.py \
     --name_column reaction_id
 ```
 
+### REAL reaction and reactant counts
+
 Plot REAL reaction and reactant counts.
 ```bash
 python plot_real_counts.py \
@@ -235,6 +246,8 @@ python plot_real_counts.py \
     --reagent_counts_path data/Enamine_REAL_space_counts/real_space_reagent_counts.csv \
     --save_dir plots/paper/real_counts
 ```
+
+### REAL vs train molecular weight and logP
 
 Plot molecular weight distribution of REAL and train molecules.
 ```bash
@@ -257,6 +270,8 @@ python property_distribution.py \
     --save_path ../../combinatorial_antibiotics/plots/paper/properties/logp_train_vs_real.pdf
 ```
 
+### t-SNE of REAL vs train
+
 Plot t-SNE of training data and REAL space sample using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python dimensionality_reduction.py \
@@ -270,8 +285,9 @@ python dimensionality_reduction.py \
 ```
 
 
-
 ## Model on REAL Data
+
+### Fragment scores
 
 Plot fragment score distribution for each model.
 ```bash
@@ -294,6 +310,8 @@ python plot_fragment_scores.py \
     --title "Chemprop RDKit Fragment Score Distribution" \
     --save_path plots/paper/fragment_scores/chemprop_rdkit_fragment_scores.pdf
 ```
+
+### Fragment vs full molecule scores
 
 Plot fragment vs full molecule scores for random sample of REAL molecules.
 
@@ -353,9 +371,14 @@ python plot_fragment_vs_molecule_scores.py \
     --save_path plots/paper/full_vs_fragment_scores/chemprop_rdkit_full_vs_fragment_scores.pdf
 ```
 
+
 ## MCTS Analysis
 
+### Fragment diversity
+
 Fragment counts before and after fragment diversity. Run `tree_search.py` using same settings as above but without `--fragment_diversity` and run assess_generated_molecules.py and look at `fragment_counts.pdf`.
+
+### Score by rollout
 
 Score of molecules binned by rollout.
 ```bash
@@ -388,9 +411,15 @@ python plot_mcts_over_time.py \
 
 ## Generated Sets
 
+### Generate set characteristics
+
 Assess generated molecules (both original 20k and final 50) for each model. This has already been done using assess_generated_molecules.py above.
 
+### Images of generated molecules
+
 TODO: Images of generated molecules with indications of model, synthesis success, and experimental scores.
+
+### t-SNE of the filtering steps
 
 t-SNE for each step of filtering using [chem_utils](https://github.com/swansonk14/chem_utils).
 Note: Replace RF_rdkit with chemprop and chemprop_rdkit and replace highlight_data_names, display_data_names, and save_path and color from red to brown for each step of filtering.
@@ -412,6 +441,8 @@ python dimensionality_reduction.py \
     --display_data_names chembl_antibiotic train train_hits random_forest \
     --save_path ../../combinatorial_antibiotics/plots/paper/tsne/random_forest_filter/random_forest.pdf
 ```
+
+### t-SNE of final generated sets
 
 t-SNE for final generated sets using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
