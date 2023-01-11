@@ -11,7 +11,6 @@ class Args(Tap):
     data_path: Path  # Path to a CSV file containing antibiotic inhibition data.
     rep1_column: str  # Name of the column containing the raw regression values from the first replicate.
     rep2_column: str  # Name of the column containing the raw regression values from the second replicate.
-    remove_outliers: bool = False  # Whether to remove outliers (5 points with largest mean inhibition).
     save_dir: Path  # Path to a directory where the plots will be saved.
 
     def process_args(self) -> None:
@@ -33,10 +32,6 @@ def plot_regression_values(args: Args) -> None:
     threshold = mean - 2 * std
     threshold_color = ['red']
     threshold_name = 'mean - 2 * std'
-
-    # Optionally remove outliers (3 points with largest mean inhibition)
-    if args.remove_outliers:
-        data = data.iloc[:-3]
 
     # Get regression values
     index = np.arange(len(data))

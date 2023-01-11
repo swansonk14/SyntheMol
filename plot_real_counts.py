@@ -35,6 +35,9 @@ def plot_real_counts(args: Args) -> None:
     plt.title('REAL Space Reaction Counts')
     plt.savefig(args.save_dir / 'reaction_counts.pdf', bbox_inches='tight')
 
+    # Save reaction counts
+    reaction_counts.to_csv(args.save_dir / 'reaction_counts.csv', index=False)
+
     # Plot reagent counts
     plt.clf()
     plt.scatter(np.arange(len(reagent_counts)), reagent_counts[args.count_column], s=3)
@@ -42,6 +45,9 @@ def plot_real_counts(args: Args) -> None:
     plt.ylabel('Number of Molecules with Reagent')
     plt.title('REAL Space Reagent Counts')
     plt.savefig(args.save_dir / 'reagent_counts.pdf', bbox_inches='tight')
+
+    # Save reagent counts
+    reagent_counts.to_csv(args.save_dir / 'reagent_counts.csv', index=False)
 
 
 if __name__ == '__main__':

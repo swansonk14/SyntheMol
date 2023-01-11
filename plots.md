@@ -13,7 +13,6 @@ python plot_regression_values.py \
     --data_path data/screening_data/AB_original/AB_2560_normalized.csv \
     --rep1_column Rep_1 \
     --rep2_column Rep_2 \
-    --remove_outliers \
     --save_dir plots/paper/AB_2560_normalized
 ```
 
@@ -22,7 +21,6 @@ python plot_regression_values.py \
     --data_path data/screening_data/AB_original/AB_Mar27_normalized.csv \
     --rep1_column Rep_1 \
     --rep2_column Rep_2 \
-    --remove_outliers \
     --save_dir plots/paper/AB_Mar27_normalized
 ```
 
@@ -31,7 +29,6 @@ python plot_regression_values.py \
     --data_path data/screening_data/AB_original/For_gen_AB_DRH.csv \
     --rep1_column Rep_1 \
     --rep2_column Rep_2 \
-    --remove_outliers \
     --save_dir plots/paper/For_gen_AB_DRH
 ```
 
@@ -75,7 +72,7 @@ Plot model generalization between training sets.
 
 Separately process each training set.
 ```bash
-!/bin/bash
+#!/bin/bash
 
 for DATA_NAME in AB_2560_normalized AB_Mar27_normalized For_gen_AB_DRH
 do
@@ -138,7 +135,7 @@ Number of non-hits = 6,354
 
 Train models on each training set.
 ```bash
-!/bin/bash
+#!/bin/bash
 
 for DATA_NAME in AB_2560_normalized AB_Mar27_normalized For_gen_AB_DRH
 do
@@ -166,7 +163,7 @@ done
 
 Make predictions on other training sets.
 ```bash
-!/bin/bash
+#!/bin/bash
 
 for DATA1_NAME in AB_2560_normalized AB_Mar27_normalized For_gen_AB_DRH
 do
@@ -249,25 +246,25 @@ python plot_real_counts.py \
 
 ### REAL vs train molecular weight and logP
 
-Plot molecular weight distribution of REAL and train molecules.
+Plot molecular weight distribution of REAL and train molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python property_distribution.py \
     --data_paths ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
-    --property mol_weight \
+    --prop mol_weight \
     --max_value 1000 \
-    --save_path ../../combinatorial_antibiotics/plots/paper/properties/mol_weight_train_vs_real.pdf
+    --save_dir ../../combinatorial_antibiotics/plots/paper/properties/mol_weight_train_vs_real
 ```
 
-Plot logP distribution of REAL and train molecules.
+Plot logP distribution of REAL and train molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python property_distribution.py \
     --data_paths ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
-    --property logp \
+    --prop logp \
     --min_value -10 \
     --max_value 10 \
-    --save_path ../../combinatorial_antibiotics/plots/paper/properties/logp_train_vs_real.pdf
+    --save_dir ../../combinatorial_antibiotics/plots/paper/properties/logp_train_vs_real
 ```
 
 ### t-SNE of REAL vs train
@@ -317,7 +314,7 @@ Plot fragment vs full molecule scores for random sample of REAL molecules.
 
 First, make predictions on a random sample of REAL molecules using each model.
 ```bash
-!/bin/bash
+#!/bin/bash
 
 python predict_model.py \
     --data_path data/Enamine_REAL_space_sampled.csv \

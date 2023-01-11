@@ -3,6 +3,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from tap import Tap
 
 # Train in rows, predict in columns
@@ -57,10 +58,14 @@ def plot_model_generalization(args: Args) -> None:
     for metric, model_to_matrix in METRIC_TO_MODEL_TO_MATRIX.items():
         for model, matrix in model_to_matrix.items():
             plt.clf()
+
+            # Plot AUC confusion matrix
             plt.imshow(matrix, cmap='Blues', vmin=0.5 if metric == 'ROC-AUC' else 0, vmax=1)
             for i in range(matrix.shape[0]):
                 for j in range(matrix.shape[1]):
                     plt.text(j, i, f'{matrix[i, j]:.3f}', ha='center', va='center', color='black')
+
+            # Label plot
             plt.xticks(np.arange(len(DATASETS)), DATASETS, rotation=45)
             plt.yticks(np.arange(len(DATASETS)), DATASETS)
             plt.xlabel('Test Dataset')
@@ -68,6 +73,14 @@ def plot_model_generalization(args: Args) -> None:
             plt.title(f'{model} {metric} Generalization')
             plt.colorbar()
             plt.savefig(args.save_dir / f'generalization_{model}_{metric}.pdf', bbox_inches='tight')
+
+            # Save matrix data
+            matrix_df = pd.DataFrame(
+                data=matrix,
+                index=[f'Train {dataset}' for dataset in DATASETS],
+                columns=[f'Predict {dataset}' for dataset in DATASETS]
+            )
+            matrix_df.to_csv(args.save_dir / f'generalization_{model}_{metric}.csv')
 
 
 if __name__ == '__main__':
