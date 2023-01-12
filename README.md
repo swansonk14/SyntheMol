@@ -404,7 +404,6 @@ do
 python assess_generated_molecules.py \
     --data_path generations/${NAME}/molecules.csv \
     --save_dir generations/${NAME} \
-    --train_path data/screening_data/AB_combined.csv \
     --train_hits_path data/screening_data/AB_combined_hits.csv
 done
 ```
@@ -586,7 +585,6 @@ do
 python assess_generated_molecules.py \
     --data_path generations/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
     --save_dir generations/${NAME}/analysis_molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50 \
-    --train_path data/screening_data/AB_combined.csv \
     --train_hits_path data/screening_data/AB_combined_hits.csv
 done
 ```
@@ -664,6 +662,13 @@ Training data.
 python calc_props.py \
     -b ../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
     -o ../combinatorial_antibiotics/data/screening_data/AB_combined_entry.csv
+```
+
+Training data hits.
+```bash
+python calc_props.py \
+    -b ../combinatorial_antibiotics/data/screening_data/AB_combined_hits.csv \
+    -o ../combinatorial_antibiotics/data/screening_data/AB_combined_hits_entry.csv
 ```
 
 Sample of REAL molecules.

@@ -490,3 +490,18 @@ python dimensionality_reduction.py \
     --display_data_names train train_hits random_forest chemprop chemprop_rdkit \
     --save_dir ../../combinatorial_antibiotics/plots/paper/tsne/train_vs_train_hits_vs_generated_selected
 ```
+
+### eNTRy properties
+
+TODO: save these scores
+
+```bash
+python plot_entry.py \
+    --data_paths data/screening_data/AB_combined_entry.csv \
+    data/screening_data/AB_combined_hits_entry.csv \
+    data/Enamine_REAL_space_sampled_entry.csv \
+    generations/mcts_AB_combined_chemprop_ids_20k/molecules_entry.csv \
+    generations/mcts_AB_combined_chemprop_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50_entry.csv \
+    --names train train_hits real chemprop chemprop_selected \
+    --save_dir plots/paper/entry
+```
