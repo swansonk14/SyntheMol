@@ -32,44 +32,51 @@ def plot_mcts_over_time(
     if min_score is not None:
         data = data[data['score'] >= min_score]
 
+    # Bin rollouts
+    num_rollouts = data['rollout_num'].max()
+    rollout_bins, rollout_bin_scores = [], []
+
+    for rollout_num in range(0, num_rollouts, increment):
+        rollout_data = data[(data['rollout_num'] > rollout_num) & (data['rollout_num'] <= rollout_num + increment)]
+        rollout_bins.append((rollout_num, rollout_num + increment))
+        rollout_bin_scores.append(rollout_data['score'])
+
+    rollout_bin_labels = [
+        f'{rollout_bin_start + 1:,} - {rollout_bin_end:,}' for
+        rollout_bin_start, rollout_bin_end in rollout_bins
+    ]
+
     # Plot MCTS results over time
     plt.clf()
-    num_rollouts = data['rollout_num'].max()
     alpha = increment / num_rollouts
 
     if plot_type == 'histogram':
         # Histograms of scores by rollout bin
-        for rollout_num in range(0, num_rollouts, increment):
-            rollout_data = data[(data['rollout_num'] > rollout_num) & (data['rollout_num'] <= rollout_num + increment)]
-            plt.hist(rollout_data['score'], bins=100, alpha=alpha,
-                     label=f'Rollouts {rollout_num + 1:,} - {rollout_num + increment:,}')
+        for (rollout_bin_start, rollout_bin_end), rollout_bin_score in zip(rollout_bins, rollout_bin_scores):
+            plt.hist(rollout_bin_scores, bins=100, alpha=alpha,
+                     label=f'Rollouts {rollout_bin_start + 1:,} - {rollout_bin_end:,}')
 
         plt.legend()
         plt.xlabel('Score')
         plt.ylabel('Count')
     elif plot_type == 'line':
         # Line plot of mean and standard deviation score by rollout bin
-        rollouts, means, stds = [], [], []
+        means, stds = [], []
 
-        for rollout_num in range(0, num_rollouts, increment):
-            rollout_data = data[(data['rollout_num'] > rollout_num) & (data['rollout_num'] <= rollout_num + increment)]
-            rollouts.append(rollout_num)
-            means.append(np.mean(rollout_data['score']))
-            stds.append(np.std(rollout_data['score']))
+        for rollout_bin_score in rollout_bin_scores:
+            means.append(np.mean(rollout_bin_score))
+            stds.append(np.std(rollout_bin_score))
 
-        plt.errorbar(rollouts, means, yerr=stds, fmt='-o', capsize=5)
+        xticks = np.arange(len(means))
+        plt.errorbar(xticks, means, yerr=stds, fmt='-o', capsize=5)
+        plt.xticks(xticks, rollout_bin_labels)
         plt.xlabel('Rollout')
         plt.ylabel('Score')
     elif plot_type == 'violin':
         # Violin plot of scores by rollout bin
-        rollouts, scores = [], []
-
-        for rollout_num in range(0, num_rollouts, increment):
-            rollout_data = data[(data['rollout_num'] > rollout_num) & (data['rollout_num'] <= rollout_num + increment)]
-            rollouts.append(rollout_num)
-            scores.append(rollout_data['score'])
-
-        plt.violinplot(scores, rollouts, widths=0.95 * increment, showmedians=True)
+        xticks = np.arange(len(rollout_bin_scores))
+        plt.violinplot(rollout_bin_scores, xticks, widths=0.95, showmedians=True)
+        plt.xticks(xticks, rollout_bin_labels, rotation=45)
         plt.xlabel('Rollout')
         plt.ylabel('Score')
     else:
@@ -81,7 +88,15 @@ def plot_mcts_over_time(
     plt.savefig(save_dir / 'mcts_rollout_scores.pdf', bbox_inches='tight')
 
     # Save data
-    fig_data = data[['rollout_num', 'score']].sort_values('rollout_num')
+    max_len = max(len(rollout_bin_score) for rollout_bin_score in rollout_bin_scores)
+    fig_data = pd.DataFrame({
+        f'rollouts_{rollout_bin_start + 1}-{rollout_bin_end}': np.pad(
+            rollout_bin_score,
+            (0, max_len - len(rollout_bin_score)),
+            constant_values=np.nan
+        )
+        for (rollout_bin_start, rollout_bin_end), rollout_bin_score in zip(rollout_bins, rollout_bin_scores)
+    })
     fig_data.to_csv(save_dir / 'mcts_rollout_scores.csv', index=False)
 
 
