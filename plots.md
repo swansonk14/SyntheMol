@@ -273,12 +273,13 @@ Plot t-SNE of training data and REAL space sample using [chem_utils](https://git
 ```bash
 python dimensionality_reduction.py \
     --data_paths ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled.csv \
+    ../../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined_hits.csv \
     --max_molecules 2000 \
-    --data_names Enamine_REAL train train_hits \
+    --data_names REAL_molecules REAL_building_blocks train train_hits \
     --highlight_data_names train_hits \
-    --save_dir ../../combinatorial_antibiotics/plots/paper/tsne/train_vs_train_hits_vs_real
+    --save_dir ../../combinatorial_antibiotics/plots/paper/tsne/train_vs_train_hits_vs_real_vs_real_building_blocks
 ```
 
 
@@ -367,6 +368,31 @@ python plot_fragment_vs_molecule_scores.py \
     --title "Chemprop RDKit Full Molecule vs Average Fragment Scores" \
     --save_dir plots/paper/full_vs_fragment_scores/chemprop_rdkit_full_vs_fragment_scores
 ```
+
+### Score distribution over REAL molecules
+
+Plot score distribution for each model.
+```bash
+python plot_score_distribution.py \
+    --data_path data/Enamine_REAL_space_sampled.csv \
+    --score_column rf_rdkit_ensemble_preds \
+    --save_dir plots/paper/real_scores/rf_rdkit
+```
+
+```bash
+python plot_score_distribution.py \
+    --data_path data/Enamine_REAL_space_sampled.csv \
+    --score_column chemprop_ensemble_preds \
+    --save_dir plots/paper/real_scores/chemprop
+```
+
+```bash
+python plot_score_distribution.py \
+    --data_path data/Enamine_REAL_space_sampled.csv \
+    --score_column chemprop_rdkit_ensemble_preds \
+    --save_dir plots/paper/real_scores/chemprop_rdkit
+```
+
 
 
 ## MCTS Analysis
