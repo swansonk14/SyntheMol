@@ -246,25 +246,41 @@ python plot_real_counts.py \
 
 ### REAL vs train molecular weight and logP
 
+Compute molecular weight and logP of REAL molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
+```bash
+python compute_properties.py \
+    --data_path ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled.csv \
+    --properties logp mol_weight \
+    --save_path ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled_with_properties.csv
+```
+
+Compute molecular weight and logP of train molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
+```bash
+python compute_properties.py \
+    --data_path ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
+    --properties logp mol_weight \
+    --save_path ../../combinatorial_antibiotics/data/screening_data/AB_combined_with_properties.csv
+```
+
 Plot molecular weight distribution of REAL and train molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
-python property_distribution.py \
-    --data_paths ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled.csv \
-    ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
-    --prop mol_weight \
-    --max_value 1000 \
-    --save_dir ../../combinatorial_antibiotics/plots/paper/properties/mol_weight_train_vs_real
+python plot_property_distribution.py \
+    --data_paths ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled_with_properties.csv \
+    ../../combinatorial_antibiotics/data/screening_data/AB_combined_with_properties.csv \
+    --property_column mol_weight \
+    --save_dir ../../combinatorial_antibiotics/plots/paper/properties/mol_weight_train_vs_real \
+    --max_value 1000
 ```
 
 Plot logP distribution of REAL and train molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
-python property_distribution.py \
-    --data_paths ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled.csv \
-    ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
-    --prop logp \
+python plot_property_distribution.py \
+    --data_paths ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled_with_properties.csv \
+    ../../combinatorial_antibiotics/data/screening_data/AB_combined_with_properties.csv \
+    --property_column logp \
+    --save_dir ../../combinatorial_antibiotics/plots/paper/properties/logp_train_vs_real \
     --min_value -10 \
-    --max_value 10 \
-    --save_dir ../../combinatorial_antibiotics/plots/paper/properties/logp_train_vs_real
+    --max_value 10
 ```
 
 ### t-SNE of REAL vs train
