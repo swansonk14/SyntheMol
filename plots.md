@@ -246,20 +246,31 @@ python plot_real_counts.py \
 
 ### REAL vs train molecular weight and logP
 
-Compute molecular weight and logP of REAL molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
+Compute molecular weight, logP, QED, and SAscore of REAL molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python compute_properties.py \
     --data_path ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled.csv \
-    --properties logp mol_weight \
+    --properties logp mol_weight qed sa_score \
     --save_path ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled_with_properties.csv
 ```
 
-Compute molecular weight and logP of train molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
+Compute molecular weight, logP, QED, and SAscore of train molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python compute_properties.py \
     --data_path ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
-    --properties logp mol_weight \
+    --properties logp mol_weight qed sa_score \
     --save_path ../../combinatorial_antibiotics/data/screening_data/AB_combined_with_properties.csv
+```
+
+Plot logP distribution of REAL and train molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
+```bash
+python plot_property_distribution.py \
+    --data_paths ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled_with_properties.csv \
+    ../../combinatorial_antibiotics/data/screening_data/AB_combined_with_properties.csv \
+    --property_column logp \
+    --save_dir ../../combinatorial_antibiotics/plots/paper/properties/logp_train_vs_real \
+    --min_value -10 \
+    --max_value 10
 ```
 
 Plot molecular weight distribution of REAL and train molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
@@ -272,15 +283,22 @@ python plot_property_distribution.py \
     --max_value 1000
 ```
 
-Plot logP distribution of REAL and train molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
+Plot QED distribution of REAL and train molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python plot_property_distribution.py \
     --data_paths ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled_with_properties.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined_with_properties.csv \
-    --property_column logp \
-    --save_dir ../../combinatorial_antibiotics/plots/paper/properties/logp_train_vs_real \
-    --min_value -10 \
-    --max_value 10
+    --property_column qed \
+    --save_dir ../../combinatorial_antibiotics/plots/paper/properties/qed_train_vs_real
+```
+
+Plot SAscore distribution of REAL and train molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
+```bash
+python plot_property_distribution.py \
+    --data_paths ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled_with_properties.csv \
+    ../../combinatorial_antibiotics/data/screening_data/AB_combined_with_properties.csv \
+    --property_column sa_score \
+    --save_dir ../../combinatorial_antibiotics/plots/paper/properties/sa_score_train_vs_real
 ```
 
 ### t-SNE of REAL vs train

@@ -7,9 +7,9 @@ from typing import Literal, Optional
 import numpy as np
 import pandas as pd
 import torch
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import average_precision_score, roc_auc_score
-from sklearn.neural_network import MLPClassifier
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.metrics import average_precision_score, mean_squared_error, r2_score, roc_auc_score
+from sklearn.neural_network import MLPClassifier, MLPRegressor
 from tap import Tap
 from tqdm import trange
 
@@ -24,10 +24,11 @@ from chemprop.utils import build_optimizer, build_lr_scheduler, load_checkpoint,
 class Args(Tap):
     data_path: Path  # Path to CSV file containing data.
     save_dir: Path  # Path to a directory where the trained model(s) and results will be saved.
+    dataset_type: Literal['classification', 'regression']  # Type of dataset.
     model_type: Literal['rf', 'mlp', 'chemprop']  # Type of model to train. 'rf' = random forest. 'mlp' = multilayer perceptron.
     fingerprint_type: Optional[Literal['morgan', 'rdkit']] = None  # Type of fingerprints to use as input features.
+    property_column: str  # The name of the column containing property values.
     smiles_column: str = 'smiles'  # The name of the column containing SMILES.
-    activity_column: str = 'activity'  # The name of the column containing binary activity values.
     num_models: int = 1  # The number of models to train using 10-fold cross-validation.
 
     def process_args(self) -> None:
@@ -39,83 +40,110 @@ def chemprop_predict(*args, **kwargs) -> np.ndarray:
     return np.array(_chemprop_predict(*args, **kwargs))[:, 0]
 
 
-def build_sklearn_model(train_fingerprints: np.ndarray,
+def build_sklearn_model(dataset_type: str,
+                        train_fingerprints: np.ndarray,
                         test_fingerprints: np.ndarray,
-                        train_activities: list[int],
-                        test_activities: list[int],
+                        train_properties: list[int],
+                        test_properties: list[int],
                         save_path: Path,
                         model_type: Literal['rf', 'mlp']) -> tuple[dict[str, float], np.ndarray]:
     """Trains, evaluates, and saves a scikit-learn model."""
     # Build model
     if model_type == 'rf':
-        model = RandomForestClassifier(n_jobs=-1, random_state=0)
+        if dataset_type == 'classification':
+            rf_class = RandomForestClassifier
+        elif dataset_type == 'regression':
+            rf_class = RandomForestRegressor
+        else:
+            raise ValueError(f'Dataset type "{dataset_type}" is not supported.')
+
+        model = rf_class(n_jobs=-1, random_state=0)
     elif model_type == 'mlp':
-        model = MLPClassifier(hidden_layer_sizes=(100, 100, 100), random_state=0)
+        if dataset_type == 'classification':
+            mlp_class = MLPClassifier
+        elif dataset_type == 'regression':
+            mlp_class = MLPRegressor
+        else:
+            raise ValueError(f'Dataset type "{dataset_type}" is not supported.')
+
+        model = mlp_class(hidden_layer_sizes=(100, 100, 100), random_state=0)
     else:
         raise ValueError(f'Model type "{model_type}" is not supported.')
+
     print(model)
 
     # Train model
-    model.fit(train_fingerprints, train_activities)
+    model.fit(train_fingerprints, train_properties)
 
     # Save model
     with open(save_path, 'wb') as f:
         pickle.dump(model, f)
 
-    # Make test predictions
-    test_probs = model.predict_proba(test_fingerprints)[:, 1]
+    # Make and evaluate test predictions
+    if dataset_type == 'classification':
+        test_preds = model.predict_proba(test_fingerprints)[:, 1]
 
-    # Evaluate predictions
-    scores = {
-        'roc_auc': roc_auc_score(test_activities, test_probs),
-        'prc_auc': average_precision_score(test_activities, test_probs)
-    }
+        scores = {
+            'roc_auc': roc_auc_score(test_properties, test_preds),
+            'prc_auc': average_precision_score(test_properties, test_preds)
+        }
+    elif dataset_type == 'regression':
+        test_preds = model.predict(test_fingerprints)
 
-    return scores, test_probs
+        scores = {
+            'mse': mean_squared_error(test_properties, test_preds),
+            'r2': r2_score(test_properties, test_preds),
+        }
+    else:
+        raise ValueError(f'Dataset type "{dataset_type}" is not supported.')
+
+    return scores, test_preds
 
 
 def build_chemprop_data_loader(smiles: list[str],
                                fingerprints: Optional[np.ndarray],
-                               activities: Optional[list[int]] = None,
+                               properties: Optional[list[int]] = None,
                                shuffle: bool = False) -> MoleculeDataLoader:
     """Builds a chemprop MoleculeDataLoader."""
     if fingerprints is None:
         fingerprints = [None] * len(smiles)
 
-    if activities is None:
-        activities = [None] * len(smiles)
+    if properties is None:
+        properties = [None] * len(smiles)
     else:
-        activities = [[float(activity)] for activity in activities]
+        properties = [[float(prop)] for prop in properties]
 
     return MoleculeDataLoader(
         dataset=MoleculeDataset([
             MoleculeDatapoint(
                 smiles=[smiles],
-                targets=activity,
+                targets=prop,
                 features=fingerprint,
-            ) for smiles, fingerprint, activity in zip(smiles, fingerprints, activities)
+            ) for smiles, fingerprint, prop in zip(smiles, fingerprints, properties)
         ]),
         num_workers=0,  # Needed for deterministic behavior and faster when training/testing on CPU only
         shuffle=shuffle
     )
 
 
-def build_chemprop_model(train_smiles: list[str],
+def build_chemprop_model(dataset_type: str,
+                         train_smiles: list[str],
                          val_smiles: list[str],
                          test_smiles: list[str],
                          fingerprint_type: Optional[str],
                          train_fingerprints: Optional[np.ndarray],
                          val_fingerprints: Optional[np.ndarray],
                          test_fingerprints: Optional[np.ndarray],
-                         train_activities: list[int],
-                         val_activities: list[int],
-                         test_activities: list[int],
+                         property_name: str,
+                         train_properties: list[int],
+                         val_properties: list[int],
+                         test_properties: list[int],
                          save_path: Path) -> tuple[dict[str, float], np.ndarray]:
     """Trains, evaluates, and saves a chemprop model."""
     # Create args
     arg_list = [
         '--data_path', 'foo.csv',
-        '--dataset_type', 'classification',
+        '--dataset_type', dataset_type,
         '--save_dir', 'foo',
         '--quiet'
     ]
@@ -131,7 +159,7 @@ def build_chemprop_model(train_smiles: list[str],
             raise ValueError(f'Fingerprint type "{fingerprint_type}" is not supported.')
 
     args = TrainArgs().parse_args(arg_list)
-    args.task_names = ['activity']
+    args.task_names = [property_name]
     args.train_data_size = len(train_smiles)
 
     if fingerprint_type is not None:
@@ -145,18 +173,18 @@ def build_chemprop_model(train_smiles: list[str],
     train_data_loader = build_chemprop_data_loader(
         smiles=train_smiles,
         fingerprints=train_fingerprints,
-        activities=train_activities,
+        properties=train_properties,
         shuffle=True
     )
     val_data_loader = build_chemprop_data_loader(
         smiles=val_smiles,
         fingerprints=val_fingerprints,
-        activities=val_activities
+        properties=val_properties
     )
     test_data_loader = build_chemprop_data_loader(
         smiles=test_smiles,
         fingerprints=test_fingerprints,
-        activities=test_activities
+        properties=test_properties
     )
 
     # Build model
@@ -170,6 +198,7 @@ def build_chemprop_model(train_smiles: list[str],
 
     # Run training
     best_score = float('inf') if args.minimize_score else -float('inf')
+    val_metric = 'PRC-AUC' if dataset_type == 'classification' else 'MSE'
     best_epoch = n_iter = 0
     for epoch in trange(args.epochs):
         print(f'Epoch {epoch}')
@@ -184,26 +213,42 @@ def build_chemprop_model(train_smiles: list[str],
         )
 
         val_probs = chemprop_predict(model=model, data_loader=val_data_loader)
-        val_score = average_precision_score(val_activities, val_probs)
 
-        if val_score > best_score:
+        if dataset_type == 'classification':
+            val_score = average_precision_score(val_properties, val_probs)
+            new_best_val_score = val_score > best_score
+        elif dataset_type == 'regression':
+            val_score = mean_squared_error(val_properties, val_probs)
+            new_best_val_score = val_score < best_score
+        else:
+            raise ValueError(f'Dataset type "{dataset_type}" is not supported.')
+
+        if new_best_val_score:
             best_score, best_epoch = val_score, epoch
             save_checkpoint(path=save_path, model=model, args=args)
 
     # Evaluate on test set using model with the best validation score
-    print(f'Best validation {args.metric} = {best_score:.6f} on epoch {best_epoch}')
+    print(f'Best validation {val_metric} = {best_score:.6f} on epoch {best_epoch}')
     model = load_checkpoint(save_path, device=args.device)
 
     # Make test predictions
-    test_probs = chemprop_predict(model=model, data_loader=test_data_loader)
+    test_preds = chemprop_predict(model=model, data_loader=test_data_loader)
 
     # Evaluate predictions
-    scores = {
-        'roc_auc': roc_auc_score(test_activities, test_probs),
-        'prc_auc': average_precision_score(test_activities, test_probs)
-    }
+    if dataset_type == 'classification':
+        scores = {
+            'roc_auc': roc_auc_score(test_properties, test_preds),
+            'prc_auc': average_precision_score(test_properties, test_preds)
+        }
+    elif dataset_type == 'regression':
+        scores = {
+            'mse': mean_squared_error(test_properties, test_preds),
+            'r2': r2_score(test_properties, test_preds)
+        }
+    else:
+        raise ValueError(f'Dataset type "{dataset_type}" is not supported.')
 
-    return scores, test_probs
+    return scores, test_preds
 
 
 def train_model(args: Args) -> None:
@@ -255,7 +300,7 @@ def train_model(args: Args) -> None:
 
         # Build and train model
         if args.model_type == 'chemprop':
-            scores, test_probs = build_chemprop_model(
+            scores, test_preds = build_chemprop_model(
                 train_smiles=train_data[args.smiles_column],
                 val_smiles=val_data[args.smiles_column],
                 test_smiles=test_data[args.smiles_column],
@@ -263,17 +308,18 @@ def train_model(args: Args) -> None:
                 train_fingerprints=train_fingerprints,
                 val_fingerprints=val_fingerprints,
                 test_fingerprints=test_fingerprints,
-                train_activities=train_data[args.activity_column],
-                val_activities=val_data[args.activity_column],
-                test_activities=test_data[args.activity_column],
+                property_name=args.property_column,
+                train_properties=train_data[args.property_column],
+                val_properties=val_data[args.property_column],
+                test_properties=test_data[args.property_column],
                 save_path=args.save_dir / f'model_{model_num}.pt'
             )
         else:
-            scores, test_probs = build_sklearn_model(
+            scores, test_preds = build_sklearn_model(
                 train_fingerprints=train_fingerprints,
                 test_fingerprints=test_fingerprints,
-                train_activities=train_data[args.activity_column],
-                test_activities=test_data[args.activity_column],
+                train_properties=train_data[args.property_column],
+                test_properties=test_data[args.property_column],
                 save_path=args.save_dir / f'model_{model_num}.pkl',
                 model_type=args.model_type
             )
@@ -281,8 +327,8 @@ def train_model(args: Args) -> None:
         # Save test predictions
         test_df = pd.DataFrame({
             'smiles': test_data[args.smiles_column],
-            'activity': test_data[args.activity_column],
-            'prediction': test_probs
+            args.property_column: test_data[args.property_column],
+            'prediction': test_preds
         })
         test_df.to_csv(args.save_dir / f'model_{model_num}_test_preds.csv', index=False)
 

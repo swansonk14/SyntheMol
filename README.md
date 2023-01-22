@@ -225,7 +225,9 @@ python train_model.py \
     --data_path data/screening_data/AB_combined.csv \
     --save_dir ckpt/AB_combined_${MODEL} \
     --model_type rf \
+    --dataset_type classification \
     --fingerprint_type rdkit \
+    --property_column activity \
     --num_models 10
 ```
 
@@ -234,7 +236,9 @@ Chemprop
 python train_model.py \
     --data_path data/screening_data/AB_combined.csv \
     --save_dir ckpt/AB_combined_chemprop \
+    --dataset_type classification \
     --model_type chemprop \
+    --property_column activity \
     --num_models 10
 ```
 
@@ -244,7 +248,9 @@ python train_model.py \
     --data_path data/screening_data/AB_combined.csv \
     --save_dir ckpt/AB_combined_chemprop_rdkit \
     --model_type chemprop \
+    --dataset_type classification \
     --fingerprint_type rdkit \
+    --property_column activity \
     --num_models 10
 ```
 
