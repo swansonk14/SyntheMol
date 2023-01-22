@@ -35,6 +35,17 @@ class Args(Tap):
         self.save_dir.mkdir(parents=True, exist_ok=True)
 
 
+def sklearn_predict(model: RandomForestClassifier | RandomForestRegressor | MLPClassifier | MLPRegressor,
+                    fingerprints: np.ndarray) -> np.ndarray:
+    """Predicts properties using a scikit-learn model."""
+    if isinstance(model, RandomForestClassifier) or isinstance(model, MLPClassifier):
+        return model.predict_proba(fingerprints)[:, 1]
+    elif isinstance(model, RandomForestRegressor) or isinstance(model, MLPRegressor):
+        return model.predict(fingerprints)
+
+    raise ValueError(f'Model type {type(model)} is not supported.')
+
+
 def chemprop_predict(*args, **kwargs) -> np.ndarray:
     """Converts chemprop predictions from list of lists to a 1D numpy array (assumes single prediction task)."""
     return np.array(_chemprop_predict(*args, **kwargs))[:, 0]
@@ -79,17 +90,16 @@ def build_sklearn_model(dataset_type: str,
     with open(save_path, 'wb') as f:
         pickle.dump(model, f)
 
+    # Make test predictions
+    test_preds = sklearn_predict(model=model, fingerprints=test_fingerprints)
+
     # Make and evaluate test predictions
     if dataset_type == 'classification':
-        test_preds = model.predict_proba(test_fingerprints)[:, 1]
-
         scores = {
             'roc_auc': roc_auc_score(test_properties, test_preds),
             'prc_auc': average_precision_score(test_properties, test_preds)
         }
     elif dataset_type == 'regression':
-        test_preds = model.predict(test_fingerprints)
-
         scores = {
             'mse': mean_squared_error(test_properties, test_preds),
             'r2': r2_score(test_properties, test_preds),
@@ -301,6 +311,7 @@ def train_model(args: Args) -> None:
         # Build and train model
         if args.model_type == 'chemprop':
             scores, test_preds = build_chemprop_model(
+                dataset_type=args.dataset_type,
                 train_smiles=train_data[args.smiles_column],
                 val_smiles=val_data[args.smiles_column],
                 test_smiles=test_data[args.smiles_column],
@@ -316,6 +327,7 @@ def train_model(args: Args) -> None:
             )
         else:
             scores, test_preds = build_sklearn_model(
+                dataset_type=args.dataset_type,
                 train_fingerprints=train_fingerprints,
                 test_fingerprints=test_fingerprints,
                 train_properties=train_data[args.property_column],

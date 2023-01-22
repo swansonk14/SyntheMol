@@ -6,15 +6,15 @@ from typing import Literal, Optional
 import numpy as np
 import pandas as pd
 import torch
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.neural_network import MLPClassifier
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.neural_network import MLPClassifier, MLPRegressor
 from tap import Tap
 from tqdm import tqdm
 
 from chem_utils.molecular_fingerprints import compute_fingerprints
 from chemprop.utils import load_checkpoint
 
-from train_model import build_chemprop_data_loader, chemprop_predict
+from train_model import build_chemprop_data_loader, chemprop_predict, sklearn_predict
 
 
 class Args(Tap):
@@ -41,14 +41,14 @@ def predict_sklearn(fingerprints: np.ndarray,
     # Load model
     with open(model_path, 'rb') as f:
         if model_type == 'rf':
-            model: RandomForestClassifier = pickle.load(f)
+            model: RandomForestClassifier | RandomForestRegressor = pickle.load(f)
         elif model_type == 'mlp':
-            model: MLPClassifier = pickle.load(f)
+            model: MLPClassifier | MLPRegressor = pickle.load(f)
         else:
             raise ValueError(f'Model type "{model_type}" is not supported.')
 
     # Make predictions
-    preds = model.predict_proba(fingerprints)[:, 1]
+    preds = sklearn_predict(model=model, fingerprints=fingerprints)
 
     return preds
 

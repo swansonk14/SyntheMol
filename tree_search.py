@@ -13,6 +13,8 @@ import numpy as np
 import pandas as pd
 import torch
 from rdkit import Chem
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.metrics import pairwise_distances
 from tap import Tap
 from tqdm import trange
@@ -22,6 +24,7 @@ from chemprop.utils import load_checkpoint
 from reactions import Reaction, set_allowed_reaction_smiles
 from real_reactions import REAL_REACTIONS
 from synnet_reactions import SYNNET_REACTIONS
+from train_model import sklearn_predict
 
 
 class Args(Tap):
@@ -576,6 +579,7 @@ def create_model_scoring_fn(model_path: Path,
 
         models = [load_checkpoint(path=model_path).eval() for model_path in model_paths]
 
+        # Set up model scoring function for ensemble of chemprop models
         def model_scorer(smiles: str, fingerprint: Optional[np.ndarray]) -> float:
             fingerprint = [fingerprint] if fingerprint is not None else None
 
@@ -586,8 +590,9 @@ def create_model_scoring_fn(model_path: Path,
             with open(model_path, 'rb') as f:
                 models.append(pickle.load(f))
 
+        # Set up model scoring function for ensemble of random forest or MLP models
         def model_scorer(smiles: str, fingerprint: np.ndarray) -> float:
-            return float(np.mean([model.predict_proba([fingerprint])[0, 1] for model in models]))
+            return float(np.mean([sklearn_predict(model=model, fingerprints=fingerprint)[0] for model in models]))
 
     @cache
     def model_scoring_fn(smiles: str) -> float:

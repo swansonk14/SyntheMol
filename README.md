@@ -223,7 +223,7 @@ Random forest with RDKit
 ```bash
 python train_model.py \
     --data_path data/screening_data/AB_combined.csv \
-    --save_dir ckpt/AB_combined_${MODEL} \
+    --save_dir ckpt/AB_combined_RF_rdkit \
     --model_type rf \
     --dataset_type classification \
     --fingerprint_type rdkit \
