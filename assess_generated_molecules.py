@@ -14,7 +14,7 @@ from chem_utils.molecular_similarities import compute_top_similarities
 class Args(Tap):
     data_path: Path  # Path to CSV file containing generated molecules.
     save_dir: Path  # Path to directory where plots will be saved.
-    train_hits_path: Path = None  # Path to CSV file containing hits from the training set for computing novelty.
+    train_hits_path: Optional[Path] = None  # Optional path to CSV file containing hits from the training set for computing novelty.
     smiles_column: str = 'smiles'  # The name of the column containing SMILES in data_path.
     train_hits_smiles_column: str = 'smiles'  # The name of the column containing SMILES in train_hits_path.
     score_column: str = 'score'  # The name of the column containing scores.
@@ -219,15 +219,12 @@ def assess_generated_molecules(args: Args) -> None:
     # Load generated molecules
     data = pd.read_csv(args.data_path)
 
-    # Load train hits
-    train_hits = pd.read_csv(args.train_hits_path)
-
     # Count molecules
     print(f'Number of molecules = {len(data):,}')
 
     # Score distribution
     plot_scores(
-        scores=data['score'],
+        scores=data[args.score_column],
         save_dir=args.save_dir
     )
 
@@ -238,14 +235,18 @@ def assess_generated_molecules(args: Args) -> None:
         save_dir=args.save_dir
     )
 
-    # Similarity between generated molecules and train hits
-    plot_similarity(
-        smiles=data[args.smiles_column],
-        similarity_type='tversky',
-        save_dir=args.save_dir,
-        reference_smiles=train_hits[args.train_hits_smiles_column],
-        reference_name='Train Hits'
-    )
+    if args.train_hits_path is not None:
+        # Load train hits
+        train_hits = pd.read_csv(args.train_hits_path)
+
+        # Similarity between generated molecules and train hits
+        plot_similarity(
+            smiles=data[args.smiles_column],
+            similarity_type='tversky',
+            save_dir=args.save_dir,
+            reference_smiles=train_hits[args.train_hits_smiles_column],
+            reference_name='Train Hits'
+        )
 
     # Number of reactions
     plot_reactions_counts(
