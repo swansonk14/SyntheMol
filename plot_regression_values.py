@@ -31,7 +31,7 @@ def plot_regression_values(args: Args) -> None:
     std = data['mean'].std()
     threshold = mean - 2 * std
     threshold_color = ['red']
-    threshold_name = 'mean - 2 * std'
+    threshold_name = r'$\mu - 2 \sigma$'
 
     # Get regression values
     index = np.arange(len(data))

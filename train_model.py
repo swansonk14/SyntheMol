@@ -1,5 +1,6 @@
 """Trains a machine learning classifier model."""
 import pickle
+import time
 from pathlib import Path
 from random import Random
 from typing import Literal, Optional
@@ -309,6 +310,8 @@ def train_model(args: Args) -> None:
             test_fingerprints = val_fingerprints = train_fingerprints = None
 
         # Build and train model
+        start_time = time.time()
+
         if args.model_type == 'chemprop':
             scores, test_preds = build_chemprop_model(
                 dataset_type=args.dataset_type,
@@ -335,6 +338,8 @@ def train_model(args: Args) -> None:
                 save_path=args.save_dir / f'model_{model_num}.pkl',
                 model_type=args.model_type
             )
+
+        scores['time'] = time.time() - start_time
 
         # Save test predictions
         test_df = pd.DataFrame({
