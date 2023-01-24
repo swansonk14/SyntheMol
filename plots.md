@@ -226,7 +226,7 @@ python plot_model_generalization.py \
 
 ### REAL reactions
 
-Visualize REAL reactions using [chem_utils](https://github.com/swansonk14/chem_utils)..
+Visualize REAL reactions using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python visualize_reactions.py \
     --data_path ../../combinatorial_antibiotics/data/real_reaction_smarts.csv \
@@ -249,9 +249,9 @@ python plot_real_counts.py \
 Compute molecular weight, logP, QED, and SAscore of REAL molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python compute_properties.py \
-    --data_path ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled.csv \
+    --data_path ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled.csv \
     --properties logp mol_weight qed sa_score \
-    --save_path ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled_with_properties.csv
+    --save_path ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_with_properties.csv
 ```
 
 Compute molecular weight, logP, QED, and SAscore of train molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
@@ -265,7 +265,7 @@ python compute_properties.py \
 Plot logP distribution of REAL and train molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python plot_property_distribution.py \
-    --data_paths ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled_with_properties.csv \
+    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_with_properties.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined_with_properties.csv \
     --property_column logp \
     --save_dir ../../combinatorial_antibiotics/plots/paper/properties/logp_train_vs_real \
@@ -276,7 +276,7 @@ python plot_property_distribution.py \
 Plot molecular weight distribution of REAL and train molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python plot_property_distribution.py \
-    --data_paths ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled_with_properties.csv \
+    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_with_properties.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined_with_properties.csv \
     --property_column mol_weight \
     --save_dir ../../combinatorial_antibiotics/plots/paper/properties/mol_weight_train_vs_real \
@@ -286,7 +286,7 @@ python plot_property_distribution.py \
 Plot QED distribution of REAL and train molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python plot_property_distribution.py \
-    --data_paths ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled_with_properties.csv \
+    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_with_properties.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined_with_properties.csv \
     --property_column qed \
     --save_dir ../../combinatorial_antibiotics/plots/paper/properties/qed_train_vs_real
@@ -295,7 +295,7 @@ python plot_property_distribution.py \
 Plot SAscore distribution of REAL and train molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python plot_property_distribution.py \
-    --data_paths ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled_with_properties.csv \
+    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_with_properties.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined_with_properties.csv \
     --property_column sa_score \
     --save_dir ../../combinatorial_antibiotics/plots/paper/properties/sa_score_train_vs_real
@@ -306,7 +306,7 @@ python plot_property_distribution.py \
 Plot t-SNE of training data and REAL space sample using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python dimensionality_reduction.py \
-    --data_paths ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled.csv \
+    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled.csv \
     ../../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined_hits.csv \

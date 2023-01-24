@@ -484,6 +484,7 @@ class TreeSearcher:
 
         return nodes
 
+    # TODO: need to change this to account for the fact that the state map doesn't keep track of all intermediate nodes
     @property
     def num_nodes(self) -> int:
         """Gets the number of nodes in the search tree."""
