@@ -13,8 +13,6 @@ import numpy as np
 import pandas as pd
 import torch
 from rdkit import Chem
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.metrics import pairwise_distances
 from tap import Tap
 from tqdm import trange
@@ -583,7 +581,9 @@ def create_model_scoring_fn(model_path: Path,
         def model_scorer(smiles: str, fingerprint: Optional[np.ndarray]) -> float:
             fingerprint = [fingerprint] if fingerprint is not None else None
 
-            return float(np.mean([model(batch=[[smiles]], features_batch=fingerprint).item() for model in models]))
+            return float(np.mean([
+                model(batch=[[smiles]], features_batch=fingerprint).item() for model in models
+            ]))
     else:
         models = []
         for model_path in model_paths:
@@ -592,7 +592,9 @@ def create_model_scoring_fn(model_path: Path,
 
         # Set up model scoring function for ensemble of random forest or MLP models
         def model_scorer(smiles: str, fingerprint: np.ndarray) -> float:
-            return float(np.mean([sklearn_predict(model=model, fingerprints=fingerprint)[0] for model in models]))
+            return float(np.mean([
+                sklearn_predict(model=model, fingerprints=fingerprint.reshape(1, -1))[0] for model in models
+            ]))
 
     @cache
     def model_scoring_fn(smiles: str) -> float:
