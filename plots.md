@@ -537,17 +537,17 @@ t-SNE for final generated sets using [chem_utils](https://github.com/swansonk14/
 ```bash
 python dimensionality_reduction.py \
     --data_paths ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
+    ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_ids_20k/molecules.csv \
+    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_ids_20k/molecules.csv \
+    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_ids_20k/molecules.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined_hits.csv \
     ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
     ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
     ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
-    ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_ids_20k/molecules.csv \
-    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_ids_20k/molecules.csv \
-    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_ids_20k/molecules.csv \
-    --data_names train train_hits random_forest chemprop chemprop_rdkit random_forest_full chemprop_full chemprop_rdkit_full \
+    --data_names train random_forest_full chemprop_full chemprop_rdkit_full train_hits random_forest chemprop chemprop_rdkit \
     --max_molecules 2000 \
-    --highlight_data_names random_forest chemprop chemprop_rdkit \
-    --display_data_names train train_hits random_forest chemprop chemprop_rdkit \
+    --highlight_data_names train_hits random_forest chemprop chemprop_rdkit \
+    --colors blue black red orange blue black red orange \
     --save_dir ../../combinatorial_antibiotics/plots/paper/tsne/train_vs_train_hits_vs_generated_selected
 ```
 
