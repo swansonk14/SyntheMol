@@ -249,9 +249,9 @@ python plot_real_counts.py \
 Compute molecular weight, logP, QED, and SAscore of REAL molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python compute_properties.py \
-    --data_path ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled.csv \
+    --data_path ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_25k.csv \
     --properties logp mol_weight qed sa_score \
-    --save_path ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_with_properties.csv
+    --save_path ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_25k_with_properties.csv
 ```
 
 Compute molecular weight, logP, QED, and SAscore of train molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
@@ -265,7 +265,7 @@ python compute_properties.py \
 Plot logP distribution of REAL and train molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python plot_property_distribution.py \
-    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_with_properties.csv \
+    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_25k_with_properties.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined_with_properties.csv \
     --property_column logp \
     --save_dir ../../combinatorial_antibiotics/plots/paper/properties/logp_train_vs_real \
@@ -276,7 +276,7 @@ python plot_property_distribution.py \
 Plot molecular weight distribution of REAL and train molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python plot_property_distribution.py \
-    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_with_properties.csv \
+    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_25k_with_properties.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined_with_properties.csv \
     --property_column mol_weight \
     --save_dir ../../combinatorial_antibiotics/plots/paper/properties/mol_weight_train_vs_real \
@@ -286,7 +286,7 @@ python plot_property_distribution.py \
 Plot QED distribution of REAL and train molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python plot_property_distribution.py \
-    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_with_properties.csv \
+    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_25k_with_properties.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined_with_properties.csv \
     --property_column qed \
     --save_dir ../../combinatorial_antibiotics/plots/paper/properties/qed_train_vs_real
@@ -295,7 +295,7 @@ python plot_property_distribution.py \
 Plot SAscore distribution of REAL and train molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python plot_property_distribution.py \
-    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_with_properties.csv \
+    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_25k_with_properties.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined_with_properties.csv \
     --property_column sa_score \
     --save_dir ../../combinatorial_antibiotics/plots/paper/properties/sa_score_train_vs_real
@@ -306,11 +306,11 @@ python plot_property_distribution.py \
 Plot t-SNE of training data and REAL space sample using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python dimensionality_reduction.py \
-    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled.csv \
+    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_25k.csv \
     ../../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined_hits.csv \
-    --max_molecules 2000 \
+    --max_molecules 7500 1000 1000 500 \
     --data_names REAL_molecules REAL_building_blocks train train_hits \
     --highlight_data_names train_hits \
     --save_dir ../../combinatorial_antibiotics/plots/paper/tsne/train_vs_train_hits_vs_real_vs_real_building_blocks
@@ -352,30 +352,30 @@ First, make predictions on a random sample of REAL molecules using each model.
 #!/bin/bash
 
 python predict_model.py \
-    --data_path data/Enamine_REAL_space_sampled.csv \
+    --data_path data/Enamine_REAL_space_sampled_25k.csv \
     --model_path ckpt/AB_combined_RF_rdkit \
     --model_type rf \
     --fingerprint_type rdkit \
     --average_preds
 
 python predict_model.py \
-    --data_path data/Enamine_REAL_space_sampled.csv \
+    --data_path data/Enamine_REAL_space_sampled_25k.csv \
     --model_path ckpt/AB_combined_chemprop \
     --model_type chemprop \
     --average_preds
 
 python predict_model.py \
-    --data_path data/Enamine_REAL_space_sampled.csv \
+    --data_path data/Enamine_REAL_space_sampled_25k.csv \
     --model_path ckpt/AB_combined_chemprop_rdkit \
     --model_type chemprop \
     --fingerprint_type rdkit \
     --average_preds
 ```
 
-Then, plot the fragment vs full molecule scores. (Note: Only 97,011 out of 100,000 molecules have all required fragment SMILES.)
+Then, plot the fragment vs full molecule scores. (Note: Only 24,276 out of 100,000 molecules have all required fragment SMILES.)
 ```bash
 python plot_fragment_vs_molecule_scores.py \
-    --data_path data/Enamine_REAL_space_sampled.csv \
+    --data_path data/Enamine_REAL_space_sampled_25k.csv \
     --score_column rf_rdkit_ensemble_preds \
     --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     --fragment_to_score_path ckpt/AB_combined_RF_rdkit/fragments_to_model_scores.json \
@@ -385,7 +385,7 @@ python plot_fragment_vs_molecule_scores.py \
 
 ```bash
 python plot_fragment_vs_molecule_scores.py \
-    --data_path data/Enamine_REAL_space_sampled.csv \
+    --data_path data/Enamine_REAL_space_sampled_25k.csv \
     --score_column chemprop_ensemble_preds \
     --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     --fragment_to_score_path ckpt/AB_combined_chemprop/fragments_to_model_scores.json \
@@ -395,7 +395,7 @@ python plot_fragment_vs_molecule_scores.py \
 
 ```bash
 python plot_fragment_vs_molecule_scores.py \
-    --data_path data/Enamine_REAL_space_sampled.csv \
+    --data_path data/Enamine_REAL_space_sampled_25k.csv \
     --score_column chemprop_rdkit_ensemble_preds \
     --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     --fragment_to_score_path ckpt/AB_combined_chemprop_rdkit/fragments_to_model_scores.json \
@@ -403,30 +403,16 @@ python plot_fragment_vs_molecule_scores.py \
     --save_dir plots/paper/full_vs_fragment_scores/chemprop_rdkit_full_vs_fragment_scores
 ```
 
-### Score distribution over REAL molecules
+### Assess REAL molecules
 
-Plot score distribution for each model.
+Assess scores and similarity distributions of REAL molecules.
 ```bash
-python plot_score_distribution.py \
-    --data_path data/Enamine_REAL_space_sampled.csv \
-    --score_column rf_rdkit_ensemble_preds \
-    --save_dir plots/paper/real_scores/rf_rdkit
+python assess_real_molecules.py \
+    --data_path data/Enamine_REAL_space_sampled_25k.csv \
+    --save_dir plots/paper/real_analysis \
+    --train_hits_path data/screening_data/AB_combined_hits.csv \
+    --score_columns rf_rdkit_ensemble_preds chemprop_ensemble_preds chemprop_rdkit_ensemble_preds
 ```
-
-```bash
-python plot_score_distribution.py \
-    --data_path data/Enamine_REAL_space_sampled.csv \
-    --score_column chemprop_ensemble_preds \
-    --save_dir plots/paper/real_scores/chemprop
-```
-
-```bash
-python plot_score_distribution.py \
-    --data_path data/Enamine_REAL_space_sampled.csv \
-    --score_column chemprop_rdkit_ensemble_preds \
-    --save_dir plots/paper/real_scores/chemprop_rdkit
-```
-
 
 
 ## MCTS Analysis
@@ -553,6 +539,7 @@ python dimensionality_reduction.py \
 
 ### eNTRy properties
 
+TODO: remove this?
 TODO: save these scores
 
 ```bash

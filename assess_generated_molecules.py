@@ -23,23 +23,24 @@ class Args(Tap):
         self.save_dir.mkdir(parents=True, exist_ok=True)
 
 
-def plot_scores(scores: list[float], save_dir: Path) -> None:
+def plot_scores(scores: list[float], save_dir: Path, score_name: str = 'score') -> None:
     """Plot score distribution.
 
     :param scores: A list of scores.
     :param save_dir: The directory where the plot will be saved.
+    :param score_name: The name of the score.
     """
     # Plot score distribution
     plt.clf()
     plt.hist(scores, bins=100)
-    plt.xlabel('Score')
+    plt.xlabel(score_name)
     plt.ylabel('Count')
-    plt.title('Score Distribution')
-    plt.savefig(save_dir / f'score.pdf', bbox_inches='tight')
+    plt.title(f'{score_name} Distribution')
+    plt.savefig(save_dir / f'{score_name}.pdf', bbox_inches='tight')
 
     # Save score distribution
-    fig_data = pd.DataFrame({'score': scores})
-    fig_data.to_csv(save_dir / f'score.csv', index=False)
+    fig_data = pd.DataFrame({score_name: scores})
+    fig_data.to_csv(save_dir / f'{score_name}.csv', index=False)
 
 
 def plot_similarity(

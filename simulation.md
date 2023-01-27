@@ -18,9 +18,9 @@ For comparison purposes, compute logP on a random sample of REAL molecules using
 
 ```bash
 python compute_properties.py \
-    --data_path ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled.csv \
+    --data_path ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled_25k.csv \
     --properties logp \
-    --save_path ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled_with_properties.csv
+    --save_path ../../combinatorial_antibiotics/data/enamine_REAL_space_sampled_25k_with_properties.csv
 ```
 
 
@@ -49,13 +49,13 @@ Random sample of REAL molecules.
 ```python
 import pandas as pd
 
-data = pd.read_csv('data/Enamine_REAL_space_sampled_with_properties.csv')
+data = pd.read_csv('data/Enamine_REAL_space_sampled_25k_with_properties.csv')
 data['logp_6.5'] = (data['logp'] > 6.5).astype(int)
 print(data['logp_6.5'].value_counts())
-data.to_csv('data/Enamine_REAL_space_sampled_with_properties.csv', index=False)
+data.to_csv('data/Enamine_REAL_space_sampled_25k_with_properties.csv', index=False)
 ```
 
-28 positive (0.028%) out of 100,000.
+11 positive (0.044%) out of 25,000.
 
 
 ## Train model
@@ -124,7 +124,7 @@ python compute_properties.py \
 Plot distribution of train vs generated vs REAL logP using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python plot_property_distribution.py \
-    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_with_properties.csv \
+    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_25k_with_properties.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined_with_properties.csv \
     ../../combinatorial_antibiotics/generations/logp_6.5_chemprop/molecules.csv \
     --property_column logp \

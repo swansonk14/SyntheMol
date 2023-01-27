@@ -33,8 +33,6 @@ def sample_real_space_for_file(path: Path, sample_proportion: float) -> tuple[pd
     rng = np.random.default_rng(seed=abs(hash(path.stem)))
     probs = rng.uniform(size=len(data))
     sampled_data = data.iloc[probs < sample_proportion]
-    print(probs)
-    print(sampled_data)
 
     return sampled_data, len(data)
 

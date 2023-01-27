@@ -89,9 +89,8 @@ Randomly sample REAL space molecules for analysis of a representative sample of 
 ```bash
 python sample_real_space.py \
     --data_dir data/Enamine_REAL_space \
-    --save_path data/Enamine_REAL_space_sampled.csv \
-    --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
-    --num_molecules 100000 \
+    --save_path data/Enamine_REAL_space_sampled_25k.csv \
+    --num_molecules 25000 \
     --parallel
 ```
 
@@ -660,6 +659,8 @@ conda activate entry-cli-env
 ```
 
 ### Apply the eNTRy rules
+
+TODO: remove this?
 
 Apply the eNTRy rules.
 
