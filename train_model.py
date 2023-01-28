@@ -31,6 +31,7 @@ class Args(Tap):
     property_column: str  # The name of the column containing property values.
     smiles_column: str = 'smiles'  # The name of the column containing SMILES.
     num_models: int = 1  # The number of models to train using 10-fold cross-validation.
+    epochs: int = 30  # The number of epochs to train the chemprop model.
 
     def process_args(self) -> None:
         self.save_dir.mkdir(parents=True, exist_ok=True)
@@ -149,13 +150,15 @@ def build_chemprop_model(dataset_type: str,
                          train_properties: list[int],
                          val_properties: list[int],
                          test_properties: list[int],
-                         save_path: Path) -> tuple[dict[str, float], np.ndarray]:
+                         save_path: Path,
+                         epochs: int) -> tuple[dict[str, float], np.ndarray]:
     """Trains, evaluates, and saves a chemprop model."""
     # Create args
     arg_list = [
         '--data_path', 'foo.csv',
         '--dataset_type', dataset_type,
         '--save_dir', 'foo',
+        '--epochs', str(epochs),
         '--quiet'
     ]
 
@@ -326,7 +329,8 @@ def train_model(args: Args) -> None:
                 train_properties=train_data[args.property_column],
                 val_properties=val_data[args.property_column],
                 test_properties=test_data[args.property_column],
-                save_path=args.save_dir / f'model_{model_num}.pt'
+                save_path=args.save_dir / f'model_{model_num}.pt',
+                epochs=args.epochs
             )
         else:
             scores, test_preds = build_sklearn_model(

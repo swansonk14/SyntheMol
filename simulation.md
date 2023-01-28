@@ -68,9 +68,12 @@ python train_model.py \
     --save_dir ckpt/logp_6.5_chemprop \
     --dataset_type classification \
     --model_type chemprop \
-    --property_column logp_6.5 \
-    --num_models 10
+    --property_column logp_6.5_epochs_1 \
+    --num_models 10 \
+    --epochs 1
 ```
+
+TODO: new results with one epoch
 
 ROC-AUC = 0.973 +/- 0.007
 
