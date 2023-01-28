@@ -68,16 +68,13 @@ python train_model.py \
     --save_dir ckpt/logp_6.5_chemprop \
     --dataset_type classification \
     --model_type chemprop \
-    --property_column logp_6.5_epochs_1 \
+    --property_column logp_6.5 \
     --num_models 10 \
     --epochs 1
 ```
 
-TODO: new results with one epoch
-
-ROC-AUC = 0.973 +/- 0.007
-
-PRC-AUC = 0.736 +/- 0.049
+1 epoch: ROC-AUC = 0.859 +/- 0.017, PRC-AUC = 0.198 +/- 0.045
+30 epochs: ROC-AUC = 0.973 +/- 0.007, PRC-AUC = 0.736 +/- 0.049
 
 
 ## Map fragments to model scores
@@ -111,7 +108,8 @@ python tree_search.py \
     --max_reactions 1
 ```
 
-25,550 generated molecules in 8 hours and 53 minutes.
+1 epoch: 27,123 molecules in 7 hours and 19 minutes.
+30 epochs: 25,550 generated molecules in 8 hours and 53 minutes.
 
 
 ## Compute true logP
@@ -153,10 +151,11 @@ Print percent of generated molecules with true logP > 6.5.
 python -c "import pandas as pd
 data = pd.read_csv('generations/logp_6.5_chemprop/molecules.csv')
 num_pos = sum(data['logp_6.5'])
-print(f'{num_pos:,} positive ({100 * num_pos / len(data):.2f}%)')"
+print(f'{num_pos:,} positive ({100 * num_pos / len(data):.2f}%) out of {len(data):,}')"
 ```
 
-15,693 positive (61.4%) out of 25,550 (vs 0.028% for random REAL).
+1 epoch: 3,195 positive (11.78%) out of 27,123 (vs 0.044% for random REAL).
+30 epochs: 15,693 positive (61.4%) out of 25,550 (vs 0.044% for random REAL).
 
 Compute metrics.
 
@@ -170,6 +169,12 @@ print('ROC-AUC: ' + str(roc_auc_score(data['logp_6.5'], data['score'])))
 print('PRC-AUC: ' + str(average_precision_score(data['logp_6.5'], data['score'])))"
 ```
 
+1 epoch:
+SpearmanrResult(correlation=0.42308232369949134, pvalue=0.0)
+ROC-AUC: 0.6721572712399064
+PRC-AUC: 0.18060276214822235 (Note: high b/c 11.8% are positive)
+
+30 epochs:
 SpearmanrResult(correlation=0.10148604738350796, pvalue=1.8034441138216467e-59)
 ROC-AUC: 0.540647770477802
 PRC-AUC: 0.62236162848842 (Note: high b/c 61.4% are positive)
@@ -215,10 +220,11 @@ python filter_molecules.py \
 python -c "import pandas as pd
 data = pd.read_csv('generations/logp_6.5_chemprop/molecules_train_sim_below_0.5.csv')
 num_pos = sum(data['logp_6.5'])
-print(f'{num_pos:,} positive ({100 * num_pos / len(data):.2f}%)')"
+print(f'{num_pos:,} positive ({100 * num_pos / len(data):.2f}%) out of {len(data):,}')"
 ```
 
-Remaining: 17,803 molecules with 9,736 (54.69%) positive
+1 epoch: 2,427 positive (10.13%) out of 23,953
+30 epochs: 9,736 positive (54.69%) out of 17,803
 
 Filter generated molecules based on logP prediction score using [chem_utils](https://github.com/swansonk14/chem_utils).
 
@@ -234,10 +240,11 @@ python filter_molecules.py \
 python -c "import pandas as pd
 data = pd.read_csv('generations/logp_6.5_chemprop/molecules_train_sim_below_0.5_top_20_percent.csv')
 num_pos = sum(data['logp_6.5'])
-print(f'{num_pos:,} positive ({100 * num_pos / len(data):.2f}%)')"
+print(f'{num_pos:,} positive ({100 * num_pos / len(data):.2f}%) out of {len(data):,}')"
 ```
 
-Remaining: 3,561 molecules with 1,928 positive (54.14%)
+1 epoch: 782 positive (16.32%) out of 4,791
+30 epochs: 1,928 positive (54.14%) out of 3,561
 
 Cluster generated molecules based on Tanimoto similarity using [chem_utils](https://github.com/swansonk14/chem_utils).
 
@@ -260,10 +267,11 @@ python select_from_clusters.py \
 python -c "import pandas as pd
 data = pd.read_csv('generations/logp_6.5_chemprop/molecules_train_sim_below_0.5_top_20_percent_selected_50.csv')
 num_pos = sum(data['logp_6.5'])
-print(f'{num_pos:,} positive ({100 * num_pos / len(data):.2f}%)')"
+print(f'{num_pos:,} positive ({100 * num_pos / len(data):.2f}%) out of {len(data):,}')"
 ```
 
-Remaining: 50 molecules with 21 positive (42.00%)
+1 epoch: 6 positive (12.00%) out of 50
+30 epochs: 21 positive (42.00%) out of 50
 
 
 Visualize selected molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
