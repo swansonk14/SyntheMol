@@ -125,8 +125,8 @@ python compute_properties.py \
 Plot distribution of train vs generated vs REAL logP using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python plot_property_distribution.py \
-    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_25k_with_properties.csv \
-    ../../combinatorial_antibiotics/data/screening_data/AB_combined_with_properties.csv \
+    --data_paths ../../combinatorial_antibiotics/data/screening_data/AB_combined_with_properties.csv \
+    ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_25k_with_properties.csv \
     ../../combinatorial_antibiotics/generations/logp_6.5_chemprop/molecules.csv \
     --property_column logp \
     --save_dir ../../combinatorial_antibiotics/generations/logp_6.5_chemprop \
@@ -155,7 +155,7 @@ print(f'{num_pos:,} positive ({100 * num_pos / len(data):.2f}%) out of {len(data
 ```
 
 1 epoch: 3,195 positive (11.78%) out of 27,123 (vs 0.044% for random REAL).
-30 epochs: 15,693 positive (61.4%) out of 25,550 (vs 0.044% for random REAL).
+30 epochs: 15,693 positive (61.42%) out of 25,550 (vs 0.044% for random REAL).
 
 Compute metrics.
 
