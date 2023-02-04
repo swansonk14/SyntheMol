@@ -1,7 +1,9 @@
 """Counts reactions and reagents in REAL space."""
 from collections import Counter
+from functools import partial
 from multiprocessing import Pool
 from pathlib import Path
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -15,7 +17,8 @@ from count_real_database import save_counts_as_csv
 class Args(Tap):
     data_dir: Path  # Path to directory with CXSMILES files containing the REAL database.
     save_dir: Path  # Path to directory where reaction and reagent counts will be saved.
-    parallel: bool = False  # Whether to run the script in parallel across files rather than sequentially.
+    fragment_path: Optional[Path] = None  # If provided, only count reactions and reagents that contain the fragments in this file.
+    fragment_id_column: str = 'Reagent_ID'  # Column in fragment file that contains fragment IDs.
 
     def process_args(self) -> None:
         self.save_dir.mkdir(parents=True, exist_ok=True)
@@ -24,10 +27,20 @@ class Args(Tap):
 USE_COLS = [REAL_REACTION_COL] + REAL_REAGENT_COLS
 
 
-def count_real_space_for_file(path: Path) -> tuple[Counter, Counter]:
+def count_real_space_for_file(path: Path, fragment_set: Optional[set] = None) -> tuple[Counter, Counter, int, int]:
     """Counts reactions and reagents for a single REAL space file."""
     # Load REAL data file
     data = pd.read_csv(path, sep='\t', usecols=USE_COLS)
+
+    # Get number of molecules in file
+    num_molecules_in_file = len(data)
+
+    # Optionally filter by fragments
+    if fragment_set is not None:
+        data = data[data[REAL_REAGENT_COLS].isin(fragment_set).all(axis=1)]
+
+    # Get number of molecules that will be counted
+    num_molecules_counted = len(data)
 
     # Count reactions
     reaction_counts = Counter(data[REAL_REACTION_COL])
@@ -38,7 +51,7 @@ def count_real_space_for_file(path: Path) -> tuple[Counter, Counter]:
         unique_reagents = {reagent for reagent in reagents if not np.isnan(reagent)}
         reagent_counts.update(unique_reagents)
 
-    return reaction_counts, reagent_counts
+    return reaction_counts, reagent_counts, num_molecules_in_file, num_molecules_counted
 
 
 def count_real_space(args: Args) -> None:
@@ -47,30 +60,45 @@ def count_real_space(args: Args) -> None:
     data_paths = sorted(args.data_dir.rglob('*.cxsmiles.bz2'))
     print(f'Number of files = {len(data_paths):,}')
 
+    # Optionally get set of fragments to filter by
+    if args.fragment_path is not None:
+        fragment_set = set(pd.read_csv(args.fragment_path)[args.fragment_id_column])
+        print(f'Number of fragments = {len(fragment_set):,}')
+    else:
+        fragment_set = None
+
+    # Set up function to count reactions and reagents for a single file
+    count_real_space_for_file_fn = partial(
+        count_real_space_for_file,
+        fragment_set=fragment_set
+    )
+
     # Create combined counters
     combined_reaction_counts = Counter()
     combined_reagent_counts = Counter()
-
-    # Set up map function
-    if args.parallel:
-        pool = Pool()
-        map_fn = pool.imap
-    else:
-        pool = None
-        map_fn = map
+    total_num_molecules = 0
+    total_num_molecules_counted = 0
 
     # Loop through all REAL space files
-    with tqdm(total=REAL_SPACE_SIZE) as progress_bar:
-        for reaction_counts, reagent_counts in map_fn(count_real_space_for_file, data_paths):
-            # Merge counts
-            combined_reaction_counts.update(reaction_counts)
-            combined_reagent_counts.update(reagent_counts)
+    with Pool() as pool:
+        with tqdm(total=REAL_SPACE_SIZE) as progress_bar:
+            for reaction_counts, reagent_counts, num_molecules_in_file, num_molecules_counted in map(
+                    count_real_space_for_file_fn,
+                    data_paths
+            ):
+                # Merge counts
+                combined_reaction_counts.update(reaction_counts)
+                combined_reagent_counts.update(reagent_counts)
+                total_num_molecules += num_molecules_in_file
+                total_num_molecules_counted += num_molecules_counted
 
-            # Update progress bar
-            progress_bar.update(reaction_counts.total())
+                # Update progress bar
+                progress_bar.update(num_molecules_in_file)
 
-    if pool is not None:
-        pool.close()
+    print(f'Total number of molecules = {total_num_molecules:,}')
+
+    if fragment_set is not None:
+        print(f'Total number of molecules with included fragments = {total_num_molecules_counted:,}')
 
     # Save reaction counts
     save_counts_as_csv(
@@ -84,7 +112,7 @@ def count_real_space(args: Args) -> None:
         {
             'reagent': reagent,
             'count': count,
-            'percent_of_real_molecules': count / REAL_SPACE_SIZE
+            'percent': count / total_num_molecules_counted
         } for reagent, count in combined_reagent_counts.items()
     ])
 

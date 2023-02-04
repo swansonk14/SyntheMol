@@ -77,8 +77,7 @@ Determine which reactions (and reagents) are most common in REAL space.
 ```bash
 python count_real_space.py \
     --data_dir data/Enamine_REAL_space \
-    --save_dir data/Enamine_REAL_space_counts \
-    --parallel
+    --save_dir data/Enamine_REAL_space_counts
 ```
 
 
@@ -135,6 +134,18 @@ python canonicalize_smiles.py \
 This removes 25 molecules whose salts cannot be stripped, leaving 138,060 molecules, of which 132,479 are unique.
 
 Note: This step is crucial to prevent errors in running reactions. Salts can cause reactions to create products that are the same as the reactants, leading to undesired infinite loops during molecule generation.
+
+
+### Count REAL molecules limited to valid fragments
+
+Count REAL space when limiting to the fragments that we have post-processing.
+
+```bash
+python count_real_space.py \
+    --data_dir data/Enamine_REAL_space \
+    --save_dir data/Enamine_REAL_space_counts_with_valid_fragments \
+    --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv
+```
 
 
 ### Process AB Training Data
