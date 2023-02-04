@@ -138,13 +138,14 @@ Note: This step is crucial to prevent errors in running reactions. Salts can cau
 
 ### Count REAL molecules limited to valid fragments
 
-Count REAL space when limiting to the fragments that we have post-processing.
+Count REAL space when limiting to the reactions and fragments that we have post-processing.
 
 ```bash
 python count_real_space.py \
     --data_dir data/Enamine_REAL_space \
     --save_dir data/Enamine_REAL_space_counts_with_valid_fragments \
-    --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv
+    --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
+    --only_selected_reactions
 ```
 
 

@@ -12,6 +12,7 @@ from tqdm import tqdm
 
 from constants import REAL_REACTION_COL, REAL_REAGENT_COLS, REAL_SPACE_SIZE
 from count_real_database import save_counts_as_csv
+from real_reactions import REAL_REACTIONS
 
 
 class Args(Tap):
@@ -19,15 +20,21 @@ class Args(Tap):
     save_dir: Path  # Path to directory where reaction and reagent counts will be saved.
     fragment_path: Optional[Path] = None  # If provided, only count reactions and reagents that contain the fragments in this file.
     fragment_id_column: str = 'Reagent_ID'  # Column in fragment file that contains fragment IDs.
+    only_selected_reactions: bool = False  # If True, only count reactions that are in the selected reactions in real_reactions.py.
 
     def process_args(self) -> None:
         self.save_dir.mkdir(parents=True, exist_ok=True)
 
 
 USE_COLS = [REAL_REACTION_COL] + REAL_REAGENT_COLS
+REAL_REACTION_IDS = {reaction.id for reaction in REAL_REACTIONS}
 
 
-def count_real_space_for_file(path: Path, fragment_set: Optional[set] = None) -> tuple[Counter, Counter, int, int]:
+def count_real_space_for_file(
+        path: Path,
+        fragment_set: Optional[set] = None,
+        only_selected_reactions: bool = False
+) -> tuple[Counter, Counter, int, int]:
     """Counts reactions and reagents for a single REAL space file."""
     # Load REAL data file
     data = pd.read_csv(path, sep='\t', usecols=USE_COLS)
@@ -38,6 +45,10 @@ def count_real_space_for_file(path: Path, fragment_set: Optional[set] = None) ->
     # Optionally filter by fragments
     if fragment_set is not None:
         data = data[data[REAL_REAGENT_COLS].isin(fragment_set).all(axis=1)]
+
+    # Optionally filter by selected reactions
+    if only_selected_reactions:
+        data = data[data[REAL_REACTION_COL].isin(REAL_REACTION_IDS)]
 
     # Get number of molecules that will be counted
     num_molecules_counted = len(data)
@@ -67,10 +78,15 @@ def count_real_space(args: Args) -> None:
     else:
         fragment_set = None
 
+    # Optionally only count selected reactions
+    if args.only_selected_reactions:
+        print(f'Number of selected reactions = {len(REAL_REACTION_IDS):,}')
+
     # Set up function to count reactions and reagents for a single file
     count_real_space_for_file_fn = partial(
         count_real_space_for_file,
-        fragment_set=fragment_set
+        fragment_set=fragment_set,
+        only_selected_reactions=args.only_selected_reactions
     )
 
     # Create combined counters
@@ -82,7 +98,7 @@ def count_real_space(args: Args) -> None:
     # Loop through all REAL space files
     with Pool() as pool:
         with tqdm(total=REAL_SPACE_SIZE) as progress_bar:
-            for reaction_counts, reagent_counts, num_molecules_in_file, num_molecules_counted in map(
+            for reaction_counts, reagent_counts, num_molecules_in_file, num_molecules_counted in pool.imap(
                     count_real_space_for_file_fn,
                     data_paths
             ):
@@ -96,9 +112,7 @@ def count_real_space(args: Args) -> None:
                 progress_bar.update(num_molecules_in_file)
 
     print(f'Total number of molecules = {total_num_molecules:,}')
-
-    if fragment_set is not None:
-        print(f'Total number of molecules with included fragments = {total_num_molecules_counted:,}')
+    print(f'Total number of molecules with selected fragments/reactions = {total_num_molecules_counted:,}')
 
     # Save reaction counts
     save_counts_as_csv(
