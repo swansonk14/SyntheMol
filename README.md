@@ -143,7 +143,7 @@ Count REAL space when limiting to the reactions and fragments that we have post-
 ```bash
 python count_real_space.py \
     --data_dir data/Enamine_REAL_space \
-    --save_dir data/Enamine_REAL_space_counts_with_valid_fragments \
+    --save_dir data/Enamine_REAL_space_counts_with_selected_fragments_and_reactions \
     --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     --only_selected_reactions
 ```
@@ -606,117 +606,33 @@ python assess_generated_molecules.py \
 done
 ```
 
-## Train Toxicity Model
+## Apply Toxicity Model
 
-Perform these steps from the chemprop repo.
+ClinTox is a clinical trial toxicity binary classification dataset with 1,478 molecules with 112 (7.58%) toxic.
 
-Generate RDKit features for toxicity data.
+Train toxicity model using the `CT_TOX` property of the ClinTox dataset. (Note that the ClinTox properties `CT_TOX` and `FDA_APPROVED` are nearly always identical, so we only use one.)
 ```bash
-python scripts/save_features.py \
+python train_model.py \
     --data_path data/clintox.csv \
-    --save_path features/clintox.npz
-```
-
-Train chemprop + RDKit model on toxicity data.
-```bash
-python train.py \
-    --data_path data/clintox.csv \
-    --dataset_type classification \
-    --metric prc-auc \
-    --extra_metrics auc \
-    --num_folds 10 \
-    --features_path features/clintox.npz \
-    --no_features_scaling \
     --save_dir ckpt/clintox \
-    --quiet
+    --model_type chemprop \
+    --dataset_type classification \
+    --fingerprint_type rdkit \
+    --property_column CT_TOX \
+    --num_models 10
 ```
 
 ```
-Overall test prc-auc = 0.707140 +/- 0.062722
-Overall test auc = 0.882426 +/- 0.040230
-```
-
-Generate RDKit features for synthesized molecules
-```bash
-python scripts/save_features.py \
-    --data_path ../combinatorial_antibiotics/generations/enamine_synthesized_results_formatted.csv \
-    --save_path ../combinatorial_antibiotics/generations/enamine_synthesized_results_formatted.npz \
-    --smiles_column smiles
+Overall test ROC-AUC = 0.881 +/- 0.045
+Overall test PRC-AUC = 0.514 +/- 0.141
 ```
 
 Make predictions on synthesized molecules.
 ```bash
-python predict.py \
-    --test_path ../combinatorial_antibiotics/generations/enamine_synthesized_results_formatted.csv \
-    --preds_path ../combinatorial_antibiotics/generations/enamine_synthesized_results_formatted.csv \
-    --checkpoint_dir ckpt/clintox \
-    --features_path ../combinatorial_antibiotics/generations/enamine_synthesized_results_formatted.npz \
-    --no_features_scaling \
-    --smiles_column smiles
-```
-
-## Analyze permeability rules
-
-Analyze the permeability of the training, REAL, and generated molecules using the Gram-negative permeability (eNTRy) rules from https://www.nature.com/articles/nature22308.
-
-### Install eNTRy
-
-Install our version of the eNTRy rules from https://github.com/swansonk14/entry-cli. This version computes the same rules but uses multiprocessing for faster computation.
-
-```bash
-git clone git@github.com:swansonk14/entry-cli.git
-cd entry-cli
-conda env create -f environment.yml
-conda activate entry-cli-env
-```
-
-### Apply the eNTRy rules
-
-TODO: remove this?
-
-Apply the eNTRy rules.
-
-Training data.
-```bash
-python calc_props.py \
-    -b ../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
-    -o ../combinatorial_antibiotics/data/screening_data/AB_combined_entry.csv
-```
-
-Training data hits.
-```bash
-python calc_props.py \
-    -b ../combinatorial_antibiotics/data/screening_data/AB_combined_hits.csv \
-    -o ../combinatorial_antibiotics/data/screening_data/AB_combined_hits_entry.csv
-```
-
-Sample of REAL molecules.
-```bash
-python calc_props.py \
-    -b ../combinatorial_antibiotics/data/Enamine_REAL_space_sampled.csv \
-    -o ../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_entry.csv
-```
-
-Generated molecules.
-```bash
-#!/bin/bash
-
-for MODEL in RF_rdkit chemprop chemprop_rdkit
-do
-  python calc_props.py \
-    -b ../combinatorial_antibiotics/generations/mcts_AB_combined_${MODEL}/molecules.csv \
-    -o ../combinatorial_antibiotics/generations/mcts_AB_combined_${MODEL}/molecules_entry.csv
-done
-```
-
-Selected generated molecules.
-```bash
-#!/bin/bash
-
-for MODEL in RF_rdkit chemprop chemprop_rdkit
-do
-  python calc_props.py \
-    -b ../combinatorial_antibiotics/generations/mcts_AB_combined_${MODEL}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
-    -o ../combinatorial_antibiotics/generations/mcts_AB_combined_${MODEL}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50_entry.csv
-done
+python predict_model.py \
+    --data_path generations/enamine_synthesized_results_formatted.csv \
+    --model_path ckpt/clintox \
+    --model_type chemprop \
+    --fingerprint_type rdkit \
+    --average_preds
 ```

@@ -2,6 +2,8 @@
 
 Steps to perform a simulation study of the generative model using a computational molecular property. This assumes that the data setup steps from README.md have already been performed.
 
+TODO: change everything from logP to cLogP
+
 
 ## Compute logP
 
