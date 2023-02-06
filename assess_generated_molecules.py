@@ -14,9 +14,9 @@ from chem_utils.molecular_similarities import compute_top_similarities
 class Args(Tap):
     data_path: Path  # Path to CSV file containing generated molecules.
     save_dir: Path  # Path to directory where plots will be saved.
-    train_hits_path: Optional[Path] = None  # Optional path to CSV file containing hits from the training set for computing novelty.
+    reference_paths: Optional[list[Path]] = None  # Optional list of paths to CSV files containing reference molecules for computing novelty.
     smiles_column: str = 'smiles'  # The name of the column containing SMILES in data_path.
-    train_hits_smiles_column: str = 'smiles'  # The name of the column containing SMILES in train_hits_path.
+    reference_smiles_column: str = 'smiles'  # The name of the column containing SMILES in reference_paths.
     score_column: str = 'score'  # The name of the column containing scores.
 
     def process_args(self) -> None:
@@ -236,18 +236,21 @@ def assess_generated_molecules(args: Args) -> None:
         save_dir=args.save_dir
     )
 
-    if args.train_hits_path is not None:
-        # Load train hits
-        train_hits = pd.read_csv(args.train_hits_path)
+    if args.reference_paths is not None:
+        for reference_path in args.reference_paths:
+            # Load reference molecules
+            reference_molecules = pd.read_csv(reference_path)
 
-        # Similarity between generated molecules and train hits
-        plot_similarity(
-            smiles=data[args.smiles_column],
-            similarity_type='tversky',
-            save_dir=args.save_dir,
-            reference_smiles=train_hits[args.train_hits_smiles_column],
-            reference_name='Train Hits'
-        )
+            print(f'Number of reference molecules in {reference_path.stem} = {len(reference_molecules):,}')
+
+            # Similarity between generated molecules and reference molecules
+            plot_similarity(
+                smiles=data[args.smiles_column],
+                similarity_type='tversky',
+                save_dir=args.save_dir,
+                reference_smiles=reference_molecules[args.reference_smiles_column],
+                reference_name=reference_path.stem
+            )
 
     # Number of reactions
     plot_reactions_counts(

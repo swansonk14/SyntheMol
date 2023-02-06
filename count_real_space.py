@@ -73,8 +73,9 @@ def count_real_space(args: Args) -> None:
 
     # Optionally get set of fragments to filter by
     if args.fragment_path is not None:
-        fragment_set = set(pd.read_csv(args.fragment_path)[args.fragment_id_column]) | {np.nan}
+        fragment_set = set(pd.read_csv(args.fragment_path)[args.fragment_id_column])
         print(f'Number of fragments = {len(fragment_set):,}')
+        fragment_set |= {np.nan}
     else:
         fragment_set = None
 

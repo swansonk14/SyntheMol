@@ -115,7 +115,7 @@ python sdf_to_smiles.py \
     --properties Reagent_ID Catalog_ID
 ```
 
-All 138,085 molecules were successfully converted from SDF to SMILES, and among those 134,609 are unique.
+All 138,085 molecules were successfully converted from SDF to SMILES, and among those 134,609 are unique molecules.
 
 Note: This seems to be because the SMILES are not capturing any stereochemistry information even though it is annotated with the `CFG` tag in the SDF file (although 3D coordinates are missing).
 
@@ -147,6 +147,12 @@ python count_real_space.py \
     --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     --only_selected_reactions
 ```
+
+Number of files = 2,993
+Number of fragments = 138,060 (132,479 unique molecules)
+Number of selected reactions = 13
+Total number of molecules = 31,507,987,117
+Total number of molecules with selected fragments/reactions = 29,575,293,692
 
 
 ### Process AB Training Data
@@ -421,7 +427,7 @@ do
 python assess_generated_molecules.py \
     --data_path generations/${NAME}/molecules.csv \
     --save_dir generations/${NAME} \
-    --train_hits_path data/screening_data/AB_combined_hits.csv
+    --reference_paths data/screening_data/AB_combined_hits.csv data/chembl/chembl_antibacterial_antibiotic.csv
 done
 ```
 
@@ -602,7 +608,7 @@ do
 python assess_generated_molecules.py \
     --data_path generations/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
     --save_dir generations/${NAME}/analysis_molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50 \
-    --train_hits_path data/screening_data/AB_combined_hits.csv
+    --reference_paths data/screening_data/AB_combined_hits.csv data/chembl/chembl_antibacterial_antibiotic.csv
 done
 ```
 
