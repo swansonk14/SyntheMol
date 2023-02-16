@@ -140,6 +140,7 @@ old_ckpt
 data
 features
 generations
-papers
+references
 plots
 preds
+paper

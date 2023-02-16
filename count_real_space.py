@@ -125,9 +125,9 @@ def count_real_space(args: Args) -> None:
     # Create reagent counts DataFrame
     combined_reagent_counts_data = pd.DataFrame([
         {
-            'reagent': reagent,
+            'building_block': reagent,
             'count': count,
-            'percent': count / total_num_molecules_counted
+            'percent': 100 * count / total_num_molecules_counted
         } for reagent, count in combined_reagent_counts.items()
     ])
 

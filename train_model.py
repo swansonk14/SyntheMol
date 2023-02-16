@@ -343,7 +343,7 @@ def train_model(args: Args) -> None:
                 model_type=args.model_type
             )
 
-        scores['time'] = time.time() - start_time
+        scores['time_seconds'] = time.time() - start_time
 
         # Save test predictions
         test_df = pd.DataFrame({
@@ -364,8 +364,9 @@ def train_model(args: Args) -> None:
     score_names = list(all_scores[0])
 
     all_scores = pd.DataFrame(all_scores)
-    all_scores['Model'] = [f'Model {model_num}' for model_num in range(args.num_models)]
-    all_scores = all_scores[['Model'] + score_names]
+    all_scores['model'] = [f'model_{model_num}' for model_num in range(args.num_models)]
+    all_scores = all_scores[['model'] + score_names]
+    # TODO: just put mean and std in here
     all_scores.to_csv(args.save_dir / 'scores.csv', index=False)
 
     # Process and save summary scores

@@ -34,11 +34,10 @@ def merge_chembl_downloads(args: Args) -> None:
 
     # Only keep compounds with SMILES
     data.dropna(subset=[args.smiles_column], inplace=True)
-    data['chembl_smiles'] = data[args.smiles_column]
-    del data[args.smiles_column]
 
     # Compute canonical smiles
-    data['smiles'] = [Chem.MolToSmiles(Chem.MolFromSmiles(smiles)) for smiles in data['chembl_smiles']]
+    data['smiles'] = [Chem.MolToSmiles(Chem.MolFromSmiles(smiles)) for smiles in data[args.smiles_column]]
+    del data[args.smiles_column]
 
     # Map SMILES to labels
     smiles_to_labels = defaultdict(set)

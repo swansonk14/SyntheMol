@@ -7,6 +7,7 @@ import pandas as pd
 from tap import Tap
 
 # Train in rows, predict in columns
+# TODO: change order to match library order
 DATASETS = ['AB_2560_normalized', 'Mar27_normalized', 'For_gen_AB_DRH']
 METRIC_TO_MODEL_TO_MATRIX = {
     'PRC-AUC': {

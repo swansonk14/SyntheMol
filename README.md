@@ -131,7 +131,16 @@ python canonicalize_smiles.py \
     --delete_disconnected_mols
 ```
 
-This removes 25 molecules whose salts cannot be stripped, leaving 138,060 molecules, of which 132,479 are unique.
+This removes 25 molecules whose salts cannot be stripped, leaving 138,060 molecules.
+
+Deduplicate by SMILES using [chem_utils](https://github.com/swansonk14/chem_utils).
+```bash
+python deduplicate_smiles.py \
+    --data_path ../../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
+    --save_path ../../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts_unique.csv
+```
+
+This leaves 132,479 unique molecules.
 
 Note: This step is crucial to prevent errors in running reactions. Salts can cause reactions to create products that are the same as the reactants, leading to undesired infinite loops during molecule generation.
 
@@ -581,6 +590,8 @@ done
 
 
 ### Map Molecules to REAL IDs
+
+TODO: change to use all possible IDs for each SMILES
 
 Map generated molecules to REAL IDs in the format expected by Enamine.
 

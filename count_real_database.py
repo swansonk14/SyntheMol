@@ -39,9 +39,9 @@ def save_counts_as_csv(counts: dict[int, int], count_name: str, save_path: Path)
     # Add percent, cumulative sum, and cumulative percent
     num_molecules = counts_data['count'].sum()
 
-    counts_data['percent'] = counts_data['count'] / num_molecules
+    counts_data['percent'] = 100 * counts_data['count'] / num_molecules
     counts_data['cumulative_count'] = np.cumsum(counts_data['count'])
-    counts_data['cumulative_percent'] = counts_data['cumulative_count'] / num_molecules
+    counts_data['cumulative_percent'] = 100 * counts_data['cumulative_count'] / num_molecules
 
     # Save counts
     counts_data.to_csv(save_path, index=False)

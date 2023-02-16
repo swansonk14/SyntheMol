@@ -516,8 +516,8 @@ def save_molecules(
 
             for reagent_index, reagent_id in enumerate(reaction_log['reagent_ids']):
                 reagent_num = reagent_index + 1
-                construction_dict[f'reagent_{reaction_num}_{reagent_num}_id'] = reagent_id
-                construction_dict[f'reagent_{reaction_num}_{reagent_num}_smiles'] = fragment_id_to_smiles[reagent_id]
+                construction_dict[f'building_block_{reaction_num}_{reagent_num}_id'] = reagent_id
+                construction_dict[f'building_block_{reaction_num}_{reagent_num}_smiles'] = fragment_id_to_smiles[reagent_id]
 
         construction_dicts.append(construction_dict)
 
@@ -528,8 +528,8 @@ def save_molecules(
         columns.append(f'reaction_{reaction_num}_id')
 
         for reagent_num in range(1, reaction_num_to_max_reagent_num[reaction_num] + 1):
-            columns.append(f'reagent_{reaction_num}_{reagent_num}_id')
-            columns.append(f'reagent_{reaction_num}_{reagent_num}_smiles')
+            columns.append(f'building_block_{reaction_num}_{reagent_num}_id')
+            columns.append(f'building_block_{reaction_num}_{reagent_num}_smiles')
 
     # Save data
     # TODO: if incorporating train similarity, set it as a node property and then extract it here
@@ -691,6 +691,7 @@ def run_tree_search(args: Args) -> None:
         reactions = REAL_REACTIONS
 
     # Load fragments
+    # TODO: consider just using unique SMILES and ignoring IDs b/c multiple IDs per SMILES
     fragment_data = pd.read_csv(args.fragment_path)
     fragment_data.drop_duplicates(subset=args.smiles_column, inplace=True)
 
@@ -844,7 +845,7 @@ def run_tree_search(args: Args) -> None:
     print(f'Total number of nodes searched = {stats["num_nodes_searched"]:,}')
     print(f'Number of full molecule, nonzero reaction nodes = {stats["num_nonzero_reaction_molecules"]:,}')
 
-    pd.DataFrame(data=[stats]).to_csv(args.save_dir / 'stats.csv', index=False)
+    pd.DataFrame(data=[stats]).to_csv(args.save_dir / 'mcts_stats.csv', index=False)
 
     # Save generated molecules
     save_molecules(
