@@ -539,3 +539,12 @@ python plot_toxicity.py \
     --generated_path paper/data/synthesized/potent.csv \
     --save_dir paper/plots/toxicity
 ```
+
+```
+Best F1 threshold = 0.416
+F1 = 0.475
+Precision = 0.547
+Recall = 0.420
+Percentiles of generated preds among toxic molecules = [14.3, 21.4, 31.2, 45.5, 47.3, 47.3]
+Percentiles of generated preds among non-toxic molecules = [76.2, 80.1, 86.4, 91.7, 93.1, 93.2]
+```
