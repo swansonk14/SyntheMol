@@ -541,6 +541,10 @@ python plot_toxicity.py \
 ```
 
 ```
+Found 10 test set predictions
+Size of test set predictions = 1,478
+Size of generated predictions = 6
+Generated preds = [0.054, 0.078, 0.123, 0.200, 0.240, 0.247]
 Best F1 threshold = 0.416
 F1 = 0.475
 Precision = 0.547

@@ -39,9 +39,8 @@ def plot_toxicity(args: Args) -> None:
 
     # Load generated preds and sort by prediction score
     generated = pd.read_csv(args.generated_path)
-    generated.sort_values(args.generated_pred_column, inplace=True)
 
-    print(f'Size of predictions = {len(generated):,}')
+    print(f'Size of generated predictions = {len(generated):,}')
 
     # Compute threshold for max F1 on test preds
     precision, recall, thresholds = precision_recall_curve(
@@ -77,14 +76,16 @@ def plot_toxicity(args: Args) -> None:
         for pred in generated[args.generated_pred_column]
     ]
 
-    print(f'Percentiles of generated preds among toxic molecules = '
-          f'[{", ".join(f"{p:.1f}" for p in toxic_percentiles)}]')
-    print(f'Percentiles of generated preds among non-toxic molecules = '
-          f'[{", ".join(f"{p:.1f}" for p in nontoxic_percentiles)}]')
+    for i in range(len(generated)):
+        print(f'Generated molecule {i}')
+        print(f'Prediction = {generated[args.generated_pred_column].iloc[i]:.3f}')
+        print(f'Toxic percentile = {toxic_percentiles[i]:.2f}')
+        print(f'Non-toxic percentile = {nontoxic_percentiles[i]:.2f}')
+        print()
 
     # Plot toxicity of test preds and generated preds
-    plt.hist(nontoxic[args.test_pred_column], bins=100, density=True, color='blue', label='test non-toxic', alpha=0.5)
-    plt.hist(toxic[args.test_pred_column], bins=100, density=True, color='red', label='test toxic', alpha=0.5)
+    plt.hist(nontoxic[args.test_pred_column], bins=100, density=True, color='blue', label='non-toxic', alpha=0.5)
+    plt.hist(toxic[args.test_pred_column], bins=100, density=True, color='red', label='toxic', alpha=0.5)
     plt.vlines(generated[args.generated_pred_column], plt.ylim()[0], 0.1 * plt.ylim()[1], color='black', label='generated')
     plt.legend()
     plt.xlabel('Predicted toxicity')
