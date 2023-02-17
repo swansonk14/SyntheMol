@@ -115,19 +115,31 @@ def count_real_space(args: Args) -> None:
     print(f'Total number of molecules = {total_num_molecules:,}')
     print(f'Total number of molecules with selected fragments/reactions = {total_num_molecules_counted:,}')
 
+    # Create reaction counts DataFrame
+    combined_reaction_counts_data = pd.DataFrame(data=[
+        {
+            'reaction': reaction,
+            'count': count,
+            'percent': 100 * count / REAL_SPACE_SIZE,
+        } for reaction, count in combined_reaction_counts.items()
+    ])
+
+    # Sort data by count from largest to smallest
+    combined_reaction_counts_data.sort_values(by='count', ascending=False, inplace=True)
+
+    # Add cumulative sum and cumulative percent
+    combined_reaction_counts_data['cumulative_count'] = np.cumsum(combined_reaction_counts_data['count'])
+    combined_reaction_counts_data['cumulative_percent'] = 100 * combined_reaction_counts_data['cumulative_count'] / REAL_SPACE_SIZE
+
     # Save reaction counts
-    save_counts_as_csv(
-        counts=combined_reaction_counts,
-        count_name='reaction',
-        save_path=args.save_dir / 'real_space_reaction_counts.csv'
-    )
+    combined_reaction_counts_data.to_csv(args.save_dir / 'real_space_reaction_counts.csv', index=False)
 
     # Create reagent counts DataFrame
     combined_reagent_counts_data = pd.DataFrame([
         {
             'building_block': reagent,
             'count': count,
-            'percent': 100 * count / total_num_molecules_counted
+            'percent': 100 * count / REAL_SPACE_SIZE
         } for reagent, count in combined_reagent_counts.items()
     ])
 
