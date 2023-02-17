@@ -91,6 +91,10 @@ class Args(Tap):
     """Whether to encourage the use of diverse fragments by modifying the score."""
     debug: bool = False
     """Whether to print out additional statements for debugging."""
+    count_nodes: bool = False
+    """Whether to count the number of nodes in the tree search.
+    Note: The memory usage will grow linearly with the number of nodes searched since
+    a set of all nodes must be stored in order to accurately count the number of nodes."""
 
 
 class TreeNode:
@@ -193,7 +197,8 @@ class TreeSearcher:
                  reactions: list[Reaction],
                  rng_seed: int,
                  fragment_diversity: bool,
-                 debug: bool) -> None:
+                 debug: bool,
+                 count_nodes: bool) -> None:
         """Creates the TreeSearcher object.
 
         :param search_type: Type of search to perform.
@@ -207,6 +212,9 @@ class TreeSearcher:
         :param rng_seed: Seed for the random number generator.
         :param fragment_diversity: Whether to encourage the use of diverse fragments by modifying the score.
         :param debug: Whether to print out additional statements for debugging.
+        :param count_nodes: Whether to count the number of nodes in the tree search.
+                                Note: The memory usage will grow linearly with the number of nodes searched since
+                                a set of all nodes must be stored in order to accurately count the number of nodes.
         """
         self.search_type = search_type
         self.fragment_smiles_to_id = fragment_smiles_to_id
@@ -232,6 +240,8 @@ class TreeSearcher:
         self.root = self.TreeNodeClass(node_id=1, rollout_num=0)
         self.state_map: dict[TreeNode, TreeNode] = {self.root: self.root}
         self.reagent_counts = Counter()
+
+        self.node_fragments_set = {self.root.fragments} if count_nodes else None
 
     def random_choice(self, array: list[Any], size: Optional[int] = None, replace: bool = True) -> Any:
         if size is None:
@@ -418,6 +428,10 @@ class TreeSearcher:
         # Check the state map and merge with an existing node if available
         new_nodes = [self.state_map.get(new_node, new_node) for new_node in new_nodes]
 
+        # If counting nodes, add node fragments to set
+        if self.node_fragments_set is not None:
+            self.node_fragments_set |= {node.fragments for node in new_nodes}
+
         # Add nodes with complete molecules to the state map
         for new_node in new_nodes:
             if new_node.num_fragments == 1 and new_node not in self.state_map:
@@ -484,11 +498,10 @@ class TreeSearcher:
 
         return nodes
 
-    # TODO: need to change this to account for the fact that the state map doesn't keep track of all intermediate nodes
     @property
-    def num_nodes(self) -> int:
-        """Gets the number of nodes in the search tree."""
-        return len(self.state_map)
+    def num_nodes(self) -> Optional[int]:
+        """Returns the number of nodes in the search tree. Only available if count_nodes is True."""
+        return len(self.node_fragments_set) if self.node_fragments_set is not None else None
 
 
 def save_molecules(
@@ -827,7 +840,8 @@ def run_tree_search(args: Args) -> None:
         reactions=reactions,
         rng_seed=args.rng_seed,
         fragment_diversity=args.fragment_diversity,
-        debug=args.debug
+        debug=args.debug,
+        count_nodes=args.count_nodes
     )
 
     # Search for molecules
@@ -842,8 +856,10 @@ def run_tree_search(args: Args) -> None:
     }
 
     print(f'MCTS time = {stats["mcts_time"]}')
-    print(f'Total number of nodes searched = {stats["num_nodes_searched"]:,}')
     print(f'Number of full molecule, nonzero reaction nodes = {stats["num_nonzero_reaction_molecules"]:,}')
+
+    if stats['num_nodes_searched'] is not None:
+        print(f'Total number of nodes searched = {stats["num_nodes_searched"]:,}')
 
     pd.DataFrame(data=[stats]).to_csv(args.save_dir / 'mcts_stats.csv', index=False)
 
