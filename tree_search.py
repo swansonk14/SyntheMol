@@ -131,6 +131,7 @@ class TreeNode:
         self.W = 0.0  # The sum of the leaf node values for leaf nodes that descend from this node.
         self.N = 0  # The number of times this node has been expanded.
         self.rollout_num = rollout_num
+        self.num_children = 0
 
     @classmethod
     def compute_score(cls, fragments: tuple[str], scoring_fn: Callable[[str], float]) -> float:
@@ -239,11 +240,10 @@ class TreeSearcher:
 
         self.rollout_num = 0
         self.TreeNodeClass = partial(TreeNode, c_puct=c_puct, scoring_fn=scoring_fn)
-        self.root = self.TreeNodeClass(node_id=1, rollout_num=0)
+        self.root = self.TreeNodeClass(node_id=0, rollout_num=0)
         self.node_map: dict[TreeNode, TreeNode] = {self.root: self.root}
         self.reagent_counts = Counter()
         self.node_to_children: dict[TreeNode, list[TreeNode]] = {}
-        self.node_id = 1
 
     def random_choice(self, array: list[Any], size: Optional[int] = None, replace: bool = True) -> Any:
         if size is None:
@@ -427,20 +427,20 @@ class TreeSearcher:
             # Expand the node both by running reactions with the current fragments and adding new fragments
             new_nodes = self.expand_node(node=node)
 
-            # Check the state map and merge with an existing node if available
+            # Check the node map and merge with an existing node if available
             new_nodes = [self.node_map.get(new_node, new_node) for new_node in new_nodes]
 
-            # Add nodes with complete molecules to the state map
+            # Add nodes with complete molecules to the node map
             for new_node in new_nodes:
                 if new_node.num_fragments == 1 and new_node not in self.node_map:
-                    new_node.node_id = self.node_id
-                    self.node_id += 1
+                    new_node.node_id = len(self.node_map)
+                    self.node_map[new_node] = new_node
                     self.reagent_counts.update(new_node.unique_reagents)
 
-                if new_node.num_fragments == 1 or self.store_nodes:
-                    self.node_map[new_node] = new_node
+            # Save the number of children in order to maintain a total node count
+            node.num_children = len(new_nodes)
 
-            # Store the children if storing nodes
+            # If storing nodes, store the children
             if self.store_nodes:
                 self.node_to_children[node] = new_nodes
 
@@ -473,13 +473,13 @@ class TreeSearcher:
         else:
             raise ValueError(f'Search type "{self.search_type}" is not supported.')
 
-        # Check the state map and merge with an existing node if available
-        selected_node = self.node_map.setdefault(selected_node, selected_node)
-
-        # Assign node ID as order in which the node was added
-        if selected_node.node_id is None:
-            selected_node.node_id = self.node_id
-            self.node_id += 1
+        # Check the node map and merge with an existing node if available
+        if selected_node in self.node_map:
+            selected_node = self.node_map[selected_node]
+        # Otherwise, assign node ID and add to node map
+        else:
+            selected_node.node_id = len(self.node_map)
+            self.node_map[selected_node] = selected_node
 
         # Unroll the selected node
         v = self.rollout(node=selected_node)
@@ -512,12 +512,9 @@ class TreeSearcher:
         return nodes
 
     @property
-    def num_nodes(self) -> int:
-        """Returns the number of nodes in the search tree. Only available if store_nodes is True."""
-        if not self.store_nodes:
-            raise ValueError('Cannot get number of nodes if store_nodes is False.')
-
-        return len(self.node_map)
+    def num_nodes_searched(self) -> int:
+        """Returns the number of nodes seen during the search."""
+        return 1 + sum(node.num_children for node in self.node_map)
 
 
 def save_molecules(
@@ -867,15 +864,13 @@ def run_tree_search(args: Args) -> None:
     # Compute, print, and save stats
     stats = {
         'mcts_time': datetime.now() - start_time,
+        'num_nodes_searched': tree_searcher.num_nodes_searched,
         'num_nonzero_reaction_molecules': len(nodes)
     }
 
     print(f'MCTS time = {stats["mcts_time"]}')
+    print(f'Total number of nodes searched = {stats["num_nodes_searched"]:,}')
     print(f'Number of full molecule, nonzero reaction nodes = {stats["num_nonzero_reaction_molecules"]:,}')
-
-    if args.store_nodes:
-        stats['num_nodes_searched'] = tree_searcher.num_nodes
-        print(f'Total number of nodes searched = {stats["num_nodes_searched"]:,}')
 
     pd.DataFrame(data=[stats]).to_csv(args.save_dir / 'mcts_stats.csv', index=False)
 
