@@ -91,10 +91,11 @@ class Args(Tap):
     """Whether to encourage the use of diverse fragments by modifying the score."""
     debug: bool = False
     """Whether to print out additional statements for debugging."""
-    count_nodes: bool = False
-    """Whether to count the number of nodes in the tree search.
-    Note: The memory usage will grow linearly with the number of nodes searched since
-    a set of all nodes must be stored in order to accurately count the number of nodes."""
+    store_nodes: bool = False
+    """Whether to store in memory all the nodes of the search tree.
+    This makes the search faster and enables a count of the number of nodes searched,
+    but it comes at the cost of huge memory usage (e.g., ~600GB for 20,000 rollouts).
+    """
 
 
 class TreeNode:
@@ -198,7 +199,7 @@ class TreeSearcher:
                  rng_seed: int,
                  fragment_diversity: bool,
                  debug: bool,
-                 count_nodes: bool) -> None:
+                 store_nodes: bool) -> None:
         """Creates the TreeSearcher object.
 
         :param search_type: Type of search to perform.
@@ -212,9 +213,9 @@ class TreeSearcher:
         :param rng_seed: Seed for the random number generator.
         :param fragment_diversity: Whether to encourage the use of diverse fragments by modifying the score.
         :param debug: Whether to print out additional statements for debugging.
-        :param count_nodes: Whether to count the number of nodes in the tree search.
-                                Note: The memory usage will grow linearly with the number of nodes searched since
-                                a set of all nodes must be stored in order to accurately count the number of nodes.
+        :param store_nodes: Whether to store the child nodes of each node in the search tree.
+                            This makes the search faster and enables a count of the number of nodes searched,
+                            but it comes at the cost of huge memory usage (e.g., ~600GB for 20,000 rollouts).
         """
         self.search_type = search_type
         self.fragment_smiles_to_id = fragment_smiles_to_id
@@ -234,14 +235,15 @@ class TreeSearcher:
         self.rng = np.random.default_rng(seed=rng_seed)
         self.fragment_diversity = fragment_diversity
         self.debug = debug
+        self.store_nodes = store_nodes
 
         self.rollout_num = 0
         self.TreeNodeClass = partial(TreeNode, c_puct=c_puct, scoring_fn=scoring_fn)
         self.root = self.TreeNodeClass(node_id=1, rollout_num=0)
-        self.state_map: dict[TreeNode, TreeNode] = {self.root: self.root}
+        self.node_map: dict[TreeNode, TreeNode] = {self.root: self.root}
         self.reagent_counts = Counter()
-
-        self.node_fragments_set = {self.root.fragments} if count_nodes else None
+        self.node_to_children: dict[TreeNode, list[TreeNode]] = {}
+        self.node_id = 1
 
     def random_choice(self, array: list[Any], size: Optional[int] = None, replace: bool = True) -> Any:
         if size is None:
@@ -416,28 +418,38 @@ class TreeSearcher:
         if node.num_reactions >= self.max_reactions:
             return node.P
 
-        # Expand the node both by running reactions with the current fragments and adding new fragments
-        new_nodes = self.expand_node(node=node)
+        # If this node has already been visited and the children have been stored, get its children from the dictionary
+        if node in self.node_to_children:
+            new_nodes = self.node_to_children[node]
 
+        # Otherwise, expand the node to get its children
+        else:
+            # Expand the node both by running reactions with the current fragments and adding new fragments
+            new_nodes = self.expand_node(node=node)
+
+            # Check the state map and merge with an existing node if available
+            new_nodes = [self.node_map.get(new_node, new_node) for new_node in new_nodes]
+
+            # Add nodes with complete molecules to the state map
+            for new_node in new_nodes:
+                if new_node.num_fragments == 1 and new_node not in self.node_map:
+                    new_node.node_id = self.node_id
+                    self.node_id += 1
+                    self.reagent_counts.update(new_node.unique_reagents)
+
+                if new_node.num_fragments == 1 or self.store_nodes:
+                    self.node_map[new_node] = new_node
+
+            # Store the children if storing nodes
+            if self.store_nodes:
+                self.node_to_children[node] = new_nodes
+
+        # If no new nodes were generated, return the current node's value
         if len(new_nodes) == 0:
             if node.num_fragments == 1:
                 return node.P
             else:
                 raise ValueError('Failed to expand a partially expanded node.')
-
-        # Check the state map and merge with an existing node if available
-        new_nodes = [self.state_map.get(new_node, new_node) for new_node in new_nodes]
-
-        # If counting nodes, add node fragments to set
-        if self.node_fragments_set is not None:
-            self.node_fragments_set |= {node.fragments for node in new_nodes}
-
-        # Add nodes with complete molecules to the state map
-        for new_node in new_nodes:
-            if new_node.num_fragments == 1 and new_node not in self.state_map:
-                new_node.node_id = len(self.state_map)
-                self.state_map[new_node] = new_node
-                self.reagent_counts.update(new_node.unique_reagents)
 
         # Select a node based on the search type
         if self.search_type == 'random':
@@ -462,11 +474,12 @@ class TreeSearcher:
             raise ValueError(f'Search type "{self.search_type}" is not supported.')
 
         # Check the state map and merge with an existing node if available
-        selected_node = self.state_map.setdefault(selected_node, selected_node)
+        selected_node = self.node_map.setdefault(selected_node, selected_node)
 
         # Assign node ID as order in which the node was added
         if selected_node.node_id is None:
-            selected_node.node_id = len(self.state_map)
+            selected_node.node_id = self.node_id
+            self.node_id += 1
 
         # Unroll the selected node
         v = self.rollout(node=selected_node)
@@ -491,7 +504,7 @@ class TreeSearcher:
             self.rollout(node=self.root)
 
         # Get all the nodes representing fully constructed molecules that are not initial building blocks
-        nodes = [node for _, node in self.state_map.items() if node.num_fragments == 1 and node.num_reactions > 0]
+        nodes = [node for _, node in self.node_map.items() if node.num_fragments == 1 and node.num_reactions > 0]
 
         # Sort by highest score and break ties by using node ID
         nodes = sorted(nodes, key=lambda node: (node.P, -node.node_id), reverse=True)
@@ -499,9 +512,12 @@ class TreeSearcher:
         return nodes
 
     @property
-    def num_nodes(self) -> Optional[int]:
-        """Returns the number of nodes in the search tree. Only available if count_nodes is True."""
-        return len(self.node_fragments_set) if self.node_fragments_set is not None else None
+    def num_nodes(self) -> int:
+        """Returns the number of nodes in the search tree. Only available if store_nodes is True."""
+        if not self.store_nodes:
+            raise ValueError('Cannot get number of nodes if store_nodes is False.')
+
+        return len(self.node_map)
 
 
 def save_molecules(
@@ -841,7 +857,7 @@ def run_tree_search(args: Args) -> None:
         rng_seed=args.rng_seed,
         fragment_diversity=args.fragment_diversity,
         debug=args.debug,
-        count_nodes=args.count_nodes
+        store_nodes=args.store_nodes
     )
 
     # Search for molecules
@@ -851,14 +867,14 @@ def run_tree_search(args: Args) -> None:
     # Compute, print, and save stats
     stats = {
         'mcts_time': datetime.now() - start_time,
-        'num_nodes_searched': tree_searcher.num_nodes,
         'num_nonzero_reaction_molecules': len(nodes)
     }
 
     print(f'MCTS time = {stats["mcts_time"]}')
     print(f'Number of full molecule, nonzero reaction nodes = {stats["num_nonzero_reaction_molecules"]:,}')
 
-    if stats['num_nodes_searched'] is not None:
+    if args.store_nodes:
+        stats['num_nodes_searched'] = tree_searcher.num_nodes
         print(f'Total number of nodes searched = {stats["num_nodes_searched"]:,}')
 
     pd.DataFrame(data=[stats]).to_csv(args.save_dir / 'mcts_stats.csv', index=False)
