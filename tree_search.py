@@ -93,9 +93,8 @@ class Args(Tap):
     """Whether to print out additional statements for debugging."""
     store_nodes: bool = False
     """Whether to store in memory all the nodes of the search tree.
-    This makes the search faster and enables a count of the number of nodes searched,
-    but it comes at the cost of huge memory usage (e.g., ~600GB for 20,000 rollouts).
-    """
+    This doubles the speed of the search but significantly increases
+    the memory usage (e.g., ~450GB for 20,000 rollouts instead of <16GB)."""
 
 
 class TreeNode:
@@ -215,8 +214,8 @@ class TreeSearcher:
         :param fragment_diversity: Whether to encourage the use of diverse fragments by modifying the score.
         :param debug: Whether to print out additional statements for debugging.
         :param store_nodes: Whether to store the child nodes of each node in the search tree.
-                            This makes the search faster and enables a count of the number of nodes searched,
-                            but it comes at the cost of huge memory usage (e.g., ~600GB for 20,000 rollouts).
+                            This doubles the speed of the search but significantly increases
+                            the memory usage (e.g., ~450GB for 20,000 rollouts instead of <16GB).
         """
         self.search_type = search_type
         self.fragment_smiles_to_id = fragment_smiles_to_id
@@ -512,9 +511,28 @@ class TreeSearcher:
         return nodes
 
     @property
-    def num_nodes_searched(self) -> int:
-        """Returns the number of nodes seen during the search."""
+    def approx_num_nodes_searched(self) -> int:
+        """Returns the approximate number of nodes seen during the search.
+
+        Note: This will over count any node that appears as a child node
+        of multiple parent nodes.
+        """
         return 1 + sum(node.num_children for node in self.node_map)
+
+    @property
+    def num_nodes_searched(self) -> int:
+        """Returns the precise number of nodes seen during the search. Only possible if store_nodes is True."""
+        if not self.store_nodes:
+            raise ValueError('Cannot get the precise number of nodes searched if store_nodes is False.'
+                             'Use approx_num_nodes_searched instead.')
+
+        # Get a set of all nodes and child nodes that have been visited
+        visited_nodes = set()
+        for node, children in self.node_to_children.items():
+            visited_nodes.add(node)
+            visited_nodes.update(children)
+
+        return len(visited_nodes)
 
 
 def save_molecules(
@@ -864,13 +882,17 @@ def run_tree_search(args: Args) -> None:
     # Compute, print, and save stats
     stats = {
         'mcts_time': datetime.now() - start_time,
-        'num_nodes_searched': tree_searcher.num_nodes_searched,
-        'num_nonzero_reaction_molecules': len(nodes)
+        'num_nonzero_reaction_molecules': len(nodes),
+        'approx_num_nodes_searched': tree_searcher.approx_num_nodes_searched
     }
 
     print(f'MCTS time = {stats["mcts_time"]}')
-    print(f'Total number of nodes searched = {stats["num_nodes_searched"]:,}')
     print(f'Number of full molecule, nonzero reaction nodes = {stats["num_nonzero_reaction_molecules"]:,}')
+    print(f'Approximate total number of nodes searched = {stats["approx_num_nodes_searched"]:,}')
+
+    if args.store_nodes:
+        stats['num_nodes_searched'] = tree_searcher.num_nodes_searched
+        print(f'Total number of nodes searched = {stats["num_nodes_searched"]:,}')
 
     pd.DataFrame(data=[stats]).to_csv(args.save_dir / 'mcts_stats.csv', index=False)
 
