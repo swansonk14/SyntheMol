@@ -94,7 +94,7 @@ class Args(Tap):
     store_nodes: bool = False
     """Whether to store in memory all the nodes of the search tree.
     This doubles the speed of the search but significantly increases
-    the memory usage (e.g., ~450GB for 20,000 rollouts instead of <16GB)."""
+    the memory usage (e.g., 450 GB for 20,000 rollouts instead of 600 MB)."""
 
 
 class TreeNode:
@@ -215,7 +215,7 @@ class TreeSearcher:
         :param debug: Whether to print out additional statements for debugging.
         :param store_nodes: Whether to store the child nodes of each node in the search tree.
                             This doubles the speed of the search but significantly increases
-                            the memory usage (e.g., ~450GB for 20,000 rollouts instead of <16GB).
+                            the memory usage (e.g., 450GB for 20,000 rollouts instead of 600 MB).
         """
         self.search_type = search_type
         self.fragment_smiles_to_id = fragment_smiles_to_id
