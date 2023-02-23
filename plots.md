@@ -2,6 +2,31 @@
 
 This file contains instructions for generating plots analyzing the data and results.
 
+- [Data plots](#data-plots)
+  * [Data distribution](#data-distribution)
+  * [t-SNE of training data and ChEMBL data](#t-sne-of-training-data-and-chembl-data)
+- [Property prediction model](#property-prediction-model)
+  * [Model performance on training data](#model-performance-on-training-data)
+  * [Model generalization](#model-generalization)
+- [REAL data](#real-data)
+  * [REAL reactions](#real-reactions)
+  * [REAL reaction and reactant counts](#real-reaction-and-reactant-counts)
+  * [REAL vs train molecular properties](#real-vs-train-molecular-properties)
+  * [t-SNE of REAL vs train](#t-sne-of-real-vs-train)
+- [Model on REAL Data](#model-on-real-data)
+  * [Fragment scores](#fragment-scores)
+  * [Fragment vs full molecule scores](#fragment-vs-full-molecule-scores)
+  * [Assess REAL molecules](#assess-real-molecules)
+- [MCTS Analysis](#mcts-analysis)
+  * [Fragment diversity](#fragment-diversity)
+  * [Score by rollout](#score-by-rollout)
+- [Generated Sets](#generated-sets)
+  * [Generate set characteristics](#generate-set-characteristics)
+  * [Images of generated molecules](#images-of-generated-molecules)
+  * [t-SNE of the filtering steps](#t-sne-of-the-filtering-steps)
+  * [t-SNE of final generated sets](#t-sne-of-final-generated-sets)
+  * [ClinTox predictions](#clintox-predictions)
+
 
 ## Data plots
 

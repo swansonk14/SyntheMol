@@ -4,6 +4,35 @@ SyntheMol is a generative AI method for designing easily synthesizable and struc
 
 TODO: Change all instances of fragments or reagents in the code to building blocks. Change rf to random_forest as model type.
 
+- [Installation](#installation)
+- [Data](#data)
+- [Process REAL data](#process-real-data)
+  * [Process building blocks](#process-building-blocks)
+    + [Convert building blocks from SDF to SMILES](#convert-building-blocks-from-sdf-to-smiles)
+    + [Remove salts from building blocks](#remove-salts-from-building-blocks)
+  * [Process REAL Space molecules](#process-real-space-molecules)
+    + [Download REAL Space](#download-real-space)
+    + [Map REAL reactions to building blocks](#map-real-reactions-to-building-blocks)
+    + [Count REAL reactions and building blocks](#count-real-reactions-and-building-blocks)
+    + [Sample REAL molecules](#sample-real-molecules)
+    + [Count REAL molecules limited to selected reactions and building blocks](#count-real-molecules-limited-to-selected-reactions-and-building-blocks)
+- [Process antibiotics training data](#process-antibiotics-training-data)
+- [Process ChEMBL antibacterials](#process-chembl-antibacterials)
+- [Build property prediction models](#build-property-prediction-models)
+  * [Train models](#train-models)
+  * [Map building blocks to model scores](#map-building-blocks-to-model-scores)
+- [Generate molecules with SyntheMol](#generate-molecules-with-synthemol)
+- [Assess generated molecules](#assess-generated-molecules)
+- [Select generated molecules](#select-generated-molecules)
+  * [Filter by novelty](#filter-by-novelty)
+  * [Filter by model score](#filter-by-model-score)
+  * [Filter by diversity](#filter-by-diversity)
+- [Assess selected molecules](#assess-selected-molecules)
+- [Visualize molecules](#visualize-molecules)
+- [Map molecules to REAL IDs](#map-molecules-to-real-ids)
+- [Predict toxicity](#predict-toxicity)
+- [Plots](#plots)
+
 ## Installation
 
 Download code.

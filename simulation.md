@@ -4,6 +4,13 @@ Steps to perform a simulation study of SyntheMol using a computational molecular
 
 TODO: convert to python scripts and adjust final steps to use both models and REAL
 
+- [Compute cLogP](#compute-clogp)
+- [Binarize clogP](#binarize-clogp)
+- [Train model](#train-model)
+- [Map building blocks to model scores](#map-building-blocks-to-model-scores)
+- [Generate molecules](#generate-molecules)
+- [Compute true cLogP](#compute-true-clogp)
+
 
 ## Compute cLogP
 
