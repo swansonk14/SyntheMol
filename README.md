@@ -4,8 +4,6 @@ SyntheMol is a generative AI method for designing easily synthesizable and struc
 
 TODO: Change all instances of fragments or reagents in the code to building blocks. Change rf to random_forest as model type.
 
-TODO: cLogP simulation and plots.
-
 ## Installation
 
 Download code.
@@ -338,7 +336,11 @@ python map_fragments_to_model_scores.py \
 
 ## Generate molecules with SyntheMol
 
-Apply SyntheMol to generate molecules using a Monte Carlo tree search (MCTS). Here, we limit the search space to molecules that can be formed using a single reaction (as opposed to multi-step reactions) to ensure easy, quick, and cheap chemical synthesis. We run SyntheMol three times, each time using a different model to score molecules and guide the search.
+Here, we apply SyntheMol to generate molecules using a Monte Carlo tree search (MCTS). We limit the search space to molecules that can be formed using a single reaction (as opposed to multi-step reactions) to ensure easy, quick, and cheap chemical synthesis.
+
+Prior to applying SyntheMol to generate antibiotics, we first run a simulation study with the property cLogP, which can be computed on the generated molecules, thereby providing an _in silico_ measure of the efficacy of SyntheMol. Instructions for running the simulation study and analyzing the results are in `simulation.md`.
+
+Below, we run SyntheMol to generate antibiotics. We run SyntheMol three times, each time using a different property prediction model to score molecules and guide the search.
 
 Chemprop
 ```bash
@@ -599,3 +601,7 @@ python predict_model.py \
     --fingerprint_type rdkit \
     --average_preds
 ```
+
+## Plots
+
+Instructions for generating plots analysing all of the data and results are in `plots.md`.
