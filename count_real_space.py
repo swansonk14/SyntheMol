@@ -74,7 +74,7 @@ def count_real_space(args: Args) -> None:
     # Optionally get set of fragments to filter by
     if args.fragment_path is not None:
         fragment_set = set(pd.read_csv(args.fragment_path)[args.fragment_id_column])
-        print(f'Number of fragments = {len(fragment_set):,}')
+        print(f'Number of building blocks = {len(fragment_set):,}')
         fragment_set |= {np.nan}
     else:
         fragment_set = None
@@ -113,7 +113,7 @@ def count_real_space(args: Args) -> None:
                 progress_bar.update(num_molecules_in_file)
 
     print(f'Total number of molecules = {total_num_molecules:,}')
-    print(f'Total number of molecules with selected fragments/reactions = {total_num_molecules_counted:,}')
+    print(f'Total number of molecules with selected building blockss/reactions = {total_num_molecules_counted:,}')
 
     # Create reaction counts DataFrame
     combined_reaction_counts_data = pd.DataFrame(data=[
@@ -132,7 +132,7 @@ def count_real_space(args: Args) -> None:
     combined_reaction_counts_data['cumulative_percent'] = 100 * combined_reaction_counts_data['cumulative_count'] / REAL_SPACE_SIZE
 
     # Save reaction counts
-    combined_reaction_counts_data.to_csv(args.save_dir / 'real_space_reaction_counts.csv', index=False)
+    combined_reaction_counts_data.to_csv(args.save_dir / 'reaction_counts.csv', index=False)
 
     # Create reagent counts DataFrame
     combined_reagent_counts_data = pd.DataFrame([
@@ -147,7 +147,7 @@ def count_real_space(args: Args) -> None:
     combined_reagent_counts_data.sort_values(by='count', ascending=False, inplace=True)
 
     # Save reagent counts
-    combined_reagent_counts_data.to_csv(args.save_dir / 'real_space_reagent_counts.csv', index=False)
+    combined_reagent_counts_data.to_csv(args.save_dir / 'building_block_counts.csv', index=False)
 
 
 if __name__ == '__main__':
