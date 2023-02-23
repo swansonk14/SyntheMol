@@ -9,31 +9,23 @@ from tqdm import tqdm
 
 from reactions import convert_to_mol
 from real_reactions import REAL_REACTIONS
-from synnet_reactions import SYNNET_REACTIONS
 
 
 class Args(Tap):
     fragment_path: Path  # Path to CSV file containing REAL fragments.
     smiles_column: str = 'smiles'  # Name of the column containing SMILES.
     save_path: Path  # Path to JSON file where a dictionary mapping reagents to fragments will be saved.
-    synnet_rxn: bool = False  # Whether to include SynNet reactions in addition to REAL reactions.
 
     def process_args(self) -> None:
         self.save_path.parent.mkdir(parents=True, exist_ok=True)
 
 
-def map_reagents_to_fragments(fragments: Iterable[str], synnet_rxn: bool = False) -> dict[str, list[str]]:
+def map_reagents_to_fragments(fragments: Iterable[str]) -> dict[str, list[str]]:
     """Maps REAL reagents to fragments that match those reagents.
 
     :param fragments: A list of molecular fragments (SMILES).
-    :param synnet_rxn: Whether to include SynNet reactions in addition to REAL reactions.
     :return: A dictionary mapping REAL reagent SMARTS to a sorted list of fragment SMILES that match the reagent.
     """
-    if synnet_rxn:
-        reactions = REAL_REACTIONS + SYNNET_REACTIONS
-    else:
-        reactions = REAL_REACTIONS
-
     # Get fragment SMILES
     fragments = sorted(set(fragments))
 
@@ -46,7 +38,7 @@ def map_reagents_to_fragments(fragments: Iterable[str], synnet_rxn: bool = False
     # Map reagents to fragments
     reagent_to_fragments = {}
 
-    for reaction in tqdm(reactions, desc='Looping reactions'):
+    for reaction in tqdm(REAL_REACTIONS, desc='Looping reactions'):
         for reagent in tqdm(reaction.reagents, desc='Looping reagents', leave=False):
             reagent_str = str(reagent)
 
@@ -70,8 +62,7 @@ def run_map_reagents_to_fragments(args: Args) -> None:
 
     # Map reagents to fragments
     reagent_to_fragments = map_reagents_to_fragments(
-        fragments=fragment_data[args.smiles_column],
-        synnet_rxn=args.synnet_rxn
+        fragments=fragment_data[args.smiles_column]
     )
 
     # Print statistics

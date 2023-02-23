@@ -21,7 +21,6 @@ from chem_utils.molecular_fingerprints import compute_fingerprint, compute_finge
 from chemprop.utils import load_checkpoint
 from reactions import Reaction, set_allowed_reaction_smiles
 from real_reactions import REAL_REACTIONS
-from synnet_reactions import SYNNET_REACTIONS
 from train_model import sklearn_predict
 
 
@@ -77,8 +76,6 @@ class Args(Tap):
     """The hyperparameter that encourages exploration."""
     num_expand_nodes: Optional[int] = None
     """The number of tree nodes to expand when extending the child nodes in the search tree."""
-    synnet_rxn: bool = False
-    """Whether to include SynNet reactions in addition to REAL reactions."""
     binarize_scoring: float = 0
     """If > 0, then molecule scores are binarized based on whether they are >= this threshold."""
     noise: bool = False
@@ -728,12 +725,6 @@ def run_tree_search(args: Args) -> None:
     args.save_dir.mkdir(parents=True, exist_ok=True)
     args.save(args.save_dir / 'args.json')
 
-    # Decide which reaction set to use
-    if args.synnet_rxn:
-        reactions = REAL_REACTIONS + SYNNET_REACTIONS
-    else:
-        reactions = REAL_REACTIONS
-
     # Load fragments
     # TODO: consider just using unique SMILES and ignoring IDs b/c multiple IDs per SMILES
     fragment_data = pd.read_csv(args.fragment_path)
@@ -868,7 +859,7 @@ def run_tree_search(args: Args) -> None:
         n_rollout=args.n_rollout,
         c_puct=args.c_puct,
         num_expand_nodes=args.num_expand_nodes,
-        reactions=reactions,
+        reactions=REAL_REACTIONS,
         rng_seed=args.rng_seed,
         fragment_diversity=args.fragment_diversity,
         debug=args.debug,
