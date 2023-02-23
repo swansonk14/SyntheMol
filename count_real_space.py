@@ -11,7 +11,6 @@ from tap import Tap
 from tqdm import tqdm
 
 from constants import REAL_REACTION_COL, REAL_REAGENT_COLS, REAL_SPACE_SIZE
-from count_real_database import save_counts_as_csv
 from real_reactions import REAL_REACTIONS
 
 
