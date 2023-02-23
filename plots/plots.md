@@ -34,7 +34,7 @@ This file contains instructions for generating plots analyzing the data and resu
 
 Plot data values for each training set.
 ```bash
-python plot_regression_values.py \
+python plots/plot_regression_values.py \
     --data_path data/screening_data/AB_original/AB_2560_normalized.csv \
     --rep1_column Rep_1 \
     --rep2_column Rep_2 \
@@ -42,7 +42,7 @@ python plot_regression_values.py \
 ```
 
 ```bash
-python plot_regression_values.py \
+python plots/plot_regression_values.py \
     --data_path data/screening_data/AB_original/AB_Mar27_normalized.csv \
     --rep1_column Rep_1 \
     --rep2_column Rep_2 \
@@ -50,7 +50,7 @@ python plot_regression_values.py \
 ```
 
 ```bash
-python plot_regression_values.py \
+python plots/plot_regression_values.py \
     --data_path data/screening_data/AB_original/For_gen_AB_DRH.csv \
     --rep1_column Rep_1 \
     --rep2_column Rep_2 \
@@ -84,7 +84,7 @@ python dimensionality_reduction.py \
 
 Plot ROC-AUC and PRC-AUC curves for each model. (Replace model paths and names as needed and curve type with ROC or PRC.)
 ```bash
-python plot_auc.py \
+python plots/plot_auc.py \
     --data_dir ckpt/AB_combined_RF_rdkit \
     --save_dir plots/paper/auc \
     --model_name "Random Forest" \
@@ -242,7 +242,7 @@ done
 Plot generalization across training sets as a confusion matrix.
 
 ```bash
-python plot_model_generalization.py \
+python plots/plot_model_generalization.py \
     --save_dir plots/paper/model_generalization
 ```
 
@@ -263,7 +263,7 @@ python visualize_reactions.py \
 
 Plot REAL reaction and reactant counts.
 ```bash
-python plot_real_counts.py \
+python plots/plot_real_counts.py \
     --reaction_counts_path data/Enamine_REAL_space_counts/real_space_reaction_counts.csv \
     --reagent_counts_path data/Enamine_REAL_space_counts/real_space_reagent_counts.csv \
     --save_dir plots/paper/real_counts
@@ -297,7 +297,7 @@ python compute_properties.py \
 
 Plot logP distributions using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
-python plot_property_distribution.py \
+python plots/plot_property_distribution.py \
     --data_paths ../../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts_unique_with_properties.csv \
     ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_25k_with_properties.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined_with_properties.csv \
@@ -309,7 +309,7 @@ python plot_property_distribution.py \
 
 Plot molecular weight distributions using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
-python plot_property_distribution.py \
+python plots/plot_property_distribution.py \
     --data_paths ../../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts_unique_with_properties.csv \
     ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_25k_with_properties.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined_with_properties.csv \
@@ -341,21 +341,21 @@ python dimensionality_reduction.py \
 
 Plot fragment score distribution for each model.
 ```bash
-python plot_fragment_scores.py \
+python plots/plot_fragment_scores.py \
     --fragment_to_score_path ckpt/AB_combined_RF_rdkit/fragments_to_model_scores.json \
     --title "Random Forest Fragment Score Distribution" \
     --save_dir plots/paper/fragment_scores/rf_fragment_scores
 ```
 
 ```bash
-python plot_fragment_scores.py \
+python plots/plot_fragment_scores.py \
     --fragment_to_score_path ckpt/AB_combined_chemprop/fragments_to_model_scores.json \
     --title "Chemprop Fragment Score Distribution" \
     --save_dir plots/paper/fragment_scores/chemprop_fragment_scores
 ```
 
 ```bash
-python plot_fragment_scores.py \
+python plots/plot_fragment_scores.py \
     --fragment_to_score_path ckpt/AB_combined_chemprop_rdkit/fragments_to_model_scores.json \
     --title "Chemprop RDKit Fragment Score Distribution" \
     --save_dir plots/paper/fragment_scores/chemprop_rdkit_fragment_scores
@@ -392,7 +392,7 @@ python predict_model.py \
 
 Then, plot the fragment vs full molecule scores. (Note: Only 24,276 out of 25,000 molecules have all required fragment SMILES.)
 ```bash
-python plot_fragment_vs_molecule_scores.py \
+python plots/plot_fragment_vs_molecule_scores.py \
     --data_path data/Enamine_REAL_space_sampled_25k.csv \
     --score_column rf_rdkit_ensemble_preds \
     --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
@@ -402,7 +402,7 @@ python plot_fragment_vs_molecule_scores.py \
 ```
 
 ```bash
-python plot_fragment_vs_molecule_scores.py \
+python plots/plot_fragment_vs_molecule_scores.py \
     --data_path data/Enamine_REAL_space_sampled_25k.csv \
     --score_column chemprop_ensemble_preds \
     --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
@@ -412,7 +412,7 @@ python plot_fragment_vs_molecule_scores.py \
 ```
 
 ```bash
-python plot_fragment_vs_molecule_scores.py \
+python plots/plot_fragment_vs_molecule_scores.py \
     --data_path data/Enamine_REAL_space_sampled_25k.csv \
     --score_column chemprop_rdkit_ensemble_preds \
     --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
@@ -443,7 +443,7 @@ Fragment counts before and after fragment diversity. Run `tree_search.py` using 
 
 Score of molecules binned by rollout.
 ```bash
-python plot_mcts_over_time.py \
+python plots/plot_mcts_over_time.py \
     --data_path generations/mcts_AB_combined_rf_rdkit_ids_20k/molecules.csv \
     --save_dir plots/paper/mcts_over_time/mcts_over_time_rf_rdkit_violin \
     --model_name "Random Forest" \
@@ -452,7 +452,7 @@ python plot_mcts_over_time.py \
 ```
 
 ```bash
-python plot_mcts_over_time.py \
+python plots/plot_mcts_over_time.py \
     --data_path generations/mcts_AB_combined_chemprop_ids_20k/molecules.csv \
     --save_dir plots/paper/mcts_over_time/mcts_over_time_chemprop_violin \
     --model_name "Chemprop" \
@@ -461,7 +461,7 @@ python plot_mcts_over_time.py \
 ```
 
 ```bash
-python plot_mcts_over_time.py \
+python plots/plot_mcts_over_time.py \
     --data_path generations/mcts_AB_combined_chemprop_rdkit_ids_20k/molecules.csv \
     --save_dir plots/paper/mcts_over_time/mcts_over_time_chemprop_rdkit_violin \
     --model_name "Chemprop RDKit" \
@@ -559,7 +559,7 @@ python dimensionality_reduction.py \
 
 Show potent molecules vs test molecules.
 ```bash
-python plot_toxicity.py \
+python plots/plot_toxicity.py \
     --test_dir paper/models/clintox_chemprop_rdkit \
     --generated_path paper/data/synthesized/potent.csv \
     --save_dir paper/plots/toxicity

@@ -1,5 +1,6 @@
 """Plots the average model score of molecular fragments vs the model score of the full molecule."""
 import json
+import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -8,6 +9,9 @@ import pandas as pd
 from sklearn.metrics import r2_score
 from tap import Tap
 from tqdm import tqdm
+
+# TODO: remove this by setting up a proper package
+sys.path.append(Path(__file__).parent.parent.resolve().as_posix())
 
 from constants import REAL_REAGENT_COLS
 

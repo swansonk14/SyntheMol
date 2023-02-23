@@ -135,12 +135,8 @@ dmypy.json
 .DS_Store
 
 # Folders
-ckpt
-old_ckpt
 data
-features
+figures
 generations
-references
-plots
-preds
+models
 paper
