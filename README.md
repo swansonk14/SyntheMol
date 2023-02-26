@@ -633,4 +633,4 @@ python predict_model.py \
 
 ## Plots
 
-Instructions for generating plots analysing all of the data and results are in `plots.md`.
+Instructions for generating plots analysing the data and results are in `plots/README.md`.

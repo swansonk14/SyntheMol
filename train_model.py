@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import torch
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.metrics import average_precision_score, mean_squared_error, r2_score, roc_auc_score
+from sklearn.metrics import average_precision_score, mean_absolute_error, r2_score, roc_auc_score
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 from tap import Tap
 from tqdm import trange
@@ -103,7 +103,7 @@ def build_sklearn_model(dataset_type: str,
         }
     elif dataset_type == 'regression':
         scores = {
-            'mse': mean_squared_error(test_properties, test_preds),
+            'mae': mean_absolute_error(test_properties, test_preds),
             'r2': r2_score(test_properties, test_preds),
         }
     else:
@@ -212,7 +212,7 @@ def build_chemprop_model(dataset_type: str,
 
     # Run training
     best_score = float('inf') if args.minimize_score else -float('inf')
-    val_metric = 'PRC-AUC' if dataset_type == 'classification' else 'MSE'
+    val_metric = 'PRC-AUC' if dataset_type == 'classification' else 'MAE'
     best_epoch = n_iter = 0
     for epoch in trange(args.epochs):
         print(f'Epoch {epoch}')
@@ -232,7 +232,7 @@ def build_chemprop_model(dataset_type: str,
             val_score = average_precision_score(val_properties, val_probs)
             new_best_val_score = val_score > best_score
         elif dataset_type == 'regression':
-            val_score = mean_squared_error(val_properties, val_probs)
+            val_score = mean_absolute_error(val_properties, val_probs)
             new_best_val_score = val_score < best_score
         else:
             raise ValueError(f'Dataset type "{dataset_type}" is not supported.')
@@ -256,7 +256,7 @@ def build_chemprop_model(dataset_type: str,
         }
     elif dataset_type == 'regression':
         scores = {
-            'mse': mean_squared_error(test_properties, test_preds),
+            'mae': mean_absolute_error(test_properties, test_preds),
             'r2': r2_score(test_properties, test_preds)
         }
     else:

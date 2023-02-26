@@ -561,7 +561,7 @@ Show potent molecules vs test molecules.
 ```bash
 python plots/plot_toxicity.py \
     --test_dir paper/models/clintox_chemprop_rdkit \
-    --generated_path paper/data/synthesized/potent.csv \
+    --generated_path paper/data/8_synthesized/potent.csv \
     --save_dir paper/plots/toxicity
 ```
 
