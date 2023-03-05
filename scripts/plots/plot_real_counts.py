@@ -4,51 +4,55 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from tap import Tap
+from tap import tapify
 
 
-class Args(Tap):
-    reaction_counts_path: Path  # Path to a CSV file containing reaction counts.
-    reagent_counts_path: Path  # Path to a CSV file containing reagent counts.
-    count_column: str = 'count'  # Name of the column containing counts.
-    save_dir: Path  # Path to a directory where the plots will be saved.
+def plot_real_counts(
+        reaction_counts_path: Path,
+        building_block_counts_path: Path,
+        save_dir: Path,
+        count_column: str = 'count'
+) -> None:
+    """Plot REAL reaction and reactant counts.
 
-    def process_args(self) -> None:
-        self.save_dir.mkdir(parents=True, exist_ok=True)
-
-
-def plot_real_counts(args: Args) -> None:
-    """Plot REAL reaction and reactant counts."""
+    :param reaction_counts_path: Path to a CSV file containing reaction counts.
+    :param building_block_counts_path: Path to a CSV file containing reagent counts.
+    :param save_dir: Path to a directory where the plots will be saved.
+    :param count_column: Name of the column containing counts.
+    """
     # Load data
-    reaction_counts = pd.read_csv(args.reaction_counts_path)
-    reagent_counts = pd.read_csv(args.reagent_counts_path)
+    reaction_counts = pd.read_csv(reaction_counts_path)
+    building_block_counts = pd.read_csv(building_block_counts_path)
 
     # Ensure counts are sorted
-    reaction_counts.sort_values(args.count_column, ascending=False, inplace=True)
-    reagent_counts.sort_values(args.count_column, ascending=False, inplace=True)
+    reaction_counts.sort_values(count_column, ascending=False, inplace=True)
+    building_block_counts.sort_values(count_column, ascending=False, inplace=True)
+
+    # Create save directory
+    save_dir.mkdir(parents=True, exist_ok=True)
 
     # Plot reaction counts
     plt.clf()
-    plt.scatter(np.arange(len(reaction_counts)), np.cumsum(reaction_counts[args.count_column]), s=3)
+    plt.scatter(np.arange(len(reaction_counts)), np.cumsum(reaction_counts[count_column]), s=3)
     plt.xlabel('Reaction Index')
     plt.ylabel('Cumulative Molecule Count')
     plt.title('REAL Space Reaction Counts')
-    plt.savefig(args.save_dir / 'reaction_counts.pdf', bbox_inches='tight')
+    plt.savefig(save_dir / 'reaction_counts.pdf', bbox_inches='tight')
 
     # Save reaction counts
-    reaction_counts.to_csv(args.save_dir / 'reaction_counts.csv', index=False)
+    reaction_counts.to_csv(save_dir / 'reaction_counts.csv', index=False)
 
-    # Plot reagent counts
+    # Plot building block counts
     plt.clf()
-    plt.scatter(np.arange(len(reagent_counts)), reagent_counts[args.count_column], s=3)
-    plt.xlabel('Reagent Index')
-    plt.ylabel('Number of Molecules with Reagent')
-    plt.title('REAL Space Reagent Counts')
-    plt.savefig(args.save_dir / 'reagent_counts.pdf', bbox_inches='tight')
+    plt.scatter(np.arange(len(building_block_counts)), building_block_counts[count_column], s=3)
+    plt.xlabel('Building Block Index')
+    plt.ylabel('Number of Molecules with Building Block')
+    plt.title('REAL Space Building Block Counts')
+    plt.savefig(save_dir / 'building_block_counts.pdf', bbox_inches='tight')
 
-    # Save reagent counts
-    reagent_counts.to_csv(args.save_dir / 'reagent_counts.csv', index=False)
+    # Save building block counts
+    building_block_counts.to_csv(save_dir / 'building_block_counts.csv', index=False)
 
 
 if __name__ == '__main__':
-    plot_real_counts(Args().parse_args())
+    tapify(plot_real_counts)

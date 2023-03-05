@@ -2,7 +2,7 @@
 
 SyntheMol is a generative AI method for designing easily synthesizable and structurally novel drug candidates. SyntheMol consists of a Monte Carlo tree search (MCTS) guided by a molecular property prediction model that searches the [Enamine REAL Space](https://enamine.net/compound-collections/real-compounds/real-space-navigator) for molecules with a desired property. REAL Space molecules are constructed by combining off-the-shelf molecular building blocks with known chemical reactions. SyntheMol efficiently searches the space of combinations of building blocks and reactions to find molecules with a desired property. Here, we apply SyntheMol to design novel antibiotics for the Gram-negative bacterium _Acinetobacter baumannii_.
 
-TODO: Change all instances of fragments or reagents in the code to building blocks. Change rf to random_forest as model type.
+TODO: Change all instances of fragments or reagents in the code to building blocks. Change rf to random_forest as model type (and elsewhere).
 
 - [Installation](#installation)
 - [Data](#data)

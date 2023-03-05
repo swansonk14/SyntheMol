@@ -3,7 +3,6 @@ from setuptools import find_packages, setup
 
 # Load version number
 __version__ = ''
-
 version_file = Path(__file__).parent.absolute() / 'SyntheMol' / '_version.py'
 
 with open(version_file) as fd:

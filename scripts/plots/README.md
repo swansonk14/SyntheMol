@@ -2,6 +2,8 @@
 
 This file contains instructions for generating plots analyzing the data and results.
 
+TODO: redo some names here
+
 - [Data plots](#data-plots)
   * [Data distribution](#data-distribution)
   * [t-SNE of training data and ChEMBL data](#t-sne-of-training-data-and-chembl-data)
@@ -14,11 +16,11 @@ This file contains instructions for generating plots analyzing the data and resu
   * [REAL vs train molecular properties](#real-vs-train-molecular-properties)
   * [t-SNE of REAL vs train](#t-sne-of-real-vs-train)
 - [Model on REAL Data](#model-on-real-data)
-  * [Fragment scores](#fragment-scores)
-  * [Fragment vs full molecule scores](#fragment-vs-full-molecule-scores)
+  * [Building block scores](#building-block-scores)
+  * [Building block vs full molecule scores](#building-block-vs-full-molecule-scores)
   * [Assess REAL molecules](#assess-real-molecules)
 - [MCTS Analysis](#mcts-analysis)
-  * [Fragment diversity](#fragment-diversity)
+  * [Building block diversity](#building-block-diversity)
   * [Score by rollout](#score-by-rollout)
 - [Generated Sets](#generated-sets)
   * [Generate set characteristics](#generate-set-characteristics)
@@ -265,7 +267,7 @@ Plot REAL reaction and reactant counts.
 ```bash
 python plots/plot_real_counts.py \
     --reaction_counts_path data/Enamine_REAL_space_counts/real_space_reaction_counts.csv \
-    --reagent_counts_path data/Enamine_REAL_space_counts/real_space_reagent_counts.csv \
+    --building_block_counts_path data/Enamine_REAL_space_counts/real_space_building_block_counts.csv \
     --save_dir plots/paper/real_counts
 ```
 
@@ -337,33 +339,33 @@ python dimensionality_reduction.py \
 
 ## Model on REAL Data
 
-### Fragment scores
+### Building block scores
 
-Plot fragment score distribution for each model.
+Plot building block score distribution for each model.
 ```bash
-python plots/plot_fragment_scores.py \
-    --fragment_to_score_path ckpt/AB_combined_RF_rdkit/fragments_to_model_scores.json \
-    --title "Random Forest Fragment Score Distribution" \
-    --save_dir plots/paper/fragment_scores/rf_fragment_scores
+python plots/plot_building_block_scores.py \
+    --building_block_to_score_path ckpt/AB_combined_RF_rdkit/building_block_to_model_scores.json \
+    --title "Random Forest Building Block Score Distribution" \
+    --save_dir plots/paper/building_block_scores/rf_building_block_scores
 ```
 
 ```bash
-python plots/plot_fragment_scores.py \
-    --fragment_to_score_path ckpt/AB_combined_chemprop/fragments_to_model_scores.json \
-    --title "Chemprop Fragment Score Distribution" \
-    --save_dir plots/paper/fragment_scores/chemprop_fragment_scores
+python plots/plot_building_block_scores.py \
+    --building_block_to_score_path ckpt/AB_combined_chemprop/building_block_to_model_scores.json \
+    --title "Chemprop Building Block Score Distribution" \
+    --save_dir plots/paper/building_block_scores/chemprop_building_block_scores
 ```
 
 ```bash
-python plots/plot_fragment_scores.py \
-    --fragment_to_score_path ckpt/AB_combined_chemprop_rdkit/fragments_to_model_scores.json \
-    --title "Chemprop RDKit Fragment Score Distribution" \
-    --save_dir plots/paper/fragment_scores/chemprop_rdkit_fragment_scores
+python plots/plot_building_block_scores.py \
+    --building_block_to_score_path ckpt/AB_combined_chemprop_rdkit/building_block_to_model_scores.json \
+    --title "Chemprop RDKit Building Block Score Distribution" \
+    --save_dir plots/paper/building_block_scores/chemprop_rdkit_building_block_scores
 ```
 
-### Fragment vs full molecule scores
+### Building block vs full molecule scores
 
-Plot fragment vs full molecule scores for random sample of REAL molecules.
+Plot building block vs full molecule scores for random sample of REAL molecules.
 
 First, make predictions on a random sample of REAL molecules using each model.
 ```bash
@@ -390,35 +392,35 @@ python predict_model.py \
     --average_preds
 ```
 
-Then, plot the fragment vs full molecule scores. (Note: Only 24,276 out of 25,000 molecules have all required fragment SMILES.)
+Then, plot the building block vs full molecule scores. (Note: Only 24,276 out of 25,000 molecules have all required building block SMILES.)
 ```bash
-python plots/plot_fragment_vs_molecule_scores.py \
+python plots/plot_building_block_vs_molecule_scores.py \
     --data_path data/Enamine_REAL_space_sampled_25k.csv \
     --score_column rf_rdkit_ensemble_preds \
-    --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
-    --fragment_to_score_path ckpt/AB_combined_RF_rdkit/fragments_to_model_scores.json \
-    --title "Random Forest Full Molecule vs Average Fragment Scores" \
-    --save_dir plots/paper/full_vs_fragment_scores/rf_rdkit_full_vs_fragment_scores
+    --building_block_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
+    --building_block_to_score_path ckpt/AB_combined_RF_rdkit/building_block_to_model_scores.json \
+    --title "Random Forest Full Molecule vs Average Building Block Scores" \
+    --save_dir plots/paper/full_vs_building_block_scores/rf_rdkit_full_vs_building_block_scores
 ```
 
 ```bash
-python plots/plot_fragment_vs_molecule_scores.py \
+python plots/plot_building_block_vs_molecule_scores.py \
     --data_path data/Enamine_REAL_space_sampled_25k.csv \
     --score_column chemprop_ensemble_preds \
-    --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
-    --fragment_to_score_path ckpt/AB_combined_chemprop/fragments_to_model_scores.json \
-    --title "Chemprop Full Molecule vs Average Fragment Scores" \
-    --save_dir plots/paper/full_vs_fragment_scores/chemprop_full_vs_fragment_scores
+    --building_block_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
+    --building_block_to_score_path ckpt/AB_combined_chemprop/building_block_to_model_scores.json \
+    --title "Chemprop Full Molecule vs Average Building Block Scores" \
+    --save_dir plots/paper/full_vs_building_block_scores/chemprop_full_vs_building_block_scores
 ```
 
 ```bash
-python plots/plot_fragment_vs_molecule_scores.py \
+python plots/plot_building_block_vs_molecule_scores.py \
     --data_path data/Enamine_REAL_space_sampled_25k.csv \
     --score_column chemprop_rdkit_ensemble_preds \
-    --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
-    --fragment_to_score_path ckpt/AB_combined_chemprop_rdkit/fragments_to_model_scores.json \
-    --title "Chemprop RDKit Full Molecule vs Average Fragment Scores" \
-    --save_dir plots/paper/full_vs_fragment_scores/chemprop_rdkit_full_vs_fragment_scores
+    --building_block_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
+    --building_block_to_score_path ckpt/AB_combined_chemprop_rdkit/building_block_to_model_scores.json \
+    --title "Chemprop RDKit Full Molecule vs Average Building Block Scores" \
+    --save_dir plots/paper/full_vs_building_block_scores/chemprop_rdkit_full_vs_building_block_scores
 ```
 
 ### Assess REAL molecules
@@ -435,9 +437,9 @@ python assess_real_molecules.py \
 
 ## MCTS Analysis
 
-### Fragment diversity
+### Building block diversity
 
-Fragment counts before and after fragment diversity. Run `tree_search.py` using same settings as above but without `--fragment_diversity` and run assess_generated_molecules.py and look at `fragment_counts.pdf`.
+Building block counts before and after building block diversity. Run `tree_search.py` using same settings as above but without `--fragment_diversity` and run assess_generated_molecules.py and look at `fragment_counts.pdf`.
 
 ### Score by rollout
 

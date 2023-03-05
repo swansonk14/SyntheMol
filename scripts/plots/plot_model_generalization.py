@@ -4,58 +4,54 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from tap import Tap
+from tap import tapify
 
 # Train in rows, predict in columns
-# TODO: change order to match library order
-DATASETS = ['AB_2560_normalized', 'Mar27_normalized', 'For_gen_AB_DRH']
+DATASETS = ['library_1', 'library_2', 'library_3']
 METRIC_TO_MODEL_TO_MATRIX = {
     'PRC-AUC': {
         'random_forest': np.array([
-            [0.546, 0.082, 0.361],
-            [0.175, 0.181, 0.125],
-            [0.571, 0.074, 0.389]
+            [0.546, 0.361, 0.082],
+            [0.571, 0.389, 0.074],
+            [0.175, 0.125, 0.181]
         ]),
         'chemprop': np.array([
-            [0.528, 0.055, 0.298],
-            [0.098, 0.069, 0.067],
-            [0.567, 0.051, 0.328]
+            [0.528, 0.298, 0.055],
+            [0.567, 0.328, 0.051],
+            [0.098, 0.067, 0.069]
         ]),
         'chemprop_rdkit': np.array([
-            [0.520, 0.070, 0.365],
-            [0.105, 0.118, 0.072],
-            [0.633, 0.058, 0.382]
+            [0.52, 0.365, 0.07],
+            [0.633, 0.382, 0.058],
+            [0.105, 0.072, 0.118]
         ])
     },
     'ROC-AUC': {
         'random_forest': np.array([
-            [0.874, 0.590, 0.772],
-            [0.747, 0.765, 0.705],
-            [0.888, 0.605, 0.789]
+            [0.874, 0.772, 0.59],
+            [0.888, 0.789, 0.605],
+            [0.747, 0.705, 0.765]
         ]),
         'chemprop': np.array([
-            [0.865, 0.534, 0.752],
-            [0.605, 0.661, 0.600],
-            [0.855, 0.624, 0.793]
+            [0.865, 0.752, 0.534],
+            [0.855, 0.793, 0.624],
+            [0.605, 0.6, 0.661]
         ]),
         'chemprop_rdkit': np.array([
-            [0.873, 0.574, 0.770],
-            [0.606, 0.702, 0.609],
-            [0.899, 0.690, 0.797]
+            [0.873, 0.77, 0.574],
+            [0.899, 0.797, 0.69],
+            [0.606, 0.609, 0.702]
         ])
     }
 }
 
 
-class Args(Tap):
-    save_dir: Path  # Path to directory where plots will be saved.
-
-    def process_args(self) -> None:
-        self.save_dir.mkdir(parents=True, exist_ok=True)
-
-
-def plot_model_generalization(args: Args) -> None:
+def plot_model_generalization(
+        save_dir: Path
+) -> None:
     """Plot a matrix showing the generalization of a property prediction model across datasets."""
+    save_dir.mkdir(parents=True, exist_ok=True)
+
     for metric, model_to_matrix in METRIC_TO_MODEL_TO_MATRIX.items():
         for model, matrix in model_to_matrix.items():
             plt.clf()
@@ -73,7 +69,7 @@ def plot_model_generalization(args: Args) -> None:
             plt.ylabel('Train Dataset')
             plt.title(f'{model} {metric} Generalization')
             plt.colorbar()
-            plt.savefig(args.save_dir / f'generalization_{model}_{metric}.pdf', bbox_inches='tight')
+            plt.savefig(save_dir / f'generalization_{model}_{metric}.pdf', bbox_inches='tight')
 
             # Save matrix data
             fig_data = pd.DataFrame(
@@ -81,8 +77,8 @@ def plot_model_generalization(args: Args) -> None:
                 index=[f'Train {dataset}' for dataset in DATASETS],
                 columns=[f'Predict {dataset}' for dataset in DATASETS]
             )
-            fig_data.to_csv(args.save_dir / f'generalization_{model}_{metric}.csv')
+            fig_data.to_csv(save_dir / f'generalization_{model}_{metric}.csv')
 
 
 if __name__ == '__main__':
-    plot_model_generalization(Args().parse_args())
+    tapify(plot_model_generalization)

@@ -5,7 +5,7 @@ from typing import Literal, Optional
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from tap import Tap
+from tap import tapify
 
 
 def plot_mcts_over_time(
@@ -101,12 +101,4 @@ def plot_mcts_over_time(
 
 
 if __name__ == '__main__':
-    class Args(Tap):
-        data_path: Path  # Path to CSV file containing MCTS generated molecules.
-        save_dir: Path  # Path to directory where the plot will be saved.
-        model_name: str  # The name of the model used during MCTS.
-        plot_type: Literal['histogram', 'line', 'violin'] = 'histogram'  # The type of plot to generate.
-        increment: int = 50000  # The number of rollouts between each plot.
-        min_score: Optional[float] = None  # If provided, only molecules with scores >= this threshold are plotted.
-
-    plot_mcts_over_time(**Args().parse_args().as_dict())
+    tapify(plot_mcts_over_time)

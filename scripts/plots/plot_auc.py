@@ -54,28 +54,28 @@ def plot_auc(
     :param prediction_column: Name of the column containing the predictions.
     """
     # Label setup
-    if args.curve_type == 'ROC':
+    if curve_type == 'ROC':
         x_label = 'False Positive Rate'
         y_label = 'True Positive Rate'
-    elif args.curve_type == 'PRC':
+    elif curve_type == 'PRC':
         x_label = 'Recall'
         y_label = 'Precision'
     else:
-        raise ValueError(f'Invalid curve type: {args.curve_type}')
+        raise ValueError(f'Invalid curve type: {curve_type}')
 
     # Plot ROC or PRC curve for each dataset
     coordinates = {}
     auc_scores, all_y_values = [], []
     base_x_values = np.linspace(0, 1, 101)
-    for i, test_path in enumerate(args.data_dir.rglob('*_test_preds.csv')):
+    for i, test_path in enumerate(data_dir.rglob('*_test_preds.csv')):
         # Load predictions and true values
         data = pd.read_csv(test_path)
 
         # Plot curve
         x_values, y_values, auc_score = compute_curve(
-            data[args.activity_column],
-            data[args.prediction_column],
-            args.curve_type
+            data[activity_column],
+            data[prediction_column],
+            curve_type
         )
         plt.plot(x_values, y_values, color='blue', alpha=0.25)
 
@@ -92,7 +92,7 @@ def plot_auc(
     # Plot average curve
     mean_y_values = np.mean(all_y_values, axis=0)
     plt.plot(base_x_values, mean_y_values, color='red',
-             label=rf'{args.curve_type}-AUC = ${np.mean(auc_scores):.3f} \pm {np.std(auc_scores):.3f}$')
+             label=rf'{curve_type}-AUC = ${np.mean(auc_scores):.3f} \pm {np.std(auc_scores):.3f}$')
 
     coordinates[f'{x_label} mean'] = base_x_values
     coordinates[f'{y_label} mean'] = mean_y_values
@@ -102,11 +102,11 @@ def plot_auc(
     plt.ylabel(y_label)
 
     plt.legend()
-    plt.title(f'{args.model_name} {args.curve_type} Curve')
+    plt.title(f'{model_name} {curve_type} Curve')
 
     # Save plot
     save_dir.mkdir(parents=True, exist_ok=True)
-    save_name = save_dir / f'{model_name.lower().replace(" ", "_")}_{args.curve_type.lower()}'
+    save_name = save_dir / f'{model_name.lower().replace(" ", "_")}_{curve_type.lower()}'
     plt.savefig(f'{save_name}.pdf', bbox_inches='tight')
 
     # Save data
@@ -119,4 +119,4 @@ def plot_auc(
 
 
 if __name__ == '__main__':
-    plot_auc(Args().parse_args())
+    tapify(plot_auc)

@@ -1,44 +1,43 @@
-"""Plots the average model score of molecular fragments vs the model score of the full molecule."""
+"""Plots the average model score of building blocks vs the model score of the full molecule."""
 import json
-import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.metrics import r2_score
-from tap import Tap
+from tap import tapify
 from tqdm import tqdm
 
-# TODO: remove this by setting up a proper package
-sys.path.append(Path(__file__).parent.parent.resolve().as_posix())
-
-from constants import REAL_REAGENT_COLS
+from SyntheMol.constants import REAL_REAGENT_COLS
 
 
-class Args(Tap):
-    data_path: Path  # Path to a CSV file containing molecules, their molecular fragments, and full molecule scores.
-    score_column: str  # Name of the model whose scores will be used.
-    fragment_path: Path  # Path to CSV file containing fragment IDs and SMILES.
-    fragment_to_score_path: Path  # Path to JSON file containing a dictionary mapping from fragment SMILES to model scores.
-    title: str  # Title of the plot to generate
-    save_dir: Path  # Path to directory where the plot will be saved.
+def plot_building_block_vs_molecule_scores(
+        data_path: Path,
+        score_column: str,
+        fragment_path: Path,
+        fragment_to_score_path: Path,
+        title: str,
+        save_dir: Path
+) -> None:
+    """Plots the average model score of building blocks vs the model score of the full molecule.
 
-    def process_args(self) -> None:
-        self.save_dir.mkdir(parents=True, exist_ok=True)
-
-
-def plot_fragment_vs_molecule_scores(args: Args) -> None:
-    """Plots the average model score of molecular fragments vs the model score of the full molecule."""
+    :param data_path: Path to a CSV file containing molecules, their building blocks, and full molecule scores.
+    :param score_column: Name of the model whose scores will be used.
+    :param fragment_path: Path to CSV file containing fragment IDs and SMILES.
+    :param fragment_to_score_path: Path to JSON file containing a dictionary mapping from fragment SMILES to model scores.
+    :param title: Title of the plot to generate.
+    :param save_dir: Path to directory where the plot will be saved.
+    """
     # Load data
-    data = pd.read_csv(args.data_path)
+    data = pd.read_csv(data_path)
     print(f'Data size = {len(data):,}')
 
     # Load fragment data
-    fragment_data = pd.read_csv(args.fragment_path)
+    fragment_data = pd.read_csv(fragment_path)
 
     # Load mapping from fragments to scores
-    with open(args.fragment_to_score_path) as f:
+    with open(fragment_to_score_path) as f:
         fragment_to_score: dict[str, float] = json.load(f)
 
     # Map from fragment ID to scores
@@ -59,7 +58,7 @@ def plot_fragment_vs_molecule_scores(args: Args) -> None:
     print(f'Data size after removing missing fragments = {len(data):,}')
 
     # Get full molecule scores
-    full_molecule_scores = data[args.score_column]
+    full_molecule_scores = data[score_column]
 
     # Get average fragment scores
     fragment_scores = [
@@ -74,19 +73,22 @@ def plot_fragment_vs_molecule_scores(args: Args) -> None:
     plt.scatter(full_molecule_scores, fragment_scores, s=3)
     plt.xlabel('Full Molecule Score')
     plt.ylabel('Average Fragment Score')
-    plt.title(args.title)
+    plt.title(title)
     plt.text(0.98, 0.98, f'$R^2 = {r2:.3f}$',
              horizontalalignment='right', verticalalignment='top',
              transform=plt.gca().transAxes)
-    plt.savefig(args.save_dir / 'fragment_vs_full_scores.pdf', bbox_inches='tight')
+
+    # Save plot
+    save_dir.mkdir(parents=True, exist_ok=True)
+    plt.savefig(save_dir / 'fragment_vs_full_scores.pdf', bbox_inches='tight')
 
     # Save data
     fig_data = pd.DataFrame({
         'full_molecule_score': full_molecule_scores,
         'fragment_score': fragment_scores,
     })
-    fig_data.to_csv(args.save_dir / 'fragment_vs_full_scores.csv', index=False)
+    fig_data.to_csv(save_dir / 'fragment_vs_full_scores.csv', index=False)
 
 
 if __name__ == '__main__':
-    plot_fragment_vs_molecule_scores(Args().parse_args())
+    tapify(plot_building_block_vs_molecule_scores)
