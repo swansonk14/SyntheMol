@@ -58,7 +58,7 @@ def map_reactions_for_file(
     return name, num_molecules, reaction_to_reactants_to_building_blocks
 
 
-def map_real_reactions_to_reagents(
+def map_real_reactions_to_building_blocks(
         data_dir: Path,
         save_path: Path
 ) -> None:
@@ -111,4 +111,4 @@ def map_real_reactions_to_reagents(
 
 
 if __name__ == '__main__':
-    tapify(map_real_reactions_to_reagents)
+    tapify(map_real_reactions_to_building_blocks)

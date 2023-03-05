@@ -9,5 +9,6 @@ REAL_BUILDING_BLOCK_ID_COL = 'Reagent_ID'
 REAL_TYPE_COL = 'Type'
 REAL_SMILES_COL = 'smiles'
 SMILES_COL = 'smiles'
+SCORE_COL = 'score'
 MODEL_TYPE = Literal['rf', 'mlp', 'chemprop']
 FINGERPRINT_TYPE = Literal['morgan', 'rdkit'] | None

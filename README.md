@@ -132,10 +132,9 @@ In the above command, replace `username` and `password` with the appropriate val
 
 Determine which building blocks are valid in which REAL reactions.
 ```bash
-python map_real_reactions_to_reagents.py \
+python map_real_reactions_to_building_blocks.py \
     --data_dir data/real_space \
-    --save_path data/reaction_to_building_blocks.json \
-    --parallel
+    --save_path data/reaction_to_building_blocks.json
 ```
 
 Total number of molecules = 31,507,987,117
@@ -158,8 +157,7 @@ Randomly sample 25,000 REAL Space molecules. Used for analysis of a representati
 python sample_real_space.py \
     --data_dir data/real_space \
     --save_path data/random_real.csv \
-    --num_molecules 25000 \
-    --parallel
+    --num_molecules 25000
 ```
 
 
