@@ -170,7 +170,7 @@ Count REAL space when limiting to the selected 13 reactions and the building blo
 python count_real_space.py \
     --data_dir data/Enamine_REAL_space \
     --save_dir data/Enamine_REAL_space_counts_with_selected_fragments_and_reactions \
-    --fragment_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
+    --building_block_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
     --only_selected_reactions
 ```
 

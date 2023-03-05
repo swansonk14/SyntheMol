@@ -21,6 +21,7 @@ from chem_utils.molecular_fingerprints import compute_fingerprint, compute_finge
 from chemprop.utils import load_checkpoint
 from reactions import Reaction, set_allowed_reaction_smiles
 from real_reactions import REAL_REACTIONS
+from SyntheMol.constants import REAL_BUILDING_BLOCK_ID_COL
 from train_model import sklearn_predict
 
 
@@ -48,7 +49,7 @@ class Args(Tap):
     # Data args
     smiles_column: str = 'smiles'
     """Name of the column containing SMILES."""
-    fragment_id_column: str = 'Reagent_ID'
+    fragment_id_column: str = REAL_BUILDING_BLOCK_ID_COL
     """Name of the column in fragment_path that contains fragment IDs."""
 
     # Train similarity args

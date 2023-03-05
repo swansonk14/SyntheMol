@@ -1,49 +1,44 @@
-"""Counts reactions and reagents in REAL space."""
+"""Counts reactions and building blocks in REAL space."""
 from collections import Counter
 from functools import partial
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 import pandas as pd
-from tap import Tap
+from tap import tapify
 from tqdm import tqdm
 
-from constants import REAL_REACTION_COL, REAL_REAGENT_COLS, REAL_SPACE_SIZE
-from real_reactions import REAL_REACTIONS
+from SyntheMol.constants import REAL_REACTION_COL, REAL_BUILDING_BLOCK_COLS, REAL_BUILDING_BLOCK_ID_COL, REAL_SPACE_SIZE
+from SyntheMol.reactions.real_reactions import REAL_REACTIONS
 
 
-class Args(Tap):
-    data_dir: Path  # Path to directory with CXSMILES files containing the REAL database.
-    save_dir: Path  # Path to directory where reaction and reagent counts will be saved.
-    fragment_path: Optional[Path] = None  # If provided, only count reactions and reagents that contain the fragments in this file.
-    fragment_id_column: str = 'Reagent_ID'  # Column in fragment file that contains fragment IDs.
-    only_selected_reactions: bool = False  # If True, only count reactions that are in the selected reactions in real_reactions.py.
-
-    def process_args(self) -> None:
-        self.save_dir.mkdir(parents=True, exist_ok=True)
-
-
-USE_COLS = [REAL_REACTION_COL] + REAL_REAGENT_COLS
+USE_COLS = [REAL_REACTION_COL] + REAL_BUILDING_BLOCK_COLS
 REAL_REACTION_IDS = {reaction.id for reaction in REAL_REACTIONS}
 
 
 def count_real_space_for_file(
         path: Path,
-        fragment_set: Optional[set] = None,
+        building_block_set: set | None = None,
         only_selected_reactions: bool = False
 ) -> tuple[Counter, Counter, int, int]:
-    """Counts reactions and reagents for a single REAL space file."""
+    """Counts reactions and building blocks for a single REAL space file.
+
+    :param path: Path to a REAL space file.
+    :param building_block_set: Set of building blocks to filter by.
+    :param only_selected_reactions: Whether to only count reactions in REAL_REACTION_IDS.
+    :return: A tuple containing the reaction counts, building block counts,
+             number of molecules in the file, and number of molecules counted.
+    """
     # Load REAL data file
     data = pd.read_csv(path, sep='\t', usecols=USE_COLS)
 
     # Get number of molecules in file
     num_molecules_in_file = len(data)
 
-    # Optionally filter by fragments
-    if fragment_set is not None:
-        data = data[data[REAL_REAGENT_COLS].isin(fragment_set).all(axis=1)]
+    # Optionally filter by building blocks
+    if building_block_set is not None:
+        data = data[data[REAL_BUILDING_BLOCK_COLS].isin(building_block_set).all(axis=1)]
 
     # Optionally filter by selected reactions
     if only_selected_reactions:
@@ -55,56 +50,69 @@ def count_real_space_for_file(
     # Count reactions
     reaction_counts = Counter(data[REAL_REACTION_COL])
 
-    # Count reagents
-    reagent_counts = Counter()
-    for reagents in data[REAL_REAGENT_COLS].itertuples(index=False):
-        unique_reagents = {reagent for reagent in reagents if not np.isnan(reagent)}
-        reagent_counts.update(unique_reagents)
+    # Count building blocks
+    building_block_counts = Counter()
+    for building_blocks in data[REAL_BUILDING_BLOCK_COLS].itertuples(index=False):
+        unique_building_blocks = {building_block for building_block in building_blocks if not np.isnan(building_block)}
+        building_block_counts.update(unique_building_blocks)
 
-    return reaction_counts, reagent_counts, num_molecules_in_file, num_molecules_counted
+    return reaction_counts, building_block_counts, num_molecules_in_file, num_molecules_counted
 
 
-def count_real_space(args: Args) -> None:
-    """Counts reactions and reagents in REAL space."""
+def count_real_space(
+        data_dir: Path,
+        save_dir: Path,
+        building_block_path: Path | None = None,
+        building_block_id_column: str = REAL_BUILDING_BLOCK_ID_COL,
+        only_selected_reactions: bool = False
+) -> None:
+    """Counts reactions and building blocks in REAL space.
+
+    :param data_dir: Path to directory with CXSMILES files containing the REAL database.
+    :param save_dir: Path to directory where reaction and building block counts will be saved.
+    :param building_block_path: If provided, only count reactions and building blocks that contain the building blocks in this file.
+    :param building_block_id_column: Column in building block file that contains building block IDs.
+    :param only_selected_reactions: If True, only count reactions that are in the selected reactions in real_reactions.py.
+    """
     # Get paths to data files
-    data_paths = sorted(args.data_dir.rglob('*.cxsmiles.bz2'))
+    data_paths = sorted(data_dir.rglob('*.cxsmiles.bz2'))
     print(f'Number of files = {len(data_paths):,}')
 
-    # Optionally get set of fragments to filter by
-    if args.fragment_path is not None:
-        fragment_set = set(pd.read_csv(args.fragment_path)[args.fragment_id_column])
-        print(f'Number of building blocks = {len(fragment_set):,}')
-        fragment_set |= {np.nan}
+    # Optionally get set of building blocks to filter by
+    if building_block_path is not None:
+        building_block_set = set(pd.read_csv(building_block_path)[building_block_id_column])
+        print(f'Number of building blocks = {len(building_block_set):,}')
+        building_block_set |= {np.nan}
     else:
-        fragment_set = None
+        building_block_set = None
 
     # Optionally only count selected reactions
-    if args.only_selected_reactions:
+    if only_selected_reactions:
         print(f'Number of selected reactions = {len(REAL_REACTION_IDS):,}')
 
-    # Set up function to count reactions and reagents for a single file
+    # Set up function to count reactions and building blocks for a single file
     count_real_space_for_file_fn = partial(
         count_real_space_for_file,
-        fragment_set=fragment_set,
-        only_selected_reactions=args.only_selected_reactions
+        building_block_set=building_block_set,
+        only_selected_reactions=only_selected_reactions
     )
 
     # Create combined counters
     combined_reaction_counts = Counter()
-    combined_reagent_counts = Counter()
+    combined_building_block_counts = Counter()
     total_num_molecules = 0
     total_num_molecules_counted = 0
 
     # Loop through all REAL space files
     with Pool() as pool:
         with tqdm(total=REAL_SPACE_SIZE) as progress_bar:
-            for reaction_counts, reagent_counts, num_molecules_in_file, num_molecules_counted in pool.imap(
+            for reaction_counts, building_block_counts, num_molecules_in_file, num_molecules_counted in pool.imap(
                     count_real_space_for_file_fn,
                     data_paths
             ):
                 # Merge counts
                 combined_reaction_counts.update(reaction_counts)
-                combined_reagent_counts.update(reagent_counts)
+                combined_building_block_counts.update(building_block_counts)
                 total_num_molecules += num_molecules_in_file
                 total_num_molecules_counted += num_molecules_counted
 
@@ -131,23 +139,23 @@ def count_real_space(args: Args) -> None:
     combined_reaction_counts_data['cumulative_percent'] = 100 * combined_reaction_counts_data['cumulative_count'] / REAL_SPACE_SIZE
 
     # Save reaction counts
-    combined_reaction_counts_data.to_csv(args.save_dir / 'reaction_counts.csv', index=False)
+    combined_reaction_counts_data.to_csv(save_dir / 'reaction_counts.csv', index=False)
 
-    # Create reagent counts DataFrame
-    combined_reagent_counts_data = pd.DataFrame([
+    # Create building block counts DataFrame
+    combined_building_block_counts_data = pd.DataFrame([
         {
-            'building_block': reagent,
+            'building_block': building_block,
             'count': count,
             'percent': 100 * count / REAL_SPACE_SIZE
-        } for reagent, count in combined_reagent_counts.items()
+        } for building_block, count in combined_building_block_counts.items()
     ])
 
-    # Sort reagent counts by count from largest to smallest
-    combined_reagent_counts_data.sort_values(by='count', ascending=False, inplace=True)
+    # Sort building block counts by count from largest to smallest
+    combined_building_block_counts_data.sort_values(by='count', ascending=False, inplace=True)
 
-    # Save reagent counts
-    combined_reagent_counts_data.to_csv(args.save_dir / 'building_block_counts.csv', index=False)
+    # Save building block counts
+    combined_building_block_counts_data.to_csv(save_dir / 'building_block_counts.csv', index=False)
 
 
 if __name__ == '__main__':
-    count_real_space(Args().parse_args())
+    tapify(count_real_space)

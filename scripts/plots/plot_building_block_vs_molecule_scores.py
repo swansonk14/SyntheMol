@@ -9,7 +9,7 @@ from sklearn.metrics import r2_score
 from tap import tapify
 from tqdm import tqdm
 
-from SyntheMol.constants import REAL_REAGENT_COLS
+from SyntheMol.constants import REAL_BUILDING_BLOCK_COLS, REAL_BUILDING_BLOCK_ID_COL
 
 
 def plot_building_block_vs_molecule_scores(
@@ -43,13 +43,13 @@ def plot_building_block_vs_molecule_scores(
     # Map from fragment ID to scores
     fragment_id_to_score = {
         fragment_id: fragment_to_score[fragment_smiles]
-        for fragment_id, fragment_smiles in zip(fragment_data['Reagent_ID'], fragment_data['smiles'])
+        for fragment_id, fragment_smiles in zip(fragment_data[REAL_BUILDING_BLOCK_ID_COL], fragment_data['smiles'])
     }
 
     # Skip molecules with any missing fragment SMILES
     missing_fragments = np.zeros(len(data), dtype=bool)
 
-    for reagent_column in REAL_REAGENT_COLS:
+    for reagent_column in REAL_BUILDING_BLOCK_COLS:
         missing_fragments |= np.array(
             [(reagent not in fragment_id_to_score and not np.isnan(reagent)) for reagent in data[reagent_column]]
         )
@@ -62,7 +62,7 @@ def plot_building_block_vs_molecule_scores(
 
     # Get average fragment scores
     fragment_scores = [
-        np.mean([fragment_id_to_score[fragment] for fragment in row[REAL_REAGENT_COLS].dropna()])
+        np.mean([fragment_id_to_score[fragment] for fragment in row[REAL_BUILDING_BLOCK_COLS].dropna()])
         for _, row in tqdm(data.iterrows(), total=len(data), desc='Average fragment scores')
     ]
 

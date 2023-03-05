@@ -1,39 +1,38 @@
 """Processes antibiotics data from potentially multiple files."""
 from collections import defaultdict
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 import pandas as pd
 from rdkit import Chem
-from tap import Tap
-
-
-class Args(Tap):
-    data_paths: list[Path]  # A list of paths to CSV files containing data.
-    save_path: Path  # A path to a CSV file where the processed data will be saved.
-    save_hits_path: Optional[Path] = None  # A path to a CSV file where only the hits (actives) will be saved.
-    smiles_column: str = 'SMILES'  # The name of the column containing the SMILES.
-    mean_column: str = 'Mean'  # The name of the column containing the activity.
-    num_std: int = 2  # The number of standard deviations to use when binarizing the data.
-
-    def process_args(self) -> None:
-        self.save_path.parent.mkdir(parents=True, exist_ok=True)
-
-        if self.save_hits_path is not None:
-            self.save_hits_path.parent.mkdir(parents=True, exist_ok=True)
+from tap import tapify
 
 
 ACTIVITY_COLUMN = 'activity'
 SMILES_COLUMN = 'smiles'
 
 
-def process_data(args: Args) -> None:
-    """Processes antibiotics data from potentially multiple files."""
+def process_data(
+        data_paths: list[Path],
+        save_path: Path,
+        save_hits_path: Path | None = None,
+        smiles_column: str = 'SMILES',
+        mean_column: str = 'Mean',
+        num_std: int = 2
+) -> None:
+    """Processes antibiotics data from potentially multiple files.
+
+    :param data_paths: A list of paths to CSV files containing data.
+    :param save_path: A path to a CSV file where the processed data will be saved.
+    :param save_hits_path: A path to a CSV file where only the hits (actives) will be saved.
+    :param smiles_column: The name of the column containing the SMILES.
+    :param mean_column: The name of the column containing the activity.
+    :param num_std: The number of standard deviations to use when binarizing the data.
+    """
     # Load and process each data file
     all_smiles, all_activities = [], []
 
-    for data_path in args.data_paths:
+    for data_path in data_paths:
         # Load data
         data = pd.read_csv(data_path)
         print(data_path.stem)
@@ -42,17 +41,17 @@ def process_data(args: Args) -> None:
         # Canonicalize SMILES
         all_smiles += [
             Chem.MolToSmiles(Chem.MolFromSmiles(smiles))
-            for smiles in data[args.smiles_column]
+            for smiles in data[smiles_column]
         ]
 
         # Binarize data using mean - k * std
-        activities = data[args.mean_column]
+        activities = data[mean_column]
         mean_activity = np.mean(activities)
         std_activity = np.std(activities)
-        threshold = mean_activity - args.num_std * std_activity
+        threshold = mean_activity - num_std * std_activity
         print(f'Mean activity = {mean_activity}')
         print(f'Std activity = {std_activity}')
-        print(f'Activity threshold of mean - {args.num_std} std = {threshold}')
+        print(f'Activity threshold of mean - {num_std} std = {threshold}')
 
         binary_activities = (activities < threshold).astype(int)
         print(f'Number of hits = {sum(binary_activities == 1):,}')
@@ -84,17 +83,19 @@ def process_data(args: Args) -> None:
     print()
 
     # Save data
-    data.to_csv(args.save_path, index=False)
+    save_path.parent.mkdir(parents=True, exist_ok=True)
+    data.to_csv(save_path, index=False)
 
     print(f'Final data size = {len(data):,}')
     print(f'Number of hits = {sum(data[ACTIVITY_COLUMN] == 1):,}')
     print(f'Number of non-hits = {sum(data[ACTIVITY_COLUMN] == 0):,}')
 
     # Save hits
-    if args.save_hits_path is not None:
+    if save_hits_path is not None:
+        save_hits_path.parent.mkdir(parents=True, exist_ok=True)
         hits = data[data[ACTIVITY_COLUMN] == 1]
-        hits.to_csv(args.save_hits_path, index=False)
+        hits.to_csv(save_hits_path, index=False)
 
 
 if __name__ == '__main__':
-    process_data(Args().parse_args())
+    tapify(process_data)

@@ -4,25 +4,30 @@ from pathlib import Path
 
 import pandas as pd
 from rdkit import Chem
-from tap import Tap
+from tap import tapify
+
+from SyntheMol.constants import CHEMBL_SMILES_COL
 
 
-class Args(Tap):
-    data_paths: list[Path]  # Paths to CSV files containing downloaded ChEMBL data.
-    labels: list[str]  # Names of each file in data_paths for the purpose of labeling where the molecules came from.
-    save_path: Path  # Path to CSV file where combined ChEMBL data will be saved.
-    id_column: str = 'ChEMBL ID'  # Name of the column containing the compound ID in the files in data_paths.
-    smiles_column: str = 'Smiles'  # Name of column containing SMILES in the files in data_paths.
+def merge_chembl_downloads(
+        data_paths: list[Path],
+        labels: list[str],
+        save_path: Path,
+        smiles_column: str = CHEMBL_SMILES_COL
+) -> None:
+    """Merges CSV files downloaded from ChEMBL using various search terms.
 
-
-def merge_chembl_downloads(args: Args) -> None:
-    """Merges CSV files downloaded from ChEMBL using various search terms."""
-    if len(args.data_paths) != len(args.labels):
+    :param data_paths: Paths to CSV files containing downloaded ChEMBL data.
+    :param labels: Names of each file in data_paths for the purpose of labeling where the molecules came from.
+    :param save_path: Path to CSV file where combined ChEMBL data will be saved.
+    :param smiles_column: Name of column containing SMILES in the files in data_paths.
+    """
+    if len(data_paths) != len(labels):
         raise ValueError('Must have an equal number of data paths and labels.')
 
     # Load data
     datasets = []
-    for data_path, label in zip(args.data_paths, args.labels):
+    for data_path, label in zip(data_paths, labels):
         dataset = pd.read_csv(data_path, sep=';')
         dataset['label'] = label
         print(f'{data_path.name} size = {len(dataset):,}')
@@ -32,11 +37,11 @@ def merge_chembl_downloads(args: Args) -> None:
     data = pd.concat(datasets)
 
     # Only keep compounds with SMILES
-    data.dropna(subset=[args.smiles_column], inplace=True)
+    data.dropna(subset=[smiles_column], inplace=True)
 
     # Compute canonical smiles
-    data['smiles'] = [Chem.MolToSmiles(Chem.MolFromSmiles(smiles)) for smiles in data[args.smiles_column]]
-    del data[args.smiles_column]
+    data['smiles'] = [Chem.MolToSmiles(Chem.MolFromSmiles(smiles)) for smiles in data[smiles_column]]
+    del data[smiles_column]
 
     # Map SMILES to labels
     smiles_to_labels = defaultdict(set)
@@ -60,9 +65,9 @@ def merge_chembl_downloads(args: Args) -> None:
     print(f'Merged data size = {len(data):,}')
 
     # Save data
-    args.save_path.parent.mkdir(parents=True, exist_ok=True)
-    data.to_csv(args.save_path, index=False)
+    save_path.parent.mkdir(parents=True, exist_ok=True)
+    data.to_csv(save_path, index=False)
 
 
 if __name__ == '__main__':
-    merge_chembl_downloads(Args().parse_args())
+    tapify(merge_chembl_downloads)
