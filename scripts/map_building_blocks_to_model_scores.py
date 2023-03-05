@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 from tap import tapify
 
-from SyntheMol.constants import FINGERPRINT_TYPE, MODEL_TYPE, SMILES_COL
+from SyntheMol.constants import FINGERPRINT_TYPES, MODEL_TYPE, SMILES_COL
 from SyntheMol.models.predict_model import predict_ensemble  # TODO: fix this import
 
 
@@ -14,7 +14,7 @@ def map_building_block_to_scores(
         model_path: Path,
         save_path: Path,
         model_type: MODEL_TYPE,
-        fingerprint_type: FINGERPRINT_TYPE = None,
+        fingerprint_type: FINGERPRINT_TYPES = None,
         smiles_column: str = SMILES_COL
 ) -> None:
     """Map building blocks to prediction scores.

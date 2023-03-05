@@ -21,8 +21,16 @@ from chem_utils.molecular_fingerprints import compute_fingerprint, compute_finge
 from chemprop.utils import load_checkpoint
 from reactions import Reaction, set_allowed_reaction_smiles
 from real_reactions import REAL_REACTIONS
-from SyntheMol.constants import REAL_BUILDING_BLOCK_ID_COL
 from train_model import sklearn_predict
+
+from SyntheMol.constants import REAL_BUILDING_BLOCK_ID_COL
+from SyntheMol.models import (
+    chemprop_load_model,
+    chemprop_predict_ensemble_on_molecule,
+    sklearn_load_model,
+    sklearn_predict_ensemble_on_molecule
+)
+
 
 
 class Args(Tap):
@@ -618,26 +626,25 @@ def create_model_scoring_fn(model_path: Path,
         torch.manual_seed(0)
         torch.use_deterministic_algorithms(True)
 
-        models = [load_checkpoint(path=model_path).eval() for model_path in model_paths]
+        models = [chemprop_load_model(model_path=model_path) for model_path in model_paths]
 
         # Set up model scoring function for ensemble of chemprop models
         def model_scorer(smiles: str, fingerprint: Optional[np.ndarray]) -> float:
-            fingerprint = [fingerprint] if fingerprint is not None else None
-
-            return float(np.mean([
-                model(batch=[[smiles]], features_batch=fingerprint).item() for model in models
-            ]))
+            return chemprop_predict_ensemble_on_molecule(
+                models=models,
+                smiles=smiles,
+                fingerprint=fingerprint
+            )
     else:
-        models = []
-        for model_path in model_paths:
-            with open(model_path, 'rb') as f:
-                models.append(pickle.load(f))
+        # Load scikit-learn models
+        models = [sklearn_load_model(model_path=model_path) for model_path in model_paths]
 
-        # Set up model scoring function for ensemble of random forest or MLP models
+        # Set up model scoring function for ensemble of scikit-learn models
         def model_scorer(smiles: str, fingerprint: np.ndarray) -> float:
-            return float(np.mean([
-                sklearn_predict(model=model, fingerprints=fingerprint.reshape(1, -1))[0] for model in models
-            ]))
+            return sklearn_predict_ensemble_on_molecule(
+                models=models,
+                fingerprint=fingerprint
+            )
 
     @cache
     def model_scoring_fn(smiles: str) -> float:
