@@ -1,4 +1,4 @@
-"""Plot an AUC curve given a set of predictions and true values."""
+"""Plot ROC or precision recall curves and compute AUCs given a set of predictions and true values."""
 from pathlib import Path
 from typing import Literal
 
@@ -7,19 +7,7 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 from sklearn.metrics import precision_recall_curve, roc_auc_score, roc_curve, average_precision_score
-from tap import Tap
-
-
-class Args(Tap):
-    data_dir: Path  # Path to directory containing CSV files with test set predictions and true values.
-    save_dir: Path  # Path to a directory where the plot will be saved.
-    model_name: str  # Name of the model whose predictions are being plotted.
-    curve_type: Literal['ROC', 'PRC']  # Type of curve to plot (ROC or PR).
-    activity_column: str = 'activity'  # Name of the column containing the true values.
-    prediction_column: str = 'prediction'  # Name of the column containing the predictions.
-
-    def process_args(self) -> None:
-        self.save_dir.mkdir(parents=True, exist_ok=True)
+from tap import tapify
 
 
 def compute_curve(
@@ -27,7 +15,13 @@ def compute_curve(
         predictions: pd.Series,
         curve_type: Literal['ROC', 'PRC']
 ) -> tuple[np.ndarray, np.ndarray, float]:
-    """Plot an individual ROC or PRC curve."""
+    """Plot an individual ROC or precision recall curve and compute AUC.
+
+    :param activities: True binary activities.
+    :param predictions: Predicted probabilities of activity.
+    :param curve_type: Type of curve to plot (ROC or PRC).
+    :return: A tuple of x values, y values, and AUC.
+    """
     if curve_type == 'ROC':
         fpr, tpr, _ = roc_curve(activities, predictions)
         x_values, y_values = fpr, tpr
@@ -42,8 +36,23 @@ def compute_curve(
     return x_values, y_values, auc_score
 
 
-def plot_auc(args: Args) -> None:
-    """Plot an AUC curve given a set of predictions and true values."""
+def plot_auc(
+        data_dir: Path,
+        save_dir: Path,
+        model_name: str,
+        curve_type: Literal['ROC', 'PRC'],
+        activity_column: str = 'activity',
+        prediction_column: str = 'prediction'
+) -> None:
+    """Plot ROC or precision recall curves and compute AUCs given a set of predictions and true values.
+
+    :param data_dir: Path to directory containing CSV files with test set predictions and true values.
+    :param save_dir: Path to a directory where the plot will be saved.
+    :param model_name: Name of the model whose predictions are being plotted.
+    :param curve_type: Type of curve to plot (ROC or PRC).
+    :param activity_column: Name of the column containing the true values.
+    :param prediction_column: Name of the column containing the predictions.
+    """
     # Label setup
     if args.curve_type == 'ROC':
         x_label = 'False Positive Rate'
@@ -96,7 +105,8 @@ def plot_auc(args: Args) -> None:
     plt.title(f'{args.model_name} {args.curve_type} Curve')
 
     # Save plot
-    save_name = args.save_dir / f'{args.model_name.lower().replace(" ", "_")}_{args.curve_type.lower()}'
+    save_dir.mkdir(parents=True, exist_ok=True)
+    save_name = save_dir / f'{model_name.lower().replace(" ", "_")}_{args.curve_type.lower()}'
     plt.savefig(f'{save_name}.pdf', bbox_inches='tight')
 
     # Save data

@@ -35,45 +35,25 @@ TODO: Change all instances of fragments or reagents in the code to building bloc
 
 ## Installation
 
-Download code.
-```bash
-git clone git@github.com:swansonk14/combinatorial_antibiotics.git
-cd combinatorial_antibiotics
-```
+TODO: think about best way to handle conda vs pip.
 
-Install conda environment.
+Install SyntheMol and set up the conda environment.
 ```bash
+git clone git@github.com:swansonk14/SyntheMol.git
+cd SyntheMol
 conda env create -f environment.yml
+conda activate SyntheMol
+pip install -e .
 ```
 
-Note: If there are any conda installation or version issues, `environment-frozen.yml` lists the explicit versions of the full list of installed packages used to run this code.
+TODO: make chem_utils on PyPI and separate things that are package vs scripts.
 
-Activate conda environment.
+In the same conda environment, install [chem_utils](https://github.com/swansonk14/chem_utils), which contains useful scripts and functions for working with small molecules.
 ```bash
-conda activate combinatorial_antibiotics
-```
-
-Install [chem_utils](https://github.com/swansonk14/chem_utils), which contains useful scripts and functions for working with small molecules.
-```bash
-cd ..
 git clone git@github.com:swansonk14/chem_utils.git
 cd chem_utils
 pip install -e .
-cd ../combinatorial_antibiotics
 ```
-
-[//]: # (&#40;Note: Had some issues with pip so commented out the `install_requires` lines in `setup.py`.&#41;)
-
-Install [chemprop](https://github.com/chemprop/chemprop), which contain a graph neural network for molecular property prediction.
-```bash
-cd ..
-git clone git@github.com:chemprop/chemprop.git
-cd chemprop
-pip install -e .
-cd ../combinatorial_antibiotics
-```
-
-[//]: # (&#40;Note: Had some issues with pip so commented out the `install_requires` and `extras_require` lines in `setup.py`.&#41;)
 
 
 ## Data

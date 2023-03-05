@@ -26,6 +26,19 @@ setup(
     license='MIT',
     packages=find_packages(),
     package_data={'SyntheMol': ['py.typed']},
+    install_requires=[  # TODO: add chem_utils here
+        'chemprop',
+        'descriptastorus',
+        'matplotlib',
+        'numpy',
+        'pandas',
+        'rdkit-pypi',
+        'scikit-learn',
+        'scipy',
+        'tqdm',
+        'typed-argument-parser'
+    ],
+    python_requires='>=3.10',
     classifiers=[
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.10',

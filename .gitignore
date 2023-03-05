@@ -135,6 +135,6 @@ dmypy.json
 .DS_Store
 
 # Folders
+checkpoints
 data
 generations
-models

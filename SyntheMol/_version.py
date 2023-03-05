@@ -1,5 +1,4 @@
-__all__ = ['__version__']
-
+"""Contains the version information for SyntheMol."""
 # major, minor, patch
 version_info = 1, 0, 0
 
