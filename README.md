@@ -315,7 +315,7 @@ In order to speed up the generative model, we pre-compute the scores of all buil
 
 Chemprop
 ```bash
-python map_fragments_to_model_scores.py \
+python map_building_blocks_to_model_scores.py \
     --fragment_path data/building_blocks.csv \
     --model_path models/chemprop \
     --save_path models/chemprop/building_block_scores.json \
@@ -324,7 +324,7 @@ python map_fragments_to_model_scores.py \
 
 Chemprop-RDKit
 ```bash
-python map_fragments_to_model_scores.py \
+python map_building_blocks_to_model_scores.py \
     --fragment_path data/building_blocks.csv \
     --model_path models/chemprop_rdkit \
     --save_path models/chemprop_rdkit/building_block_scores.json \
@@ -334,7 +334,7 @@ python map_fragments_to_model_scores.py \
 
 Random forest with RDKit
 ```bash
-python map_fragments_to_model_scores.py \
+python map_building_blocks_to_model_scores.py \
     --fragment_path data/building_blocks.csv \
     --model_path models/random_forest \
     --save_path models/random_forest/building_block_scores.json \

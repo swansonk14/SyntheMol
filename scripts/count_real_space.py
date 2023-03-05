@@ -9,7 +9,12 @@ import pandas as pd
 from tap import tapify
 from tqdm import tqdm
 
-from SyntheMol.constants import REAL_REACTION_COL, REAL_BUILDING_BLOCK_COLS, REAL_BUILDING_BLOCK_ID_COL, REAL_SPACE_SIZE
+from SyntheMol.constants import (
+    REAL_BUILDING_BLOCK_COLS,
+    REAL_REACTION_COL,
+    REAL_BUILDING_BLOCK_ID_COL,
+    REAL_SPACE_SIZE
+)
 from SyntheMol.reactions.real_reactions import REAL_REACTIONS
 
 

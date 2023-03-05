@@ -9,8 +9,8 @@ from tap import tapify
 from tqdm import tqdm
 
 from SyntheMol.constants import (
-    REAL_REACTION_COL,
     REAL_BUILDING_BLOCK_COLS,
+    REAL_REACTION_COL,
     REAL_SMILES_COL,
     REAL_SPACE_SIZE
 )

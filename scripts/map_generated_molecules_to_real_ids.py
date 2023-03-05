@@ -4,40 +4,46 @@ from pathlib import Path
 import pandas as pd
 from rdkit import Chem
 from rdkit.Chem.PandasTools import WriteSDF
-from tap import Tap
+from tap import tapify
 
 
-class Args(Tap):
-    data_path: Path  # Path to CSV file containing generated molecules with reaction and reagent IDs.
-    save_dir: Path  # Path to directory where CSV and SDF files with REAL IDs will be saved.
+def map_generated_molecules_to_real_ids(
+        data_path: Path,
+        save_dir: Path
+) -> None:
+    """Maps generated molecules to REAL IDs in the format expected by Enamine.
 
-    def process_args(self) -> None:
-        self.save_dir.mkdir(parents=True, exist_ok=True)
+    Note: Currently only works with one-reaction molecules.
 
-
-def map_generated_molecules_to_real_ids(args: Args) -> None:
-    """Maps generated molecules to REAL IDs in the format expected by Enamine."""
+    :param data_path: Path to CSV file containing generated molecules with reaction and building block IDs.
+    :param save_dir: Path to directory where CSV and SDF files with REAL IDs will be saved.
+    """
     # Load data
-    data = pd.read_csv(args.data_path)
+    data = pd.read_csv(data_path)
     print(f'Data size = {len(data):,}')
 
     # Get only one-reaction molecules
     data = data[data['num_reactions'] == 1]
     print(f'Number of one-reaction molecules = {len(data):,}')
 
-    # Get reagent columns
-    reagent_columns = sorted(
+    # Get building block columns
+    building_block_columns = sorted(
         column for column in data.columns if column.startswith('reagent_1_') and column.endswith('_id')
     )
 
+    # TODO: handle the case of a building block having multiple IDs
+
     # Compute REAL IDs without prefixes
     real_ids = [
-        f'{row["reaction_1_id"]}____{"____".join(str(int(reagent_id)) for reagent_id in row[reagent_columns].dropna())}'
+        f'{row["reaction_1_id"]}____{"____".join(str(int(building_block_id)) for building_block_id in row[building_block_columns].dropna())}'
         for _, row in data.iterrows()
     ]
 
     # Compute mols
     mols = [Chem.MolFromSmiles(smiles) for smiles in data['smiles']]
+
+    # Create save directory
+    save_dir.mkdir(parents=True, exist_ok=True)
 
     # Loop through prefixes
     for prefix in ['m', 's']:
@@ -49,13 +55,13 @@ def map_generated_molecules_to_real_ids(args: Args) -> None:
         })
 
         # Save data as SDF
-        with open(args.save_dir / f'type_{prefix}.sdf', 'w') as f:
+        with open(save_dir / f'type_{prefix}.sdf', 'w') as f:
             WriteSDF(real_data, f, molColName='mol', idName='real_id')
 
         # Save data as CSV
         del real_data['mol']
-        real_data.to_csv(args.save_dir / f'type_{prefix}.csv', index=False)
+        real_data.to_csv(save_dir / f'type_{prefix}.csv', index=False)
 
 
 if __name__ == '__main__':
-    map_generated_molecules_to_real_ids(Args().parse_args())
+    tapify(map_generated_molecules_to_real_ids)
