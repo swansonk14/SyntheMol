@@ -136,7 +136,5 @@ dmypy.json
 
 # Folders
 data
-figures
 generations
 models
-paper
