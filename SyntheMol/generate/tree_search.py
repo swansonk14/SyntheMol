@@ -221,7 +221,7 @@ class TreeSearcher:
         self.all_fragments = list(dict.fromkeys(
             fragment
             for reaction in REAL_REACTIONS
-            for reagent in reaction.reagents
+            for reagent in reaction.reactants
             for fragment in reagent.allowed_smiles
         ))
         self.max_reactions = max_reactions
@@ -256,7 +256,7 @@ class TreeSearcher:
         return [
             [
                 reagent_index
-                for reagent_index, reagent in enumerate(reaction.reagents)
+                for reagent_index, reagent in enumerate(reaction.reactants)
                 if reagent.has_match(fragment)
             ]
             for fragment in fragments
@@ -270,10 +270,10 @@ class TreeSearcher:
         # Loop through each reaction
         for reaction in self.reactions:
             # Get indices of the reagents in this reaction
-            reagent_indices = set(range(reaction.num_reagents))
+            reagent_indices = set(range(reaction.num_reactants))
 
             # Skip reaction if there's no room to add more reagents
-            if len(fragments) >= reaction.num_reagents:
+            if len(fragments) >= reaction.num_reactants:
                 continue
 
             # For each mol, get a list of indices of reagents it matches
@@ -287,7 +287,7 @@ class TreeSearcher:
 
                 if len(matched_reagent_indices) == len(fragments):
                     for index in sorted(reagent_indices - matched_reagent_indices):
-                        available_fragments += reaction.reagents[index].allowed_smiles
+                        available_fragments += reaction.reactants[index].allowed_smiles
 
         # Remove duplicates but maintain order for reproducibility and avoid sorting sets for speed
         # Note: requires Python 3.7+ for ordered dictionaries
@@ -299,7 +299,7 @@ class TreeSearcher:
         matching_reactions = []
 
         for reaction in self.reactions:
-            if len(fragments) != reaction.num_reagents:
+            if len(fragments) != reaction.num_reactants:
                 continue
 
             # For each mol, get a list of indices of reagents it matches
@@ -307,7 +307,7 @@ class TreeSearcher:
 
             # Include every assignment of fragments to reagents that fills all the reagents
             for matched_reagent_indices in itertools.product(*reagent_matches_per_mol):
-                if len(set(matched_reagent_indices)) == reaction.num_reagents:
+                if len(set(matched_reagent_indices)) == reaction.num_reactants:
                     fragment_to_reagent_index = dict(zip(fragments, matched_reagent_indices))
                     matching_reactions.append((reaction, fragment_to_reagent_index))
 

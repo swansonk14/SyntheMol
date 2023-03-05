@@ -1,11 +1,10 @@
-"""SMARTS representations of the most common REAL reactions.
-Reference: https://docs.google.com/document/d/1LDgRXf4P-uOXQEmgJPgVhuOK32I2u0FXSB8tzDenN6U/edit?usp=sharing
-"""
-from reactions import QueryMol, Reaction
+"""SMARTS representations of the most common Enamine REAL reactions."""
+from SyntheMol.reactions import QueryMol, Reaction
+
 
 REAL_REACTIONS = [
     Reaction(
-        reagents=[
+        reactants=[
             QueryMol('CC(C)(C)OC(=O)[N:1]([*:2])[*:3].[*:4][N:5]([H])[*:6]'),
             QueryMol('[OH1][C:7]([*:8])=[O:9]'),
             QueryMol('[OH1][C:10]([*:11])=[O:12]')
@@ -14,7 +13,7 @@ REAL_REACTIONS = [
         reaction_id=275592
     ),
     Reaction(
-        reagents=[
+        reactants=[
             QueryMol('[*:1][N:2]([H])[*:3]'),
             QueryMol('[OH1][C:4]([*:5])=[O:6]')
         ],
@@ -22,7 +21,7 @@ REAL_REACTIONS = [
         reaction_id=22
     ),
     Reaction(
-        reagents=[
+        reactants=[
             QueryMol('[*:1][N:2]([H])[*:3]'),
             QueryMol('[OH1][C:4]([*:5])=[O:6]')
         ],
@@ -30,7 +29,7 @@ REAL_REACTIONS = [
         reaction_id=11
     ),
     Reaction(
-        reagents=[
+        reactants=[
             QueryMol('[*:1][N:2]([H])[*:3]'),
             QueryMol('[OH1][C:4]([*:5])=[O:6]')
         ],
@@ -38,7 +37,7 @@ REAL_REACTIONS = [
         reaction_id=527
     ),
     Reaction(
-        reagents=[
+        reactants=[
             QueryMol('[*:1][N:2]([H])[H:3]'),
             QueryMol('[*:4][N:5]([H])[*:6]')
         ],
@@ -46,7 +45,7 @@ REAL_REACTIONS = [
         reaction_id=2430
     ),
     Reaction(
-        reagents=[
+        reactants=[
             QueryMol('[*:1][N:2]([H])[H:3]'),
             QueryMol('[*:4][N:5]([H])[H:6]')
         ],
@@ -54,7 +53,7 @@ REAL_REACTIONS = [
         reaction_id=2708
     ),
     Reaction(
-        reagents=[
+        reactants=[
             QueryMol('[*:1][N:2]([H])[*:3]'),
             QueryMol('[OH1][C:4]([*:5])=[O:6]')
         ],
@@ -62,7 +61,7 @@ REAL_REACTIONS = [
         reaction_id=240690
     ),
     Reaction(
-        reagents=[
+        reactants=[
             QueryMol('[*:1][N:2]([H])[*:3]'),
             QueryMol('[F,Cl,Br,I][*:4]')
         ],
@@ -70,7 +69,7 @@ REAL_REACTIONS = [
         reaction_id=2230
     ),
     Reaction(
-        reagents=[
+        reactants=[
             QueryMol('[*:1][N:2]([H])[H:3]'),
             QueryMol('[*:4][N:5]([H])[H:6]')
         ],
@@ -78,7 +77,7 @@ REAL_REACTIONS = [
         reaction_id=2718
     ),
     Reaction(
-        reagents=[
+        reactants=[
             QueryMol('[*:1][N:2]([H])[*:3]'),
             QueryMol('[O:4]=[S:5](=[O:6])([F,Cl,Br,I])[*:7]')
         ],
@@ -86,7 +85,7 @@ REAL_REACTIONS = [
         reaction_id=40
     ),
     Reaction(
-        reagents=[
+        reactants=[
             QueryMol('[OH1:1][C:2]([*:3])=[O:4]'),
             QueryMol('[F,Cl,Br,I][*:5]')
         ],
@@ -94,7 +93,7 @@ REAL_REACTIONS = [
         reaction_id=1458
     ),
     Reaction(
-        reagents=[
+        reactants=[
             QueryMol('[*:1][N:2]([H])[*:3]'),
             QueryMol('[*:4][N:5]([H])[H:6]')
         ],
@@ -102,7 +101,7 @@ REAL_REACTIONS = [
         reaction_id=271948
     ),
     Reaction(
-        reagents=[
+        reactants=[
             QueryMol('[*:1][N:2]([H])[*:3]'),
             QueryMol('[F,Cl,Br,I][*:4]')
         ],
@@ -110,20 +109,3 @@ REAL_REACTIONS = [
         reaction_id=27
     )
 ]
-
-
-if __name__ == '__main__':
-    # Save reaction SMARTS and reaction IDs in a CSV file
-    import pandas as pd
-
-    smarts, reaction_ids = [], []
-
-    for reaction in REAL_REACTIONS:
-        smarts.append(
-            f'{".".join(f"({reagent.smarts_with_atom_mapping})" for reagent in reaction.reagents)}'
-            f'>>({reaction.product.smarts_with_atom_mapping})'
-        )
-        reaction_ids.append(reaction.id)
-
-    df = pd.DataFrame({'smarts': smarts, 'reaction_id': reaction_ids})
-    df.to_csv('data/real_reaction_smarts.csv', index=False)

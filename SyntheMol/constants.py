@@ -1,6 +1,9 @@
 """Contains constants shared throughout SyntheMol."""
 from typing import Literal
 
+from rdkit.Chem import Mol
+
+
 CHEMBL_SMILES_COL = 'Smiles'
 REAL_SPACE_SIZE = 31507987117  # As of August 30, 2022, in the 2022 q1-2 REAL space
 REAL_REACTION_COL = 'reaction'
@@ -12,3 +15,4 @@ SMILES_COL = 'smiles'
 SCORE_COL = 'score'
 MODEL_TYPE = Literal['rf', 'mlp', 'chemprop']
 FINGERPRINT_TYPE = Literal['morgan', 'rdkit'] | None
+MOLECULE_TYPE = str | Mol  # Either a SMILES string or an RDKit Mol object

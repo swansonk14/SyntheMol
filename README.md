@@ -4,6 +4,8 @@ SyntheMol is a generative AI method for designing easily synthesizable and struc
 
 TODO: Change all instances of fragments or reagents in the code to building blocks. Change rf to random_forest as model type (and elsewhere).
 
+TODO: move assessment stuff from here to plots
+
 - [Installation](#installation)
 - [Data](#data)
 - [Process REAL data](#process-real-data)
