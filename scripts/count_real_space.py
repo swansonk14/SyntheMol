@@ -67,7 +67,7 @@ def count_real_space_for_file(
 def count_real_space(
         data_dir: Path,
         save_dir: Path,
-        building_block_path: Path | None = None,
+        building_blocks_path: Path | None = None,
         building_block_id_column: str = REAL_BUILDING_BLOCK_ID_COL,
         only_selected_reactions: bool = False
 ) -> None:
@@ -75,7 +75,7 @@ def count_real_space(
 
     :param data_dir: Path to directory with CXSMILES files containing the REAL database.
     :param save_dir: Path to directory where reaction and building block counts will be saved.
-    :param building_block_path: If provided, only count reactions and building blocks that contain the building blocks in this file.
+    :param building_blocks_path: If provided, only count reactions and building blocks that contain the building blocks in this file.
     :param building_block_id_column: Column in building block file that contains building block IDs.
     :param only_selected_reactions: If True, only count reactions that are in the selected reactions in real_reactions.py.
     """
@@ -84,8 +84,8 @@ def count_real_space(
     print(f'Number of files = {len(data_paths):,}')
 
     # Optionally get set of building blocks to filter by
-    if building_block_path is not None:
-        building_block_set = set(pd.read_csv(building_block_path)[building_block_id_column])
+    if building_blocks_path is not None:
+        building_block_set = set(pd.read_csv(building_blocks_path)[building_block_id_column])
         print(f'Number of building blocks = {len(building_block_set):,}')
         building_block_set |= {np.nan}
     else:

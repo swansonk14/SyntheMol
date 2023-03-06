@@ -4,6 +4,8 @@ Steps to perform a simulation study of SyntheMol using a computational molecular
 
 TODO: convert to python scripts and adjust final steps to use both models and REAL
 
+TODO: separate out antibiotic-specific documentation and put general documentation here
+
 - [Compute cLogP](#compute-clogp)
 - [Binarize clogP](#binarize-clogp)
 - [Train model](#train-model)
@@ -92,11 +94,11 @@ Map building blocks to model scores.
 
 for EPOCHS in 30 1
 do
-python map_fragments_to_model_scores.py \
-    --fragment_path data/building_blocks.csv \
+python scripts/predict.py \
+    --data_path data/building_blocks.csv \
     --model_path models/clogp_chemprop_${EPOCHS}_epochs \
-    --save_path models/clogp_chemprop_${EPOCHS}_epochs/building_block_scores.json \
-    --model_type chemprop
+    --model_type chemprop \
+    --average_preds
 done
 ```
 
@@ -109,17 +111,14 @@ Apply SyntheMol to generate molecules.
 
 for EPOCHS in 30 1
 do
-python tree_search.py \
+python scripts/generate.py \
     --model_path models/clogp_chemprop_${EPOCHS}_epochs \
-    --fragment_path data/building_blocks.csv \
-    --reaction_to_reagents_path data/reaction_to_building_blocks.json \
-    --fragment_to_model_score_path models/clogp_chemprop_${EPOCHS}_epochs/building_block_scores.json \
-    --save_dir generations/clogp_chemprop_${EPOCHS}_epochs \
-    --search_type mcts \
     --model_type chemprop \
-    --n_rollout 20000 \
-    --fragment_diversity \
-    --max_reactions 1
+    --building_blocks_path data/building_blocks.csv \
+    --save_dir generations/clogp_chemprop_${EPOCHS}_epochs \
+    --reaction_to_building_blocks_path data/reaction_to_building_blocks.json \
+    --max_reactions 1 \
+    --n_rollout 20000
 done
 ```
 

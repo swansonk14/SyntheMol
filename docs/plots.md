@@ -273,34 +273,40 @@ python plots/plot_real_counts.py \
 
 ### REAL vs train molecular properties
 
+Deduplicate building blocks by SMILES using [chem_utils](https://github.com/swansonk14/chem_utils).
+```bash
+python deduplicate_smiles.py \
+    --data_path ../../combinatorial_antibiotics/data/building_blocks.csv \
+    --save_path ../../combinatorial_antibiotics/data/building_blocks_unique.csv
+```
+
+This leaves 132,479 unique building block molecules.
+
 Compute properties of REAL building blocks using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python compute_properties.py \
-    --data_path ../../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts_unique.csv \
-    --properties logp mol_weight \
-    --save_path ../../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts_unique_with_properties.csv
+    --data_path ../../combinatorial_antibiotics/data/building_blocks_unique.csv \
+    --properties logp mol_weight
 ```
 
 Compute properties of REAL molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python compute_properties.py \
-    --data_path ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_25k.csv \
-    --properties logp mol_weight \
-    --save_path ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_25k_with_properties.csv
+    --data_path ../../combinatorial_antibiotics/data/random_real.csv \
+    --properties logp mol_weight
 ```
 
 Compute properties of train molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python compute_properties.py \
     --data_path ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
-    --properties logp mol_weight qed sa_score \
-    --save_path ../../combinatorial_antibiotics/data/screening_data/AB_combined_with_properties.csv
+    --properties logp mol_weight qed sa_score
 ```
 
 Plot logP distributions using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python plots/plot_property_distribution.py \
-    --data_paths ../../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts_unique_with_properties.csv \
+    --data_paths ../../combinatorial_antibiotics/data/building_blocks_unique.csv \
     ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_25k_with_properties.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined_with_properties.csv \
     --property_column logp \
@@ -312,7 +318,7 @@ python plots/plot_property_distribution.py \
 Plot molecular weight distributions using [chem_utils](https://github.com/swansonk14/chem_utils).
 ```bash
 python plots/plot_property_distribution.py \
-    --data_paths ../../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts_unique_with_properties.csv \
+    --data_paths ../../combinatorial_antibiotics/data/building_blocks_unique.csv \
     ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_25k_with_properties.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined_with_properties.csv \
     --property_column mol_weight \
@@ -327,7 +333,7 @@ Plot t-SNE of training data and REAL space sample using [chem_utils](https://git
 ```bash
 python dimensionality_reduction.py \
     --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_25k.csv \
-    ../../combinatorial_antibiotics/data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts_unique.csv \
+    ../../combinatorial_antibiotics/data/building_blocks_unique.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
     ../../combinatorial_antibiotics/data/screening_data/AB_combined_hits.csv \
     --max_molecules 7500 1000 1000 500 \
@@ -397,7 +403,7 @@ Then, plot the building block vs full molecule scores. (Note: Only 24,276 out of
 python plots/plot_building_block_vs_molecule_scores.py \
     --data_path data/Enamine_REAL_space_sampled_25k.csv \
     --score_column rf_rdkit_ensemble_preds \
-    --building_block_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
+    --building_block_path data/building_blocks.csv \
     --building_block_to_score_path ckpt/AB_combined_RF_rdkit/building_block_to_model_scores.json \
     --title "Random Forest Full Molecule vs Average Building Block Scores" \
     --save_dir plots/paper/full_vs_building_block_scores/rf_rdkit_full_vs_building_block_scores
@@ -407,7 +413,7 @@ python plots/plot_building_block_vs_molecule_scores.py \
 python plots/plot_building_block_vs_molecule_scores.py \
     --data_path data/Enamine_REAL_space_sampled_25k.csv \
     --score_column chemprop_ensemble_preds \
-    --building_block_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
+    --building_block_path data/building_blocks.csv \
     --building_block_to_score_path ckpt/AB_combined_chemprop/building_block_to_model_scores.json \
     --title "Chemprop Full Molecule vs Average Building Block Scores" \
     --save_dir plots/paper/full_vs_building_block_scores/chemprop_full_vs_building_block_scores
@@ -417,7 +423,7 @@ python plots/plot_building_block_vs_molecule_scores.py \
 python plots/plot_building_block_vs_molecule_scores.py \
     --data_path data/Enamine_REAL_space_sampled_25k.csv \
     --score_column chemprop_rdkit_ensemble_preds \
-    --building_block_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
+    --building_block_path data/building_blocks.csv \
     --building_block_to_score_path ckpt/AB_combined_chemprop_rdkit/building_block_to_model_scores.json \
     --title "Chemprop RDKit Full Molecule vs Average Building Block Scores" \
     --save_dir plots/paper/full_vs_building_block_scores/chemprop_rdkit_full_vs_building_block_scores
@@ -439,7 +445,7 @@ python assess_real_molecules.py \
 
 ### Building block diversity
 
-Building block counts before and after building block diversity. Run `tree_search.py` using same settings as above but without `--fragment_diversity` and run assess_generated_molecules.py and look at `fragment_counts.pdf`.
+Building block counts before and after building block diversity. Run `tree_search.py` using same settings as above but without `--building_block_diversity` and run assess_generated_molecules.py and look at `building_block_counts.pdf`.
 
 ### Score by rollout
 
@@ -476,11 +482,45 @@ python plots/plot_mcts_over_time.py \
 
 ### Generate set characteristics
 
-Assess generated molecules (both original 20k and final 50) for each model. This has already been done using assess_generated_molecules.py above.
+Assess generated molecules for novelty, score, and diversity for each model.
+```bash
+#!/bin/bash
+
+for NAME in chemprop chemprop_rdkit random_forest
+do
+python assess_generated_molecules.py \
+    --data_path generations/${NAME}/molecules.csv \
+    --save_dir generations/${NAME} \
+    --reference_paths data/antibiotics_hits.csv data/chembl.csv
+done
+```
+
+Assess selected molecules for novelty, score, and diversity for each model.
+```bash
+#!/bin/bash
+
+for NAME in chemprop chemprop_rdkit random_forest
+do
+python assess_generated_molecules.py \
+    --data_path generations/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
+    --save_dir generations/${NAME}/analysis_molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50 \
+    --reference_paths data/antibiotics_hits.csv data/chembl.csv
+done
+```
 
 ### Images of generated molecules
 
-TODO: Images of generated molecules with indications of model, synthesis success, and experimental scores.
+Visualize the selected molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
+```bash
+#!/bin/bash
+
+for NAME in chemprop chemprop_rdkit random_forest
+do
+python visualize_molecules.py \
+    --data_path ../../combinatorial_antibiotics/generations/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
+    --save_dir ../../combinatorial_antibiotics/generations/${NAME}
+done
+```
 
 ### t-SNE of the filtering steps
 

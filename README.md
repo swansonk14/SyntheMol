@@ -2,11 +2,11 @@
 
 SyntheMol is a generative AI method for designing easily synthesizable and structurally novel drug candidates. SyntheMol consists of a Monte Carlo tree search (MCTS) guided by a molecular property prediction model that searches the [Enamine REAL Space](https://enamine.net/compound-collections/real-compounds/real-space-navigator) for molecules with a desired property. REAL Space molecules are constructed by combining off-the-shelf molecular building blocks with known chemical reactions. SyntheMol efficiently searches the space of combinations of building blocks and reactions to find molecules with a desired property. Here, we apply SyntheMol to design novel antibiotics for the Gram-negative bacterium _Acinetobacter baumannii_.
 
-TODO: Change all instances of fragments or reagents in the code to building blocks. Change rf to random_forest as model type (and elsewhere).
+All raw and processed data, model checkpoints, and generate molecules are available in this Google Drive folder: https://drive.google.com/drive/folders/1VLPPUbY_FTKMjlXgRm09bPSSms206Dce?usp=share_link.
 
-TODO: move assessment stuff from here to plots
+TODO: add summary figure and paper reference to README
 
-TODO: add summary figure and paper reference
+TODO: update table of contents here and in other READMEs
 
 - [Installation](#installation)
 - [Data](#data)
@@ -60,11 +60,6 @@ pip install -e .
 ```
 
 
-## Data
-
-All raw and processed data is available in this Google Drive folder: https://drive.google.com/drive/folders/1VLPPUbY_FTKMjlXgRm09bPSSms206Dce?usp=share_link.
-
-
 ## Process REAL data
 
 Process the Enamine REAL Space data consisting of building blocks, reactions, and molecules. The sections below detail the steps for processing the building blocks and molecules. A PDF with the 169 reactions is provided in the Google Drive folder, and SMARTS of the 13 reactions used here are provided in `real_reactions.py`.
@@ -106,7 +101,6 @@ python canonicalize_smiles.py \
 This removes 25 molecules whose salts cannot be stripped, leaving 138,060 molecules (unique IDs, duplicate SMILES) of which 132,479 are unique.
 
 Note: This step is crucial to prevent errors in running reactions. Salts can cause reactions to create products that are the same as the reactants, leading to undesired infinite loops during molecule generation.
-
 
 ### Process REAL Space molecules
 
@@ -162,8 +156,8 @@ Count REAL space when limiting to the selected 13 reactions and the building blo
 ```bash
 python count_real_space.py \
     --data_dir data/Enamine_REAL_space \
-    --save_dir data/Enamine_REAL_space_counts_with_selected_fragments_and_reactions \
-    --building_block_path data/2021q3-4_Enamine_REAL_reagents_SMILES_no_salts.csv \
+    --save_dir data/Enamine_REAL_space_counts_selected \
+    --building_blocks_path data/building_blocks.csv \
     --only_selected_reactions
 ```
 
@@ -245,6 +239,11 @@ python merge_chembl_downloads.py \
 ```
 
 The file `chembl.csv` contains 1,005 molecules.
+
+
+## Simulation study
+
+Prior to applying SyntheMol to antibiotic generation, we ran a simulation study using a computed molecular property. See `simulation.md` for details.
 
 
 ## Build property prediction models
@@ -346,65 +345,40 @@ Below, we run SyntheMol to generate antibiotics. We run SyntheMol three times, e
 
 Chemprop
 ```bash
-python tree_search.py \
+python scripts/generate.py \
     --model_path models/chemprop \
-    --fragment_path data/building_blocks.csv \
-    --reaction_to_reagents_path data/reaction_to_building_blocks.json \
-    --fragment_to_model_score_path models/chemprop/building_block_scores.json \
-    --save_dir generations/chemprop \
-    --search_type mcts \
     --model_type chemprop \
-    --n_rollout 20000 \
-    --fragment_diversity \
-    --max_reactions 1
+    --building_blocks_path data/building_blocks.csv \
+    --save_dir generations/chemprop \
+    --reaction_to_building_blocks_path data/reaction_to_building_blocks.json \
+    --max_reactions 1 \
+    --n_rollout 20000
 ```
 
 Chemprop-RDKit
 ```bash
-python tree_search.py \
+python scripts/generate.py \
     --model_path models/chemprop_rdkit \
-    --fragment_path data/building_blocks.csv \
-    --reaction_to_reagents_path data/reaction_to_building_blocks.json \
-    --fragment_to_model_score_path models/chemprop_rdkit/building_block_scores.json \
-    --save_dir generations/chemprop_rdkit \
-    --search_type mcts \
     --model_type chemprop \
+    --building_blocks_path data/building_blocks.csv \
+    --save_dir generations/chemprop_rdkit \
     --fingerprint_type rdkit \
-    --n_rollout 20000 \
-    --fragment_diversity \
-    --max_reactions 1
+    --reaction_to_building_blocks_path data/reaction_to_building_blocks.json \
+    --max_reactions 1 \
+    --n_rollout 20000
 ```
 
 Random forest
 ```bash
-python tree_search.py \
+python scripts/generate.py \
     --model_path models/random_forest \
-    --fragment_path data/building_blocks.csv \
-    --reaction_to_reagents_path data/reaction_to_building_blocks.json \
-    --fragment_to_model_score_path models/random_forest/building_block_scores.json \
+    --model_type random_forest \
+    --building_blocks_path data/building_blocks.csv \
     --save_dir generations/random_forest \
-    --search_type mcts \
-    --model_type rf \
     --fingerprint_type rdkit \
-    --n_rollout 20000 \
-    --fragment_diversity \
-    --max_reactions 1
-```
-
-
-## Assess generated molecules
-
-Optionally, assess various quantities about the generated molecules such as novelty, score, and diversity.
-```bash
-#!/bin/bash
-
-for NAME in chemprop chemprop_rdkit random_forest
-do
-python assess_generated_molecules.py \
-    --data_path generations/${NAME}/molecules.csv \
-    --save_dir generations/${NAME} \
-    --reference_paths data/antibiotics_hits.csv data/chembl.csv
-done
+    --reaction_to_building_blocks_path data/reaction_to_building_blocks.json \
+    --max_reactions 1 \
+    --n_rollout 20000
 ```
 
 
@@ -527,38 +501,6 @@ done
 We now have 50 molecules selected from each model's generations that meet our desired novelty, score, and diversity criteria.
 
 
-## Assess selected molecules
-
-Optionally, assess various quantities about the selected molecules.
-
-```bash
-#!/bin/bash
-
-for NAME in chemprop chemprop_rdkit random_forest
-do
-python assess_generated_molecules.py \
-    --data_path generations/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
-    --save_dir generations/${NAME}/analysis_molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50 \
-    --reference_paths data/antibiotics_hits.csv data/chembl.csv
-done
-```
-
-
-## Visualize molecules
-
-Optionally, visualize the selected molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
-```bash
-#!/bin/bash
-
-for NAME in chemprop chemprop_rdkit random_forest
-do
-python visualize_molecules.py \
-    --data_path ../../combinatorial_antibiotics/generations/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
-    --save_dir ../../combinatorial_antibiotics/generations/${NAME}
-done
-```
-
-
 ## Map molecules to REAL IDs
 
 TODO: change to use all possible IDs for each SMILES
@@ -606,4 +548,4 @@ python predict_model.py \
 
 ## Plots
 
-Instructions for generating plots analysing the data and results are in `plots/README.md`.
+Instructions for generating plots analysing the data and results are in `scripts/plots/README.md`.

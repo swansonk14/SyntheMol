@@ -37,7 +37,7 @@ class TreeSearcher:
         :param n_rollout: The number of times to run the tree search.
         :param explore_weight: The hyperparameter that encourages exploration.
         :param num_expand_nodes: The number of tree nodes to expand when extending the child nodes in the search tree.
-        :param reactions: A list of chemical reactions that can be used to combine molecular fragments.
+        :param reactions: A list of chemical reactions that can be used to combine molecular building blocks.
         :param rng_seed: Seed for the random number generator.
         :param no_building_block_diversity: Whether to turn off the score modification that encourages diverse building blocks.
         :param store_nodes: Whether to store the child nodes of each node in the search tree.
@@ -84,11 +84,11 @@ class TreeSearcher:
             # Get indices of the reactants in this reaction
             reactant_indices = set(range(reaction.num_reactants))
 
-            # Skip reaction if there's no room to add more reagents
+            # Skip reaction if there's no room to add more reactants
             if len(molecules) >= reaction.num_reactants:
                 continue
 
-            # For each molecule, get a list of indices of reagents it matches
+            # For each molecule, get a list of indices of reactants it matches
             reactant_matches_per_molecule = [
                 reaction.get_reactant_matches(smiles=molecule)
                 for molecule in molecules
@@ -173,8 +173,8 @@ class TreeSearcher:
             reaction_log = {
                 'reaction_id': reaction.id,
                 'building_block_ids': tuple(
-                    self.building_block_smiles_to_id.get(fragment, -1)
-                    for fragment in molecules
+                    self.building_block_smiles_to_id.get(molecule, -1)
+                    for molecule in molecules
                 ),
             }
 
@@ -252,8 +252,8 @@ class TreeSearcher:
         if self.building_block_diversity and node.num_molecules > 0:
             # Determine the maximum number of times any building block in the molecule has been used
             max_building_block_count = max(
-                self.building_block_counts[reagent_id]
-                for reagent_id in node.unique_building_block_ids
+                self.building_block_counts[building_block_id]
+                for building_block_id in node.unique_building_block_ids
             )
 
             # Reduce MCTS score based on maximum building block usage
@@ -269,9 +269,10 @@ class TreeSearcher:
         :return: The value (reward) of the rollout.
         """
         if self.verbose:
-            print(f'Fragments = {node.molecules}')
-            print(f'Num fragments = {node.num_molecules}')
-            print(f'Num unique reagents = {len(node.unique_building_block_ids)}')
+            print(f'Node {node.node_id} (rollout {self.rollout_num})')
+            print(f'Molecules = {node.molecules}')
+            print(f'Num molecules = {node.num_molecules}')
+            print(f'Num unique building blocks = {len(node.unique_building_block_ids)}')
             print(f'Num reactions = {node.num_reactions}')
             print(f'Score = {node.P}')
             print()
@@ -286,7 +287,7 @@ class TreeSearcher:
 
         # Otherwise, expand the node to get its children
         else:
-            # Expand the node both by running reactions with the current fragments and adding new fragments
+            # Expand the node both by running reactions with the current molecules and adding new building blocks
             child_nodes = self.get_child_nodes(node=node)
 
             # Check the node map and merge with an existing node if available
@@ -356,10 +357,6 @@ class TreeSearcher:
         # Run the generation algorithm for the specified number of rollouts
         for rollout_index in trange(self.n_rollout):
             self.rollout_num = rollout_index + 1
-
-            if self.verbose:
-                print(f'Rollout {self.rollout_num}')
-
             self.rollout(node=self.root)
 
         # Get all the Nodes representing fully constructed molecules that are not initial building blocks

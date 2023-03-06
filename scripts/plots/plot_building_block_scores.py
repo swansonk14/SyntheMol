@@ -19,11 +19,11 @@ def plot_building_block_scores(
     :param title: Title of the plot.
     :param save_dir: Path to a directory where the plot will be saved.
     """
-    # Load mapping from fragments to scores
+    # Load mapping from building blocks to scores
     with open(building_block_to_score_path) as f:
         building_block_to_score: dict[str, float] = json.load(f)
 
-    # Plot distribution of fragment scores
+    # Plot distribution of building block scores
     scores = list(building_block_to_score.values())
 
     plt.hist(scores, bins=100)

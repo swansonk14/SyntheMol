@@ -16,7 +16,7 @@ def plot_real_counts(
     """Plot REAL reaction and reactant counts.
 
     :param reaction_counts_path: Path to a CSV file containing reaction counts.
-    :param building_block_counts_path: Path to a CSV file containing reagent counts.
+    :param building_block_counts_path: Path to a CSV file containing building block counts.
     :param save_dir: Path to a directory where the plots will be saved.
     :param count_column: Name of the column containing counts.
     """

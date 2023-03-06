@@ -24,7 +24,7 @@ class Reaction:
         self.id = reaction_id
 
         self.reaction = AllChem.ReactionFromSmarts(
-            f'{".".join(f"({reagent.smarts_with_atom_mapping})" for reagent in self.reactants)}'
+            f'{".".join(f"({reactant.smarts_with_atom_mapping})" for reactant in self.reactants)}'
             f'>>({self.product.smarts_with_atom_mapping})'
         )
 

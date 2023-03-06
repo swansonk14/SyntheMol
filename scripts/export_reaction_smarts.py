@@ -18,7 +18,7 @@ def export_reaction_smarts(
     smarts, reaction_ids = [], []
     for reaction in REAL_REACTIONS:
         smarts.append(
-            f'{".".join(f"({reagent.smarts_with_atom_mapping})" for reagent in reaction.reactants)}'
+            f'{".".join(f"({reactant.smarts_with_atom_mapping})" for reactant in reaction.reactants)}'
             f'>>({reaction.product.smarts_with_atom_mapping})'
         )
         reaction_ids.append(reaction.id)
