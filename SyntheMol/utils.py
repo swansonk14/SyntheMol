@@ -1,6 +1,8 @@
 """Utility functions for SyntheMol."""
 import re
+from typing import Any
 
+import numpy as np
 from rdkit import Chem
 
 from SyntheMol.constants import MOLECULE_TYPE
@@ -34,3 +36,25 @@ def convert_to_mol(
         mol = Chem.AddHs(mol)
 
     return mol
+
+
+def random_choice(
+        rng: np.random.Generator,
+        array: list[Any],
+        size: int | None = None,
+        replace: bool = True
+) -> Any:
+    """An efficient random choice function built on top of NumPy.
+
+    :param rng: A NumPy random number generator.
+    :param array: An array to choose from.
+    :param size: The number of elements to choose. If None, a single element is chosen.
+    :param replace: Whether to allow replacement.
+    :return: A list of elements chosen from the array.
+    """
+    if size is None:
+        return array[rng.integers(len(array))]
+
+    return [
+        array[i] for i in rng.choice(len(array), size=size, replace=replace)
+    ]

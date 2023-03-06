@@ -6,6 +6,8 @@ TODO: Change all instances of fragments or reagents in the code to building bloc
 
 TODO: move assessment stuff from here to plots
 
+TODO: add summary figure and paper reference
+
 - [Installation](#installation)
 - [Data](#data)
 - [Process REAL data](#process-real-data)
@@ -101,18 +103,9 @@ python canonicalize_smiles.py \
     --delete_disconnected_mols
 ```
 
-This removes 25 molecules whose salts cannot be stripped, leaving 138,060 molecules (unique IDs, duplicate SMILES).
+This removes 25 molecules whose salts cannot be stripped, leaving 138,060 molecules (unique IDs, duplicate SMILES) of which 132,479 are unique.
 
 Note: This step is crucial to prevent errors in running reactions. Salts can cause reactions to create products that are the same as the reactants, leading to undesired infinite loops during molecule generation.
-
-Deduplicate by SMILES using [chem_utils](https://github.com/swansonk14/chem_utils).
-```bash
-python deduplicate_smiles.py \
-    --data_path ../../combinatorial_antibiotics/data/building_blocks.csv \
-    --save_path ../../combinatorial_antibiotics/data/building_blocks_unique.csv
-```
-
-This leaves 132,479 unique molecules.
 
 
 ### Process REAL Space molecules
@@ -315,31 +308,31 @@ In order to speed up the generative model, we pre-compute the scores of all buil
 
 Chemprop
 ```bash
-python map_building_blocks_to_model_scores.py \
-    --fragment_path data/building_blocks.csv \
+python scripts/predict.py \
+    --data_path data/building_blocks.csv \
     --model_path models/chemprop \
-    --save_path models/chemprop/building_block_scores.json \
-    --model_type chemprop
+    --model_type chemprop \
+    --average_preds
 ```
 
 Chemprop-RDKit
 ```bash
-python map_building_blocks_to_model_scores.py \
-    --fragment_path data/building_blocks.csv \
+python scripts/predict.py \
+    --data_path data/building_blocks.csv \
     --model_path models/chemprop_rdkit \
-    --save_path models/chemprop_rdkit/building_block_scores.json \
     --model_type chemprop \
-    --fingerprint_type rdkit
+    --fingerprint_type rdkit \
+    --average_preds
 ```
 
-Random forest with RDKit
+Random forest
 ```bash
-python map_building_blocks_to_model_scores.py \
-    --fragment_path data/building_blocks.csv \
+python scripts/predict.py \
+    --data_path data/building_blocks.csv \
     --model_path models/random_forest \
-    --save_path models/random_forest/building_block_scores.json \
-    --model_type rf \
-    --fingerprint_type rdkit
+    --model_type random_forest \
+    --fingerprint_type rdkit \
+    --average_preds
 ```
 
 

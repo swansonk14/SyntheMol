@@ -28,6 +28,18 @@ class Reaction:
             f'>>({self.product.smarts_with_atom_mapping})'
         )
 
+    def get_reactant_matches(self, smiles: str) -> list[int]:
+        """Gets the indices of the reactants that match the provided SMILES.
+
+        :param smiles: The SMILES to match.
+        :return: A list of indices of the reactants that match the provided SMILES.
+        """
+        return [
+            reactant_index
+            for reactant_index, reactant in enumerate(self.reactants)
+            if reactant.has_match(smiles)
+        ]
+
     @property
     def num_reactants(self) -> int:
         """Gets the number of reactants in the reaction."""
