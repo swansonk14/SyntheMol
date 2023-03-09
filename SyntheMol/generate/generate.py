@@ -12,7 +12,8 @@ from SyntheMol.constants import (
     SMILES_COL
 )
 from SyntheMol.reactions import REAL_REACTIONS, load_and_set_allowed_reaction_smiles
-from SyntheMol.generate import create_scoring_fn, save_generated_molecules, Generator
+from SyntheMol.generate.generator import Generator
+from SyntheMol.generate.utils import create_scoring_fn, save_generated_molecules
 
 
 def generate(
@@ -148,3 +149,9 @@ def generate(
         building_block_id_to_smiles=building_block_id_to_smiles,
         save_path=save_dir / 'molecules.csv'
     )
+
+
+if __name__ == '__main__':
+    from tap import tapify
+
+    tapify(generate)

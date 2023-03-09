@@ -1,0 +1,1 @@
+"""SyntheMol.data module."""

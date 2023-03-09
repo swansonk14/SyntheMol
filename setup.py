@@ -31,6 +31,7 @@ setup(
         'matplotlib',
         'numpy',
         'pandas',
+        'torch',
         'rdkit',
         'scikit-learn',
         'scipy',

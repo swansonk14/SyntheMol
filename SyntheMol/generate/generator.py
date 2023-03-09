@@ -7,7 +7,7 @@ import numpy as np
 from rdkit import Chem
 from tqdm import trange
 
-from SyntheMol.generate import Node
+from SyntheMol.generate.node import Node
 from SyntheMol.reactions import Reaction
 from SyntheMol.utils import random_choice
 

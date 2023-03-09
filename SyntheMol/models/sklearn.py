@@ -9,7 +9,7 @@ from sklearn.neural_network import MLPClassifier, MLPRegressor
 from SyntheMol.constants import DATASET_TYPES, SKLEARN_MODEL_NAME_TYPES, SKLEARN_MODEL_TYPES
 
 
-def sklearn_save_model(
+def sklearn_save(
         model: SKLEARN_MODEL_TYPES,
         save_path: Path
 ) -> None:
@@ -24,7 +24,7 @@ def sklearn_save_model(
         pickle.dump(model, f)
 
 
-def sklearn_load_model(
+def sklearn_load(
         model_path: Path
 ) -> SKLEARN_MODEL_TYPES:
     """Loads a scikit-learn model.
@@ -49,12 +49,12 @@ def sklearn_predict_ensemble_on_molecule(
     :return: The ensemble prediction on the molecule.
     """
     return float(np.mean([
-        sklearn_predict_model(model=model, fingerprints=fingerprint.reshape(1, -1))[0]
+        sklearn_predict(model=model, fingerprints=fingerprint.reshape(1, -1))[0]
         for model in models
     ]))
 
 
-def sklearn_predict_model(
+def sklearn_predict(
         model: SKLEARN_MODEL_TYPES,
         fingerprints: np.ndarray
 ) -> np.ndarray:
@@ -108,7 +108,7 @@ def sklearn_build_model(
     return model
 
 
-def sklearn_train_model(
+def sklearn_train(
         model_type: SKLEARN_MODEL_NAME_TYPES,
         dataset_type: DATASET_TYPES,
         fingerprints: np.ndarray,
@@ -134,7 +134,7 @@ def sklearn_train_model(
     model.fit(fingerprints, properties)
 
     # Save model
-    sklearn_save_model(
+    sklearn_save(
         model=model,
         save_path=save_path
     )

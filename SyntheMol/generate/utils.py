@@ -9,11 +9,11 @@ import torch
 
 from chem_utils.molecular_fingerprints import compute_fingerprint
 from SyntheMol.constants import FINGERPRINT_TYPES, MODEL_TYPES
-from SyntheMol.generate import Node
+from SyntheMol.generate.node import Node
 from SyntheMol.models import (
-    chemprop_load_model,
+    chemprop_load,
     chemprop_predict_ensemble_on_molecule,
-    sklearn_load_model,
+    sklearn_load,
     sklearn_predict_ensemble_on_molecule
 )
 
@@ -50,7 +50,7 @@ def create_scoring_fn(
         torch.manual_seed(0)
         torch.use_deterministic_algorithms(True)
 
-        models = [chemprop_load_model(model_path=model_path) for model_path in model_paths]
+        models = [chemprop_load(model_path=model_path) for model_path in model_paths]
 
         # Set up model scoring function for ensemble of chemprop models
         def model_scorer(smiles: str, fingerprint: np.ndarray | None = None) -> float:
@@ -61,7 +61,7 @@ def create_scoring_fn(
             )
     else:
         # Load scikit-learn models
-        models = [sklearn_load_model(model_path=model_path) for model_path in model_paths]
+        models = [sklearn_load(model_path=model_path) for model_path in model_paths]
 
         # Set up model scoring function for ensemble of scikit-learn models
         def model_scorer(smiles: str, fingerprint: np.ndarray) -> float:

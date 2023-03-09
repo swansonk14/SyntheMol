@@ -13,7 +13,7 @@ from chemprop.models import MoleculeModel
 from chemprop.utils import build_optimizer, build_lr_scheduler, load_checkpoint, save_checkpoint
 
 
-def chemprop_load_model(
+def chemprop_load(
         model_path: Path
 ) -> MoleculeModel:
     """Loads a Chemprop model.
@@ -45,7 +45,7 @@ def chemprop_predict_ensemble_on_molecule(
     ]))
 
 
-def chemprop_predict_model(
+def chemprop_predict(
         model: MoleculeModel,
         smiles: list[str],
         fingerprints: np.ndarray | None = None
@@ -103,7 +103,7 @@ def chemprop_build_data_loader(
     )
 
 
-def chemprop_train_model(
+def chemprop_train(
         dataset_type: str,
         train_smiles: list[str],
         val_smiles: list[str],
@@ -194,7 +194,7 @@ def chemprop_train_model(
             n_iter=n_iter
         )
 
-        val_probs = chemprop_predict_model(
+        val_probs = chemprop_predict(
             model=model,
             smiles=val_smiles,
             fingerprints=val_fingerprints

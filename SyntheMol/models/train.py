@@ -11,17 +11,17 @@ from chem_utils.molecular_fingerprints import compute_fingerprints
 
 from SyntheMol.constants import DATASET_TYPES, FINGERPRINT_TYPES, MODEL_TYPES, SMILES_COL
 from SyntheMol.models.chemprop import (
-    chemprop_predict_model,
-    chemprop_train_model
+    chemprop_predict,
+    chemprop_train
 )
 from SyntheMol.models.evaluate import evaluate
 from SyntheMol.models.sklearn import (
-    sklearn_predict_model,
-    sklearn_train_model
+    sklearn_predict,
+    sklearn_train
 )
 
 
-def train_model(
+def train(
         data_path: Path,
         save_dir: Path,
         dataset_type: DATASET_TYPES,
@@ -97,7 +97,7 @@ def train_model(
 
         if model_type == 'chemprop':
             # Train and save chemprop model
-            model = chemprop_train_model(
+            model = chemprop_train(
                 dataset_type=dataset_type,
                 train_smiles=train_data[smiles_column],
                 val_smiles=val_data[smiles_column],
@@ -114,14 +114,14 @@ def train_model(
             print(model)
 
             # Make test predictions with chemprop model
-            test_preds = chemprop_predict_model(
+            test_preds = chemprop_predict(
                 model=model,
                 smiles=test_data[smiles_column],
                 fingerprints=test_fingerprints
             )
         else:
             # Train and save sklearn model
-            model = sklearn_train_model(
+            model = sklearn_train(
                 model_type=model_type,
                 dataset_type=dataset_type,
                 fingerprints=train_fingerprints,
@@ -132,7 +132,7 @@ def train_model(
             print(model)
 
             # Make test predictions with sklearn model
-            test_preds = sklearn_predict_model(
+            test_preds = sklearn_predict(
                 model=model,
                 fingerprints=test_fingerprints
             )
@@ -178,3 +178,9 @@ def train_model(
 
     summary_scores = pd.DataFrame([summary_scores])
     summary_scores.to_csv(save_dir / 'summary_scores.csv', index=False)
+
+
+if __name__ == '__main__':
+    from tap import tapify
+
+    tapify(train)

@@ -18,6 +18,7 @@ dependencies:
   - tqdm
   - pip:
     - chemprop
+    - descriptastorus
     - typed-argument-parser>=1.8.0
 
 # TODO: make chem_utils on PyPI and then add it here

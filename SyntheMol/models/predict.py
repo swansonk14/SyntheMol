@@ -4,21 +4,20 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import torch
-from tap import tapify
 from tqdm import tqdm
 
 from chem_utils.molecular_fingerprints import compute_fingerprints
 
 from SyntheMol.constants import FINGERPRINT_TYPES, MODEL_TYPES, SMILES_COL
 from SyntheMol.models import (
-    chemprop_load_model,
-    chemprop_predict_model,
-    sklearn_load_model,
-    sklearn_predict_model
+    chemprop_load,
+    chemprop_predict,
+    sklearn_load,
+    sklearn_predict
 )
 
 
-def predict_model(
+def predict(
         data_path: Path,
         model_path: Path,
         model_type: MODEL_TYPES,
@@ -68,14 +67,14 @@ def predict_model(
         torch.manual_seed(0)
         torch.use_deterministic_algorithms(True)
 
-        models = [chemprop_load_model(model_path=model_path) for model_path in model_paths]
+        models = [chemprop_load(model_path=model_path) for model_path in model_paths]
     else:
-        models = [sklearn_load_model(model_path=model_path) for model_path in model_paths]
+        models = [sklearn_load(model_path=model_path) for model_path in model_paths]
 
     # Make predictions
     if model_type == 'chemprop':
         preds = np.array([
-            chemprop_predict_model(
+            chemprop_predict(
                 model=model,
                 smiles=smiles,
                 fingerprints=fingerprints,
@@ -83,7 +82,7 @@ def predict_model(
         ])
     else:
         preds = np.array([
-            sklearn_predict_model(
+            sklearn_predict(
                 model=model,
                 fingerprints=fingerprints,
             ) for model in tqdm(models, desc='models')
@@ -111,4 +110,6 @@ def predict_model(
 
 
 if __name__ == '__main__':
-    tapify(predict_model)
+    from tap import tapify
+
+    tapify(predict)

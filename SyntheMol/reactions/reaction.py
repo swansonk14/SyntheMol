@@ -23,10 +23,9 @@ class Reaction:
         self.product = product
         self.id = reaction_id
 
-        self.reaction = AllChem.ReactionFromSmarts(
-            f'{".".join(f"({reactant.smarts_with_atom_mapping})" for reactant in self.reactants)}'
-            f'>>({self.product.smarts_with_atom_mapping})'
-        )
+        self.reaction_smarts = f'{".".join(f"({reactant.smarts_with_atom_mapping})" for reactant in self.reactants)}' \
+                               f'>>({self.product.smarts_with_atom_mapping})'
+        self.reaction = AllChem.ReactionFromSmarts(self.reaction_smarts)
 
     def get_reactant_matches(self, smiles: str) -> list[int]:
         """Gets the indices of the reactants that match the provided SMILES.
@@ -52,3 +51,7 @@ class Reaction:
         :return: A tuple of tuples of RDKit Mol objects representing the products of the reaction.
         """
         return self.reaction.RunReactants([convert_to_mol(reactant, add_hs=True) for reactant in reactants])
+
+    def __repr__(self) -> str:
+        """Gets the string representation of the Reaction."""
+        return f'{self.__class__.__name__}(id={self.id}, reaction={self.reaction_smarts})'
