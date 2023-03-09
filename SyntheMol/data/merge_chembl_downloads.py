@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pandas as pd
 from rdkit import Chem
-from tap import tapify
 
 from SyntheMol.constants import CHEMBL_SMILES_COL
 
@@ -70,4 +69,6 @@ def merge_chembl_downloads(
 
 
 if __name__ == '__main__':
+    from tap import tapify
+
     tapify(merge_chembl_downloads)

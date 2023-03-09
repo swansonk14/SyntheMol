@@ -5,7 +5,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from tap import tapify
 from tqdm import tqdm
 
 from SyntheMol.constants import (
@@ -86,4 +85,6 @@ def sample_real_space(
 
 
 if __name__ == '__main__':
+    from tap import tapify
+
     tapify(sample_real_space)

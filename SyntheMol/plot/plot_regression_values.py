@@ -1,4 +1,4 @@
-"""Plot the raw regression values of the antibiotic inhibition data."""
+"""Plot the regression values for data with two replicates."""
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -13,11 +13,11 @@ def plot_regression_values(
         rep2_column: str,
         save_dir: Path
 ) -> None:
-    """Plot the raw regression values of the antibiotic inhibition data.
+    """Plot the regression values for data with two replicates.
 
     :param data_path: Path to a CSV file containing regression data.
-    :param rep1_column: Name of the column containing the raw regression values from the first replicate.
-    :param rep2_column: Name of the column containing the raw regression values from the second replicate.
+    :param rep1_column: Name of the column containing the regression values from the first replicate.
+    :param rep2_column: Name of the column containing the regression values from the second replicate.
     :param save_dir: Path to a directory where the plots will be saved.
     """
     # Load data

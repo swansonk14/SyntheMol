@@ -6,7 +6,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from tap import tapify
 from tqdm import tqdm
 
 from SyntheMol.constants import (
@@ -15,7 +14,7 @@ from SyntheMol.constants import (
     REAL_BUILDING_BLOCK_ID_COL,
     REAL_SPACE_SIZE
 )
-from SyntheMol.reactions.real_reactions import REAL_REACTIONS
+from SyntheMol.reactions import REAL_REACTIONS
 
 
 USE_COLS = [REAL_REACTION_COL] + REAL_BUILDING_BLOCK_COLS
@@ -163,4 +162,6 @@ def count_real_space(
 
 
 if __name__ == '__main__':
+    from tap import tapify
+
     tapify(count_real_space)

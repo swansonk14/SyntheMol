@@ -4,7 +4,6 @@ from pathlib import Path
 import pandas as pd
 from rdkit import Chem
 from rdkit.Chem.PandasTools import WriteSDF
-from tap import tapify
 
 
 def map_generated_molecules_to_real_ids(
@@ -64,4 +63,6 @@ def map_generated_molecules_to_real_ids(
 
 
 if __name__ == '__main__':
+    from tap import tapify
+
     tapify(map_generated_molecules_to_real_ids)

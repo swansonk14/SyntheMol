@@ -1,11 +1,10 @@
-"""Processes antibiotics data from potentially multiple files."""
+"""Process regression data from potentially multiple files, including binarization and deduplication."""
 from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from rdkit import Chem
-from tap import tapify
 
 
 ACTIVITY_COLUMN = 'activity'
@@ -20,7 +19,7 @@ def process_data(
         mean_column: str = 'Mean',
         num_std: int = 2
 ) -> None:
-    """Processes antibiotics data from potentially multiple files.
+    """Process regression data from potentially multiple files, including binarization and deduplication.
 
     :param data_paths: A list of paths to CSV files containing data.
     :param save_path: A path to a CSV file where the processed data will be saved.
@@ -98,4 +97,6 @@ def process_data(
 
 
 if __name__ == '__main__':
+    from tap import tapify
+
     tapify(process_data)

@@ -6,7 +6,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from tap import tapify
 from tqdm import tqdm
 
 from SyntheMol.constants import (
@@ -111,4 +110,6 @@ def map_real_reactions_to_building_blocks(
 
 
 if __name__ == '__main__':
+    from tap import tapify
+
     tapify(map_real_reactions_to_building_blocks)
