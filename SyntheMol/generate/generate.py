@@ -12,7 +12,7 @@ from SyntheMol.constants import (
     SMILES_COL
 )
 from SyntheMol.reactions import REAL_REACTIONS, load_and_set_allowed_reaction_smiles
-from SyntheMol.generate import create_scoring_fn, save_generated_molecules, TreeSearcher
+from SyntheMol.generate import create_scoring_fn, save_generated_molecules, Generator
 
 
 def generate(
@@ -105,8 +105,8 @@ def generate(
         smiles_to_score=building_block_smiles_to_score
     )
 
-    # Set up TreeSearcher
-    tree_searcher = TreeSearcher(
+    # Set up Generator
+    generator = Generator(
         search_type='mcts',
         building_block_smiles_to_id=building_block_smiles_to_id,
         max_reactions=max_reactions,
@@ -123,13 +123,13 @@ def generate(
 
     # Search for molecules
     start_time = datetime.now()
-    nodes = tree_searcher.generate()
+    nodes = generator.generate()
 
     # Compute, print, and save stats
     stats = {
         'mcts_time': datetime.now() - start_time,
         'num_nonzero_reaction_molecules': len(nodes),
-        'approx_num_nodes_searched': tree_searcher.approx_num_nodes_searched
+        'approx_num_nodes_searched': generator.approx_num_nodes_searched
     }
 
     print(f'MCTS time = {stats["mcts_time"]}')
@@ -137,7 +137,7 @@ def generate(
     print(f'Approximate total number of nodes searched = {stats["approx_num_nodes_searched"]:,}')
 
     if store_nodes:
-        stats['num_nodes_searched'] = tree_searcher.num_nodes_searched
+        stats['num_nodes_searched'] = generator.num_nodes_searched
         print(f'Total number of nodes searched = {stats["num_nodes_searched"]:,}')
 
     pd.DataFrame(data=[stats]).to_csv(save_dir / 'mcts_stats.csv', index=False)

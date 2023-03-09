@@ -18,6 +18,6 @@ dependencies:
   - tqdm
   - pip:
     - chemprop
-    - typed-argument-parser
+    - typed-argument-parser>=1.8.0
 
 # TODO: make chem_utils on PyPI and then add it here

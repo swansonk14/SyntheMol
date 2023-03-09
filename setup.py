@@ -31,11 +31,11 @@ setup(
         'matplotlib',
         'numpy',
         'pandas',
-        'rdkit-pypi',
+        'rdkit',
         'scikit-learn',
         'scipy',
         'tqdm',
-        'typed-argument-parser'
+        'typed-argument-parser>=1.8.0'
     ],
     python_requires='>=3.10',
     classifiers=[

@@ -12,8 +12,8 @@ from SyntheMol.reactions import Reaction
 from SyntheMol.utils import random_choice
 
 
-class TreeSearcher:
-    """A class that runs a tree search to generate high scoring molecules."""
+class Generator:
+    """A class that generates molecules."""
 
     def __init__(self,
                  search_type: Literal['mcts', 'random'],  # TODO: how to handle different search types?
@@ -28,7 +28,7 @@ class TreeSearcher:
                  no_building_block_diversity: bool,
                  store_nodes: bool,
                  verbose: bool) -> None:
-        """Creates the TreeSearcher object.
+        """Creates the Generator.
 
         :param search_type: Type of search to perform.
         :param building_block_smiles_to_id: A dictionary mapping building block SMILES to their IDs.
