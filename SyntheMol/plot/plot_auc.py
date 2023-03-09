@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 from sklearn.metrics import precision_recall_curve, roc_auc_score, roc_curve, average_precision_score
-from tap import tapify
 
 
 def compute_curve(
@@ -119,4 +118,6 @@ def plot_auc(
 
 
 if __name__ == '__main__':
+    from tap import tapify
+
     tapify(plot_auc)

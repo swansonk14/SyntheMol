@@ -4,7 +4,6 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from tap import tapify
 
 
 def plot_regression_values(
@@ -111,4 +110,6 @@ def plot_regression_values(
 
 
 if __name__ == '__main__':
+    from tap import tapify
+
     tapify(plot_regression_values)

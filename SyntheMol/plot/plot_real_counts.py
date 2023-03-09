@@ -4,7 +4,6 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from tap import tapify
 
 
 def plot_real_counts(
@@ -55,4 +54,6 @@ def plot_real_counts(
 
 
 if __name__ == '__main__':
+    from tap import tapify
+
     tapify(plot_real_counts)

@@ -4,7 +4,6 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from tap import tapify
 
 # Train in rows, predict in columns
 DATASETS = ['library_1', 'library_2', 'library_3']
@@ -81,4 +80,6 @@ def plot_model_generalization(
 
 
 if __name__ == '__main__':
+    from tap import tapify
+
     tapify(plot_model_generalization)

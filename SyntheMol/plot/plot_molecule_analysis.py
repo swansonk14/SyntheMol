@@ -1,14 +1,13 @@
-"""Assess the novelty, scores, and diversity of random REAL molecules."""
+"""Assess the novelty, scores, and diversity of molecules."""
 from pathlib import Path
 
 import pandas as pd
-from tap import tapify
 
 from SyntheMol.constants import SMILES_COL
 from plot_generated_molecule_analysis import plot_scores, plot_internal_similarity
 
 
-def assess_real_molecules(
+def plot_molecule_analysis(
         data_path: Path,
         save_dir: Path,
         score_columns: list[str],
@@ -16,7 +15,7 @@ def assess_real_molecules(
         smiles_column: str = SMILES_COL,
         train_hits_smiles_column: str = SMILES_COL,
 ) -> None:
-    """Assess the novelty, scores, and diversity of random REAL molecules.
+    """Assess the novelty, scores, and diversity of molecules.
 
     :param data_path: Path to CSV file containing scores.
     :param save_dir: Path to directory where the plot will be saved.
@@ -64,4 +63,6 @@ def assess_real_molecules(
 
 
 if __name__ == '__main__':
-    tapify(assess_real_molecules)
+    from tap import tapify
+
+    tapify(plot_molecule_analysis)

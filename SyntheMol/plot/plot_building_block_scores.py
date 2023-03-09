@@ -4,7 +4,6 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import pandas as pd
-from tap import tapify
 
 
 def plot_building_block_scores(
@@ -41,4 +40,6 @@ def plot_building_block_scores(
 
 
 if __name__ == '__main__':
+    from tap import tapify
+
     tapify(plot_building_block_scores)

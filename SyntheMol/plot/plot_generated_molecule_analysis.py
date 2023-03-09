@@ -5,7 +5,6 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from tap import tapify
 
 from chem_utils.molecular_similarities import compute_top_similarities
 from SyntheMol.constants import SCORE_COL, SMILES_COL
@@ -216,7 +215,7 @@ def plot_building_block_usage(
     fig_data.to_csv(save_dir / 'building_block_counts.csv', index=False)
 
 
-def assess_generated_molecules(
+def plot_generated_molecule_analysis(
         data_path: Path,
         save_dir: Path,
         reference_paths: list[Path] | None = None,
@@ -291,4 +290,6 @@ def assess_generated_molecules(
 
 
 if __name__ == '__main__':
-    tapify(assess_generated_molecules)
+    from tap import tapify
+
+    tapify(plot_generated_molecule_analysis)

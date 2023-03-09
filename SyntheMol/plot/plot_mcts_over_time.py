@@ -5,7 +5,6 @@ from typing import Literal, Optional
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from tap import tapify
 
 
 def plot_mcts_over_time(
@@ -101,4 +100,6 @@ def plot_mcts_over_time(
 
 
 if __name__ == '__main__':
+    from tap import tapify
+
     tapify(plot_mcts_over_time)

@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 from scipy.stats import percentileofscore
 from sklearn.metrics import precision_recall_curve
-from tap import tapify
 
 
 def plot_toxicity(
@@ -97,7 +96,7 @@ def plot_toxicity(
     plt.xlabel('Predicted toxicity')
     plt.ylabel('Density')
     plt.title('Predicted toxicity vs test set predictions')
-    plt.savefig(save_dir / 'clintox.pdf', bbox_inches='tight')
+    plt.savefig(save_dir / 'toxicity.pdf', bbox_inches='tight')
 
     # Save plot data
     fig_data = {
@@ -110,8 +109,10 @@ def plot_toxicity(
         key: np.pad(values, (0, max_len - len(values)), constant_values=np.nan)
         for key, values in fig_data.items()
     })
-    fig_data.to_csv(save_dir / 'clintox.csv', index=False)
+    fig_data.to_csv(save_dir / 'toxicity.csv', index=False)
 
 
 if __name__ == '__main__':
+    from tap import tapify
+
     tapify(plot_toxicity)

@@ -1,12 +1,10 @@
 """Plots the average model score of building blocks vs the model score of the full molecule."""
-import json
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.metrics import r2_score
-from tap import tapify
 from tqdm import tqdm
 
 from SyntheMol.constants import (
@@ -97,4 +95,6 @@ def plot_building_block_vs_molecule_scores(
 
 
 if __name__ == '__main__':
+    from tap import tapify
+
     tapify(plot_building_block_vs_molecule_scores)
