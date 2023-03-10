@@ -28,6 +28,7 @@ setup(
     install_requires=[  # TODO: add chem_utils here
         'chemprop',
         'descriptastorus',
+        'gdown',
         'matplotlib',
         'numpy',
         'pandas',

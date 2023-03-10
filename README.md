@@ -37,6 +37,11 @@ cd SyntheMol
 pip install -e .
 ```
 
+Download the necessary data files.
+```bash
+gdown "https://drive.google.com/drive/folders/1LLLwxe_nQAnsRSQpIRq_ngyCm1txS-Sq" -O SyntheMol/files --folder
+```
+
 
 ## Combinatorial chemical space
 
@@ -48,7 +53,6 @@ However, an alternate combinatorial chemical space can be used by replacing the 
 - **Building blocks:** Replace `SyntheMol/files/building_blocks.csv.gz` with a custom file containing the building blocks. The file should be a CSV file with a header row and two columns: `smiles` and `ID`. The `smiles` column should contain the SMILES string for each building block, and the `ID` column should contain a unique ID for each building block.
 - **Chemical reactions:** In `SyntheMol/reactions/custom.py`, replace set `CUSTOM_REACTIONS` to a list of `Reaction` objects similar to the `REAL_REACTIONS` list in `SyntheMol/reactions/real.py`. If `CUSTOM_REACTIONS` is not None, then it will automatically be used instead of the `REAL_REACTIONS`.
 
-TODO: figure out where to put reaction to building block mapping
 
 
 ## Property prediction model

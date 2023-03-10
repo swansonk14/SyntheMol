@@ -137,4 +137,5 @@ dmypy.json
 # Folders
 checkpoints
 data
+files
 generations

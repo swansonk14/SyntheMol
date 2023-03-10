@@ -24,5 +24,8 @@ SKLEARN_MODEL_NAME_TYPES = Literal['random_forest', 'mlp']
 MODEL_TYPES = Literal['random_forest', 'mlp', 'chemprop']
 DATASET_TYPES = Literal['classification', 'regression']
 
+# Path where data files are stored
+DATA_DIR = Path(__file__).parent / 'files'
+
 # Replace this with a path to a custom building blocks file to change the default building blocks path across all files
-BUILDING_BLOCKS_PATH = Path(__file__).parent / 'files' / 'building_blocks.csv.gz'
+BUILDING_BLOCKS_PATH = DATA_DIR / 'building_blocks.csv.gz'
