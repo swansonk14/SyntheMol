@@ -1,5 +1,5 @@
 """Determines which REAL building blocks can be used in which REAL reactions."""
-import json
+import pickle
 from collections import defaultdict
 from multiprocessing import Pool
 from pathlib import Path
@@ -64,7 +64,7 @@ def map_real_reactions_to_building_blocks(
     """Determines which REAL building blocks can be used in which REAL reactions.
 
     :param data_dir: Path to directory with CXSMILES files containing the REAL database.
-    :param save_path: Path to JSON file where mapping will be saved.
+    :param save_path: Path to PKL file where mapping will be saved.
     """
     # Get paths to data files
     data_paths = sorted(data_dir.rglob('*.cxsmiles.bz2'))
@@ -93,7 +93,7 @@ def map_real_reactions_to_building_blocks(
 
     print(f'Total number of molecules = {total_num_molecules:,}')
 
-    # Convert sets to sorted lists for JSON serializability
+    # Convert sets to sorted lists
     combined_reaction_to_reactants_to_building_blocks = {
         reaction: {
             reactant: sorted(building_blocks)
@@ -105,8 +105,8 @@ def map_real_reactions_to_building_blocks(
     # Save mapping
     save_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(save_path, 'w') as f:
-        json.dump(combined_reaction_to_reactants_to_building_blocks, f, indent=4, sort_keys=True)
+    with open(save_path, 'wb') as f:
+        pickle.dump(combined_reaction_to_reactants_to_building_blocks, f)
 
 
 if __name__ == '__main__':

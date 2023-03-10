@@ -5,13 +5,14 @@ from pathlib import Path
 import pandas as pd
 
 from SyntheMol.constants import (
+    BUILDING_BLOCKS_PATH,
     FINGERPRINT_TYPES,
     MODEL_TYPES,
     REAL_BUILDING_BLOCK_ID_COL,
     SCORE_COL,
     SMILES_COL
 )
-from SyntheMol.reactions import REAL_REACTIONS, load_and_set_allowed_reaction_smiles
+from SyntheMol.reactions import REACTIONS, load_and_set_allowed_reaction_smiles
 from SyntheMol.generate.generator import Generator
 from SyntheMol.generate.utils import create_scoring_fn, save_generated_molecules
 
@@ -19,8 +20,8 @@ from SyntheMol.generate.utils import create_scoring_fn, save_generated_molecules
 def generate(
         model_path: Path,
         model_type: MODEL_TYPES,
-        building_blocks_path: Path,
         save_dir: Path,
+        building_blocks_path: Path = BUILDING_BLOCKS_PATH,
         fingerprint_type: FINGERPRINT_TYPES | None = None,
         reaction_to_building_blocks_path: Path | None = None,
         building_blocks_id_column: str = REAL_BUILDING_BLOCK_ID_COL,
@@ -42,7 +43,7 @@ def generate(
     :param building_blocks_path: Path to CSV file containing molecular building blocks.
     :param save_dir: Path to directory where the generated molecules will be saved.
     :param fingerprint_type: Type of fingerprints to use as input features.
-    :param reaction_to_building_blocks_path: Path to JSON file containing mapping from REAL reactions to allowed building blocks.
+    :param reaction_to_building_blocks_path: Path to PKL file containing mapping from REAL reactions to allowed building blocks.
     :param building_blocks_id_column: Name of the column containing IDs for each building block.
     :param building_blocks_score_column: Name of column containing scores for each building block.
     :param building_blocks_smiles_column: Name of the column containing SMILES for each building block.
@@ -91,7 +92,7 @@ def generate(
     # Optionally, set allowed building blocks for each reaction
     if reaction_to_building_blocks_path is not None:
         load_and_set_allowed_reaction_smiles(
-            reactions=REAL_REACTIONS,
+            reactions=REACTIONS,
             reaction_to_reactant_to_building_blocks_path=reaction_to_building_blocks_path,
             building_blocks_path=building_blocks_path,
             building_blocks_id_column=building_blocks_id_column,
@@ -115,7 +116,7 @@ def generate(
         n_rollout=n_rollout,
         explore_weight=explore_weight,
         num_expand_nodes=num_expand_nodes,
-        reactions=REAL_REACTIONS,
+        reactions=REACTIONS,
         rng_seed=rng_seed,
         no_building_block_diversity=no_building_block_diversity,
         verbose=verbose,

@@ -1,4 +1,5 @@
 """Contains constants shared throughout SyntheMol."""
+from pathlib import Path
 from typing import Literal
 
 from rdkit.Chem import Mol
@@ -10,7 +11,7 @@ CHEMBL_SMILES_COL = 'Smiles'
 REAL_SPACE_SIZE = 31507987117  # As of August 30, 2022, in the 2022 q1-2 REAL space
 REAL_REACTION_COL = 'reaction'
 REAL_BUILDING_BLOCK_COLS = ['reagent1', 'reagent2', 'reagent3', 'reagent4']
-REAL_BUILDING_BLOCK_ID_COL = 'Reagent_ID'
+REAL_BUILDING_BLOCK_ID_COL = 'ID'
 REAL_TYPE_COL = 'Type'
 REAL_SMILES_COL = 'smiles'
 SMILES_COL = 'smiles'
@@ -22,3 +23,6 @@ SKLEARN_MODEL_TYPES = RandomForestClassifier | RandomForestRegressor | MLPClassi
 SKLEARN_MODEL_NAME_TYPES = Literal['random_forest', 'mlp']
 MODEL_TYPES = Literal['random_forest', 'mlp', 'chemprop']
 DATASET_TYPES = Literal['classification', 'regression']
+
+# Replace this with a path to a custom building blocks file to change the default building blocks path across all files
+BUILDING_BLOCKS_PATH = Path(__file__).parent / 'files' / 'building_blocks.csv.gz'

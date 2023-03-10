@@ -1,5 +1,5 @@
 """Plots the distribution of model scores over molecular building blocks."""
-import json
+import pickle
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -13,14 +13,14 @@ def plot_building_block_scores(
 ) -> None:
     """Plots the distribution of model scores over molecular building blocks.
 
-    :param building_block_to_score_path: Path to JSON file containing a dictionary mapping
+    :param building_block_to_score_path: Path to PKL file containing a dictionary mapping
                                          from building block SMILES to model scores.
     :param title: Title of the plot.
     :param save_dir: Path to a directory where the plot will be saved.
     """
     # Load mapping from building blocks to scores
-    with open(building_block_to_score_path) as f:
-        building_block_to_score: dict[str, float] = json.load(f)
+    with open(building_block_to_score_path, 'rb') as f:
+        building_block_to_score: dict[str, float] = pickle.load(f)
 
     # Plot distribution of building block scores
     scores = list(building_block_to_score.values())

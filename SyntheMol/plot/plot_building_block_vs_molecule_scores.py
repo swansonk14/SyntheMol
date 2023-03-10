@@ -8,6 +8,7 @@ from sklearn.metrics import r2_score
 from tqdm import tqdm
 
 from SyntheMol.constants import (
+    BUILDING_BLOCKS_PATH,
     REAL_BUILDING_BLOCK_COLS,
     REAL_BUILDING_BLOCK_ID_COL,
     SCORE_COL
@@ -17,9 +18,9 @@ from SyntheMol.constants import (
 def plot_building_block_vs_molecule_scores(
         data_path: Path,
         score_column: str,
-        building_blocks_path: Path,
         title: str,
         save_dir: Path,
+        building_blocks_path: Path = BUILDING_BLOCKS_PATH,
         building_blocks_id_column: str = REAL_BUILDING_BLOCK_ID_COL,
         building_blocks_score_column: str = SCORE_COL
 ) -> None:
