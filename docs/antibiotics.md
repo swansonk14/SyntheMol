@@ -4,10 +4,22 @@ This file contains instructions for using SyntheMol to generate novel antibiotic
 
 The data and models referred to in this file can be downloaded from the Google Drive folder [here](https://drive.google.com/drive/folders/1VLPPUbY_FTKMjlXgRm09bPSSms206Dce?usp=share_link). Note that the instructions below assume that the relevant data is downloaded to the `data` directory.
 
-TODO: update table of contents here
+* [Process Enamine REAL Space data](#process-enamine-real-space-data)
+* [Process antibiotics training data](#process-antibiotics-training-data)
+* [Process ChEMBL antibacterials](#process-chembl-antibacterials)
+* [Build bioactivity prediction models](#build-bioactivity-prediction-models)
+  + [Train models](#train-models)
+  + [Map building blocks to model scores](#map-building-blocks-to-model-scores)
+* [Generate molecules with SyntheMol](#generate-molecules-with-synthemol)
+* [Filter generated molecules](#filter-generated-molecules)
+  + [Novelty](#novelty)
+  + [Bioactivity](#bioactivity)
+  + [Diversity](#diversity)
+* [Map molecules to REAL IDs](#map-molecules-to-real-ids)
+* [Predict toxicity](#predict-toxicity)
 
 
-## Enamine REAL Space data processing
+## Process Enamine REAL Space data
 
 See the [REAL Space data processing instructions](real.md) for details on how to process the Enamine REAL Space data.
 
@@ -217,12 +229,12 @@ python -m SyntheMol.models.generate \
 ```
 
 
-## Select generated molecules
+## Filter generated molecules
 
-Run three filtering steps to select molecules for experimental testing based on novelty, score, and diversity.
+Run three filtering steps to select molecules for experimental testing based on novelty, predicted bioactivity, and diversity.
 
 
-### Filter by novelty
+### Novelty
 
 Filter for molecules that are structurally novel, i.e., dissimilar from the training hits and the ChEMBL antibacterials.
 
@@ -287,9 +299,9 @@ done
 ```
 
 
-### Filter by model score
+### Bioactivity
 
-Filter for high-scoring molecules by only keeping molecules with the top 20% of model scores.
+Filter for high-scoring molecules (i.e., predicted bioactivity) by only keeping molecules with the top 20% of model scores.
 ```bash
 #!/bin/bash
 
@@ -304,7 +316,7 @@ done
 ```
 
 
-### Filter by diversity
+### Diversity
 
 Filter for diverse molecules by clustering molecules based on their Morgan fingerprint and only keeping the top scoring molecule from each cluster.
 

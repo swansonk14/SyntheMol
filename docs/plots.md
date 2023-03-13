@@ -4,10 +4,32 @@ This file contains instructions for generating plots analyzing the data and resu
 
 The data and models referred to in this file can be downloaded from the Google Drive folder [here](https://drive.google.com/drive/folders/1VLPPUbY_FTKMjlXgRm09bPSSms206Dce?usp=share_link). Note that the instructions below assume that the relevant data is downloaded to the `data` and `model` directories.
 
-TODO: table of contents
+* [Data](#data)
+  + [Data distribution](#data-distribution)
+  + [t-SNE of training data and ChEMBL data](#t-sne-of-training-data-and-chembl-data)
+* [Property prediction model](#property-prediction-model)
+  + [Model performance on training data](#model-performance-on-training-data)
+  + [Model generalization](#model-generalization)
+* [REAL data](#real-data)
+  + [REAL reactions](#real-reactions)
+  + [REAL reaction and reactant counts](#real-reaction-and-reactant-counts)
+  + [REAL vs train molecular properties](#real-vs-train-molecular-properties)
+  + [t-SNE of REAL vs train](#t-sne-of-real-vs-train)
+* [Model on REAL Data](#model-on-real-data)
+  + [Building block scores](#building-block-scores)
+  + [Building block vs full molecule scores](#building-block-vs-full-molecule-scores)
+  + [Assess REAL molecules](#assess-real-molecules)
+* [MCTS Analysis](#mcts-analysis)
+  + [Building block diversity](#building-block-diversity)
+  + [Score by rollout](#score-by-rollout)
+* [Generated Sets](#generated-sets)
+  + [Generate set characteristics](#generate-set-characteristics)
+  + [Images of generated molecules](#images-of-generated-molecules)
+  + [t-SNE of final generated sets](#t-sne-of-final-generated-sets)
+  + [ClinTox predictions](#clintox-predictions)
 
 
-## Data plots
+## Data
 
 ### Data distribution
 
