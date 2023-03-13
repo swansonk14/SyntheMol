@@ -2,7 +2,7 @@
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
-from SyntheMol.reactions import QueryMol
+from SyntheMol.reactions.query_mol import QueryMol
 from SyntheMol.utils import convert_to_mol, MOLECULE_TYPE
 
 

@@ -8,6 +8,7 @@ from SyntheMol.constants import (
     BUILDING_BLOCKS_PATH,
     FINGERPRINT_TYPES,
     MODEL_TYPES,
+    REACTION_TO_BUILDING_BLOCKS_PATH,
     REAL_BUILDING_BLOCK_ID_COL,
     SCORE_COL,
     SMILES_COL
@@ -23,7 +24,7 @@ def generate(
         save_dir: Path,
         building_blocks_path: Path = BUILDING_BLOCKS_PATH,
         fingerprint_type: FINGERPRINT_TYPES | None = None,
-        reaction_to_building_blocks_path: Path | None = None,
+        reaction_to_building_blocks_path: Path | None = REACTION_TO_BUILDING_BLOCKS_PATH,
         building_blocks_id_column: str = REAL_BUILDING_BLOCK_ID_COL,
         building_blocks_score_column: str = SCORE_COL,
         building_blocks_smiles_column: str = SMILES_COL,

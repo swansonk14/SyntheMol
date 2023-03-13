@@ -9,7 +9,7 @@ from SyntheMol.constants import (
     REAL_BUILDING_BLOCK_ID_COL,
     SMILES_COL
 )
-from SyntheMol.reactions import Reaction
+from SyntheMol.reactions.reaction import Reaction
 
 
 def set_allowed_reaction_smiles(

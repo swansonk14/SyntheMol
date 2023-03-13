@@ -135,7 +135,7 @@ dmypy.json
 .DS_Store
 
 # Folders
-checkpoints
 data
-files
 generations
+models
+SyntheMol/files
