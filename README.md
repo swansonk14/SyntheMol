@@ -87,6 +87,8 @@ O=C(O)CCc1ccc(NCc2cccc(Oc3ccccc3)c2)cc1,0
 ...
 ```
 
+TODO: make sure training and predict commands work like this in chemprop
+
 Train Chemprop
 ```bash
 python -m chemprop.train \
@@ -112,7 +114,7 @@ python -m chemprop.predict \
 SyntheMol uses the bioactivity prediction model within a Monte Carlo tree search to generate molecules. Below is an example for generating molecules with a trained Chemprop model using 20,000 MCTS rollouts.
 
 ```bash
-python -m SyntheMol.generate \
+python -m SyntheMol.generate.generate \
     --model_path models/chemprop \
     --model_type chemprop \
     --save_dir generations/chemprop \

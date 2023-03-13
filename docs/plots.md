@@ -1,33 +1,10 @@
 # Plots
 
-This file contains instructions for generating plots analyzing the data and results.
+This file contains instructions for generating plots analyzing the data and results for antibiotic generation from our paper [TODO](TODO).
 
-TODO: redo some names here
+The data and models referred to in this file can be downloaded from the Google Drive folder [here](https://drive.google.com/drive/folders/1VLPPUbY_FTKMjlXgRm09bPSSms206Dce?usp=share_link). Note that the instructions below assume that the relevant data is downloaded to the `data` and `model` directories.
 
-- [Data plots](#data-plots)
-  * [Data distribution](#data-distribution)
-  * [t-SNE of training data and ChEMBL data](#t-sne-of-training-data-and-chembl-data)
-- [Property prediction model](#property-prediction-model)
-  * [Model performance on training data](#model-performance-on-training-data)
-  * [Model generalization](#model-generalization)
-- [REAL data](#real-data)
-  * [REAL reactions](#real-reactions)
-  * [REAL reaction and reactant counts](#real-reaction-and-reactant-counts)
-  * [REAL vs train molecular properties](#real-vs-train-molecular-properties)
-  * [t-SNE of REAL vs train](#t-sne-of-real-vs-train)
-- [Model on REAL Data](#model-on-real-data)
-  * [Building block scores](#building-block-scores)
-  * [Building block vs full molecule scores](#building-block-vs-full-molecule-scores)
-  * [Assess REAL molecules](#assess-real-molecules)
-- [MCTS Analysis](#mcts-analysis)
-  * [Building block diversity](#building-block-diversity)
-  * [Score by rollout](#score-by-rollout)
-- [Generated Sets](#generated-sets)
-  * [Generate set characteristics](#generate-set-characteristics)
-  * [Images of generated molecules](#images-of-generated-molecules)
-  * [t-SNE of the filtering steps](#t-sne-of-the-filtering-steps)
-  * [t-SNE of final generated sets](#t-sne-of-final-generated-sets)
-  * [ClinTox predictions](#clintox-predictions)
+TODO: table of contents
 
 
 ## Data plots
@@ -36,48 +13,35 @@ TODO: redo some names here
 
 Plot data values for each training set.
 ```bash
-python plots/plot_regression_values.py \
-    --data_path data/screening_data/AB_original/AB_2560_normalized.csv \
+for LIBRARY in library_1 library_2 library_3
+do
+python -m SyntheMol.plot.plot_regression_values \
+    --data_path data/${LIBRARY}.csv \
     --rep1_column Rep_1 \
     --rep2_column Rep_2 \
-    --save_dir plots/paper/AB_2560_normalized
-```
-
-```bash
-python plots/plot_regression_values.py \
-    --data_path data/screening_data/AB_original/AB_Mar27_normalized.csv \
-    --rep1_column Rep_1 \
-    --rep2_column Rep_2 \
-    --save_dir plots/paper/AB_Mar27_normalized
-```
-
-```bash
-python plots/plot_regression_values.py \
-    --data_path data/screening_data/AB_original/For_gen_AB_DRH.csv \
-    --rep1_column Rep_1 \
-    --rep2_column Rep_2 \
-    --save_dir plots/paper/For_gen_AB_DRH
+    --save_dir plots/${LIBRARY}
+done
 ```
 
 ### t-SNE of training data and ChEMBL data
 
-Plot t-SNE of training data and ChEMBL antibiotics using [chem_utils](https://github.com/swansonk14/chem_utils).
+Plot t-SNE of training data and ChEMBL antibiotics.
 ```bash
-python dimensionality_reduction.py \
-    --data_paths ../../combinatorial_antibiotics/data/chembl/chembl_antibacterial_antibiotic.csv \
-    ../../combinatorial_antibiotics/data/screening_data/AB_original/AB_2560_normalized.csv \
-    ../../combinatorial_antibiotics/data/screening_data/AB_original/AB_Mar27_normalized.csv \
-    ../../combinatorial_antibiotics/data/screening_data/AB_original/For_gen_AB_DRH.csv \
-    ../../combinatorial_antibiotics/data/screening_data/AB_2560_hits.csv \
-    ../../combinatorial_antibiotics/data/screening_data/AB_Mar27_hits.csv \
-    ../../combinatorial_antibiotics/data/screening_data/For_gen_AB_DRH_hits.csv \
+python -m chem_utils.dimensionality_reduction \
+    --data_paths data/chembl/chembl_antibacterial_antibiotic.csv \
+    data/library_1.csv \
+    data/library_2.csv \
+    data/library_3.csv \
+    data/library_1_hits.csv \
+    data/library_2_hits.csv \
+    data/library_3_hits.csv \
     --max_molecules 2000 \
     --colors red orange blue purple orange blue purple \
-    --data_names chembl_antibiotic AB_2560_normalized AB_Mar27_normalized For_gen_AB_DRH \
-     AB_2560_normalized_hits AB_Mar27_normalized_hits For_gen_AB_DRH_hits  \
-    --highlight_data_names AB_2560_normalized_hits AB_Mar27_normalized_hits For_gen_AB_DRH_hits \
+    --data_names chembl_antibiotic library_1 library_2 library_3 \
+     library_1_hits library_2_hits library_3_hits  \
+    --highlight_data_names library_1_hits library_2_hits library_3_hits \
     --smiles_columns smiles SMILES SMILES SMILES smiles smiles smiles \
-    --save_dir ../../combinatorial_antibiotics/plots/paper/tsne/train_vs_train_hits_vs_chembl
+    --save_dir plots/tsne/train_vs_train_hits_vs_chembl
 ```
 
 ## Property prediction model
@@ -86,9 +50,9 @@ python dimensionality_reduction.py \
 
 Plot ROC-AUC and PRC-AUC curves for each model. (Replace model paths and names as needed and curve type with ROC or PRC.)
 ```bash
-python plots/plot_auc.py \
-    --data_dir ckpt/AB_combined_RF_rdkit \
-    --save_dir plots/paper/auc \
+python -m SyntheMol.plot.plot_auc \
+    --data_dir models/random_forest \
+    --save_dir plots/auc \
     --model_name "Random Forest" \
     --curve_type ROC
 ```
@@ -101,17 +65,17 @@ Separately process each training set.
 ```bash
 #!/bin/bash
 
-for DATA_NAME in AB_2560_normalized AB_Mar27_normalized For_gen_AB_DRH
+for LIBRARY in library_1 library_2 library_3
 do
-python process_data.py \
-    --data_paths data/screening_data/AB_original/${DATA_NAME}.csv \
-    --save_path data/screening_data/AB_original/${DATA_NAME}_binarized.csv
+python -m SyntheMol.data.process_data \
+    --data_paths data/${LIBRARY}.csv \
+    --save_path data/${LIBRARY}_binarized.csv
 done
 ```
 
 Results of separate data processing.
 ```
-AB_2560_normalized
+library_1
 Data size = 2,371
 Mean activity = 0.9759337199493885
 Std activity = 0.2673771821337539
@@ -127,23 +91,7 @@ Final data size = 2,371
 Number of hits = 130
 Number of non-hits = 2,241
 
-AB_Mar27_normalized
-Data size = 5,376
-Mean activity = 0.9980530249533108
-Std activity = 0.13303517604898704
-Activity threshold of mean - 2 std = 0.7319826728553367
-Number of hits = 112
-Number of non-hits = 5,264
-
-Full data size = 5,376
-Data size after dropping non-conflicting duplicates = 5,376
-Data size after dropping conflicting duplicates = 5,376
-
-Final data size = 5,376
-Number of hits = 112
-Number of non-hits = 5,264
-
-For_gen_AB_DRH
+library_2
 Data size = 6,680
 Mean activity = 0.9701813713618264
 Std activity = 0.17623388953330232
@@ -158,30 +106,46 @@ Data size after dropping conflicting duplicates = 6,646
 Final data size = 6,646
 Number of hits = 292
 Number of non-hits = 6,354
+
+library_3
+Data size = 5,376
+Mean activity = 0.9980530249533108
+Std activity = 0.13303517604898704
+Activity threshold of mean - 2 std = 0.7319826728553367
+Number of hits = 112
+Number of non-hits = 5,264
+
+Full data size = 5,376
+Data size after dropping non-conflicting duplicates = 5,376
+Data size after dropping conflicting duplicates = 5,376
+
+Final data size = 5,376
+Number of hits = 112
+Number of non-hits = 5,264
 ```
 
 Train models on each training set.
 ```bash
 #!/bin/bash
 
-for DATA_NAME in AB_2560_normalized AB_Mar27_normalized For_gen_AB_DRH
+for LIBRARY in library_1 library_2 library_3
 do
 python train_model.py \
-    --data_path data/screening_data/AB_original/${DATA_NAME}_binarized.csv \
-    --save_dir ckpt/${DATA_NAME}_RF_rdkit \
-    --model_type rf \
+    --data_path data/${LIBRARY}_binarized.csv \
+    --save_dir models/${LIBRARY}_RF_rdkit \
+    --model_type random_forest \
     --fingerprint_type rdkit \
     --num_models 10
 
 python train_model.py \
-    --data_path data/screening_data/AB_original/${DATA_NAME}_binarized.csv \
-    --save_dir ckpt/${DATA_NAME}_chemprop \
+    --data_path data/${LIBRARY}_binarized.csv \
+    --save_dir models/${LIBRARY}_chemprop \
     --model_type chemprop \
     --num_models 10
 
 python train_model.py \
-    --data_path data/screening_data/AB_original/${DATA_NAME}_binarized.csv \
-    --save_dir ckpt/${DATA_NAME}_chemprop_rdkit \
+    --data_path data/${LIBRARY}_binarized.csv \
+    --save_dir models/${LIBRARY}_chemprop_rdkit \
     --model_type chemprop \
     --fingerprint_type rdkit \
     --num_models 10
@@ -192,48 +156,48 @@ Make predictions on other training sets.
 ```bash
 #!/bin/bash
 
-for DATA1_NAME in AB_2560_normalized AB_Mar27_normalized For_gen_AB_DRH
+for LIBRARY_A in library_1 library_2 library_3
 do
-    for DATA2_NAME in AB_2560_normalized AB_Mar27_normalized For_gen_AB_DRH
+    for LIBRARY_B in library_1 library_2 library_3
     do
-        if [ "$DATA1_NAME" != "$DATA2_NAME" ]
+        if [ "$LIBRARY_A" != "$LIBRARY_B" ]
         then
-            echo $DATA1_NAME $DATA2_NAME
-            python predict_model.py \
-                --data_path data/screening_data/AB_original/${DATA2_NAME}_binarized.csv \
-                --model_path ckpt/${DATA1_NAME}_RF_rdkit \
-                --save_path ckpt/${DATA1_NAME}_RF_rdkit/${DATA2_NAME}_preds.csv \
+            echo $LIBRARY_A $LIBRARY_B
+            python -m SyntheMol.models.predict \
+                --data_path data/screening_data/AB_original/${LIBRARY_B}_binarized.csv \
+                --model_path ckpt/${LIBRARY_A}_RF_rdkit \
+                --save_path ckpt/${LIBRARY_A}_RF_rdkit/${LIBRARY_B}_preds.csv \
                 --model_type rf \
                 --fingerprint_type rdkit \
                 --average_preds
 
-            python compute_auc.py \
-                --data_path ckpt/${DATA1_NAME}_RF_rdkit/${DATA2_NAME}_preds.csv \
+            python -m SyntheMol.assess.compute_auc \
+                --data_path ckpt/${LIBRARY_A}_RF_rdkit/${LIBRARY_B}_preds.csv \
                 --pred_column rf_rdkit_ensemble_preds \
                 --true_column activity
 
-            python predict_model.py \
-                --data_path data/screening_data/AB_original/${DATA2_NAME}_binarized.csv \
-                --model_path ckpt/${DATA1_NAME}_chemprop \
-                --save_path ckpt/${DATA1_NAME}_chemprop/${DATA2_NAME}_preds.csv \
+            python -m SyntheMol.models.predict \
+                --data_path data/screening_data/AB_original/${LIBRARY_B}_binarized.csv \
+                --model_path ckpt/${LIBRARY_A}_chemprop \
+                --save_path ckpt/${LIBRARY_A}_chemprop/${LIBRARY_B}_preds.csv \
                 --model_type chemprop \
                 --average_preds
 
-            python compute_auc.py \
-                --data_path ckpt/${DATA1_NAME}_chemprop/${DATA2_NAME}_preds.csv \
+            python -m SyntheMol.assess.compute_auc \
+                --data_path ckpt/${LIBRARY_A}_chemprop/${LIBRARY_B}_preds.csv \
                 --pred_column chemprop_ensemble_preds \
                 --true_column activity
 
-            python predict_model.py \
-                --data_path data/screening_data/AB_original/${DATA2_NAME}_binarized.csv \
-                --model_path ckpt/${DATA1_NAME}_chemprop_rdkit \
-                --save_path ckpt/${DATA1_NAME}_chemprop_rdkit/${DATA2_NAME}_preds.csv \
+            python -m SyntheMol.models.predict \
+                --data_path data/screening_data/AB_original/${LIBRARY_B}_binarized.csv \
+                --model_path ckpt/${LIBRARY_A}_chemprop_rdkit \
+                --save_path ckpt/${LIBRARY_A}_chemprop_rdkit/${LIBRARY_B}_preds.csv \
                 --model_type chemprop \
                 --fingerprint_type rdkit \
                 --average_preds
 
-            python compute_auc.py \
-                --data_path ckpt/${DATA1_NAME}_chemprop_rdkit/${DATA2_NAME}_preds.csv \
+            python -m SyntheMol.assess.compute_auc \
+                --data_path ckpt/${LIBRARY_A}_chemprop_rdkit/${DATA2_NAME}_preds.csv \
                 --pred_column chemprop_rdkit_ensemble_preds \
                 --true_column activity
         fi
@@ -244,8 +208,8 @@ done
 Plot generalization across training sets as a confusion matrix.
 
 ```bash
-python plots/plot_model_generalization.py \
-    --save_dir plots/paper/model_generalization
+python -m SyntheMol.plot.plot_model_generalization \
+    --save_dir plots/model_generalization
 ```
 
 
@@ -253,11 +217,11 @@ python plots/plot_model_generalization.py \
 
 ### REAL reactions
 
-Visualize REAL reactions using [chem_utils](https://github.com/swansonk14/chem_utils).
+Visualize REAL reactions.
 ```bash
-python visualize_reactions.py \
-    --data_path ../../combinatorial_antibiotics/data/real_reaction_smarts.csv \
-    --save_dir ../../combinatorial_antibiotics/plots/paper/real_reactions \
+python -m chem_utils.visualize_reactions \
+    --data_path data/real_reaction_smarts.csv \
+    --save_dir plots/real_reactions \
     --name_column reaction_id
 ```
 
@@ -265,81 +229,70 @@ python visualize_reactions.py \
 
 Plot REAL reaction and reactant counts.
 ```bash
-python plots/plot_real_counts.py \
+python -m SyntheMol.plot.plot_real_counts \
     --reaction_counts_path data/Enamine_REAL_space_counts/real_space_reaction_counts.csv \
     --building_block_counts_path data/Enamine_REAL_space_counts/real_space_building_block_counts.csv \
-    --save_dir plots/paper/real_counts
+    --save_dir plots/real_counts
 ```
 
 ### REAL vs train molecular properties
 
-Deduplicate building blocks by SMILES using [chem_utils](https://github.com/swansonk14/chem_utils).
+Deduplicate building blocks by SMILES.
 ```bash
-python deduplicate_smiles.py \
-    --data_path ../../combinatorial_antibiotics/data/building_blocks.csv \
-    --save_path ../../combinatorial_antibiotics/data/building_blocks_unique.csv
+python -m chem_utils.deduplicate_smiles \
+    --data_path data/building_blocks.csv \
+    --save_path data/building_blocks_unique.csv
 ```
 
 This leaves 132,479 unique building block molecules.
 
-Compute properties of REAL building blocks using [chem_utils](https://github.com/swansonk14/chem_utils).
+Compute properties of REAL building blocks, REAL molecules, and train molecules.
 ```bash
-python compute_properties.py \
-    --data_path ../../combinatorial_antibiotics/data/building_blocks_unique.csv \
+for DATA in building_blocks_unique random_real antibiotics
+do
+python -m chem_utils.compute_properties \
+    --data_path data/${DATA}.csv \
     --properties logp mol_weight
+done
 ```
 
-Compute properties of REAL molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
+Plot logP distributions.
 ```bash
-python compute_properties.py \
-    --data_path ../../combinatorial_antibiotics/data/random_real.csv \
-    --properties logp mol_weight
-```
-
-Compute properties of train molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
-```bash
-python compute_properties.py \
-    --data_path ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
-    --properties logp mol_weight qed sa_score
-```
-
-Plot logP distributions using [chem_utils](https://github.com/swansonk14/chem_utils).
-```bash
-python plots/plot_property_distribution.py \
-    --data_paths ../../combinatorial_antibiotics/data/building_blocks_unique.csv \
-    ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_25k_with_properties.csv \
-    ../../combinatorial_antibiotics/data/screening_data/AB_combined_with_properties.csv \
+python -m chem_utils.plot_property_distribution \
+    --data_paths data/building_blocks_unique.csv \
+    data/random_real.csv \
+    data/antibiotics.csv \
     --property_column logp \
-    --save_dir ../../combinatorial_antibiotics/plots/paper/properties/logp_train_vs_real \
+    --save_dir plots/properties/logp_train_vs_real \
     --min_value -10 \
     --max_value 10
 ```
 
-Plot molecular weight distributions using [chem_utils](https://github.com/swansonk14/chem_utils).
+Plot molecular weight distributions.
 ```bash
-python plots/plot_property_distribution.py \
-    --data_paths ../../combinatorial_antibiotics/data/building_blocks_unique.csv \
-    ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_25k_with_properties.csv \
-    ../../combinatorial_antibiotics/data/screening_data/AB_combined_with_properties.csv \
+python -m chem_utils.plot_property_distribution \
+    --data_paths data/building_blocks_unique.csv \
+    data/random_real.csv \
+    data/antibiotics.csv \
     --property_column mol_weight \
-    --save_dir ../../combinatorial_antibiotics/plots/paper/properties/mol_weight_train_vs_real \
+    --save_dir plots/properties/mol_weight_train_vs_real \
     --max_value 1000
 ```
 
 
 ### t-SNE of REAL vs train
 
-Plot t-SNE of training data and REAL space sample using [chem_utils](https://github.com/swansonk14/chem_utils).
+Plot t-SNE of training data and REAL space sample.
 ```bash
-python dimensionality_reduction.py \
-    --data_paths ../../combinatorial_antibiotics/data/Enamine_REAL_space_sampled_25k.csv \
-    ../../combinatorial_antibiotics/data/building_blocks_unique.csv \
-    ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
-    ../../combinatorial_antibiotics/data/screening_data/AB_combined_hits.csv \
+python -m chem_utils.dimensionality_reduction \
+    --data_paths data/random_real.csv \
+    data/building_blocks_unique.csv \
+    data/antibiotics.csv \
+    data/antibiotics_hits.csv \
     --max_molecules 7500 1000 1000 500 \
     --data_names REAL_molecules REAL_building_blocks train train_hits \
     --highlight_data_names train_hits \
-    --save_dir ../../combinatorial_antibiotics/plots/paper/tsne/train_vs_train_hits_vs_real_vs_real_building_blocks
+    --save_dir plots/tsne/train_vs_train_hits_vs_real_vs_real_building_blocks
 ```
 
 
@@ -349,24 +302,24 @@ python dimensionality_reduction.py \
 
 Plot building block score distribution for each model.
 ```bash
-python plots/plot_building_block_scores.py \
-    --building_block_to_score_path ckpt/AB_combined_RF_rdkit/building_block_to_model_scores.json \
+python -m SyntheMol.plot.plot_building_block_scores \
+    --building_block_to_score_path models/random_forest/building_block_to_model_scores.pkl \
     --title "Random Forest Building Block Score Distribution" \
-    --save_dir plots/paper/building_block_scores/rf_building_block_scores
+    --save_dir plots/building_block_scores/random_forest_building_block_scores
 ```
 
 ```bash
-python plots/plot_building_block_scores.py \
-    --building_block_to_score_path ckpt/AB_combined_chemprop/building_block_to_model_scores.json \
+python -m SyntheMol.plot.plot_building_block_scores \
+    --building_block_to_score_path models/chemprop/building_block_to_model_scores.pkl \
     --title "Chemprop Building Block Score Distribution" \
-    --save_dir plots/paper/building_block_scores/chemprop_building_block_scores
+    --save_dir plots/building_block_scores/chemprop_building_block_scores
 ```
 
 ```bash
-python plots/plot_building_block_scores.py \
-    --building_block_to_score_path ckpt/AB_combined_chemprop_rdkit/building_block_to_model_scores.json \
+python -m SyntheMol.plot.plot_building_block_scores \
+    --building_block_to_score_path models/chemprop_rdkit/building_block_to_model_scores.pkl \
     --title "Chemprop RDKit Building Block Score Distribution" \
-    --save_dir plots/paper/building_block_scores/chemprop_rdkit_building_block_scores
+    --save_dir plots/building_block_scores/chemprop_rdkit_building_block_scores
 ```
 
 ### Building block vs full molecule scores
@@ -378,21 +331,21 @@ First, make predictions on a random sample of REAL molecules using each model.
 #!/bin/bash
 
 python predict_model.py \
-    --data_path data/Enamine_REAL_space_sampled_25k.csv \
-    --model_path ckpt/AB_combined_RF_rdkit \
-    --model_type rf \
+    --data_path data/random_real.csv \
+    --model_path models/random_forest \
+    --model_type random_forest \
     --fingerprint_type rdkit \
     --average_preds
 
 python predict_model.py \
-    --data_path data/Enamine_REAL_space_sampled_25k.csv \
-    --model_path ckpt/AB_combined_chemprop \
+    --data_path data/random_real.csv \
+    --model_path models/chemprop \
     --model_type chemprop \
     --average_preds
 
 python predict_model.py \
-    --data_path data/Enamine_REAL_space_sampled_25k.csv \
-    --model_path ckpt/AB_combined_chemprop_rdkit \
+    --data_path data/random_real.csv \
+    --model_path models/chemprop_rdkit \
     --model_type chemprop \
     --fingerprint_type rdkit \
     --average_preds
@@ -400,44 +353,44 @@ python predict_model.py \
 
 Then, plot the building block vs full molecule scores. (Note: Only 24,276 out of 25,000 molecules have all required building block SMILES.)
 ```bash
-python plots/plot_building_block_vs_molecule_scores.py \
-    --data_path data/Enamine_REAL_space_sampled_25k.csv \
-    --score_column rf_rdkit_ensemble_preds \
+python -m SyntheMol.plot.plot_building_block_vs_molecule_scores \
+    --data_path data/random_real.csv \
+    --score_column random_forest_rdkit_ensemble_preds \
     --building_block_path data/building_blocks.csv \
-    --building_block_to_score_path ckpt/AB_combined_RF_rdkit/building_block_to_model_scores.json \
+    --building_block_to_score_path models/random_forest/building_block_to_model_scores.pkl \
     --title "Random Forest Full Molecule vs Average Building Block Scores" \
-    --save_dir plots/paper/full_vs_building_block_scores/rf_rdkit_full_vs_building_block_scores
+    --save_dir plots/full_vs_building_block_scores/random_forest_full_vs_building_block_scores
 ```
 
 ```bash
-python plots/plot_building_block_vs_molecule_scores.py \
-    --data_path data/Enamine_REAL_space_sampled_25k.csv \
+python -m SyntheMol.plot.plot_building_block_vs_molecule_scores \
+    --data_path data/random_real.csv \
     --score_column chemprop_ensemble_preds \
     --building_block_path data/building_blocks.csv \
-    --building_block_to_score_path ckpt/AB_combined_chemprop/building_block_to_model_scores.json \
+    --building_block_to_score_path models/chemprop/building_block_to_model_scores.pkl \
     --title "Chemprop Full Molecule vs Average Building Block Scores" \
-    --save_dir plots/paper/full_vs_building_block_scores/chemprop_full_vs_building_block_scores
+    --save_dir plots/full_vs_building_block_scores/chemprop_full_vs_building_block_scores
 ```
 
 ```bash
 python plots/plot_building_block_vs_molecule_scores.py \
-    --data_path data/Enamine_REAL_space_sampled_25k.csv \
+    --data_path data/random_real.csv \
     --score_column chemprop_rdkit_ensemble_preds \
     --building_block_path data/building_blocks.csv \
-    --building_block_to_score_path ckpt/AB_combined_chemprop_rdkit/building_block_to_model_scores.json \
+    --building_block_to_score_path models/chemprop_rdkit/building_block_to_model_scores.pkl \
     --title "Chemprop RDKit Full Molecule vs Average Building Block Scores" \
-    --save_dir plots/paper/full_vs_building_block_scores/chemprop_rdkit_full_vs_building_block_scores
+    --save_dir plots/full_vs_building_block_scores/chemprop_rdkit_full_vs_building_block_scores
 ```
 
 ### Assess REAL molecules
 
 Assess scores and similarity distributions of REAL molecules.
 ```bash
-python assess_real_molecules.py \
-    --data_path data/Enamine_REAL_space_sampled_25k.csv \
-    --save_dir plots/paper/real_analysis \
-    --train_hits_path data/screening_data/AB_combined_hits.csv \
-    --score_columns rf_rdkit_ensemble_preds chemprop_ensemble_preds chemprop_rdkit_ensemble_preds
+python -m SyntheMol.plot.plot_molecule_analysis.py \
+    --data_path data/random_real.csv \
+    --save_dir plots/real_analysis \
+    --train_hits_path data/antibiotics_hits.csv \
+    --score_columns random_forest_rdkit_ensemble_preds chemprop_ensemble_preds chemprop_rdkit_ensemble_preds
 ```
 
 
@@ -445,33 +398,33 @@ python assess_real_molecules.py \
 
 ### Building block diversity
 
-Building block counts before and after building block diversity. Run `tree_search.py` using same settings as above but without `--building_block_diversity` and run assess_generated_molecules.py and look at `building_block_counts.pdf`.
+Building block counts before and after building block diversity. Run `SyntheMol.generate.generate` as before but with the `--no_building_block_diversity` flag. Then run `SyntheMol.plot.plot_generated_molecule_analysis` and look at `building_block_counts.pdf`.
 
 ### Score by rollout
 
 Score of molecules binned by rollout.
 ```bash
-python plots/plot_mcts_over_time.py \
-    --data_path generations/mcts_AB_combined_rf_rdkit_ids_20k/molecules.csv \
-    --save_dir plots/paper/mcts_over_time/mcts_over_time_rf_rdkit_violin \
+python -m SyntheMol.plotplot_mcts_over_time \
+    --data_path generations/random_forest/molecules.csv \
+    --save_dir plots/mcts_over_time/random_forest \
     --model_name "Random Forest" \
     --plot_type violin \
     --increment 2000
 ```
 
 ```bash
-python plots/plot_mcts_over_time.py \
-    --data_path generations/mcts_AB_combined_chemprop_ids_20k/molecules.csv \
-    --save_dir plots/paper/mcts_over_time/mcts_over_time_chemprop_violin \
+python -m SyntheMol.plotplot_mcts_over_time \
+    --data_path generations/chemprop/molecules.csv \
+    --save_dir plots/mcts_over_time/chemprop \
     --model_name "Chemprop" \
     --plot_type violin \
     --increment 2000
 ```
 
 ```bash
-python plots/plot_mcts_over_time.py \
-    --data_path generations/mcts_AB_combined_chemprop_rdkit_ids_20k/molecules.csv \
-    --save_dir plots/paper/mcts_over_time/mcts_over_time_chemprop_rdkit_violin \
+python -m SyntheMol.plotplot_mcts_over_time \
+    --data_path generations/chemprop_rdkit/molecules.csv \
+    --save_dir plots/mcts_over_time/chemprop_rdkit \
     --model_name "Chemprop RDKit" \
     --plot_type violin \
     --increment 2000
@@ -488,7 +441,7 @@ Assess generated molecules for novelty, score, and diversity for each model.
 
 for NAME in chemprop chemprop_rdkit random_forest
 do
-python assess_generated_molecules.py \
+python -m SyntheMol.plot.plot_generated_molecule_analysis \
     --data_path generations/${NAME}/molecules.csv \
     --save_dir generations/${NAME} \
     --reference_paths data/antibiotics_hits.csv data/chembl.csv
@@ -501,7 +454,7 @@ Assess selected molecules for novelty, score, and diversity for each model.
 
 for NAME in chemprop chemprop_rdkit random_forest
 do
-python assess_generated_molecules.py \
+python -m SyntheMol.plot.plot_generated_molecule_analysis \
     --data_path generations/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
     --save_dir generations/${NAME}/analysis_molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50 \
     --reference_paths data/antibiotics_hits.csv data/chembl.csv
@@ -510,101 +463,47 @@ done
 
 ### Images of generated molecules
 
-Visualize the selected molecules using [chem_utils](https://github.com/swansonk14/chem_utils).
+Visualize the selected molecules.
 ```bash
 #!/bin/bash
 
 for NAME in chemprop chemprop_rdkit random_forest
 do
-python visualize_molecules.py \
-    --data_path ../../combinatorial_antibiotics/generations/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
-    --save_dir ../../combinatorial_antibiotics/generations/${NAME}
+python -m chem_utils.visualize_molecules \
+    --data_path generations/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
+    --save_dir generations/${NAME}
 done
 ```
 
-### t-SNE of the filtering steps
-
-t-SNE for each step of filtering using [chem_utils](https://github.com/swansonk14/chem_utils).
-Note: Need to uncomment hack in dimensionality_reduction.py.
-```bash
-python dimensionality_reduction.py \
-    --data_paths ../../combinatorial_antibiotics/data/chembl/chembl_antibacterial_antibiotic.csv \
-    ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
-    ../../combinatorial_antibiotics/data/screening_data/AB_combined_hits.csv \
-    ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_ids_20k/molecules.csv \
-    ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_ids_20k/molecules_train_sim_below_0.5.csv \
-    ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5.csv \
-    ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
-    ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
-    --data_names chembl_antibiotic train train_hits random_forest random_forest_train_sim random_forest_train_sim_chembl_sim \
-    random_forest_train_sim_chembl_sim_top_score random_forest_train_sim_chembl_sim_top_score_selected \
-    --colors orange blue purple brown brown brown brown red \
-    --highlight_data_names random_forest_train_sim_chembl_sim_top_score_selected \
-    --save_dir ../../combinatorial_antibiotics/plots/paper/tsne/random_forest_filter
-```
-
-```bash
-python dimensionality_reduction.py \
-    --data_paths ../../combinatorial_antibiotics/data/chembl/chembl_antibacterial_antibiotic.csv \
-    ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
-    ../../combinatorial_antibiotics/data/screening_data/AB_combined_hits.csv \
-    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_ids_20k/molecules.csv \
-    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_ids_20k/molecules_train_sim_below_0.5.csv \
-    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5.csv \
-    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
-    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
-    --data_names chembl_antibiotic train train_hits chemprop chemprop_train_sim chemprop_train_sim_chembl_sim \
-    chemprop_train_sim_chembl_sim_top_score chemprop_train_sim_chembl_sim_top_score_selected \
-    --colors orange blue purple brown brown brown brown red \
-    --highlight_data_names chemprop_train_sim_chembl_sim_top_score_selected \
-    --save_dir ../../combinatorial_antibiotics/plots/paper/tsne/chemprop_filter
-```
-
-```bash
-python dimensionality_reduction.py \
-    --data_paths ../../combinatorial_antibiotics/data/chembl/chembl_antibacterial_antibiotic.csv \
-    ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
-    ../../combinatorial_antibiotics/data/screening_data/AB_combined_hits.csv \
-    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_ids_20k/molecules.csv \
-    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_ids_20k/molecules_train_sim_below_0.5.csv \
-    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5.csv \
-    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
-    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
-    --data_names chembl_antibiotic train train_hits chemprop_rdkit chemprop_rdkit_train_sim chemprop_rdkit_train_sim_chembl_sim \
-    chemprop_rdkit_train_sim_chembl_sim_top_score chemprop_rdkit_train_sim_chembl_sim_top_score_selected \
-    --colors orange blue purple brown brown brown brown red \
-    --highlight_data_names chemprop_rdkit_train_sim_chembl_sim_top_score_selected \
-    --save_dir ../../combinatorial_antibiotics/plots/paper/tsne/chemprop_rdkit_filter
-```
 
 ### t-SNE of final generated sets
 
-t-SNE for final generated sets using [chem_utils](https://github.com/swansonk14/chem_utils).
+t-SNE for final generated sets.
 ```bash
-python dimensionality_reduction.py \
-    --data_paths ../../combinatorial_antibiotics/data/screening_data/AB_combined.csv \
-    ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_ids_20k/molecules.csv \
-    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_ids_20k/molecules.csv \
-    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_ids_20k/molecules.csv \
-    ../../combinatorial_antibiotics/data/screening_data/AB_combined_hits.csv \
-    ../../combinatorial_antibiotics/generations/mcts_AB_combined_RF_rdkit_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
-    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
-    ../../combinatorial_antibiotics/generations/mcts_AB_combined_chemprop_rdkit_ids_20k/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
+python -m chem_utils.dimensionality_reduction \
+    --data_paths data/antibiotics.csv \
+    generations/random_forest/molecules.csv \
+    generations/chemprop/molecules.csv \
+    generations/chemprop_rdkit/molecules.csv \
+    data/screening_data/AB_combined_hits.csv \
+    generations/random_forest/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
+    generations/chemprop/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
+    generations/chemprop_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
     --data_names train random_forest_full chemprop_full chemprop_rdkit_full train_hits random_forest chemprop chemprop_rdkit \
     --max_molecules 2000 \
     --highlight_data_names train_hits random_forest chemprop chemprop_rdkit \
     --colors blue black red orange blue black red orange \
-    --save_dir ../../combinatorial_antibiotics/plots/paper/tsne/train_vs_train_hits_vs_generated_selected
+    --save_dir plots/tsne/train_vs_train_hits_vs_generated_selected
 ```
 
 ### ClinTox predictions
 
 Show potent molecules vs test molecules.
 ```bash
-python plots/plot_toxicity.py \
-    --test_dir paper/models/clintox_chemprop_rdkit \
-    --generated_path paper/data/8_synthesized/potent.csv \
-    --save_dir paper/plots/toxicity
+python -m SyntheMol.plotplot_toxicity \
+    --test_dir models/clintox_chemprop_rdkit \
+    --generated_path data/potent.csv \
+    --save_dir plots/toxicity
 ```
 
 ```
