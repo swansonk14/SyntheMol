@@ -4,7 +4,7 @@ SyntheMol is a generative AI method for designing structurally novel and diverse
 
 SyntheMol consists of a Monte Carlo tree search (MCTS) that explores a combinatorial chemical space consisting of molecular building blocks and chemical reactions. The MCTS is guided by a bioactivity prediction AI model, such as a graph neural network or a random forest. Currently, SyntheMol is designed to use 139,444 building blocks and 13 chemical reactions from the [Enamine REAL Space](https://enamine.net/compound-collections/real-compounds/real-space-navigator), which can produce over 30 billion molecules. However, SyntheMol can be easily adapted to use any set of building blocks and reactions.
 
-SyntheMol is described in the paper [TODO](TODO), where we applied SyntheMol to design novel antibiotic candidates for the Gram-negative bacterium _Acinetobacter baumannii_. Full details for reproducing the results in the paper are provided in the [docs](https://github.com/swansonk14/SyntheMol/docs) directory.
+SyntheMol is described in the paper [TODO](TODO), where we applied SyntheMol to design novel antibiotic candidates for the Gram-negative bacterium _Acinetobacter baumannii_. Full details for reproducing the results in the paper are provided in the [docs](docs) directory.
 
 If you use SyntheMol in your research, please cite:
 
