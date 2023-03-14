@@ -22,8 +22,8 @@ The `building_blocks.sdf` file (from the Google Drive folder) is the 2021 q3-4 v
 Convert the building blocks from SDF to SMILES.
 ```bash
 python -m chem_utils.sdf_to_smiles \
-    --data_path data/building_blocks.sdf \
-    --save_path data/building_blocks_raw.csv \
+    --data_path data/4_real_space/building_blocks.sdf \
+    --save_path data/4_real_space/building_blocks_raw.csv \
     --properties Reagent_ID Catalog_ID
 ```
 
@@ -37,8 +37,8 @@ Note: The SMILES are likely not all unique because they do not include stereoche
 Remove the salts from the building blocks. This will also canonicalize the SMILES using RDKit's canonicalization method.
 ```bash
 python -m chem_utils.canonicalize_smiles \
-    --data_path data/building_blocks_raw.csv \
-    --save_path data/building_blocks.csv \
+    --data_path data/4_real_space/building_blocks_raw.csv \
+    --save_path data/4_real_space/building_blocks.csv \
     --remove_salts \
     --delete_disconnected_mols
 ```
@@ -56,7 +56,7 @@ Below, we describe the steps for processing the REAL Space molecules.
 
 Download the building block and reaction IDs used for the full REAL Space of 31 billion compounds (2022 q1-2 version downloaded on August 30, 2022).
 ```bash
-lftp -c "open -p 21 -u username,password ftp-rdb-fr.chem-space.com; mirror -c --parallel=16 . data/real_space"
+lftp -c "open -p 21 -u username,password ftp-rdb-fr.chem-space.com; mirror -c --parallel=16 . data/4_real_space/full_real"
 ```
 
 In the above command, replace `username` and `password` with the appropriate values provided by Enamine.
@@ -67,8 +67,8 @@ In the above command, replace `username` and `password` with the appropriate val
 Determine which building blocks are valid in which REAL reactions.
 ```bash
 python -m SyntheMol.data.map_real_reactions_to_building_blocks \
-    --data_dir data/real_space \
-    --save_path data/reaction_to_building_blocks.pkl
+    --data_dir data/4_real_space/full_real \
+    --save_path data/4_real_space/reaction_to_building_blocks.pkl
 ```
 
 Total number of molecules = 31,507,987,117
@@ -79,8 +79,8 @@ Total number of molecules = 31,507,987,117
 Determine which reactions and building blocks are most common in REAL space.
 ```bash
 python -m SyntheMol.data.count_real_space \
-    --data_dir data/real_space \
-    --save_dir data/real_space_counts
+    --data_dir data/4_real_space/full_real \
+    --save_dir data/4_real_space
 ```
 
 
@@ -89,8 +89,8 @@ python -m SyntheMol.data.count_real_space \
 Randomly sample 25,000 REAL Space molecules. This is used for analysis of a representative sample of REAL Space molecules.
 ```bash
 python -m SyntheMol.data.sample_real_space \
-    --data_dir data/real_space \
-    --save_path data/random_real.csv \
+    --data_dir data/4_real_space/full_real \
+    --save_path data/4_real_space/random_real.csv \
     --num_molecules 25000
 ```
 
@@ -100,9 +100,9 @@ python -m SyntheMol.data.sample_real_space \
 Count feasible REAL Space molecules, i.e., those that can be produced when limited to the selected 13 reactions and the building blocks after processing.
 ```bash
 python -m SyntheMol.data.count_real_space \
-    --data_dir data/Enamine_REAL_space \
-    --save_dir data/Enamine_REAL_space_counts_selected \
-    --building_blocks_path data/building_blocks.csv \
+    --data_dir data/4_real_space/full_real \
+    --save_dir data/4_real_space \
+    --building_blocks_path data/4_real_space/building_blocks.csv \
     --only_selected_reactions
 ```
 

@@ -39,6 +39,14 @@ REAL_REACTIONS = [
     ),
     Reaction(
         reactants=[
+            QueryMol('[*:1][N:2]([H])[*:3]'),
+            QueryMol('[OH1][C:4]([*:5])=[O:6]')
+        ],
+        product=QueryMol('[*:5][C:4](=[O:6])[N:2]([*:1])[*:3]'),
+        reaction_id=240690
+    ),
+    Reaction(
+        reactants=[
             QueryMol('[*:1][N:2]([H])[H:3]'),
             QueryMol('[*:4][N:5]([H])[*:6]')
         ],
@@ -52,14 +60,6 @@ REAL_REACTIONS = [
         ],
         product=QueryMol('O=C([N:2]([*:1])[H:3])[N:5]([*:4])[H:6]'),
         reaction_id=2708
-    ),
-    Reaction(
-        reactants=[
-            QueryMol('[*:1][N:2]([H])[*:3]'),
-            QueryMol('[OH1][C:4]([*:5])=[O:6]')
-        ],
-        product=QueryMol('[*:5][C:4](=[O:6])[N:2]([*:1])[*:3]'),
-        reaction_id=240690
     ),
     Reaction(
         reactants=[
@@ -87,11 +87,11 @@ REAL_REACTIONS = [
     ),
     Reaction(
         reactants=[
-            QueryMol('[OH1:1][C:2]([*:3])=[O:4]'),
-            QueryMol('[F,Cl,Br,I][*:5]')
+            QueryMol('[*:1][N:2]([H])[*:3]'),
+            QueryMol('[F,Cl,Br,I][*:4]')
         ],
-        product=QueryMol('[O:4]=[C:2]([*:3])[O:1][*:5]'),
-        reaction_id=1458
+        product=QueryMol('[*:1][N:2]([*:3])[*:4]'),
+        reaction_id=27
     ),
     Reaction(
         reactants=[
@@ -103,10 +103,10 @@ REAL_REACTIONS = [
     ),
     Reaction(
         reactants=[
-            QueryMol('[*:1][N:2]([H])[*:3]'),
-            QueryMol('[F,Cl,Br,I][*:4]')
+            QueryMol('[OH1:1][C:2]([*:3])=[O:4]'),
+            QueryMol('[F,Cl,Br,I][*:5]')
         ],
-        product=QueryMol('[*:1][N:2]([*:3])[*:4]'),
-        reaction_id=27
-    )
+        product=QueryMol('[O:4]=[C:2]([*:3])[O:1][*:5]'),
+        reaction_id=1458
+    ),
 ]

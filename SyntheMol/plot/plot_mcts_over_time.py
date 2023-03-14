@@ -11,7 +11,7 @@ def plot_mcts_over_time(
         data_path: Path,
         save_dir: Path,
         model_name: str,
-        plot_type: Literal['histogram', 'line', 'violin'] = 'histogram',
+        plot_type: Literal['histogram', 'line', 'violin'] = 'violin',
         increment: int = 50000,
         min_score: Optional[float] = None,
 ) -> None:

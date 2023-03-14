@@ -71,11 +71,14 @@ SyntheMol requires a bioactivity prediction model to guide its generative proces
 2. **Chemprop-RDKit:** Chemprop augmented with 200 RDKit molecular features
 3. **Random forest:** a scikit-learn random forest model trained on 200 RDKit molecular features
 
+
 ### Train model
 
 All three model types can be trained using [Chemprop](https://github.com/chemprop/chemprop), which is installed along with SyntheMol. All three model types can be trained on either regression or binary classification bioactivities. Full details are provided in the [Chemprop](https://github.com/chemprop/chemprop) README. Below is an example for training a Chemprop model on a binary classification task.
 
 TODO: enable random forest RDKit in chemprop
+
+TODO: enable regression models
 
 Data file
 ```bash
@@ -96,6 +99,7 @@ python -m chemprop.train \
     --dataset_type classification \
     --save_dir models/chemprop
 ```
+
 
 ### Pre-compute building block scores
 

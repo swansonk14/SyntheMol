@@ -4,7 +4,7 @@ This file contains instructions for performing a simulation study of SyntheMol u
 
 The data and models referred to in this file can be downloaded from the Google Drive folder [here](https://drive.google.com/drive/folders/1VLPPUbY_FTKMjlXgRm09bPSSms206Dce?usp=share_link). Note that the instructions below assume that the relevant data is downloaded to the `data` directory.
 
-TODO: need to add generated cLogP molecules to Google Drive
+TODO: potentially change order of cLogP data in Google Drive and add to supplementary table
 
 * [Compute cLogP](#compute-clogp)
 * [Binarize clogP](#binarize-clogp)
@@ -19,14 +19,14 @@ TODO: need to add generated cLogP molecules to Google Drive
 Compute cLogP on the training set.
 ```bash
 python -m chem_utils.compute_properties \
-    --data_path data/antibiotics.csv \
+    --data_path data/1_training_data/antibiotics.csv \
     --properties clogp
 ```
 
 For comparison purposes, compute cLogP on a random sample of REAL molecules.
 ```bash
 python -m chem_utils.compute_properties \
-    --data_path data/random_real.csv \
+    --data_path data/4_real_space/random_real.csv \
     --properties clogp
 ```
 
@@ -39,7 +39,7 @@ Binarize cLogP by using 6.5 as a threshold.
 for DATA_NAME in antibiotics random_real
 do
 python -m chem_utils.regression_to_classification \
-    --data_path data/${DATA_NAME}.csv \
+    --data_path data/1_training_data/${DATA_NAME}.csv \
     --regression_column clogp \
     --threshold 6.5 \
     --classification_column clogp_6.5
@@ -60,7 +60,7 @@ Train a Chemprop model on binary cLogP data using 30 epochs (strong model) or 1 
 for EPOCHS in 30 1
 do
 python -m SyntheMol.models.train \
-    --data_path data/antibiotics.csv \
+    --data_path data/1_training_data/antibiotics.csv \
     --save_dir models/clogp_chemprop_${EPOCHS}_epochs \
     --dataset_type classification \
     --model_type chemprop \
@@ -84,7 +84,7 @@ Map building blocks to model scores.
 for EPOCHS in 30 1
 do
 python -m SyntheMol.models.predict \
-    --data_path data/building_blocks.csv \
+    --data_path data/4_real_space/building_blocks.csv \
     --model_path models/clogp_chemprop_${EPOCHS}_epochs \
     --model_type chemprop \
     --average_preds
@@ -103,9 +103,9 @@ do
 python -m SyntheMol.models.generate \
     --model_path models/clogp_chemprop_${EPOCHS}_epochs \
     --model_type chemprop \
-    --building_blocks_path data/building_blocks.csv \
-    --save_dir generations/clogp_chemprop_${EPOCHS}_epochs \
-    --reaction_to_building_blocks_path data/reaction_to_building_blocks.pkl \
+    --building_blocks_path data/4_real_space/building_blocks.csv \
+    --save_dir data/10_generations_clogp/clogp_chemprop_${EPOCHS}_epochs \
+    --reaction_to_building_blocks_path data/4_real_space/reaction_to_building_blocks.pkl \
     --max_reactions 1 \
     --n_rollout 20000
 done
@@ -125,7 +125,7 @@ Compute the true cLogP for generated molecules.
 for EPOCHS in 30 1
 do
 python -m chem_utils.compute_properties \
-    --data_path generations/clogp_chemprop_${EPOCHS}_epochs/molecules.csv \
+    --data_path data/10_generations_clogp/clogp_chemprop_${EPOCHS}_epochs/molecules.csv \
     --properties clogp
 done
 ```
@@ -133,10 +133,10 @@ done
 Plot distribution of train vs generated vs REAL cLogP.
 ```bash
 python -m chem_utils.plot_property_distribution \
-    --data_paths data/antibiotics.csv \
-    data/random_real.csv \
-    generations/clogp_chemprop_30_epochs/molecules.csv \
-    generations/clogp_chemprop_1_epochs/molecules.csv \
+    --data_paths data/1_training_data/antibiotics.csv \
+    data/4_real_space/random_real.csv \
+    data/10_generations_clogp/clogp_chemprop_30_epochs/molecules.csv \
+    data/10_generations_clogp/clogp_chemprop_1_epochs/molecules.csv \
     --property_column clogp \
     --save_dir plots/clogp_generations \
     --min_value -7 \
@@ -149,7 +149,7 @@ Binarize the true cLogP for generated molecules using the 6.5 threshold.
 for EPOCHS in 30 1
 do
 python -m chem_utils.regression_to_classification \
-    --data_path generations/clogp_chemprop_${EPOCHS}_epochs/molecules.csv \
+    --data_path data/10_generations_clogp/clogp_chemprop_${EPOCHS}_epochs/molecules.csv \
     --regression_column clogp \
     --threshold 6.5 \
     --classification_column clogp_6.5

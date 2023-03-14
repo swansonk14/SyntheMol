@@ -1,26 +1,31 @@
 """Plots the distribution of model scores over molecular building blocks."""
-import pickle
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import pandas as pd
 
+from SyntheMol.constants import SCORE_COL, SMILES_COL
+
 
 def plot_building_block_scores(
-        building_block_to_score_path: Path,
+        building_blocks_path: Path,
         title: str,
-        save_dir: Path
+        save_dir: Path,
+        building_blocks_smiles_column: str = SMILES_COL,
+        building_blocks_score_column: str = SCORE_COL
 ) -> None:
     """Plots the distribution of model scores over molecular building blocks.
 
-    :param building_block_to_score_path: Path to PKL file containing a dictionary mapping
-                                         from building block SMILES to model scores.
+    :param building_blocks_path: Path to CSV file containing building blocks and scores.
     :param title: Title of the plot.
     :param save_dir: Path to a directory where the plot will be saved.
+    :param building_blocks_smiles_column: Name of the column in the building blocks file containing SMILES.
+    :param building_blocks_score_column: Name of the column in the building blocks file containing building block scores.
+
     """
     # Load mapping from building blocks to scores
-    with open(building_block_to_score_path, 'rb') as f:
-        building_block_to_score: dict[str, float] = pickle.load(f)
+    data = pd.read_csv(building_blocks_path)
+    building_block_to_score = dict(zip(data[building_blocks_smiles_column], data[building_blocks_score_column]))
 
     # Plot distribution of building block scores
     scores = list(building_block_to_score.values())

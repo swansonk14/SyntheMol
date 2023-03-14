@@ -143,7 +143,10 @@ def count_real_space(
     combined_reaction_counts_data['cumulative_percent'] = 100 * combined_reaction_counts_data['cumulative_count'] / REAL_SPACE_SIZE
 
     # Save reaction counts
-    combined_reaction_counts_data.to_csv(save_dir / 'reaction_counts.csv', index=False)
+    combined_reaction_counts_data.to_csv(
+        save_dir / f'reaction_counts{"_selected" if only_selected_reactions else ""}.csv',
+        index=False
+    )
 
     # Create building block counts DataFrame
     combined_building_block_counts_data = pd.DataFrame([
@@ -158,7 +161,10 @@ def count_real_space(
     combined_building_block_counts_data.sort_values(by='count', ascending=False, inplace=True)
 
     # Save building block counts
-    combined_building_block_counts_data.to_csv(save_dir / 'building_block_counts.csv', index=False)
+    combined_building_block_counts_data.to_csv(
+        save_dir / f'building_block_counts{"_selected" if only_selected_reactions else ""}.csv',
+        index=False
+    )
 
 
 if __name__ == '__main__':
