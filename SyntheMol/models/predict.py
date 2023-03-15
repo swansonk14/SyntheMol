@@ -4,9 +4,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import torch
-from tqdm import tqdm
-
 from chem_utils.molecular_fingerprints import compute_fingerprints
+from tqdm import tqdm
 
 from SyntheMol.constants import FINGERPRINT_TYPES, MODEL_TYPES, SMILES_COL
 from SyntheMol.models.chemprop import chemprop_load, chemprop_predict
@@ -50,7 +49,7 @@ def predict(
 
     # Get model paths
     if model_path.is_dir():
-        model_paths = list(model_path.glob('*.pt' if model_type == 'chemprop' else '*.pkl'))
+        model_paths = list(model_path.glob('**/*.pt' if model_type == 'chemprop' else '**/*.pkl'))
 
         if len(model_paths) == 0:
             raise ValueError(f'Could not find any models in directory {model_path}.')

@@ -15,7 +15,7 @@ from SyntheMol.constants import (
 )
 from SyntheMol.reactions import REACTIONS, load_and_set_allowed_reaction_smiles
 from SyntheMol.generate.generator import Generator
-from SyntheMol.generate.utils import create_scoring_fn, save_generated_molecules
+from SyntheMol.generate.utils import create_model_scoring_fn, save_generated_molecules
 
 
 def generate(
@@ -101,7 +101,7 @@ def generate(
         )
 
     # Define model scoring function
-    scoring_fn = create_scoring_fn(
+    model_scoring_fn = create_model_scoring_fn(
         model_path=model_path,
         model_type=model_type,
         fingerprint_type=fingerprint_type,
@@ -110,10 +110,10 @@ def generate(
 
     # Set up Generator
     generator = Generator(
-        search_type='mcts',
+        search_type='mcts',  # TODO: provide random option
         building_block_smiles_to_id=building_block_smiles_to_id,
         max_reactions=max_reactions,
-        scoring_fn=scoring_fn,
+        scoring_fn=model_scoring_fn,
         n_rollout=n_rollout,
         explore_weight=explore_weight,
         num_expand_nodes=num_expand_nodes,
@@ -151,9 +151,3 @@ def generate(
         building_block_id_to_smiles=building_block_id_to_smiles,
         save_path=save_dir / 'molecules.csv'
     )
-
-
-if __name__ == '__main__':
-    from tap import tapify
-
-    tapify(generate)

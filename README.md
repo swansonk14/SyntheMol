@@ -32,6 +32,14 @@ TODO: put SyntheMol (and chem_utils) on pip
 
 TODO: remove environment.yml?
 
+TODO: rdkit?
+
+Create conda environment.
+```bash
+conda create --name SyntheMol python=3.10
+conda activate SyntheMol
+```
+
 Install SyntheMol via pip.
 ```bash
 pip install SyntheMol
@@ -50,6 +58,8 @@ gdown "https://drive.google.com/drive/folders/1LLLwxe_nQAnsRSQpIRq_ngyCm1txS-Sq"
 ```
 
 **Note:** Replace `/path/to/SyntheMol` with the path to the SyntheMol package. The path to SyntheMol can be found by running `python -c "import SyntheMol; print(SyntheMol.__path__)"`.
+
+**Note:** If you get the issue `ImportError: libXrender.so.1: cannot open shared object file: No such file or directory`, run `conda install -c conda-forge xorg-libxrender`.
 
 
 ## Combinatorial chemical space
@@ -118,12 +128,12 @@ python -m chemprop.predict \
 SyntheMol uses the bioactivity prediction model within a Monte Carlo tree search to generate molecules. Below is an example for generating molecules with a trained Chemprop model using 20,000 MCTS rollouts.
 
 ```bash
-python -m SyntheMol.generate.generate \
+python -m SyntheMol.generate \
     --model_path models/chemprop \
     --model_type chemprop \
     --save_dir generations/chemprop \
     --building_blocks_path models/chemprop/building_block_scores.csv \
-    --bulding_block_scores_column activity \
+    --bulding_blocks_score_column activity \
     --n_rollout 20000
 ```
 

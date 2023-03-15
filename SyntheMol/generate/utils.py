@@ -6,30 +6,32 @@ from typing import Callable
 import numpy as np
 import pandas as pd
 import torch
-
 from chem_utils.molecular_fingerprints import compute_fingerprint
+
 from SyntheMol.constants import FINGERPRINT_TYPES, MODEL_TYPES
 from SyntheMol.generate.node import Node
 from SyntheMol.models import (
     chemprop_load,
-    chemprop_predict_ensemble_on_molecule,
+    chemprop_load_scaler,
+    chemprop_predict_on_molecule_ensemble,
     sklearn_load,
-    sklearn_predict_ensemble_on_molecule
+    sklearn_predict_on_molecule_ensemble
 )
 
 
-def create_scoring_fn(
+def create_model_scoring_fn(
         model_path: Path,
         model_type: MODEL_TYPES,
         fingerprint_type: FINGERPRINT_TYPES | None = None,
         smiles_to_score: dict[str, float] | None = None
 ) -> Callable[[str], float]:
-    """Creates a function that scores a molecule using a model.
+    """Creates a function that scores a molecule using a model or ensemble of models.
 
     :param model_path: A path to a model or directory of models.
     :param model_type: The type of model.
     :param fingerprint_type: The type of fingerprint to use.
     :param smiles_to_score: An optional dictionary mapping SMILES to precomputed scores.
+    :return: A function that scores a molecule using a model or ensemble of models.
     """
     # Check compatibility of model and fingerprint type
     if model_type != 'chemprop' and fingerprint_type is None:
@@ -37,7 +39,7 @@ def create_scoring_fn(
 
     # Get model paths
     if model_path.is_dir():
-        model_paths = list(model_path.glob('*.pt' if model_type == 'chemprop' else '*.pkl'))
+        model_paths = list(model_path.glob('**/*.pt' if model_type == 'chemprop' else '**/*.pkl'))
 
         if len(model_paths) == 0:
             raise ValueError(f'Could not find any models in directory {model_path}.')
@@ -51,13 +53,15 @@ def create_scoring_fn(
         torch.use_deterministic_algorithms(True)
 
         models = [chemprop_load(model_path=model_path) for model_path in model_paths]
+        scalers = [chemprop_load_scaler(model_path=model_path) for model_path in model_paths]
 
         # Set up model scoring function for ensemble of chemprop models
         def model_scorer(smiles: str, fingerprint: np.ndarray | None = None) -> float:
-            return chemprop_predict_ensemble_on_molecule(
+            return chemprop_predict_on_molecule_ensemble(
                 models=models,
                 smiles=smiles,
-                fingerprint=fingerprint
+                fingerprint=fingerprint,
+                scalers=scalers
             )
     else:
         # Load scikit-learn models
@@ -65,7 +69,7 @@ def create_scoring_fn(
 
         # Set up model scoring function for ensemble of scikit-learn models
         def model_scorer(smiles: str, fingerprint: np.ndarray) -> float:
-            return sklearn_predict_ensemble_on_molecule(
+            return sklearn_predict_on_molecule_ensemble(
                 models=models,
                 fingerprint=fingerprint
             )
@@ -74,9 +78,9 @@ def create_scoring_fn(
     if smiles_to_score is None:
         smiles_to_score = dict()
 
-    # Build scoring function using either chemprop or scikit-learn ensemble and precomputed building block scores
+    # Build model scoring function using either chemprop or scikit-learn ensemble and precomputed building block scores
     @cache
-    def scoring_fn(smiles: str) -> float:
+    def model_scoring_fn(smiles: str) -> float:
         if smiles in smiles_to_score:
             return smiles_to_score[smiles]
 
@@ -90,7 +94,7 @@ def create_scoring_fn(
             fingerprint=fingerprint
         )
 
-    return scoring_fn
+    return model_scoring_fn
 
 
 def save_generated_molecules(

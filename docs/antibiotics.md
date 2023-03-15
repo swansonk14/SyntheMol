@@ -110,6 +110,8 @@ Here, we build three binary classification bioactivity prediction models to pred
 
 For each model type, we trained 10 models using 10-fold cross-validation on the training data. Each ensemble of 10 models took less than 90 minutes to train on a 16-CPU machine. Trained models are available in the `Models` subfolder of the Google Drive folder.
 
+TODO: figure out appropriate train and predict package imports
+
 Chemprop
 ```bash
 python -m SyntheMol.models.train \

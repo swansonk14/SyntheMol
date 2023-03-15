@@ -38,7 +38,20 @@ def sklearn_load(
     return model
 
 
-def sklearn_predict_ensemble_on_molecule(
+def sklearn_predict_on_molecule(
+        model: SKLEARN_MODEL_TYPES,
+        fingerprint: np.ndarray | None = None
+) -> float:
+    """Predicts the property of a molecule using a scikit-learn model.
+
+    :param model: A scikit-learn model.
+    :param fingerprint: A 1D array of molecular fingerprints (if applicable).
+    :return: The model prediction on the molecule.
+    """
+    return sklearn_predict(model=model, fingerprints=fingerprint.reshape(1, -1))[0]
+
+
+def sklearn_predict_on_molecule_ensemble(
         models: list[SKLEARN_MODEL_TYPES],
         fingerprint: np.ndarray | None = None
 ) -> float:
@@ -49,7 +62,7 @@ def sklearn_predict_ensemble_on_molecule(
     :return: The ensemble prediction on the molecule.
     """
     return float(np.mean([
-        sklearn_predict(model=model, fingerprints=fingerprint.reshape(1, -1))[0]
+        sklearn_predict_on_molecule(model=model, fingerprint=fingerprint)
         for model in models
     ]))
 

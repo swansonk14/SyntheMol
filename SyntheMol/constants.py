@@ -25,7 +25,7 @@ MODEL_TYPES = Literal['random_forest', 'mlp', 'chemprop']
 DATASET_TYPES = Literal['classification', 'regression']
 
 # Path where data files are stored
-DATA_DIR = Path(__file__).parent.parent / 'data'
+DATA_DIR = Path(__file__).parent / 'files'
 
 # If using custom building blocks, replace BUILDING_BLOCKS_PATH and set REACTION_TO_BUILDING_BLOCKS_PATH to None
 BUILDING_BLOCKS_PATH = DATA_DIR / 'building_blocks.csv'

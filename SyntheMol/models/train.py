@@ -5,9 +5,8 @@ from random import Random
 
 import numpy as np
 import pandas as pd
-from tqdm import trange
-
 from chem_utils.molecular_fingerprints import compute_fingerprints
+from tqdm import trange
 
 from SyntheMol.constants import DATASET_TYPES, FINGERPRINT_TYPES, MODEL_TYPES, SMILES_COL
 from SyntheMol.models.chemprop import (

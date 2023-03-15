@@ -46,7 +46,7 @@ def load_and_set_allowed_reaction_smiles(
     :param building_blocks_smiles_column: The name of the column in the building blocks file containing SMILES.
     """
     # Load building blocks
-    building_blocks = pd.read_csv(building_blocks_path, sep='\t')
+    building_blocks = pd.read_csv(building_blocks_path)
 
     # Create mapping from building block ID to SMILES
     building_block_id_to_smiles = dict(zip(

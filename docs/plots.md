@@ -418,7 +418,7 @@ python -m SyntheMol.plot.plot_molecule_analysis.py \
 
 ### Building block diversity
 
-Building block counts before and after building block diversity. Run `SyntheMol.generate.generate` as before but with the `--no_building_block_diversity` flag. Then run `SyntheMol.plot.plot_generated_molecule_analysis` and look at `building_block_counts.pdf`.
+Building block counts before and after building block diversity. Run `SyntheMol.generate` as before but with the `--no_building_block_diversity` flag. Then run `SyntheMol.plot.plot_generated_molecule_analysis` and look at `building_block_counts.pdf`.
 
 ### Score by rollout
 
