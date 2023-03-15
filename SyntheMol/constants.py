@@ -23,6 +23,7 @@ SKLEARN_MODEL_TYPES = RandomForestClassifier | RandomForestRegressor | MLPClassi
 SKLEARN_MODEL_NAME_TYPES = Literal['random_forest', 'mlp']
 MODEL_TYPES = Literal['random_forest', 'mlp', 'chemprop']
 DATASET_TYPES = Literal['classification', 'regression']
+OPTIMIZATION_TYPES = Literal['maximize', 'minimize']
 
 # Path where data files are stored
 DATA_DIR = Path(__file__).parent / 'files'

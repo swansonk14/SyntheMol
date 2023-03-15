@@ -7,6 +7,7 @@ import numpy as np
 from rdkit import Chem
 from tqdm import trange
 
+from SyntheMol.constants import OPTIMIZATION_TYPES
 from SyntheMol.generate.node import Node
 from SyntheMol.reactions import Reaction
 from SyntheMol.utils import random_choice
@@ -23,6 +24,7 @@ class Generator:
                  n_rollout: int,
                  explore_weight: float,
                  num_expand_nodes: Optional[int],
+                 optimization: OPTIMIZATION_TYPES,
                  reactions: list[Reaction],
                  rng_seed: int,
                  no_building_block_diversity: bool,
@@ -37,6 +39,8 @@ class Generator:
         :param n_rollout: The number of times to run the tree search.
         :param explore_weight: The hyperparameter that encourages exploration.
         :param num_expand_nodes: The number of tree nodes to expand when extending the child nodes in the search tree.
+                                  If None, then all nodes are expanded.
+        :param optimization: Whether to maximize or minimize the score.
         :param reactions: A list of chemical reactions that can be used to combine molecular building blocks.
         :param rng_seed: Seed for the random number generator.
         :param no_building_block_diversity: Whether to turn off the score modification that encourages diverse building blocks.
@@ -52,6 +56,7 @@ class Generator:
         self.n_rollout = n_rollout
         self.explore_weight = explore_weight
         self.num_expand_nodes = num_expand_nodes
+        self.optimization = optimization
         self.reactions = reactions
         self.rng = np.random.default_rng(seed=rng_seed)
         self.building_block_diversity = not no_building_block_diversity
@@ -65,6 +70,17 @@ class Generator:
             if any(reactant.has_match(building_block) for reaction in reactions for reactant in reaction.reactants)
         )
 
+        # Get the function to use for optimization
+        if self.optimization == 'maximize':
+            self.optimization_fn = max
+            self.ascending_scores = False
+        elif self.optimization == 'minimize':
+            self.optimization_fn = min
+            self.ascending_scores = True
+        else:
+            raise ValueError(f'Invalid optimization type: {self.optimization}')
+
+        # Initialize the root node
         self.rollout_num = 0
         self.root = Node(
             explore_weight=explore_weight,
@@ -72,6 +88,8 @@ class Generator:
             node_id=0,
             rollout_num=0
         )
+
+        # Initialize the node map, building block counts, and node to children
         self.node_map: dict[Node, Node] = {self.root: self.root}
         self.building_block_counts = Counter()
         self.node_to_children: dict[Node, list[Node]] = {}
@@ -323,7 +341,7 @@ class Generator:
         # Select a node based on the search type
         if self.search_type == 'mcts':
             total_visit_count = sum(child_node.N for child_node in child_nodes)
-            selected_node = max(
+            selected_node = self.optimization_fn(
                 child_nodes,
                 key=partial(self.compute_mcts_score, total_visit_count=total_visit_count)
             )
@@ -356,7 +374,7 @@ class Generator:
 
         NOTE: Only returns Nodes with exactly one molecule and at least one reaction.
 
-        :return: A list of Node objects sorted from highest to lowest reward.
+        :return: A list of Node objects sorted from best to worst score.
         """
         # TODO: handle calling this twice
 
@@ -368,8 +386,12 @@ class Generator:
         # Get all the Nodes representing fully constructed molecules that are not initial building blocks
         nodes = [node for _, node in self.node_map.items() if node.num_molecules == 1 and node.num_reactions > 0]
 
-        # Sort by highest score and break ties by using Node ID
-        nodes = sorted(nodes, key=lambda node: (node.P, -node.node_id), reverse=True)
+        # Sort by score and break ties by using Node ID
+        nodes = sorted(
+            nodes,
+            key=lambda node: (node.P, (1 if self.ascending_scores else -1) * node.node_id),
+            reverse=not self.ascending_scores
+        )
 
         return nodes
 

@@ -8,6 +8,7 @@ from SyntheMol.constants import (
     BUILDING_BLOCKS_PATH,
     FINGERPRINT_TYPES,
     MODEL_TYPES,
+    OPTIMIZATION_TYPES,
     REACTION_TO_BUILDING_BLOCKS_PATH,
     REAL_BUILDING_BLOCK_ID_COL,
     SCORE_COL,
@@ -32,6 +33,7 @@ def generate(
         n_rollout: int = 10,
         explore_weight: float = 10.0,
         num_expand_nodes: int | None = None,
+        optimization: OPTIMIZATION_TYPES = 'maximize',
         rng_seed: int = 0,
         no_building_block_diversity: bool = False,
         store_nodes: bool = False,
@@ -52,6 +54,7 @@ def generate(
     :param n_rollout: The number of times to run the generation process.
     :param explore_weight: The hyperparameter that encourages exploration.
     :param num_expand_nodes: The number of child nodes to include when expanding a given node. If None, all child nodes will be included.
+    :param optimization: Whether to maximize or minimize the score.
     :param rng_seed: Seed for random number generators.
     :param no_building_block_diversity: Whether to turn off the score modification that encourages diverse building blocks.
     :param store_nodes: Whether to store in memory all the nodes of the search tree.
@@ -117,6 +120,7 @@ def generate(
         n_rollout=n_rollout,
         explore_weight=explore_weight,
         num_expand_nodes=num_expand_nodes,
+        optimization=optimization,
         reactions=REACTIONS,
         rng_seed=rng_seed,
         no_building_block_diversity=no_building_block_diversity,
