@@ -47,7 +47,6 @@ class Generator:
         """
         self.search_type = search_type
         self.building_block_smiles_to_id = building_block_smiles_to_id
-        self.all_building_blocks = sorted(self.building_block_smiles_to_id)  # TODO: check that this doesn't change the order of generations
         self.max_reactions = max_reactions
         self.scoring_fn = scoring_fn
         self.n_rollout = n_rollout
@@ -58,6 +57,13 @@ class Generator:
         self.building_block_diversity = not no_building_block_diversity
         self.store_nodes = store_nodes
         self.verbose = verbose
+
+        # Get all building blocks that are used in at least one reaction
+        self.all_building_blocks = sorted(
+            building_block
+            for building_block in self.building_block_smiles_to_id
+            if any(reactant.has_match(building_block) for reaction in reactions for reactant in reaction.reactants)
+        )
 
         self.rollout_num = 0
         self.root = Node(

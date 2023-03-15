@@ -2,7 +2,7 @@
 
 SyntheMol is a generative AI method for designing structurally novel and diverse drug candidates with predicted bioactivity that are easy to synthesize.
 
-SyntheMol consists of a Monte Carlo tree search (MCTS) that explores a combinatorial chemical space consisting of molecular building blocks and chemical reactions. The MCTS is guided by a bioactivity prediction AI model, such as a graph neural network or a random forest. Currently, SyntheMol is designed to use 139,444 building blocks and 13 chemical reactions from the [Enamine REAL Space](https://enamine.net/compound-collections/real-compounds/real-space-navigator), which can produce over 30 billion molecules. However, SyntheMol can be easily adapted to use any set of building blocks and reactions.
+SyntheMol consists of a Monte Carlo tree search (MCTS) that explores a combinatorial chemical space consisting of molecular building blocks and chemical reactions. The MCTS is guided by a bioactivity prediction AI model, such as a graph neural network or a random forest. Currently, SyntheMol is designed to use 137,656 building blocks and 13 chemical reactions from the [Enamine REAL Space](https://enamine.net/compound-collections/real-compounds/real-space-navigator), which can produce over 30 billion molecules. However, SyntheMol can be easily adapted to use any set of building blocks and reactions.
 
 SyntheMol is described in the paper [TODO](TODO), where we applied SyntheMol to design novel antibiotic candidates for the Gram-negative bacterium _Acinetobacter baumannii_. Full details for reproducing the results in the paper are provided in the [docs](docs) directory.
 
@@ -52,19 +52,21 @@ cd SyntheMol
 pip install -e .
 ```
 
+TODO: check processing of building blocks file
+
 Download the necessary data files.
 ```bash
 gdown "https://drive.google.com/drive/folders/1LLLwxe_nQAnsRSQpIRq_ngyCm1txS-Sq" -O /path/to/SyntheMol/files --folder
 ```
 
-**Note:** Replace `/path/to/SyntheMol` with the path to the SyntheMol package. The path to SyntheMol can be found by running `python -c "import SyntheMol; print(SyntheMol.__path__)"`.
+**Note:** Replace `/path/to/SyntheMol` with the path to the SyntheMol package. The path to SyntheMol can be found by running `python -c "import SyntheMol; print(SyntheMol.__path__[0])"`.
 
 **Note:** If you get the issue `ImportError: libXrender.so.1: cannot open shared object file: No such file or directory`, run `conda install -c conda-forge xorg-libxrender`.
 
 
 ## Combinatorial chemical space
 
-SyntheMol is currently designed to use 139,444 unique building blocks and 13 chemical reactions from the [Enamine REAL Space](https://enamine.net/compound-collections/real-compounds/real-space-navigator), which can produce over 30 billion molecules. However, an alternate combinatorial chemical space can optionally be used by replacing the building blocks and chemical reactions as follows.
+SyntheMol is currently designed to use 137,656 unique building blocks and 13 chemical reactions from the [Enamine REAL Space](https://enamine.net/compound-collections/real-compounds/real-space-navigator), which can produce over 30 billion molecules. However, an alternate combinatorial chemical space can optionally be used by replacing the building blocks and chemical reactions as follows.
 
 TODO: check numbers with new building blocks
 
@@ -117,7 +119,7 @@ After training, use the model to pre-compute scores of building blocks to accele
 
 ```bash
 python -m chemprop.predict \
-    --test_path data/building_blocks.csv \
+    --test_path SyntheMol/files/building_blocks.csv \
     --preds_path models/chemprop/building_block_scores.csv \
     --checkpoint_dir models/chemprop
 ```
@@ -126,6 +128,8 @@ python -m chemprop.predict \
 ## Generate molecules
 
 SyntheMol uses the bioactivity prediction model within a Monte Carlo tree search to generate molecules. Below is an example for generating molecules with a trained Chemprop model using 20,000 MCTS rollouts.
+
+TODO: ensure this works with GPU-trained models
 
 ```bash
 python -m SyntheMol.generate \
