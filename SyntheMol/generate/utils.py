@@ -132,7 +132,7 @@ def save_generated_molecules(
             for reactant_index, building_block_id in enumerate(reaction_log['building_block_ids']):
                 reactant_num = reactant_index + 1
                 construction_dict[f'building_block_{reaction_num}_{reactant_num}_id'] = building_block_id
-                construction_dict[f'building_block_{reaction_num}_{reactant_num}_smiles'] = building_block_id_to_smiles[building_block_id]
+                construction_dict[f'building_block_{reaction_num}_{reactant_num}_smiles'] = building_block_id_to_smiles.get(building_block_id, '')
 
         construction_dicts.append(construction_dict)
 

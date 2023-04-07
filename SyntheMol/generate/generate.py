@@ -62,10 +62,6 @@ def generate(
                         the memory usage (e.g., 450 GB for 20,000 rollouts instead of 600 MB).
     :param verbose: Whether to print out additional information during generation.
     """
-    # TODO: need to enable this
-    if max_reactions > 1:
-        raise NotImplementedError('Multiple reactions not yet implemented when using reaction_to_reactants.')
-
     # Create save directory
     save_dir.mkdir(parents=True, exist_ok=True)
 
