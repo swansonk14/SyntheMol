@@ -126,7 +126,7 @@ class Generator:
 
                 if len(matched_reactant_indices) == len(molecules):
                     for index in sorted(reactant_indices - matched_reactant_indices):
-                        available_building_blocks += reaction.reactants[index].allowed_smiles
+                        available_building_blocks += reaction.reactants[index].allowed_building_blocks
 
         # Remove duplicates but maintain order for reproducibility
         available_building_blocks = list(dict.fromkeys(available_building_blocks))

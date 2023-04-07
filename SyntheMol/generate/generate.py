@@ -14,7 +14,7 @@ from SyntheMol.constants import (
     SCORE_COL,
     SMILES_COL
 )
-from SyntheMol.reactions import REACTIONS, load_and_set_allowed_reaction_smiles
+from SyntheMol.reactions import REACTIONS, load_and_set_allowed_reaction_building_blocks, set_all_building_blocks
 from SyntheMol.generate.generator import Generator
 from SyntheMol.generate.utils import create_model_scoring_fn, save_generated_molecules
 
@@ -93,9 +93,15 @@ def generate(
     if len(building_block_id_to_smiles) != len(building_block_smiles_to_id):
         raise ValueError('Building block IDs are not unique.')
 
+    # Set all building blocks for each reaction
+    set_all_building_blocks(
+        reactions=REACTIONS,
+        building_blocks=set(building_block_smiles_to_id.keys())
+    )
+
     # Optionally, set allowed building blocks for each reaction
     if reaction_to_building_blocks_path is not None:
-        load_and_set_allowed_reaction_smiles(
+        load_and_set_allowed_reaction_building_blocks(
             reactions=REACTIONS,
             reaction_to_reactant_to_building_blocks_path=reaction_to_building_blocks_path,
             building_blocks_path=building_blocks_path,

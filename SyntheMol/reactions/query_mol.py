@@ -19,29 +19,53 @@ class QueryMol:
         self.smarts = strip_atom_mapping(smarts)
         self.query_mol = Chem.MolFromSmarts(self.smarts)
 
-        # SMILES that are allowed to match this QueryMol
-        self._allow_set = self._allow_list = self._allow_tuple = None
+        # All building block SMILES
+        self._all_building_block_set = None
+
+        # Building block SMILES that are allowed to match this QueryMol
+        self._allowed_building_block_set = self._allowed_building_block_list = None
 
     @property
-    def allowed_smiles(self) -> list[str] | None:
-        """Gets a sorted list of allowed SMILES for this QueryMol."""
-        return self._allow_list
+    def all_building_blocks(self) -> set[str] | None:
+        """Gets a set of all building block SMILES for this QueryMol."""
+        return self._all_building_block_set
 
-    @allowed_smiles.setter
-    def allowed_smiles(self, allowed_smiles: Iterable[str]) -> None:
-        """Sets the allowed SMILES for this QueryMol. Can only be set once.
+    @all_building_blocks.setter
+    def all_building_blocks(self, all_building_blocks: Iterable[str]) -> None:
+        """Sets the all building block SMILES for this QueryMol. Can only be set once.
+
+        Note: Filters the all SMILES to only include those that match the SMARTS of this QueryMol.
+
+        :param all_building_blocks: An iterable of building block SMILES that are allowed for this QueryMol.
+        """
+        if self._all_building_block_set is not None:
+            raise ValueError('All building block SMILES has already been set.')
+
+        self._all_building_block_set = set(all_building_blocks)
+
+    @property
+    def allowed_building_blocks(self) -> list[str] | None:
+        """Gets a sorted list of allowed building block SMILES for this QueryMol."""
+        return self._allowed_building_block_list
+
+    @allowed_building_blocks.setter
+    def allowed_building_blocks(self, allowed_building_blocks: Iterable[str]) -> None:
+        """Sets the allowed building block SMILES for this QueryMol. Can only be set once.
 
         Note: Filters the allowed SMILES to only include those that match the SMARTS of this QueryMol.
 
-        :param allowed_smiles: An iterable of SMILES that are allowed for this QueryMol.
+        :param allowed_building_blocks: An iterable of building block SMILES that are allowed for this QueryMol.
         """
-        if self._allow_set is not None:
-            raise ValueError('Allowed SMILES has already been set.')
+        if self._allowed_building_block_set is not None:
+            raise ValueError('Allowed building block SMILES has already been set.')
 
-        allowed_smiles = set(allowed_smiles)
-        self._allow_set = {smiles for smiles in allowed_smiles if self.has_substruct_match(smiles)}
-        self._allow_list = sorted(self._allow_set)
-        self._allow_tuple = tuple(self._allow_list)
+        allowed_building_blocks = set(allowed_building_blocks)
+        self._allowed_building_block_set = {
+            smiles
+            for smiles in allowed_building_blocks
+            if self.has_substruct_match(smiles)
+        }
+        self._allowed_building_block_list = sorted(self._allowed_building_block_set)
 
     def has_substruct_match(self, smiles: str) -> bool:
         """Determines whether the provided molecule includes this QueryMol as a substructure.
@@ -67,9 +91,14 @@ class QueryMol:
         :param smiles: A SMILES string.
         :return: True if the molecule matches this QueryMol, False otherwise.
         """
-        if self._allow_set is not None and smiles not in self._allow_set:
-            return False
+        # If SMILES is not in allowed building block set, return False (unless it's not a building block at all)
+        if self._allowed_building_block_set is not None and smiles not in self._allowed_building_block_set:
+            if self._all_building_block_set is not None and smiles not in self._all_building_block_set:
+                pass
+            else:
+                return False
 
+        # Check if SMILES matches SMARTS
         return self.has_substruct_match(smiles)
 
     def __str__(self) -> str:
