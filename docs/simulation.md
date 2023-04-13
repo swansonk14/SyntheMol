@@ -100,7 +100,7 @@ Apply SyntheMol to generate molecules.
 
 for EPOCHS in 30 1
 do
-python -m SyntheMol.models.generate \
+python -m SyntheMol.generate \
     --model_path models/clogp_chemprop_${EPOCHS}_epochs \
     --model_type chemprop \
     --building_blocks_path data/4_real_space/building_blocks.csv \

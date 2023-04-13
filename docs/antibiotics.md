@@ -194,7 +194,7 @@ Here, we apply SyntheMol to generate molecules using a Monte Carlo tree search (
 
 Chemprop
 ```bash
-python -m SyntheMol.models.generate \
+python -m SyntheMol.generate \
     --model_path models/antibiotic_chemprop \
     --model_type chemprop \
     --building_blocks_path data/4_real_space/building_blocks.csv \
@@ -206,7 +206,7 @@ python -m SyntheMol.models.generate \
 
 Chemprop-RDKit
 ```bash
-python -m SyntheMol.models.generate \
+python -m SyntheMol.generate \
     --model_path models/antibiotic_chemprop_rdkit \
     --model_type chemprop \
     --building_blocks_path data/4_real_space/building_blocks.csv \
@@ -219,7 +219,7 @@ python -m SyntheMol.models.generate \
 
 Random forest
 ```bash
-python -m SyntheMol.models.generate \
+python -m SyntheMol.generate \
     --model_path models/antibiotic_random_forest \
     --model_type random_forest \
     --building_blocks_path data/4_real_space/building_blocks.csv \
