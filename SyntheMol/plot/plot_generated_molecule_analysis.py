@@ -34,7 +34,7 @@ def plot_scores(
     fig_data.to_csv(save_dir / f'{score_name}.csv', index=False)
 
 
-def plot_internal_similarity(
+def plot_similarity(
         smiles: list[str],
         similarity_type: str,
         save_dir: Path,
@@ -74,44 +74,6 @@ def plot_internal_similarity(
     # Save diversity distribution
     fig_data = pd.DataFrame({f'max_{similarity_type}_similarity': max_similarities})
     fig_data.to_csv(f'{save_name}.csv', index=False)
-
-
-def plot_reference_similarity(
-        smiles: list[str],
-        reference_smiles: list[str],
-        reference_name: str,
-        similarity_type: str,
-        save_dir: Path
-) -> None:
-    """Plot similarity distribution between a list of SMILES and a reference list of SMILES.
-
-    :param smiles: A list of SMILES.
-    :param reference_smiles: A list of reference SMILES to compare against.
-    :param reference_name: The name of the reference list of SMILES.
-    :param similarity_type: The type of similarity.
-    :param save_dir: The directory where the plot will be saved.
-    """
-    # Compute maximum similarity to reference SMILES
-    max_similarities = compute_top_similarities(
-        similarity_type=similarity_type,
-        mols=smiles,
-        reference_mols=reference_smiles
-    )
-
-    # Get reference file name
-    reference_file_name = reference_name.lower().replace(' ', '_')
-
-    # Plot diversity distribution compared to train
-    plt.clf()
-    plt.hist(max_similarities, bins=100)
-    plt.xlabel(f'Maximum {similarity_type.title()} Similarity from Generated to {reference_name}')
-    plt.ylabel('Count')
-    plt.title(f'{reference_name} Maximum {similarity_type.title()} Similarity Distribution')
-    plt.savefig(save_dir / f'{reference_file_name}_{similarity_type}_similarity.pdf', bbox_inches='tight')
-
-    # Save similarity distribution
-    fig_data = pd.DataFrame({f'max_{similarity_type}_similarity': max_similarities})
-    fig_data.to_csv(save_dir / f'{reference_file_name}_{similarity_type}_similarity.csv', index=False)
 
 
 def plot_reactions_numbers(
@@ -189,7 +151,11 @@ def plot_building_block_usage(
     :param save_dir: The directory where the plot will be saved.
     """
     # Get building block usage
-    building_block_columns = [column for column in data.columns if column.startswith('reagent_') and column.endswith('_id')]
+    building_block_columns = [
+        column
+        for column in data.columns
+        if column.startswith('building_block_') and column.endswith('_id')
+    ]
     building_block_data = data[building_block_columns]
     building_block_counter = Counter(
         building_block
@@ -248,7 +214,7 @@ def plot_generated_molecule_analysis(
     )
 
     # Similarity within generated molecules
-    plot_internal_similarity(
+    plot_similarity(
         smiles=data[smiles_column],
         similarity_type='tanimoto',
         save_dir=save_dir
@@ -262,7 +228,7 @@ def plot_generated_molecule_analysis(
             print(f'Number of reference molecules in {reference_path.stem} = {len(reference_molecules):,}')
 
             # Similarity between generated molecules and reference molecules
-            plot_internal_similarity(
+            plot_similarity(
                 smiles=data[smiles_column],
                 similarity_type='tversky',
                 save_dir=save_dir,

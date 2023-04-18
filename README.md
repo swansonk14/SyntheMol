@@ -106,7 +106,7 @@ TODO: make sure training and predict commands work like this in chemprop
 
 Train Chemprop
 ```bash
-python -m chemprop.train \
+chemprop_train \
     --data_path data/data.csv \
     --dataset_type classification \
     --save_dir models/chemprop
@@ -118,7 +118,7 @@ python -m chemprop.train \
 After training, use the model to pre-compute scores of building blocks to accelerate the SyntheMol generation process. Below is an example using the trained Chemprop model.
 
 ```bash
-python -m chemprop.predict \
+chemprop_predict \
     --test_path SyntheMol/files/building_blocks.csv \
     --preds_path models/chemprop/building_block_scores.csv \
     --checkpoint_dir models/chemprop
@@ -132,7 +132,7 @@ SyntheMol uses the bioactivity prediction model within a Monte Carlo tree search
 TODO: ensure this works with GPU-trained models
 
 ```bash
-python -m SyntheMol.generate \
+SyntheMol \
     --model_path models/chemprop \
     --model_type chemprop \
     --save_dir generations/chemprop \

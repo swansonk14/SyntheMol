@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 
 from SyntheMol.constants import SMILES_COL
-from SyntheMol.plot.plot_generated_molecule_analysis import plot_scores, plot_internal_similarity
+from SyntheMol.plot.plot_generated_molecule_analysis import plot_scores, plot_similarity
 
 
 def plot_molecule_analysis(
@@ -42,7 +42,7 @@ def plot_molecule_analysis(
         )
 
     # Similarity within REAL molecules
-    plot_internal_similarity(
+    plot_similarity(
         smiles=data[smiles_column],
         similarity_type='tanimoto',
         save_dir=save_dir
@@ -53,7 +53,7 @@ def plot_molecule_analysis(
         train_hits = pd.read_csv(train_hits_path)
 
         # Similarity between REAL molecules and train hits
-        plot_internal_similarity(
+        plot_similarity(
             smiles=data[smiles_column],
             similarity_type='tversky',
             save_dir=save_dir,

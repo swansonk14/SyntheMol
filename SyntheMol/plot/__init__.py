@@ -5,10 +5,9 @@ from SyntheMol.plot.plot_building_block_vs_molecule_scores import plot_building_
 from SyntheMol.plot.plot_generated_molecule_analysis import (
     plot_building_block_usage,
     plot_generated_molecule_analysis,
-    plot_internal_similarity,
+    plot_similarity,
     plot_reactions_numbers,
     plot_reaction_usage,
-    plot_reference_similarity,
     plot_scores
 )
 from SyntheMol.plot.plot_mcts_over_time import plot_mcts_over_time

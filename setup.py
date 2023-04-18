@@ -25,6 +25,11 @@ setup(
     license='MIT',
     packages=find_packages(),
     package_data={'SyntheMol': ['py.typed']},
+    entry_points={
+        'console_scripts': [
+            'SyntheMol=SyntheMol.generate.generate:generate'
+        ]
+    },
     install_requires=[  # TODO: add chem_utils here
         'chemprop',
         'descriptastorus',
