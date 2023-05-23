@@ -5,7 +5,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from chem_utils.molecular_similarities import compute_top_similarities
+from chemfunc import compute_top_similarities
 
 from SyntheMol.constants import SCORE_COL, SMILES_COL
 

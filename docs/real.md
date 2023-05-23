@@ -21,7 +21,7 @@ The `building_blocks.sdf` file (from the Google Drive folder) is the 2021 q3-4 v
 
 Convert the building blocks from SDF to SMILES.
 ```bash
-python -m chem_utils.sdf_to_smiles \
+chemfunc sdf_to_smiles \
     --data_path data/4_real_space/building_blocks.sdf \
     --save_path data/4_real_space/building_blocks_raw.csv \
     --properties Reagent_ID Catalog_ID
@@ -36,7 +36,7 @@ Note: The SMILES are likely not all unique because they do not include stereoche
 
 Remove the salts from the building blocks. This will also canonicalize the SMILES using RDKit's canonicalization method.
 ```bash
-python -m chem_utils.canonicalize_smiles \
+chemfunc canonicalize_smiles \
     --data_path data/4_real_space/building_blocks_raw.csv \
     --save_path data/4_real_space/building_blocks.csv \
     --remove_salts \

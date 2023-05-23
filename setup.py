@@ -30,7 +30,8 @@ setup(
             'SyntheMol=SyntheMol.generate.generate:generate'
         ]
     },
-    install_requires=[  # TODO: add chem_utils here
+    install_requires=[
+        'chemfunc',
         'chemprop',
         'descriptastorus',
         'gdown',
@@ -51,7 +52,7 @@ setup(
         'Programming Language :: Python :: 3.11',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
-        "Typing :: Typed"
+        'Typing :: Typed'
     ],
     keywords=[
         'machine learning',

@@ -18,14 +18,14 @@ TODO: potentially change order of cLogP data in Google Drive and add to suppleme
 
 Compute cLogP on the training set.
 ```bash
-python -m chem_utils.compute_properties \
+chemfunc compute_properties \
     --data_path data/1_training_data/antibiotics.csv \
     --properties clogp
 ```
 
 For comparison purposes, compute cLogP on a random sample of REAL molecules.
 ```bash
-python -m chem_utils.compute_properties \
+chemfunc compute_properties \
     --data_path data/4_real_space/random_real.csv \
     --properties clogp
 ```
@@ -38,7 +38,7 @@ Binarize cLogP by using 6.5 as a threshold.
 ```bash
 for DATA_NAME in antibiotics random_real
 do
-python -m chem_utils.regression_to_classification \
+chemfunc regression_to_classification \
     --data_path data/1_training_data/${DATA_NAME}.csv \
     --regression_column clogp \
     --threshold 6.5 \
@@ -124,7 +124,7 @@ Compute the true cLogP for generated molecules.
 
 for EPOCHS in 30 1
 do
-python -m chem_utils.compute_properties \
+chemfunc compute_properties \
     --data_path data/10_generations_clogp/clogp_chemprop_${EPOCHS}_epochs/molecules.csv \
     --properties clogp
 done
@@ -132,7 +132,7 @@ done
 
 Plot distribution of train vs generated vs REAL cLogP.
 ```bash
-python -m chem_utils.plot_property_distribution \
+chemfunc plot_property_distribution \
     --data_paths data/1_training_data/antibiotics.csv \
     data/4_real_space/random_real.csv \
     data/10_generations_clogp/clogp_chemprop_30_epochs/molecules.csv \
@@ -148,7 +148,7 @@ Binarize the true cLogP for generated molecules using the 6.5 threshold.
 ```bash
 for EPOCHS in 30 1
 do
-python -m chem_utils.regression_to_classification \
+chemfunc regression_to_classification \
     --data_path data/10_generations_clogp/clogp_chemprop_${EPOCHS}_epochs/molecules.csv \
     --regression_column clogp \
     --threshold 6.5 \

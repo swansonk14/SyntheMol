@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import torch
-from chem_utils.molecular_fingerprints import compute_fingerprints
+from chemfunc import compute_fingerprints
 from tqdm import tqdm
 
 from SyntheMol.constants import FINGERPRINT_TYPES, MODEL_TYPES, SMILES_COL

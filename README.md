@@ -28,11 +28,7 @@ TODO
 
 ## Installation
 
-TODO: put SyntheMol (and chem_utils) on pip
-
-TODO: remove environment.yml?
-
-TODO: rdkit?
+TODO: put SyntheMol on pip
 
 Create conda environment.
 ```bash
@@ -144,7 +140,7 @@ SyntheMol \
 
 ## Filter generated molecules
 
-Optionally, the generated molecules can be filtered for structural novelty, predicted bioactivity, and structural diversity. These filtering steps use [chem_utils](https://github.com/swansonk14/chem_utils), which is installed along with SyntheMol. Below is an example for filtering the generated molecules.
+Optionally, the generated molecules can be filtered for structural novelty, predicted bioactivity, and structural diversity. These filtering steps use [chemfunc](https://github.com/swansonk14/chemfunc), which is installed along with SyntheMol. Below is an example for filtering the generated molecules.
 
 ### Novelty
 
@@ -161,7 +157,7 @@ O=C(NNc1ccccc1)c1ccncc1,1
 
 Compute Tversky similarity between generated molecules and hits
 ```bash
-python -m chem_utils.nearest_neighbor \
+chemfunc nearest_neighbor \
     --data_path generations/chemprop/molecules.csv \
     --reference_data_path data/hits.csv \
     --reference_name hits \
@@ -170,7 +166,7 @@ python -m chem_utils.nearest_neighbor \
 
 Filter by similarity, only keeping molecules with a nearest neighbor similarity to hits of at most 0.5
 ```bash
-python -m chem_utils.filter_molecules \
+chemfunc filter_molecules \
     --data_path generations/chemprop/molecules.csv \
     --save_path generations/chemprop/molecules_novel.csv \
     --filter_column hits_tversky_nearest_neighbor_similarity \
@@ -183,7 +179,7 @@ python -m chem_utils.filter_molecules \
 Filter for predicted bioactivity by keeping the molecules with the top 20% highest predicted bioactivity.
 
 ```bash
-python -m chem_utils.filter_molecules \
+chemfunc filter_molecules \
     --data_path generations/chemprop/molecules_novel.csv \
     --save_path generations/chemprop/molecules_novel_bioactive.csv \
     --filter_column score \
@@ -197,14 +193,14 @@ Filter for diversity by clustering molecules based on their Morgan fingerprint a
 
 Cluster molecules into 50 clusters
 ```bash
-python -m chem_utils.cluster_molecules \
+chemfunc cluster_molecules \
     --data_path generations/chemprop/molecules_novel_bioactive.csv \
     --num_clusters 50
 ```
 
 Select the top scoring molecule from each cluster
 ```bash
-python -m chem_utils.select_from_clusters \
+chemfunc select_from_clusters \
     --data_path generations/molecules_novel_bioactive.csv \
     --save_path generations/molecules_novel_bioactive_diverse.csv \
     --value_column score

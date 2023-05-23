@@ -6,7 +6,7 @@ from typing import Callable
 import numpy as np
 import pandas as pd
 import torch
-from chem_utils.molecular_fingerprints import compute_fingerprint
+from chemfunc import compute_fingerprint
 
 from SyntheMol.constants import FINGERPRINT_TYPES, MODEL_TYPES
 from SyntheMol.generate.node import Node

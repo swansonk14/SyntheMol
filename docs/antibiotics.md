@@ -248,7 +248,7 @@ Compute Tversky similarity to train hits.
 
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
-python -m chem_utils.nearest_neighbor \
+chemfunc nearest_neighbor \
     --data_path data/${NAME}/molecules.csv \
     --reference_data_path data/1_training_data/antibiotics_hits.csv \
     --reference_name antibiotics_hits \
@@ -262,7 +262,7 @@ Compute Tversky similarity to ChEMBL antibacterials.
 
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
-python -m chem_utils.nearest_neighbor \
+chemfunc nearest_neighbor \
     --data_path data/${NAME}/molecules.csv \
     --reference_data_path data/2_chembl/chembl.csv \
     --reference_name chembl \
@@ -278,7 +278,7 @@ Filter by Tversky similarity to train hits.
 
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
-python -m chem_utils.filter_molecules \
+chemfunc filter_molecules \
     --data_path data/${NAME}/molecules.csv \
     --save_path data/${NAME}/molecules_train_sim_below_0.5.csv \
     --filter_column antibiotics_hits_tversky_nearest_neighbor_similarity \
@@ -292,7 +292,7 @@ Filter by Tversky similarity to ChEMBL antibacterials.
 
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
-python -m chem_utils.filter_molecules \
+chemfunc filter_molecules \
     --data_path data/${NAME}/molecules_train_sim_below_0.5.csv \
     --save_path data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5.csv \
     --filter_column chembl_tversky_nearest_neighbor_similarity \
@@ -309,7 +309,7 @@ Filter for high-scoring molecules (i.e., predicted bioactivity) by only keeping 
 
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
-python -m chem_utils.filter_molecules \
+chemfunc filter_molecules \
     --data_path data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5.csv \
     --save_path data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
     --filter_column score \
@@ -328,7 +328,7 @@ Cluster molecules based on their Morgan fingerprint.
 
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
-python -m chem_utils.cluster_molecules \
+chemfunc cluster_molecules \
     --data_path data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
     --num_clusters 50
 done
@@ -340,7 +340,7 @@ Select the top scoring molecule from each cluster.
 
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
-python -m chem_utils.select_from_clusters \
+chemfunc select_from_clusters \
     --data_path data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
     --save_path data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
     --value_column score

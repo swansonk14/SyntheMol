@@ -364,6 +364,12 @@ class Generator:
 
         # Unroll the selected node
         v = self.rollout(node=selected_node)
+
+        # Get max whole molecule score as feedback
+        if selected_node.num_molecules == 1:
+            v = max(v, selected_node.P)
+
+        # Update exploit score and visit count
         selected_node.W += v
         selected_node.N += 1
 

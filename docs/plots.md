@@ -49,7 +49,7 @@ done
 
 Plot t-SNE of training data and ChEMBL antibiotics.
 ```bash
-python -m chem_utils.dimensionality_reduction \
+chemfunc dimensionality_reduction \
     --data_paths data/2_chembl/chembl_antibacterial_antibiotic.csv \
     data/1_training_data/library_1.csv \
     data/1_training_data/library_2.csv \
@@ -241,7 +241,7 @@ python -m SyntheMol.plot.plot_model_generalization \
 
 Visualize REAL reactions.
 ```bash
-python -m chem_utils.visualize_reactions \
+chemfunc visualize_reactions \
     --data_path data/4_real_space/reactions.csv \
     --save_dir plots/real_reactions \
     --smarts_column reaction_smarts \
@@ -262,7 +262,7 @@ python -m SyntheMol.plot.plot_real_counts \
 
 Deduplicate building blocks by SMILES.
 ```bash
-python -m chem_utils.deduplicate_smiles \
+chemfunc deduplicate_smiles \
     --data_path data/4_real_space/building_blocks.csv \
     --save_path data/4_real_space/building_blocks_unique.csv
 ```
@@ -273,7 +273,7 @@ Compute properties of REAL building blocks, REAL molecules, and train molecules.
 ```bash
 for DATA in 4_real_space/building_blocks_unique 4_real_space/random_real 1_training_data/antibiotics
 do
-python -m chem_utils.compute_properties \
+chemfunc compute_properties \
     --data_path data/${DATA}.csv \
     --properties logp mol_weight
 done
@@ -281,7 +281,7 @@ done
 
 Plot logP distributions.
 ```bash
-python -m chem_utils.plot_property_distribution \
+chemfunc plot_property_distribution \
     --data_paths data/4_real_space/building_blocks_unique.csv \
     data/4_real_space/random_real.csv \
     data/1_training_data/antibiotics.csv \
@@ -293,7 +293,7 @@ python -m chem_utils.plot_property_distribution \
 
 Plot molecular weight distributions.
 ```bash
-python -m chem_utils.plot_property_distribution \
+chemfunc plot_property_distribution \
     --data_paths data/4_real_space/building_blocks_unique.csv \
     data/4_real_space/random_real.csv \
     data/1_training_data/antibiotics.csv \
@@ -307,7 +307,7 @@ python -m chem_utils.plot_property_distribution \
 
 Plot t-SNE of training data and REAL space sample.
 ```bash
-python -m chem_utils.dimensionality_reduction \
+chemfunc dimensionality_reduction \
     --data_paths data/4_real_space/random_real.csv \
     data/4_real_space/building_blocks_unique.csv \
     data/1_training_data/antibiotics.csv \
@@ -486,7 +486,7 @@ Visualize the selected molecules.
 
 for NAME in chemprop chemprop_rdkit random_forest
 do
-python -m chem_utils.visualize_molecules \
+chemfunc visualize_molecules \
     --data_path data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
     --save_dir data/${NAME}
 done
@@ -497,7 +497,7 @@ done
 
 t-SNE for final generated sets.
 ```bash
-python -m chem_utils.dimensionality_reduction \
+chemfunc dimensionality_reduction \
     --data_paths data/1_training_data/antibiotics.csv \
     data/5_generations_chemprop/molecules.csv \
     data/6_generations_chemprop_rdkit/molecules.csv \
