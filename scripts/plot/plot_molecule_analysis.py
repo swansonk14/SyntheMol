@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 
 from SyntheMol.constants import SMILES_COL
-from SyntheMol.plot.plot_generated_molecule_analysis import plot_scores, plot_similarity
+from plot_generated_molecule_analysis import plot_scores, plot_similarity
 
 
 def plot_molecule_analysis(

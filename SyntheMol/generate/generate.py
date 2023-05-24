@@ -157,3 +157,5 @@ def generate(
         building_block_id_to_smiles=building_block_id_to_smiles,
         save_path=save_dir / 'molecules.csv'
     )
+
+    # TODO: add plotting here
