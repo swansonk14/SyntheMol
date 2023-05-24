@@ -7,9 +7,9 @@ import torch
 from chemfunc import compute_fingerprints
 from tqdm import tqdm
 
+from chemprop_models import chemprop_predict
 from SyntheMol.constants import FINGERPRINT_TYPES, MODEL_TYPES, SMILES_COL
-from SyntheMol.models.chemprop import chemprop_load, chemprop_predict
-from SyntheMol.models.sklearn import sklearn_load, sklearn_predict
+from SyntheMol.models import chemprop_load, sklearn_load, sklearn_predict
 
 
 def predict(

@@ -8,16 +8,16 @@ import pandas as pd
 from chemfunc import compute_fingerprints
 from tqdm import trange
 
-from SyntheMol.constants import DATASET_TYPES, FINGERPRINT_TYPES, MODEL_TYPES, SMILES_COL
-from SyntheMol.models.chemprop import (
+from chemprop_models import (
     chemprop_predict,
     chemprop_train
 )
-from SyntheMol.models.evaluate import evaluate
-from SyntheMol.models.sklearn import (
+from evaluate import evaluate
+from sklearn_models import (
     sklearn_predict,
     sklearn_train
 )
+from SyntheMol.constants import DATASET_TYPES, FINGERPRINT_TYPES, MODEL_TYPES, SMILES_COL
 
 
 def train(

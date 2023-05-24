@@ -135,7 +135,7 @@ dmypy.json
 .DS_Store
 
 # Folders
-data
-generations
-models
-SyntheMol/files
+/data
+/generations
+/models
+/SyntheMol/files
