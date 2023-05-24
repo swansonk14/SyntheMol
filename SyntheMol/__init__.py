@@ -1,5 +1,4 @@
 """Import all submodules of SyntheMol."""
-import SyntheMol.assess
 import SyntheMol.constants
 import SyntheMol.generate
 import SyntheMol.models

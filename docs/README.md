@@ -11,3 +11,5 @@ This directory contains documentation for the project.
 [simulation.md](simulation.md): Instructions for performing a simulation study of SyntheMol using a computational molecular property, cLogP (the computed octanol-water partition coefficient). These steps reproduce the results in our paper [TODO](TODO).  
 
 TODO: sphinx documentation and readthedocs
+
+TODO: update scripts references in docs (data, plot, assess)
