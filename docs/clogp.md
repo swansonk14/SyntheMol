@@ -1,8 +1,6 @@
 # Simulation Study
 
-This file contains instructions for performing a simulation study of SyntheMol using a computational molecular property, cLogP (the computed octanol-water partition coefficient).
-
-The data and models referred to in this file can be downloaded from the Google Drive folder [here](https://drive.google.com/drive/folders/1VLPPUbY_FTKMjlXgRm09bPSSms206Dce?usp=share_link). Note that the instructions below assume that the relevant data is downloaded to the `data` directory.
+Instructions for performing an _in silico_ study of SyntheMol using a computational molecular property, cLogP, which is the computed octanol-water partition coefficient. Assumes relevant data has already been downloaded (see [docs/README.md](README.md)).
 
 TODO: potentially change order of cLogP data in Google Drive and add to supplementary table
 

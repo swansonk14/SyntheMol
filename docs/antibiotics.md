@@ -1,10 +1,7 @@
 # Generating Novel Antibiotics with SyntheMol
 
-This file contains instructions for using SyntheMol to generate novel antibiotic candidates for the Gram-negative bacterium _Acinetobacter baumannii_. These instructions reproduce the work in the paper [TODO](TODO).
+Instructions for generating antibiotic candidates for _Acinetobacter baumannii_. Includes instructions for processing antibiotics data, training antibacterial activity prediction models, generating molecules with SyntheMol, and selecting candidates. Assumes relevant data has already been downloaded (see [docs/README.md](README.md)).
 
-The data and models referred to in this file can be downloaded from the Google Drive folder [here](https://drive.google.com/drive/folders/1VLPPUbY_FTKMjlXgRm09bPSSms206Dce?usp=share_link). Note that the instructions below assume that the relevant data is downloaded to the `data` directory.
-
-* [Process Enamine REAL Space data](#process-enamine-real-space-data)
 * [Process antibiotics training data](#process-antibiotics-training-data)
 * [Process ChEMBL antibacterials](#process-chembl-antibacterials)
 * [Build bioactivity prediction models](#build-bioactivity-prediction-models)
@@ -17,11 +14,6 @@ The data and models referred to in this file can be downloaded from the Google D
   + [Diversity](#diversity)
 * [Map molecules to REAL IDs](#map-molecules-to-real-ids)
 * [Predict toxicity](#predict-toxicity)
-
-
-## Process Enamine REAL Space data
-
-See the [REAL Space data processing instructions](real.md) for details on how to process the Enamine REAL Space data.
 
 
 ## Process antibiotics training data

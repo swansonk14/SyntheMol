@@ -124,7 +124,7 @@ def count_real_space(
                 progress_bar.update(num_molecules_in_file)
 
     print(f'Total number of molecules = {total_num_molecules:,}')
-    print(f'Total number of molecules with selected building blockss/reactions = {total_num_molecules_counted:,}')
+    print(f'Total number of molecules with selected building blocks/reactions = {total_num_molecules_counted:,}')
 
     # Create reaction counts DataFrame
     combined_reaction_counts_data = pd.DataFrame(data=[
@@ -162,7 +162,7 @@ def count_real_space(
 
     # Save building block counts
     combined_building_block_counts_data.to_csv(
-        save_dir / f'building_block_counts{"_selected" if only_selected_reactions else ""}.csv',
+        save_dir / f'building_blocks_counts{"_selected" if only_selected_reactions else ""}.csv',
         index=False
     )
 

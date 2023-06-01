@@ -1,13 +1,23 @@
 # Enamine REAL Space Data Processing
 
-This file contains instructions for processing the Enamine REAL Space data in preparation for use with SyntheMol. Here, we use the 2021 q3-4 version of the building blocks and the 2022 q1-2 version of the enumerated REAL Space molecules as described in our antibiotic generation paper [TODO](TODO). However, by default, SyntheMol now downloads the 2022 q1-2 version of the building blocks during installation.
+Instructions for processing Enamine REAL building blocks, reactions, and molecules. Assumes relevant data has already been downloaded (see [docs/README.md](README.md)).
 
-The data referred to in this file can be downloaded from the Google Drive folder [here](https://drive.google.com/drive/folders/1VLPPUbY_FTKMjlXgRm09bPSSms206Dce?usp=share_link). Note that the instructions below assume that the relevant data is downloaded to the `data` directory.
+
+- [Reactions](#reactions)
+- [Building blocks](#building-blocks)
+  * [SDF to SMILES](#sdf-to-smiles)
+  * [Remove salts](#remove-salts)
+- [REAL Space molecules](#real-space-molecules)
+  * [Download REAL Space](#download-real-space)
+  * [Map REAL reactions to building blocks](#map-real-reactions-to-building-blocks)
+  * [Count REAL reactions and building blocks](#count-real-reactions-and-building-blocks)
+  * [Sample REAL molecules](#sample-real-molecules)
+  * [Count feasible REAL molecules](#count-feasible-real-molecules)
 
 
 ## Reactions
 
-The Enamine REAL Space consists of 169 reactions, which can be found in a PDF in the Google Drive folder. By default, SyntheMol uses 13 of these reactions, which are provided as SMARTS in `SyntheMol/reactions/real.py`.
+The Enamine REAL Space consists of 169 reactions, which can be found in a PDF in the Google Drive folder. By default, SyntheMol uses 13 of these reactions, which are provided as SMARTS in `synthemol/reactions/real.py`.
 
 
 ## Building blocks
@@ -17,13 +27,13 @@ Below, we describe the steps for processing the building blocks.
 
 ### SDF to SMILES
 
-The `building_blocks.sdf` file (from the Google Drive folder) is the 2021 q3-4 version containing 138,085 molecules.
+The `data/Data/4_real_space/building_blocks.sdf` file is the 2021 q3-4 version containing 138,085 molecules.
 
 Convert the building blocks from SDF to SMILES.
 ```bash
 chemfunc sdf_to_smiles \
-    --data_path data/4_real_space/building_blocks.sdf \
-    --save_path data/4_real_space/building_blocks_raw.csv \
+    --data_path data/Data/4_real_space/building_blocks_raw.sdf \
+    --save_path data/Data/4_real_space/building_blocks_raw.csv \
     --properties Reagent_ID Catalog_ID
 ```
 
@@ -37,8 +47,8 @@ Note: The SMILES are likely not all unique because they do not include stereoche
 Remove the salts from the building blocks. This will also canonicalize the SMILES using RDKit's canonicalization method.
 ```bash
 chemfunc canonicalize_smiles \
-    --data_path data/4_real_space/building_blocks_raw.csv \
-    --save_path data/4_real_space/building_blocks.csv \
+    --data_path data/Data/4_real_space/building_blocks_raw.csv \
+    --save_path data/Data/4_real_space/building_blocks.csv \
     --remove_salts \
     --delete_disconnected_mols
 ```
@@ -54,9 +64,9 @@ Below, we describe the steps for processing the REAL Space molecules.
 
 ### Download REAL Space
 
-Download the building block and reaction IDs used for the full REAL Space of 31 billion compounds (2022 q1-2 version downloaded on August 30, 2022).
+Download the building block and reaction IDs used for the full REAL Space of 31 billion compounds (we used the 2022 q1-2 version downloaded on August 30, 2022).
 ```bash
-lftp -c "open -p 21 -u username,password ftp-rdb-fr.chem-space.com; mirror -c --parallel=16 . data/4_real_space/full_real"
+lftp -c "open -p 21 -u username,password ftp-rdb-fr.chem-space.com; mirror -c --parallel=16 . data/Data/4_real_space/full_real"
 ```
 
 In the above command, replace `username` and `password` with the appropriate values provided by Enamine.
@@ -66,9 +76,9 @@ In the above command, replace `username` and `password` with the appropriate val
 
 Determine which building blocks are valid in which REAL reactions.
 ```bash
-python -m synthemol.data.map_real_reactions_to_building_blocks \
-    --data_dir data/4_real_space/full_real \
-    --save_path data/4_real_space/reaction_to_building_blocks.pkl
+python scripts/data/map_real_reactions_to_building_blocks.py \
+    --data_dir data/Data/4_real_space/full_real \
+    --save_path data/Data/4_real_space/reaction_to_building_blocks.pkl
 ```
 
 Total number of molecules = 31,507,987,117
@@ -78,9 +88,9 @@ Total number of molecules = 31,507,987,117
 
 Determine which reactions and building blocks are most common in REAL space.
 ```bash
-python -m synthemol.data.count_real_space \
-    --data_dir data/4_real_space/full_real \
-    --save_dir data/4_real_space
+python scripts/data/count_real_space.py \
+    --data_dir data/Data/4_real_space/full_real \
+    --save_dir data/Data/4_real_space
 ```
 
 
@@ -88,9 +98,9 @@ python -m synthemol.data.count_real_space \
 
 Randomly sample 25,000 REAL Space molecules. This is used for analysis of a representative sample of REAL Space molecules.
 ```bash
-python -m synthemol.data.sample_real_space \
-    --data_dir data/4_real_space/full_real \
-    --save_path data/4_real_space/random_real.csv \
+python scripts/data/sample_real_space.py \
+    --data_dir data/Data/4_real_space/full_real \
+    --save_path data/Data/4_real_space/random_real.csv \
     --num_molecules 25000
 ```
 
@@ -99,10 +109,10 @@ python -m synthemol.data.sample_real_space \
 
 Count feasible REAL Space molecules, i.e., those that can be produced when limited to the selected 13 reactions and the building blocks after processing.
 ```bash
-python -m synthemol.data.count_real_space \
-    --data_dir data/4_real_space/full_real \
-    --save_dir data/4_real_space \
-    --building_blocks_path data/4_real_space/building_blocks.csv \
+python scripts/data/count_real_space.py \
+    --data_dir data/Data/4_real_space/full_real \
+    --save_dir data/Data/4_real_space \
+    --building_blocks_path data/Data/4_real_space/building_blocks.csv \
     --only_selected_reactions
 ```
 

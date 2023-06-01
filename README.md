@@ -30,8 +30,6 @@ TODO
 
 TODO: put SyntheMol on pip
 
-TODO: consider renaming SyntheMol to synthemol
-
 Optionally, create a conda environment.
 ```bash
 conda create -y -n synthemol python=3.10
@@ -46,7 +44,7 @@ pip install synthemol
 Alternatively, clone the repo and install SyntheMol locally.
 ```bash
 git clone https://github.com/swansonk14/SyntheMol.git
-cd synthemol
+cd SyntheMol
 pip install -e .
 ```
 
@@ -58,12 +56,10 @@ pip install -e .
 
 TODO: check processing of building blocks file
 
-Download the necessary data files.
+Download the necessary data files to `SyntheMol/synthemol/files`.
 ```bash
-gdown "https://drive.google.com/drive/folders/1LLLwxe_nQAnsRSQpIRq_ngyCm1txS-Sq" -O /path/to/synthemol/files --folder
+gdown "https://drive.google.com/drive/folders/1LLLwxe_nQAnsRSQpIRq_ngyCm1txS-Sq" -O $(python -c "import synthemol; print(synthemol.__path__[0])")/files --folder
 ```
-
-**Note:** Replace `/path/to/SyntheMol` with the path to the SyntheMol package. The path to SyntheMol can be found by running `python -c "import SyntheMol; print(SyntheMol.__path__[0])"`.
 
 **Note:** If you get the issue `ImportError: libXrender.so.1: cannot open shared object file: No such file or directory`, run `conda install -c conda-forge xorg-libxrender`.
 
