@@ -3,6 +3,7 @@ from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
+from tap import tapify
 
 from synthemol.constants import (
     BUILDING_BLOCKS_PATH,
@@ -159,3 +160,7 @@ def generate(
     )
 
     # TODO: add plotting here
+
+def generate_command_line() -> None:
+    """Run generate function from command line."""
+    tapify(generate)

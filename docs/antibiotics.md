@@ -104,7 +104,7 @@ Here, we build three binary classification bioactivity prediction models to pred
 
 ### Train models
 
-For each model type, we trained 10 models using 10-fold cross-validation on the training data. Each ensemble of 10 models took less than 90 minutes to train on a 16-CPU machine. Trained models are available in the `Models` subfolder of the Google Drive folder.
+For each model type, we trained 10 models using 10-fold cross-validation on the training data. Each ensemble of 10 models took less than 90 minutes to train on a 16-core CPU machine.
 
 TODO: figure out appropriate train and predict package imports
 
@@ -112,7 +112,7 @@ Chemprop
 ```bash
 python -m synthemol.models.train \
     --data_path data/Data/1_training_data/antibiotics.csv \
-    --save_dir models/antibiotic_chemprop \
+    --save_dir data/Models/antibiotic_chemprop \
     --dataset_type classification \
     --model_type chemprop \
     --property_column activity \
@@ -123,7 +123,7 @@ Chemprop-RDKit
 ```bash
 python -m synthemol.models.train \
     --data_path data/Data/1_training_data/antibiotics.csv \
-    --save_dir models/antibiotic_chemprop_rdkit \
+    --save_dir data/Models/antibiotic_chemprop_rdkit \
     --model_type chemprop \
     --dataset_type classification \
     --fingerprint_type rdkit \
@@ -135,7 +135,7 @@ Random forest
 ```bash
 python -m synthemol.models.train \
     --data_path data/Data/1_training_data/antibiotics.csv \
-    --save_dir models/antibiotic_random_forest \
+    --save_dir data/Models/antibiotic_random_forest \
     --model_type random_forest \
     --dataset_type classification \
     --fingerprint_type rdkit \

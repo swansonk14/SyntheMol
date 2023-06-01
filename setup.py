@@ -27,7 +27,7 @@ setup(
     package_data={'synthemol': ['py.typed']},
     entry_points={
         'console_scripts': [
-            'synthemol=synthemol.generate.generate:generate'
+            'synthemol=synthemol.generate.generate:generate_command_line'
         ]
     },
     install_requires=[
