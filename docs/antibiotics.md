@@ -27,7 +27,8 @@ Merge the three libraries into a single file and determine which molecules are h
 python scripts/data/process_data.py \
     --data_paths data/Data/1_training_data/library_1.csv data/Data/1_training_data/library_2.csv data/Data/1_training_data/library_3.csv \
     --save_path data/Data/1_training_data/antibiotics.csv \
-    --save_hits_path data/Data/1_training_data/antibiotics_hits.csv
+    --save_hits_path data/Data/1_training_data/antibiotics_hits.csv \
+    --activity_column antibiotic_activity
 ```
 
 Output:
@@ -106,40 +107,38 @@ Here, we build three binary classification bioactivity prediction models to pred
 
 For each model type, we trained 10 models using 10-fold cross-validation on the training data. Each ensemble of 10 models took less than 90 minutes to train on a 16-core CPU machine.
 
-TODO: figure out appropriate train and predict package imports
-
 Chemprop
 ```bash
-python -m synthemol.models.train \
+python scripts/models/train.py \
     --data_path data/Data/1_training_data/antibiotics.csv \
     --save_dir data/Models/antibiotic_chemprop \
     --dataset_type classification \
     --model_type chemprop \
-    --property_column activity \
+    --property_column antibiotic_activity \
     --num_models 10
 ```
 
 Chemprop-RDKit
 ```bash
-python -m synthemol.models.train \
+python scripts/models/train.py \
     --data_path data/Data/1_training_data/antibiotics.csv \
     --save_dir data/Models/antibiotic_chemprop_rdkit \
     --model_type chemprop \
     --dataset_type classification \
     --fingerprint_type rdkit \
-    --property_column activity \
+    --property_column antibiotic_activity \
     --num_models 10
 ```
 
 Random forest
 ```bash
-python -m synthemol.models.train \
+python scripts/models/train.py \
     --data_path data/Data/1_training_data/antibiotics.csv \
     --save_dir data/Models/antibiotic_random_forest \
     --model_type random_forest \
     --dataset_type classification \
     --fingerprint_type rdkit \
-    --property_column activity \
+    --property_column antibiotic_activity \
     --num_models 10
 ```
 

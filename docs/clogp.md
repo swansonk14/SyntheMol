@@ -111,9 +111,11 @@ do
 synthemol \
     --model_path data/Models/clogp_chemprop_${EPOCHS}_epochs \
     --model_type chemprop \
-    --building_blocks_path data/Data/4_real_space/building_blocks.csv \
-    --save_dir data/Data/10_generations_clogp/clogp_chemprop_${EPOCHS}_epochs \
+    --building_blocks_path data/Models/clogp_chemprop_${EPOCHS}_epochs/building_blocks.csv \
+    --building_blocks_score_column chemprop_ensemble_preds \
+    --building_blocks_id_column Reagent_ID \
     --reaction_to_building_blocks_path data/Data/4_real_space/reaction_to_building_blocks.pkl \
+    --save_dir data/Data/10_generations_clogp/clogp_chemprop_${EPOCHS}_epochs \
     --max_reactions 1 \
     --n_rollout 20000
 done

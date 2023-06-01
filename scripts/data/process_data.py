@@ -15,6 +15,7 @@ def process_data(
         save_hits_path: Path | None = None,
         smiles_column: str = SMILES_COL,
         mean_column: str = 'mean',
+        activity_column: str = ACTIVITY_COL,
         num_std: int = 2
 ) -> None:
     """Process regression data from potentially multiple files, including binarization and deduplication.
@@ -23,7 +24,8 @@ def process_data(
     :param save_path: A path to a CSV file where the processed data will be saved.
     :param save_hits_path: A path to a CSV file where only the hits (actives) will be saved.
     :param smiles_column: The name of the column containing the SMILES.
-    :param mean_column: The name of the column containing the activity.
+    :param mean_column: The name of the column containing the mean activity.
+    :param activity_column: The name of the column where the binary activity will be stored.
     :param num_std: The number of standard deviations to use when binarizing the data.
     """
     # Load and process each data file
@@ -59,8 +61,8 @@ def process_data(
 
     # Combine the data
     data = pd.DataFrame({
-        SMILES_COL: all_smiles,
-        ACTIVITY_COL: all_activities
+        smiles_column: all_smiles,
+        activity_column: all_activities
     })
     print(f'Full data size = {len(data):,}')
 
@@ -70,12 +72,12 @@ def process_data(
 
     # Drop duplicates with conflicting values
     smiles_to_values = defaultdict(set)
-    for smiles, value in zip(data[SMILES_COL], data[ACTIVITY_COL]):
+    for smiles, value in zip(data[smiles_column], data[activity_column]):
         smiles_to_values[smiles].add(value)
 
     conflicting_smiles = {smiles for smiles, values in smiles_to_values.items() if len(values) > 1}
 
-    data = data[~data[SMILES_COL].isin(conflicting_smiles)]
+    data = data[~data[smiles_column].isin(conflicting_smiles)]
     print(f'Data size after dropping conflicting duplicates = {len(data):,}')
     print()
 
@@ -84,13 +86,13 @@ def process_data(
     data.to_csv(save_path, index=False)
 
     print(f'Final data size = {len(data):,}')
-    print(f'Number of hits = {sum(data[ACTIVITY_COL] == 1):,}')
-    print(f'Number of non-hits = {sum(data[ACTIVITY_COL] == 0):,}')
+    print(f'Number of hits = {sum(data[activity_column] == 1):,}')
+    print(f'Number of non-hits = {sum(data[activity_column] == 0):,}')
 
     # Save hits
     if save_hits_path is not None:
         save_hits_path.parent.mkdir(parents=True, exist_ok=True)
-        hits = data[data[ACTIVITY_COL] == 1]
+        hits = data[data[activity_column] == 1]
         hits.to_csv(save_hits_path, index=False)
 
 
