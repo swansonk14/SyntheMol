@@ -1,11 +1,11 @@
-"""Utility functions for SyntheMol."""
+"""Utility functions for synthemol."""
 import re
 from typing import Any
 
 import numpy as np
 from rdkit import Chem
 
-from SyntheMol.constants import MOLECULE_TYPE
+from synthemol.constants import MOLECULE_TYPE
 
 
 def strip_atom_mapping(

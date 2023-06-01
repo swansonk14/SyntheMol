@@ -2,8 +2,8 @@
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
-from SyntheMol.reactions.query_mol import QueryMol
-from SyntheMol.utils import convert_to_mol, MOLECULE_TYPE
+from synthemol.reactions.query_mol import QueryMol
+from synthemol.utils import convert_to_mol, MOLECULE_TYPE
 
 
 class Reaction:

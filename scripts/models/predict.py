@@ -8,8 +8,8 @@ from chemfunc import compute_fingerprints
 from tqdm import tqdm
 
 from chemprop_models import chemprop_predict
-from SyntheMol.constants import FINGERPRINT_TYPES, MODEL_TYPES, SMILES_COL
-from SyntheMol.models import chemprop_load, sklearn_load, sklearn_predict
+from synthemol.constants import FINGERPRINT_TYPES, MODEL_TYPES, SMILES_COL
+from synthemol.models import chemprop_load, sklearn_load, sklearn_predict
 
 
 def predict(

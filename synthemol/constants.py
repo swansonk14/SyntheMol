@@ -1,4 +1,4 @@
-"""Contains constants shared throughout SyntheMol."""
+"""Contains constants shared throughout synthemol."""
 from pathlib import Path
 from typing import Literal
 

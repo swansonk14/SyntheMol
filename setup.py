@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 
 # Load version number
 __version__ = ''
-version_file = Path(__file__).parent.absolute() / 'SyntheMol' / '_version.py'
+version_file = Path(__file__).parent.absolute() / 'synthemol' / '_version.py'
 
 with open(version_file) as fd:
     exec(fd.read())
@@ -13,21 +13,21 @@ with open('README.md', encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='SyntheMol',
+    name='synthemol',
     version=__version__,
     author='Kyle Swanson',
     author_email='swansonk.14@gmail.com',
-    description='SyntheMol',
+    description='synthemol',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/swansonk14/SyntheMol',
     download_url=f'https://github.com/swansonk14/SyntheMol/archive/refs/tags/v_{__version__}.tar.gz',
     license='MIT',
     packages=find_packages(),
-    package_data={'SyntheMol': ['py.typed']},
+    package_data={'synthemol': ['py.typed']},
     entry_points={
         'console_scripts': [
-            'SyntheMol=SyntheMol.generate.generate:generate'
+            'synthemol=synthemol.generate.generate:generate'
         ]
     },
     install_requires=[

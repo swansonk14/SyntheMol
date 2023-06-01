@@ -40,13 +40,13 @@ conda activate synthemol
 
 Install SyntheMol via pip.
 ```bash
-pip install SyntheMol
+pip install synthemol
 ```
 
 Alternatively, clone the repo and install SyntheMol locally.
 ```bash
 git clone https://github.com/swansonk14/SyntheMol.git
-cd SyntheMol
+cd synthemol
 pip install -e .
 ```
 
@@ -60,7 +60,7 @@ TODO: check processing of building blocks file
 
 Download the necessary data files.
 ```bash
-gdown "https://drive.google.com/drive/folders/1LLLwxe_nQAnsRSQpIRq_ngyCm1txS-Sq" -O /path/to/SyntheMol/files --folder
+gdown "https://drive.google.com/drive/folders/1LLLwxe_nQAnsRSQpIRq_ngyCm1txS-Sq" -O /path/to/synthemol/files --folder
 ```
 
 **Note:** Replace `/path/to/SyntheMol` with the path to the SyntheMol package. The path to SyntheMol can be found by running `python -c "import SyntheMol; print(SyntheMol.__path__[0])"`.
@@ -123,7 +123,7 @@ After training, use the model to pre-compute scores of building blocks to accele
 
 ```bash
 chemprop_predict \
-    --test_path SyntheMol/files/building_blocks.csv \
+    --test_path synthemol/files/building_blocks.csv \
     --preds_path models/chemprop/building_block_scores.csv \
     --checkpoint_dir models/chemprop
 ```
@@ -136,7 +136,7 @@ SyntheMol uses the bioactivity prediction model within a Monte Carlo tree search
 TODO: ensure this works with GPU-trained models
 
 ```bash
-SyntheMol \
+synthemol \
     --model_path models/chemprop \
     --model_type chemprop \
     --save_dir generations/chemprop \

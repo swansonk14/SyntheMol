@@ -1,6 +1,6 @@
 """SMARTS representations of the most common Enamine REAL reactions."""
-from SyntheMol.reactions.query_mol import QueryMol
-from SyntheMol.reactions.reaction import Reaction
+from synthemol.reactions.query_mol import QueryMol
+from synthemol.reactions.reaction import Reaction
 
 
 REAL_REACTIONS = [

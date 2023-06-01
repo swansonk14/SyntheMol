@@ -7,7 +7,7 @@ import pandas as pd
 from sklearn.metrics import r2_score
 from tqdm import tqdm
 
-from SyntheMol.constants import (
+from synthemol.constants import (
     BUILDING_BLOCKS_PATH,
     REAL_BUILDING_BLOCK_COLS,
     REAL_BUILDING_BLOCK_ID_COL,

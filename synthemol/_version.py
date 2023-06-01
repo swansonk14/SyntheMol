@@ -1,4 +1,4 @@
-"""Contains the version information for SyntheMol."""
+"""Contains the version information for synthemol."""
 # major, minor, patch
 version_info = 1, 0, 0
 

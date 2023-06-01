@@ -37,7 +37,7 @@ Plot data values for each training set.
 ```bash
 for LIBRARY in library_1 library_2 library_3
 do
-python -m SyntheMol.plot.plot_regression_values \
+python -m synthemol.plot.plot_regression_values \
     --data_path data/1_training_data/${LIBRARY}.csv \
     --rep1_column Rep_1 \
     --rep2_column Rep_2 \
@@ -72,7 +72,7 @@ chemfunc dimensionality_reduction \
 
 Plot ROC-AUC and PRC-AUC curves for each model. (Replace model paths and names as needed and curve type with ROC or PRC.)
 ```bash
-python -m SyntheMol.plot.plot_auc \
+python -m synthemol.plot.plot_auc \
     --data_dir models/antibiotic_random_forest \
     --save_dir plots/auc \
     --model_name "Random Forest" \
@@ -89,7 +89,7 @@ Separately process each training set.
 
 for LIBRARY in library_1 library_2 library_3
 do
-python -m SyntheMol.data.process_data \
+python -m synthemol.data.process_data \
     --data_paths data/1_training_data/${LIBRARY}.csv \
     --save_path data/1_training_data/${LIBRARY}_binarized.csv
 done
@@ -185,7 +185,7 @@ do
         if [ "$LIBRARY_A" != "$LIBRARY_B" ]
         then
             echo $LIBRARY_A $LIBRARY_B
-            python -m SyntheMol.models.predict \
+            python -m synthemol.models.predict \
                 --data_path data/1_training_data/${LIBRARY_B}_binarized.csv \
                 --model_path models/${LIBRARY_A}_random_forest \
                 --save_path models/${LIBRARY_A}_random_forest/${LIBRARY_B}_preds.csv \
@@ -193,24 +193,24 @@ do
                 --fingerprint_type rdkit \
                 --average_preds
 
-            python -m SyntheMol.assess.compute_auc \
+            python -m synthemol.assess.compute_auc \
                 --data_path models/${LIBRARY_A}_random_forest/${LIBRARY_B}_preds.csv \
                 --pred_column random_forest_ensemble_preds \
                 --true_column activity
 
-            python -m SyntheMol.models.predict \
+            python -m synthemol.models.predict \
                 --data_path data/1_training_data/${LIBRARY_B}_binarized.csv \
                 --model_path models/${LIBRARY_A}_chemprop \
                 --save_path models/${LIBRARY_A}_chemprop/${LIBRARY_B}_preds.csv \
                 --model_type chemprop \
                 --average_preds
 
-            python -m SyntheMol.assess.compute_auc \
+            python -m synthemol.assess.compute_auc \
                 --data_path models/${LIBRARY_A}_chemprop/${LIBRARY_B}_preds.csv \
                 --pred_column chemprop_ensemble_preds \
                 --true_column activity
 
-            python -m SyntheMol.models.predict \
+            python -m synthemol.models.predict \
                 --data_path data/1_training_data/${LIBRARY_B}_binarized.csv \
                 --model_path models/${LIBRARY_A}_chemprop_rdkit \
                 --save_path models/${LIBRARY_A}_chemprop_rdkit/${LIBRARY_B}_preds.csv \
@@ -218,7 +218,7 @@ do
                 --fingerprint_type rdkit \
                 --average_preds
 
-            python -m SyntheMol.assess.compute_auc \
+            python -m synthemol.assess.compute_auc \
                 --data_path models/${LIBRARY_A}_chemprop_rdkit/${DATA2_NAME}_preds.csv \
                 --pred_column chemprop_rdkit_ensemble_preds \
                 --true_column activity
@@ -230,7 +230,7 @@ done
 Plot generalization across training sets as a confusion matrix.
 
 ```bash
-python -m SyntheMol.plot.plot_model_generalization \
+python -m synthemol.plot.plot_model_generalization \
     --save_dir plots/model_generalization
 ```
 
@@ -252,7 +252,7 @@ chemfunc visualize_reactions \
 
 Plot REAL reaction and reactant counts.
 ```bash
-python -m SyntheMol.plot.plot_real_counts \
+python -m synthemol.plot.plot_real_counts \
     --reaction_counts_path data/4_real_space/reaction_counts.csv \
     --building_block_counts_path data/4_real_space/building_block_counts.csv \
     --save_dir plots/real_counts
@@ -325,21 +325,21 @@ chemfunc dimensionality_reduction \
 
 Plot building block score distribution for each model.
 ```bash
-python -m SyntheMol.plot.plot_building_block_scores \
+python -m synthemol.plot.plot_building_block_scores \
     --building_blocks_path models/antibiotic_random_forest/building_block_scores.csv \
     --title "Random Forest Building Block Score Distribution" \
     --save_dir plots/building_block_scores/random_forest_building_block_scores
 ```
 
 ```bash
-python -m SyntheMol.plot.plot_building_block_scores \
+python -m synthemol.plot.plot_building_block_scores \
     --building_blocks_path models/antibiotic_chemprop/building_block_scores.csv \
     --title "Chemprop Building Block Score Distribution" \
     --save_dir plots/building_block_scores/chemprop_building_block_scores
 ```
 
 ```bash
-python -m SyntheMol.plot.plot_building_block_scores \
+python -m synthemol.plot.plot_building_block_scores \
     --building_blocks_path models/antibiotic_chemprop_rdkit/building_block_scores.csv \
     --title "Chemprop RDKit Building Block Score Distribution" \
     --save_dir plots/building_block_scores/chemprop_rdkit_building_block_scores
@@ -376,7 +376,7 @@ python predict_model.py \
 
 Then, plot the building block vs full molecule scores. (Note: Only 24,276 out of 25,000 molecules have all required building block SMILES.)
 ```bash
-python -m SyntheMol.plot.plot_building_block_vs_molecule_scores \
+python -m synthemol.plot.plot_building_block_vs_molecule_scores \
     --data_path data/4_real_space/random_real.csv \
     --building_blocks_path models/random_forest/building_block_scores.csv \
     --building_blocks_score_column random_forest_rdkit_ensemble_preds \
@@ -385,7 +385,7 @@ python -m SyntheMol.plot.plot_building_block_vs_molecule_scores \
 ```
 
 ```bash
-python -m SyntheMol.plot.plot_building_block_vs_molecule_scores \
+python -m synthemol.plot.plot_building_block_vs_molecule_scores \
     --data_path data/4_real_space/random_real.csv \
     --building_blocks_path models/chemprop/building_block_scores.csv \
     --building_blocks_score_column chemprop_ensemble_preds \
@@ -406,7 +406,7 @@ python plots/plot_building_block_vs_molecule_scores.py \
 
 Assess scores and similarity distributions of REAL molecules.
 ```bash
-python -m SyntheMol.plot.plot_molecule_analysis.py \
+python -m synthemol.plot.plot_molecule_analysis.py \
     --data_path data/4_real_space/random_real.csv \
     --save_dir plots/real_analysis \
     --train_hits_path data/1_training_data/antibiotics_hits.csv \
@@ -424,7 +424,7 @@ Building block counts before and after building block diversity. Run `SyntheMol.
 
 Score of molecules binned by rollout.
 ```bash
-python -m SyntheMol.plot.plot_mcts_over_time \
+python -m synthemol.plot.plot_mcts_over_time \
     --data_path data/5_generations_chemprop/molecules.csv \
     --save_dir plots/mcts_over_time/chemprop \
     --model_name "Chemprop" \
@@ -432,7 +432,7 @@ python -m SyntheMol.plot.plot_mcts_over_time \
 ```
 
 ```bash
-python -m SyntheMol.plot.plot_mcts_over_time \
+python -m synthemol.plot.plot_mcts_over_time \
     --data_path data/6_generations_chemprop_rdkit/molecules.csv \
     --save_dir plots/mcts_over_time/chemprop_rdkit \
     --model_name "Chemprop RDKit" \
@@ -440,7 +440,7 @@ python -m SyntheMol.plot.plot_mcts_over_time \
 ```
 
 ```bash
-python -m SyntheMol.plot.plot_mcts_over_time \
+python -m synthemol.plot.plot_mcts_over_time \
     --data_path data/7_generations_random_forest/molecules.csv \
     --save_dir plots/mcts_over_time/random_forest \
     --model_name "Random Forest" \
@@ -458,7 +458,7 @@ Assess generated molecules for novelty, score, and diversity for each model.
 
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
-python -m SyntheMol.plot.plot_generated_molecule_analysis \
+python -m synthemol.plot.plot_generated_molecule_analysis \
     --data_path data/${NAME}/molecules.csv \
     --save_dir data/${NAME} \
     --reference_paths data/1_training_data/antibiotics_hits.csv data/2_chembl/chembl.csv
@@ -471,7 +471,7 @@ Assess selected molecules for novelty, score, and diversity for each model.
 
 for NAME in chemprop chemprop_rdkit random_forest
 do
-python -m SyntheMol.plot.plot_generated_molecule_analysis \
+python -m synthemol.plot.plot_generated_molecule_analysis \
     --data_path data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
     --save_dir data/${NAME}/analysis_molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50 \
     --reference_paths data/1_training_data/antibiotics_hits.csv data/2_chembl/chembl.csv
@@ -517,7 +517,7 @@ chemfunc dimensionality_reduction \
 
 Show potent molecules vs test molecules.
 ```bash
-python -m SyntheMol.plotplot_toxicity \
+python -m synthemol.plotplot_toxicity \
     --test_dir models/clintox_chemprop_rdkit \
     --generated_path data/8_synthesized/potent.csv \
     --save_dir plots/toxicity

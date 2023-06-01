@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from chemfunc import compute_top_similarities
 
-from SyntheMol.constants import SCORE_COL, SMILES_COL
+from synthemol.constants import SCORE_COL, SMILES_COL
 
 
 def plot_scores(

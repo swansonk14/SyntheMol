@@ -1,15 +1,15 @@
-"""Utility functions for SyntheMol reactions."""
+"""Utility functions for synthemol reactions."""
 import pickle
 from pathlib import Path
 
 import pandas as pd
 
-from SyntheMol.constants import (
+from synthemol.constants import (
     BUILDING_BLOCKS_PATH,
     REAL_BUILDING_BLOCK_ID_COL,
     SMILES_COL
 )
-from SyntheMol.reactions.reaction import Reaction
+from synthemol.reactions.reaction import Reaction
 
 
 def set_all_building_blocks(

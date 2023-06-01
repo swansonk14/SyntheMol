@@ -2,7 +2,7 @@
 import numpy as np
 from sklearn.metrics import average_precision_score, mean_absolute_error, r2_score, roc_auc_score
 
-from SyntheMol.constants import DATASET_TYPES
+from synthemol.constants import DATASET_TYPES
 
 
 def evaluate_classification(

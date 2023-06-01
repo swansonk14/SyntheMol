@@ -6,7 +6,7 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 
-from SyntheMol.constants import DATASET_TYPES, SKLEARN_MODEL_NAME_TYPES, SKLEARN_MODEL_TYPES
+from synthemol.constants import DATASET_TYPES, SKLEARN_MODEL_NAME_TYPES, SKLEARN_MODEL_TYPES
 
 
 def sklearn_save(

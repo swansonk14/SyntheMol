@@ -4,7 +4,7 @@ from typing import Iterable
 
 from rdkit import Chem
 
-from SyntheMol.utils import convert_to_mol, strip_atom_mapping
+from synthemol.utils import convert_to_mol, strip_atom_mapping
 
 
 class QueryMol:

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from SyntheMol.constants import (
+from synthemol.constants import (
     BUILDING_BLOCKS_PATH,
     FINGERPRINT_TYPES,
     MODEL_TYPES,
@@ -14,9 +14,9 @@ from SyntheMol.constants import (
     SCORE_COL,
     SMILES_COL
 )
-from SyntheMol.reactions import REACTIONS, load_and_set_allowed_reaction_building_blocks, set_all_building_blocks
-from SyntheMol.generate.generator import Generator
-from SyntheMol.generate.utils import create_model_scoring_fn, save_generated_molecules
+from synthemol.reactions import REACTIONS, load_and_set_allowed_reaction_building_blocks, set_all_building_blocks
+from synthemol.generate.generator import Generator
+from synthemol.generate.utils import create_model_scoring_fn, save_generated_molecules
 
 
 def generate(

@@ -66,7 +66,7 @@ In the above command, replace `username` and `password` with the appropriate val
 
 Determine which building blocks are valid in which REAL reactions.
 ```bash
-python -m SyntheMol.data.map_real_reactions_to_building_blocks \
+python -m synthemol.data.map_real_reactions_to_building_blocks \
     --data_dir data/4_real_space/full_real \
     --save_path data/4_real_space/reaction_to_building_blocks.pkl
 ```
@@ -78,7 +78,7 @@ Total number of molecules = 31,507,987,117
 
 Determine which reactions and building blocks are most common in REAL space.
 ```bash
-python -m SyntheMol.data.count_real_space \
+python -m synthemol.data.count_real_space \
     --data_dir data/4_real_space/full_real \
     --save_dir data/4_real_space
 ```
@@ -88,7 +88,7 @@ python -m SyntheMol.data.count_real_space \
 
 Randomly sample 25,000 REAL Space molecules. This is used for analysis of a representative sample of REAL Space molecules.
 ```bash
-python -m SyntheMol.data.sample_real_space \
+python -m synthemol.data.sample_real_space \
     --data_dir data/4_real_space/full_real \
     --save_path data/4_real_space/random_real.csv \
     --num_molecules 25000
@@ -99,7 +99,7 @@ python -m SyntheMol.data.sample_real_space \
 
 Count feasible REAL Space molecules, i.e., those that can be produced when limited to the selected 13 reactions and the building blocks after processing.
 ```bash
-python -m SyntheMol.data.count_real_space \
+python -m synthemol.data.count_real_space \
     --data_dir data/4_real_space/full_real \
     --save_dir data/4_real_space \
     --building_blocks_path data/4_real_space/building_blocks.csv \

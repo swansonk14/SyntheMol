@@ -30,7 +30,7 @@ The antibiotics training data consists of three libraries of molecules tested ag
 
 Merge the three libraries into a single file and determine which molecules are hits.
 ```bash
-python -m SyntheMol.data.process_data \
+python -m synthemol.data.process_data \
     --data_paths data/1_training_data/library_1.csv data/library_2.csv data/library_3.csv \
     --save_path data/1_training_data/antibiotics.csv \
     --save_hits_path data/1_training_data/antibiotics_hits.csv
@@ -88,7 +88,7 @@ The files are:
 
 Merge these two files to form a single collection of antibiotic-related compounds.
 ```bash
-python -m SyntheMol.data.merge_chembl_downloads \
+python -m synthemol.data.merge_chembl_downloads \
     --data_paths data/2_chembl/chembl_antibacterial.csv data/2_chembl/chembl_antibiotic.csv \
     --labels antibacterial antibiotic \
     --save_path data/2_chembl/chembl.csv
@@ -114,7 +114,7 @@ TODO: figure out appropriate train and predict package imports
 
 Chemprop
 ```bash
-python -m SyntheMol.models.train \
+python -m synthemol.models.train \
     --data_path data/1_training_data/antibiotics.csv \
     --save_dir models/antibiotic_chemprop \
     --dataset_type classification \
@@ -125,7 +125,7 @@ python -m SyntheMol.models.train \
 
 Chemprop-RDKit
 ```bash
-python -m SyntheMol.models.train \
+python -m synthemol.models.train \
     --data_path data/1_training_data/antibiotics.csv \
     --save_dir models/antibiotic_chemprop_rdkit \
     --model_type chemprop \
@@ -137,7 +137,7 @@ python -m SyntheMol.models.train \
 
 Random forest
 ```bash
-python -m SyntheMol.models.train \
+python -m synthemol.models.train \
     --data_path data/1_training_data/antibiotics.csv \
     --save_dir models/antibiotic_random_forest \
     --model_type random_forest \
@@ -160,7 +160,7 @@ In order to speed up the generative model, we pre-compute the scores of all buil
 
 Chemprop
 ```bash
-python -m SyntheMol.models.predict \
+python -m synthemol.models.predict \
     --data_path data/4_real_space/building_blocks.csv \
     --model_path models/antibiotic_chemprop \
     --model_type chemprop \
@@ -169,7 +169,7 @@ python -m SyntheMol.models.predict \
 
 Chemprop-RDKit
 ```bash
-python -m SyntheMol.models.predict \
+python -m synthemol.models.predict \
     --data_path data/4_real_space/building_blocks.csv \
     --model_path models/antibiotic_chemprop_rdkit \
     --model_type chemprop \
@@ -179,7 +179,7 @@ python -m SyntheMol.models.predict \
 
 Random forest
 ```bash
-python -m SyntheMol.models.predict \
+python -m synthemol.models.predict \
     --data_path data/4_real_space/building_blocks.csv \
     --model_path models/antibiotic_random_forest \
     --model_type random_forest \
@@ -194,7 +194,7 @@ Here, we apply SyntheMol to generate molecules using a Monte Carlo tree search (
 
 Chemprop
 ```bash
-python -m SyntheMol.generate \
+python -m synthemol.generate \
     --model_path models/antibiotic_chemprop \
     --model_type chemprop \
     --building_blocks_path data/4_real_space/building_blocks.csv \
@@ -206,7 +206,7 @@ python -m SyntheMol.generate \
 
 Chemprop-RDKit
 ```bash
-python -m SyntheMol.generate \
+python -m synthemol.generate \
     --model_path models/antibiotic_chemprop_rdkit \
     --model_type chemprop \
     --building_blocks_path data/4_real_space/building_blocks.csv \
@@ -219,7 +219,7 @@ python -m SyntheMol.generate \
 
 Random forest
 ```bash
-python -m SyntheMol.generate \
+python -m synthemol.generate \
     --model_path models/antibiotic_random_forest \
     --model_type random_forest \
     --building_blocks_path data/4_real_space/building_blocks.csv \
@@ -360,7 +360,7 @@ Map generated molecules to REAL IDs in the format expected by Enamine to enable 
 
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
-python -m SyntheMol.data.map_generated_molecules_to_real_ids \
+python -m synthemol.data.map_generated_molecules_to_real_ids \
     --data_path data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
     --save_dir data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50_real_ids
 done
@@ -373,7 +373,7 @@ Predict the toxicity of the synthesized molecules by training a toxicity predict
 
 Train toxicity model using the `CT_TOX` property of the ClinTox dataset. (Note that the ClinTox properties `CT_TOX` and `FDA_APPROVED` are nearly always identical, so we only use one.)
 ```bash
-python -m SyntheMol.models.train \
+python -m synthemol.models.train \
     --data_path data/1_training_data/clintox.csv \
     --save_dir models/clintox_chemprop_rdkit \
     --model_type chemprop \
@@ -387,7 +387,7 @@ The model has an ROC-AUC of 0.881 +/- 0.045 and a PRC-AUC of 0.514 +/- 0.141 acr
 
 Make toxicity predictions on the synthesized molecules. The list of successfully synthesized generated molecules is in the `Data/8. Synthesized` subfolder of the Google Drive folder.
 ```bash
-python -m SyntheMol.models.predict \
+python -m synthemol.models.predict \
     --data_path data/8_synthesized/synthesized.csv \
     --model_path models/clintox_chemprop_rdkit \
     --model_type chemprop \

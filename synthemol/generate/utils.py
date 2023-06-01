@@ -8,9 +8,9 @@ import pandas as pd
 import torch
 from chemfunc import compute_fingerprint
 
-from SyntheMol.constants import FINGERPRINT_TYPES, MODEL_TYPES
-from SyntheMol.generate.node import Node
-from SyntheMol.models import (
+from synthemol.constants import FINGERPRINT_TYPES, MODEL_TYPES
+from synthemol.generate.node import Node
+from synthemol.models import (
     chemprop_load,
     chemprop_load_scaler,
     chemprop_predict_on_molecule_ensemble,

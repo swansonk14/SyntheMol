@@ -4,7 +4,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from SyntheMol.constants import SCORE_COL, SMILES_COL
+from synthemol.constants import SCORE_COL, SMILES_COL
 
 
 def plot_building_block_scores(

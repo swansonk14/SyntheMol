@@ -17,7 +17,7 @@ from sklearn_models import (
     sklearn_predict,
     sklearn_train
 )
-from SyntheMol.constants import DATASET_TYPES, FINGERPRINT_TYPES, MODEL_TYPES, SMILES_COL
+from synthemol.constants import DATASET_TYPES, FINGERPRINT_TYPES, MODEL_TYPES, SMILES_COL
 
 
 def train(

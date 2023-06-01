@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from tqdm import trange
 
-from SyntheMol.constants import REAL_BUILDING_BLOCK_ID_COL, SCORE_COL
+from synthemol.constants import REAL_BUILDING_BLOCK_ID_COL, SCORE_COL
 
 
 def plot_heatmap(

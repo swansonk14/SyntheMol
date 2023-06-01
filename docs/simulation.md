@@ -59,7 +59,7 @@ Train a Chemprop model on binary cLogP data using 30 epochs (strong model) or 1 
 
 for EPOCHS in 30 1
 do
-python -m SyntheMol.models.train \
+python -m synthemol.models.train \
     --data_path data/1_training_data/antibiotics.csv \
     --save_dir models/clogp_chemprop_${EPOCHS}_epochs \
     --dataset_type classification \
@@ -83,7 +83,7 @@ Map building blocks to model scores.
 
 for EPOCHS in 30 1
 do
-python -m SyntheMol.models.predict \
+python -m synthemol.models.predict \
     --data_path data/4_real_space/building_blocks.csv \
     --model_path models/clogp_chemprop_${EPOCHS}_epochs \
     --model_type chemprop \
@@ -100,7 +100,7 @@ Apply SyntheMol to generate molecules.
 
 for EPOCHS in 30 1
 do
-python -m SyntheMol.generate \
+python -m synthemol.generate \
     --model_path models/clogp_chemprop_${EPOCHS}_epochs \
     --model_type chemprop \
     --building_blocks_path data/4_real_space/building_blocks.csv \

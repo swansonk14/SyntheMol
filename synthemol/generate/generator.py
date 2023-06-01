@@ -7,10 +7,10 @@ import numpy as np
 from rdkit import Chem
 from tqdm import trange
 
-from SyntheMol.constants import OPTIMIZATION_TYPES
-from SyntheMol.generate.node import Node
-from SyntheMol.reactions import Reaction
-from SyntheMol.utils import random_choice
+from synthemol.constants import OPTIMIZATION_TYPES
+from synthemol.generate.node import Node
+from synthemol.reactions import Reaction
+from synthemol.utils import random_choice
 
 
 class Generator:

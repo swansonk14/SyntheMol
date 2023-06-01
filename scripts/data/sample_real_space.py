@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from SyntheMol.constants import (
+from synthemol.constants import (
     REAL_BUILDING_BLOCK_COLS,
     REAL_REACTION_COL,
     REAL_SMILES_COL,

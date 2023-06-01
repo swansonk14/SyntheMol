@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 from rdkit import Chem
 
-from SyntheMol.constants import CHEMBL_SMILES_COL
+from synthemol.constants import CHEMBL_SMILES_COL
 
 
 def merge_chembl_downloads(

@@ -6,7 +6,7 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 
-from SyntheMol.constants import SKLEARN_MODEL_TYPES
+from synthemol.constants import SKLEARN_MODEL_TYPES
 
 
 def sklearn_load(

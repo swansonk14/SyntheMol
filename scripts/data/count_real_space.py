@@ -8,13 +8,13 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from SyntheMol.constants import (
+from synthemol.constants import (
     REAL_BUILDING_BLOCK_COLS,
     REAL_REACTION_COL,
     REAL_BUILDING_BLOCK_ID_COL,
     REAL_SPACE_SIZE
 )
-from SyntheMol.reactions import REACTIONS
+from synthemol.reactions import REACTIONS
 
 
 USE_COLS = [REAL_REACTION_COL] + REAL_BUILDING_BLOCK_COLS
