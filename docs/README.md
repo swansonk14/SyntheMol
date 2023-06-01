@@ -18,3 +18,5 @@ Note that here, we use the 2021 q3-4 version of the building blocks and the 2022
 [clogp.md](clogp.md): Instructions for performing an _in silico_ study of SyntheMol using a computational molecular property, cLogP, which is the computed octanol-water partition coefficient.
 
 [antibiotics.md](antibiotics.md): Instructions for generating antibiotic candidates for _Acinetobacter baumannii_. Includes instructions for processing antibiotics data, training antibacterial activity prediction models, generating molecules with SyntheMol, and selecting candidates.
+
+[plots.md](plots.md) Instructions for producing plots analyzing the data and results.

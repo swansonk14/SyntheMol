@@ -2,6 +2,8 @@
 
 Instructions for generating antibiotic candidates for _Acinetobacter baumannii_. Includes instructions for processing antibiotics data, training antibacterial activity prediction models, generating molecules with SyntheMol, and selecting candidates. Assumes relevant data has already been downloaded (see [docs/README.md](README.md)).
 
+TODO: update TOC
+
 * [Process antibiotics training data](#process-antibiotics-training-data)
 * [Process ChEMBL antibacterials](#process-chembl-antibacterials)
 * [Build bioactivity prediction models](#build-bioactivity-prediction-models)
@@ -22,10 +24,10 @@ The antibiotics training data consists of three libraries of molecules tested ag
 
 Merge the three libraries into a single file and determine which molecules are hits.
 ```bash
-python -m synthemol.data.process_data \
-    --data_paths data/1_training_data/library_1.csv data/library_2.csv data/library_3.csv \
-    --save_path data/1_training_data/antibiotics.csv \
-    --save_hits_path data/1_training_data/antibiotics_hits.csv
+python scripts/data/process_data.py \
+    --data_paths data/Data/1_training_data/library_1.csv data/Data/1_training_data/library_2.csv data/Data/1_training_data/library_3.csv \
+    --save_path data/Data/1_training_data/antibiotics.csv \
+    --save_hits_path data/Data/1_training_data/antibiotics_hits.csv
 ```
 
 Output:
@@ -63,6 +65,8 @@ Number of hits = 470
 Number of non-hits = 13,054
 ```
 
+Note: Newer versions of RDKit canonicalize SMILES differently, which may result in different deduplication results. The results above were generated with RDKit version 2022.3.4.
+
 
 ## Process ChEMBL antibacterials
 
@@ -80,10 +84,10 @@ The files are:
 
 Merge these two files to form a single collection of antibiotic-related compounds.
 ```bash
-python -m synthemol.data.merge_chembl_downloads \
-    --data_paths data/2_chembl/chembl_antibacterial.csv data/2_chembl/chembl_antibiotic.csv \
+python scripts/data/merge_chembl_downloads.py \
+    --data_paths data/Data/2_chembl/chembl_antibacterial.csv data/Data/2_chembl/chembl_antibiotic.csv \
     --labels antibacterial antibiotic \
-    --save_path data/2_chembl/chembl.csv
+    --save_path data/Data/2_chembl/chembl.csv
 ```
 
 The file `chembl.csv` contains 1,005 molecules.
@@ -107,7 +111,7 @@ TODO: figure out appropriate train and predict package imports
 Chemprop
 ```bash
 python -m synthemol.models.train \
-    --data_path data/1_training_data/antibiotics.csv \
+    --data_path data/Data/1_training_data/antibiotics.csv \
     --save_dir models/antibiotic_chemprop \
     --dataset_type classification \
     --model_type chemprop \
@@ -118,7 +122,7 @@ python -m synthemol.models.train \
 Chemprop-RDKit
 ```bash
 python -m synthemol.models.train \
-    --data_path data/1_training_data/antibiotics.csv \
+    --data_path data/Data/1_training_data/antibiotics.csv \
     --save_dir models/antibiotic_chemprop_rdkit \
     --model_type chemprop \
     --dataset_type classification \
@@ -130,7 +134,7 @@ python -m synthemol.models.train \
 Random forest
 ```bash
 python -m synthemol.models.train \
-    --data_path data/1_training_data/antibiotics.csv \
+    --data_path data/Data/1_training_data/antibiotics.csv \
     --save_dir models/antibiotic_random_forest \
     --model_type random_forest \
     --dataset_type classification \
@@ -146,14 +150,14 @@ python -m synthemol.models.train \
 | Random forest  | 0.835 +/- 0.035 | 0.401 +/- 0.099 |
 
 
-### Map building blocks to model scores
+### Compute model scores for building blocks
 
 In order to speed up the generative model, we pre-compute the scores of all building blocks for each model.
 
 Chemprop
 ```bash
 python -m synthemol.models.predict \
-    --data_path data/4_real_space/building_blocks.csv \
+    --data_path data/Data/4_real_space/building_blocks.csv \
     --model_path models/antibiotic_chemprop \
     --model_type chemprop \
     --average_preds
@@ -162,7 +166,7 @@ python -m synthemol.models.predict \
 Chemprop-RDKit
 ```bash
 python -m synthemol.models.predict \
-    --data_path data/4_real_space/building_blocks.csv \
+    --data_path data/Data/4_real_space/building_blocks.csv \
     --model_path models/antibiotic_chemprop_rdkit \
     --model_type chemprop \
     --fingerprint_type rdkit \
@@ -172,7 +176,7 @@ python -m synthemol.models.predict \
 Random forest
 ```bash
 python -m synthemol.models.predict \
-    --data_path data/4_real_space/building_blocks.csv \
+    --data_path data/Data/4_real_space/building_blocks.csv \
     --model_path models/antibiotic_random_forest \
     --model_type random_forest \
     --fingerprint_type rdkit \
@@ -189,9 +193,9 @@ Chemprop
 python -m synthemol.generate \
     --model_path models/antibiotic_chemprop \
     --model_type chemprop \
-    --building_blocks_path data/4_real_space/building_blocks.csv \
-    --save_dir data/5_generations_chemprop \
-    --reaction_to_building_blocks_path data/4_real_space/reaction_to_building_blocks.pkl \
+    --building_blocks_path data/Data/4_real_space/building_blocks.csv \
+    --save_dir data/Data/5_generations_chemprop \
+    --reaction_to_building_blocks_path data/Data/4_real_space/reaction_to_building_blocks.pkl \
     --max_reactions 1 \
     --n_rollout 20000
 ```
@@ -201,10 +205,10 @@ Chemprop-RDKit
 python -m synthemol.generate \
     --model_path models/antibiotic_chemprop_rdkit \
     --model_type chemprop \
-    --building_blocks_path data/4_real_space/building_blocks.csv \
-    --save_dir data/6_generations_chemprop_rdkit \
+    --building_blocks_path data/Data/4_real_space/building_blocks.csv \
+    --save_dir data/Data/6_generations_chemprop_rdkit \
     --fingerprint_type rdkit \
-    --reaction_to_building_blocks_path data/4_real_space/reaction_to_building_blocks.pkl \
+    --reaction_to_building_blocks_path data/Data/4_real_space/reaction_to_building_blocks.pkl \
     --max_reactions 1 \
     --n_rollout 20000
 ```
@@ -214,10 +218,10 @@ Random forest
 python -m synthemol.generate \
     --model_path models/antibiotic_random_forest \
     --model_type random_forest \
-    --building_blocks_path data/4_real_space/building_blocks.csv \
-    --save_dir data/7_generations_random_forest \
+    --building_blocks_path data/Data/4_real_space/building_blocks.csv \
+    --save_dir data/Data/7_generations_random_forest \
     --fingerprint_type rdkit \
-    --reaction_to_building_blocks_path data/4_real_space/reaction_to_building_blocks.pkl \
+    --reaction_to_building_blocks_path data/Data/4_real_space/reaction_to_building_blocks.pkl \
     --max_reactions 1 \
     --n_rollout 20000
 ```
@@ -241,8 +245,8 @@ Compute Tversky similarity to train hits.
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
 chemfunc nearest_neighbor \
-    --data_path data/${NAME}/molecules.csv \
-    --reference_data_path data/1_training_data/antibiotics_hits.csv \
+    --data_path data/Data/${NAME}/molecules.csv \
+    --reference_data_path data/Data/1_training_data/antibiotics_hits.csv \
     --reference_name antibiotics_hits \
     --metrics tversky
 done
@@ -255,8 +259,8 @@ Compute Tversky similarity to ChEMBL antibacterials.
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
 chemfunc nearest_neighbor \
-    --data_path data/${NAME}/molecules.csv \
-    --reference_data_path data/2_chembl/chembl.csv \
+    --data_path data/Data/${NAME}/molecules.csv \
+    --reference_data_path data/Data/2_chembl/chembl.csv \
     --reference_name chembl \
     --metrics tversky
 done
@@ -271,8 +275,8 @@ Filter by Tversky similarity to train hits.
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
 chemfunc filter_molecules \
-    --data_path data/${NAME}/molecules.csv \
-    --save_path data/${NAME}/molecules_train_sim_below_0.5.csv \
+    --data_path data/Data/${NAME}/molecules.csv \
+    --save_path data/Data/${NAME}/molecules_train_sim_below_0.5.csv \
     --filter_column antibiotics_hits_tversky_nearest_neighbor_similarity \
     --max_value 0.5
 done
@@ -285,8 +289,8 @@ Filter by Tversky similarity to ChEMBL antibacterials.
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
 chemfunc filter_molecules \
-    --data_path data/${NAME}/molecules_train_sim_below_0.5.csv \
-    --save_path data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5.csv \
+    --data_path data/Data/${NAME}/molecules_train_sim_below_0.5.csv \
+    --save_path data/Data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5.csv \
     --filter_column chembl_tversky_nearest_neighbor_similarity \
     --max_value 0.5
 done
@@ -302,8 +306,8 @@ Filter for high-scoring molecules (i.e., predicted bioactivity) by only keeping 
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
 chemfunc filter_molecules \
-    --data_path data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5.csv \
-    --save_path data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
+    --data_path data/Data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5.csv \
+    --save_path data/Data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
     --filter_column score \
     --top_proportion 0.2
 done
@@ -321,7 +325,7 @@ Cluster molecules based on their Morgan fingerprint.
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
 chemfunc cluster_molecules \
-    --data_path data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
+    --data_path data/Data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
     --num_clusters 50
 done
 ```
@@ -333,8 +337,8 @@ Select the top scoring molecule from each cluster.
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
 chemfunc select_from_clusters \
-    --data_path data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
-    --save_path data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
+    --data_path data/Data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
+    --save_path data/Data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
     --value_column score
 done
 ```
@@ -353,8 +357,8 @@ Map generated molecules to REAL IDs in the format expected by Enamine to enable 
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
 python -m synthemol.data.map_generated_molecules_to_real_ids \
-    --data_path data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
-    --save_dir data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50_real_ids
+    --data_path data/Data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
+    --save_dir data/Data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50_real_ids
 done
 ```
 
@@ -366,7 +370,7 @@ Predict the toxicity of the synthesized molecules by training a toxicity predict
 Train toxicity model using the `CT_TOX` property of the ClinTox dataset. (Note that the ClinTox properties `CT_TOX` and `FDA_APPROVED` are nearly always identical, so we only use one.)
 ```bash
 python -m synthemol.models.train \
-    --data_path data/1_training_data/clintox.csv \
+    --data_path data/Data/1_training_data/clintox.csv \
     --save_dir models/clintox_chemprop_rdkit \
     --model_type chemprop \
     --dataset_type classification \
@@ -380,7 +384,7 @@ The model has an ROC-AUC of 0.881 +/- 0.045 and a PRC-AUC of 0.514 +/- 0.141 acr
 Make toxicity predictions on the synthesized molecules. The list of successfully synthesized generated molecules is in the `Data/8. Synthesized` subfolder of the Google Drive folder.
 ```bash
 python -m synthemol.models.predict \
-    --data_path data/8_synthesized/synthesized.csv \
+    --data_path data/Data/8_synthesized/synthesized.csv \
     --model_path models/clintox_chemprop_rdkit \
     --model_type chemprop \
     --fingerprint_type rdkit \

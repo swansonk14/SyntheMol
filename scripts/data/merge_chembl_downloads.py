@@ -58,7 +58,7 @@ def merge_chembl_downloads(
     data.sort_values(by='smiles', inplace=True)
 
     # Change order of columns
-    new_columns = ['smiles', 'chembl_smiles', 'labels']
+    new_columns = ['smiles', 'labels']
     data = data[new_columns + list(data.columns)[:-len(new_columns)]]
 
     print(f'Merged data size = {len(data):,}')

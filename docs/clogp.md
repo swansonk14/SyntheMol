@@ -6,6 +6,8 @@ TODO: potentially change order of cLogP data in Google Drive and add to suppleme
 
 TODO: update TOC
 
+TODO: for all models, compute building block scores as CSV rather than JSON
+
 * [Compute cLogP](#compute-clogp)
 * [Binarize clogP](#binarize-clogp)
 * [Train model](#train-model)
@@ -80,17 +82,18 @@ done
 **30 epochs:** ROC-AUC = 0.973 +/- 0.007, PRC-AUC = 0.736 +/- 0.049
 
 
-## Map building blocks to model scores
+## Compute model scores for building blocks
 
-Map building blocks to model scores.
+Compute model scores for building blocks.
 ```bash
 #!/bin/bash
 
-for EPOCHS in 30 1
+for EPOCHS in 1 30
 do
-python -m synthemol.models.predict \
+python scripts/models/predict.py \
     --data_path data/Data/4_real_space/building_blocks.csv \
-    --model_path models/clogp_chemprop_${EPOCHS}_epochs \
+    --save_path data/Models/clogp_chemprop_${EPOCHS}_epochs/building_blocks.csv \
+    --model_path data/Models/clogp_chemprop_${EPOCHS}_epochs \
     --model_type chemprop \
     --average_preds
 done
@@ -103,7 +106,7 @@ Apply SyntheMol to generate molecules.
 ```bash
 #!/bin/bash
 
-for EPOCHS in 30 1
+for EPOCHS in 1 30
 do
 python -m synthemol.generate \
     --model_path models/clogp_chemprop_${EPOCHS}_epochs \
@@ -127,7 +130,7 @@ Compute the true cLogP for generated molecules.
 ```bash
 #!/bin/bash
 
-for EPOCHS in 30 1
+for EPOCHS in 1 30
 do
 chemfunc compute_properties \
     --data_path data/Data/10_generations_clogp/clogp_chemprop_${EPOCHS}_epochs/molecules.csv \
@@ -151,7 +154,7 @@ chemfunc plot_property_distribution \
 Binarize the true cLogP for generated molecules using the 6.5 threshold.
 
 ```bash
-for EPOCHS in 30 1
+for EPOCHS in 1 30
 do
 chemfunc regression_to_classification \
     --data_path data/Data/10_generations_clogp/clogp_chemprop_${EPOCHS}_epochs/molecules.csv \

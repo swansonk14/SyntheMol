@@ -1,8 +1,8 @@
 # Plots
 
-This file contains instructions for generating plots analyzing the data and results for antibiotic generation from our paper [TODO](TODO).
+Instructions for producing plots analyzing the data and results. Assumes relevant data has already been downloaded (see [docs/README.md](README.md)).
 
-The data and models referred to in this file can be downloaded from the Google Drive folder [here](https://drive.google.com/drive/folders/1VLPPUbY_FTKMjlXgRm09bPSSms206Dce?usp=share_link). Note that the instructions below assume that the relevant data is downloaded to the `data` and `model` directories.
+TODO: update TOC
 
 * [Data](#data)
   + [Data distribution](#data-distribution)

@@ -6,17 +6,15 @@ import numpy as np
 import pandas as pd
 from rdkit import Chem
 
-
-ACTIVITY_COLUMN = 'activity'
-SMILES_COLUMN = 'smiles'
+from synthemol.constants import ACTIVITY_COL, SMILES_COL
 
 
 def process_data(
         data_paths: list[Path],
         save_path: Path,
         save_hits_path: Path | None = None,
-        smiles_column: str = 'SMILES',
-        mean_column: str = 'Mean',
+        smiles_column: str = SMILES_COL,
+        mean_column: str = 'mean',
         num_std: int = 2
 ) -> None:
     """Process regression data from potentially multiple files, including binarization and deduplication.
@@ -61,8 +59,8 @@ def process_data(
 
     # Combine the data
     data = pd.DataFrame({
-        SMILES_COLUMN: all_smiles,
-        ACTIVITY_COLUMN: all_activities
+        SMILES_COL: all_smiles,
+        ACTIVITY_COL: all_activities
     })
     print(f'Full data size = {len(data):,}')
 
@@ -72,12 +70,12 @@ def process_data(
 
     # Drop duplicates with conflicting values
     smiles_to_values = defaultdict(set)
-    for smiles, value in zip(data[SMILES_COLUMN], data[ACTIVITY_COLUMN]):
+    for smiles, value in zip(data[SMILES_COL], data[ACTIVITY_COL]):
         smiles_to_values[smiles].add(value)
 
     conflicting_smiles = {smiles for smiles, values in smiles_to_values.items() if len(values) > 1}
 
-    data = data[~data[SMILES_COLUMN].isin(conflicting_smiles)]
+    data = data[~data[SMILES_COL].isin(conflicting_smiles)]
     print(f'Data size after dropping conflicting duplicates = {len(data):,}')
     print()
 
@@ -86,13 +84,13 @@ def process_data(
     data.to_csv(save_path, index=False)
 
     print(f'Final data size = {len(data):,}')
-    print(f'Number of hits = {sum(data[ACTIVITY_COLUMN] == 1):,}')
-    print(f'Number of non-hits = {sum(data[ACTIVITY_COLUMN] == 0):,}')
+    print(f'Number of hits = {sum(data[ACTIVITY_COL] == 1):,}')
+    print(f'Number of non-hits = {sum(data[ACTIVITY_COL] == 0):,}')
 
     # Save hits
     if save_hits_path is not None:
         save_hits_path.parent.mkdir(parents=True, exist_ok=True)
-        hits = data[data[ACTIVITY_COLUMN] == 1]
+        hits = data[data[ACTIVITY_COL] == 1]
         hits.to_csv(save_hits_path, index=False)
 
 

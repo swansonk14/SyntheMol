@@ -15,6 +15,7 @@ REAL_BUILDING_BLOCK_ID_COL = 'ID'
 REAL_TYPE_COL = 'Type'
 REAL_SMILES_COL = 'smiles'
 SMILES_COL = 'smiles'
+ACTIVITY_COL = 'activity'
 SCORE_COL = 'score'
 MODEL_TYPE = Literal['random_forest', 'mlp', 'chemprop']
 FINGERPRINT_TYPES = Literal['morgan', 'rdkit']

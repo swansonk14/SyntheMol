@@ -8,6 +8,8 @@ import pandas as pd
 from scipy.interpolate import interp1d
 from sklearn.metrics import precision_recall_curve, roc_auc_score, roc_curve, average_precision_score
 
+from synthemol.constants import ACTIVITY_COL
+
 
 def compute_curve(
         activities: pd.Series,
@@ -40,7 +42,7 @@ def plot_auc(
         save_dir: Path,
         model_name: str,
         curve_type: Literal['ROC', 'PRC'],
-        activity_column: str = 'activity',
+        activity_column: str = ACTIVITY_COL,
         prediction_column: str = 'prediction'
 ) -> None:
     """Plot ROC or precision recall curves and compute AUCs given a set of predictions and true values.
