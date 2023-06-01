@@ -30,10 +30,12 @@ TODO
 
 TODO: put SyntheMol on pip
 
-Create conda environment.
+TODO: consider renaming SyntheMol to synthemol
+
+Optionally, create a conda environment.
 ```bash
-conda create --name SyntheMol python=3.10
-conda activate SyntheMol
+conda create -y -n synthemol python=3.10
+conda activate synthemol
 ```
 
 Install SyntheMol via pip.
@@ -45,6 +47,12 @@ Alternatively, clone the repo and install SyntheMol locally.
 ```bash
 git clone https://github.com/swansonk14/SyntheMol.git
 cd SyntheMol
+pip install -e .
+```
+
+If there are version issues with the required packages, create a conda environment with specific working versions of the packages as follows.
+```bash
+pip install -r requirements.txt
 pip install -e .
 ```
 

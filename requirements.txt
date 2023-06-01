@@ -1,0 +1,13 @@
+chemfunc==1.0.0
+chemprop==1.5.2
+descriptastorus==2.6.0
+gdown==4.7.1
+matplotlib==3.7.1
+numpy==1.24.3
+pandas==2.0.1
+rdkit==2023.3.1
+scikit-learn==1.2.2
+scipy==1.10.1
+torch==2.0.1
+tqdm==4.65.0
+typed-argument-parser==1.8.0
