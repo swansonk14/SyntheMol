@@ -13,11 +13,9 @@ from chemprop_models import (
     chemprop_train
 )
 from evaluate import evaluate
-from sklearn_models import (
-    sklearn_predict,
-    sklearn_train
-)
+from sklearn_models import sklearn_train
 from synthemol.constants import DATASET_TYPES, FINGERPRINT_TYPES, MODEL_TYPES, SMILES_COL
+from synthemol.models import sklearn_predict
 
 
 def train(
