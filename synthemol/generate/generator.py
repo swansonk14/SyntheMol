@@ -75,15 +75,15 @@ class Generator:
             raise ValueError(f'Invalid optimization type: {self.optimization}')
 
         # Initialize the root node
+        self.rollout_num = 0
         self.root = Node(
             explore_weight=explore_weight,
             scoring_fn=scoring_fn,
             node_id=0,
-            rollout_num=0
+            rollout_num=self.rollout_num
         )
 
         # Initialize the rollout num, node map, building block counts, and node to children
-        self.rollout_num = 1
         self.node_map: dict[Node, Node] = {self.root: self.root}
         self.building_block_counts = Counter()
         self.node_to_children: dict[Node, list[Node]] = {}
@@ -369,8 +369,8 @@ class Generator:
         :return: A list of Node objects sorted from best to worst score.
         """
         # Set up rollout bounds
-        rollout_start = self.rollout_num
-        rollout_end = self.rollout_num + n_rollout
+        rollout_start = self.rollout_num + 1
+        rollout_end = rollout_start + n_rollout
 
         print(f'Running rollouts {rollout_start} through {rollout_end - 1}')
 
