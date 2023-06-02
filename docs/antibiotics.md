@@ -155,18 +155,20 @@ In order to speed up the generative model, we pre-compute the scores of all buil
 
 Chemprop
 ```bash
-python -m synthemol.models.predict \
+python scripts/models/predict.py \
     --data_path data/Data/4_real_space/building_blocks.csv \
-    --model_path models/antibiotic_chemprop \
+    --save_path data/Models/antibiotic_chemprop/building_blocks.csv \
+    --model_path data/Models/antibiotic_chemprop \
     --model_type chemprop \
     --average_preds
 ```
 
 Chemprop-RDKit
 ```bash
-python -m synthemol.models.predict \
+python scripts/models/predict.py \
     --data_path data/Data/4_real_space/building_blocks.csv \
-    --model_path models/antibiotic_chemprop_rdkit \
+    --save_path data/Models/antibiotic_chemprop_rdkit/building_blocks.csv \
+    --model_path data/Models/antibiotic_chemprop_rdkit \
     --model_type chemprop \
     --fingerprint_type rdkit \
     --average_preds
@@ -174,9 +176,10 @@ python -m synthemol.models.predict \
 
 Random forest
 ```bash
-python -m synthemol.models.predict \
+python scripts/models/predict.py \
     --data_path data/Data/4_real_space/building_blocks.csv \
-    --model_path models/antibiotic_random_forest \
+    --save_path data/Models/antibiotic_random_forest/building_blocks.csv \
+    --model_path data/Models/antibiotic_random_forest \
     --model_type random_forest \
     --fingerprint_type rdkit \
     --average_preds
@@ -189,38 +192,44 @@ Here, we apply SyntheMol to generate molecules using a Monte Carlo tree search (
 
 Chemprop
 ```bash
-python -m synthemol.generate \
-    --model_path models/antibiotic_chemprop \
+synthemol \
+    --model_path data/Models/antibiotic_chemprop \
     --model_type chemprop \
-    --building_blocks_path data/Data/4_real_space/building_blocks.csv \
-    --save_dir data/Data/5_generations_chemprop \
+    --building_blocks_path data/Models/antibiotic_chemprop/building_blocks.csv \
+    --building_blocks_score_column chemprop_ensemble_preds \
+    --building_blocks_id_column Reagent_ID \
     --reaction_to_building_blocks_path data/Data/4_real_space/reaction_to_building_blocks.pkl \
+    --save_dir data/Data/5_generations_chemprop \
     --max_reactions 1 \
     --n_rollout 20000
 ```
 
 Chemprop-RDKit
 ```bash
-python -m synthemol.generate \
-    --model_path models/antibiotic_chemprop_rdkit \
+synthemol \
+    --model_path data/Models/antibiotic_chemprop_rdkit \
     --model_type chemprop \
-    --building_blocks_path data/Data/4_real_space/building_blocks.csv \
+    --building_blocks_path data/Models/antibiotic_chemprop_rdkit/building_blocks.csv \
+    --building_blocks_score_column chemprop_rdkit_ensemble_preds \
+    --building_blocks_id_column Reagent_ID \
+    --reaction_to_building_blocks_path data/Data/4_real_space/reaction_to_building_blocks.pkl \
     --save_dir data/Data/6_generations_chemprop_rdkit \
     --fingerprint_type rdkit \
-    --reaction_to_building_blocks_path data/Data/4_real_space/reaction_to_building_blocks.pkl \
     --max_reactions 1 \
     --n_rollout 20000
 ```
 
 Random forest
 ```bash
-python -m synthemol.generate \
-    --model_path models/antibiotic_random_forest \
+synthemol \
+    --model_path data/Models/antibiotic_random_forest \
     --model_type random_forest \
-    --building_blocks_path data/Data/4_real_space/building_blocks.csv \
+    --building_blocks_path data/Models/antibiotic_random_forest/building_blocks.csv \
+    --building_blocks_score_column random_forest_rdkit_ensemble_preds \
+    --building_blocks_id_column Reagent_ID \
+    --reaction_to_building_blocks_path data/Data/4_real_space/reaction_to_building_blocks.pkl \
     --save_dir data/Data/7_generations_random_forest \
     --fingerprint_type rdkit \
-    --reaction_to_building_blocks_path data/Data/4_real_space/reaction_to_building_blocks.pkl \
     --max_reactions 1 \
     --n_rollout 20000
 ```
