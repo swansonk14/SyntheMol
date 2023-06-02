@@ -27,10 +27,8 @@ def map_generated_molecules_to_real_ids(
 
     # Get building block columns
     building_block_columns = sorted(
-        column for column in data.columns if column.startswith('reagent_1_') and column.endswith('_id')
+        column for column in data.columns if column.startswith('building_block_1_') and column.endswith('_id')
     )
-
-    # TODO: handle the case of a building block having multiple IDs
 
     # Compute REAL IDs without prefixes
     real_ids = [

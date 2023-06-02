@@ -252,7 +252,7 @@ chemfunc nearest_neighbor \
     --data_path data/Data/${NAME}/molecules.csv \
     --reference_data_path data/Data/1_training_data/antibiotics_hits.csv \
     --reference_name antibiotics_hits \
-    --metrics tversky
+    --metric tversky
 done
 ```
 
@@ -264,7 +264,7 @@ chemfunc nearest_neighbor \
     --data_path data/Data/${NAME}/molecules.csv \
     --reference_data_path data/Data/2_chembl/chembl.csv \
     --reference_name chembl \
-    --metrics tversky
+    --metric tversky
 done
 ```
 
@@ -276,7 +276,7 @@ for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_ra
 do
 chemfunc filter_molecules \
     --data_path data/Data/${NAME}/molecules.csv \
-    --save_path data/Data/${NAME}/molecules_train_sim_below_0.5.csv \
+    --save_path data/Data/${NAME}/molecules_antibiotics_hits_sim_below_0.5.csv \
     --filter_column antibiotics_hits_tversky_nearest_neighbor_similarity \
     --max_value 0.5
 done
@@ -287,8 +287,8 @@ Filter by Tversky similarity to ChEMBL antibacterials.
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
 chemfunc filter_molecules \
-    --data_path data/Data/${NAME}/molecules_train_sim_below_0.5.csv \
-    --save_path data/Data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5.csv \
+    --data_path data/Data/${NAME}/molecules_antibiotics_hits_sim_below_0.5.csv \
+    --save_path data/Data/${NAME}/molecules_antibiotics_hits_sim_below_0.5_chembl_sim_below_0.5.csv \
     --filter_column chembl_tversky_nearest_neighbor_similarity \
     --max_value 0.5
 done
@@ -302,8 +302,8 @@ Filter for high-scoring molecules (i.e., predicted bioactivity) by only keeping 
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
 chemfunc filter_molecules \
-    --data_path data/Data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5.csv \
-    --save_path data/Data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
+    --data_path data/Data/${NAME}/molecules_antibiotics_hits_sim_below_0.5_chembl_sim_below_0.5.csv \
+    --save_path data/Data/${NAME}/molecules_antibiotics_hits_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
     --filter_column score \
     --top_proportion 0.2
 done
@@ -319,7 +319,7 @@ Cluster molecules based on their Morgan fingerprint.
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
 chemfunc cluster_molecules \
-    --data_path data/Data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
+    --data_path data/Data/${NAME}/molecules_antibiotics_hits_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
     --num_clusters 50
 done
 ```
@@ -329,8 +329,8 @@ Select the top scoring molecule from each cluster.
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
 chemfunc select_from_clusters \
-    --data_path data/Data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
-    --save_path data/Data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
+    --data_path data/Data/${NAME}/molecules_antibiotics_hits_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
+    --save_path data/Data/${NAME}/molecules_antibiotics_hits_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
     --value_column score
 done
 ```
@@ -340,15 +340,15 @@ We now have 50 molecules selected from each model's generations that meet our de
 
 ## Map molecules to REAL IDs
 
-TODO: change to use all possible IDs for each SMILES
+TODO: add to google drive?
 
 Map generated molecules to REAL IDs in the format expected by Enamine to enable a lookup in the Enamine REAL Space database.
 ```bash
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
-python -m synthemol.data.map_generated_molecules_to_real_ids \
-    --data_path data/Data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
-    --save_dir data/Data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50_real_ids
+python scripts/data/map_generated_molecules_to_real_ids.py \
+    --data_path data/Data/${NAME}/molecules_antibiotics_hits_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
+    --save_dir data/Data/${NAME}/molecules_antibiotics_hits_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50_real_ids
 done
 ```
 
@@ -371,7 +371,7 @@ python scripts/models/train.py \
 
 The model has an ROC-AUC of 0.881 +/- 0.045 and a PRC-AUC of 0.514 +/- 0.141 across 10-fold cross-validation.
 
-Make toxicity predictions on the synthesized molecules. The list of successfully synthesized generated molecules is in the `Data/8. Synthesized` subfolder of the Google Drive folder.
+Make toxicity predictions on the synthesized molecules. The list of successfully synthesized generated molecules is in the `data/Data/8_synthesized` subfolder of the Google Drive folder.
 ```bash
 python scripts/models/predict.py \
     --data_path data/Data/8_synthesized/synthesized.csv \

@@ -61,7 +61,7 @@ chemfunc dimensionality_reduction \
      library_1_hits library_2_hits library_3_hits  \
     --highlight_data_names library_1_hits library_2_hits library_3_hits \
     --smiles_columns smiles SMILES SMILES SMILES smiles smiles smiles \
-    --save_dir plots/tsne/train_vs_train_hits_vs_chembl
+    --save_path plots/tsne/train_vs_train_hits_vs_chembl.pdf
 ```
 
 ## Property prediction model
@@ -307,7 +307,7 @@ chemfunc dimensionality_reduction \
     --max_molecules 7500 1000 1000 500 \
     --data_names REAL_molecules REAL_building_blocks train train_hits \
     --highlight_data_names train_hits \
-    --save_dir plots/tsne/train_vs_train_hits_vs_real_vs_real_building_blocks
+    --save_path plots/tsne/train_vs_train_hits_vs_real_vs_real_building_blocks.pdf
 ```
 
 
@@ -494,7 +494,7 @@ chemfunc dimensionality_reduction \
     --max_molecules 2000 \
     --highlight_data_names train_hits chemprop chemprop_rdkit random_forest \
     --colors blue black red orange blue black red orange \
-    --save_dir plots/tsne/train_vs_train_hits_vs_generated_selected
+    --save_path plots/tsne/train_vs_train_hits_vs_generated_selected.pdf
 ```
 
 ### ClinTox predictions
