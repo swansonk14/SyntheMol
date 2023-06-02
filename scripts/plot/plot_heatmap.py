@@ -27,8 +27,6 @@ def plot_heatmap(
     :param building_blocks_id_column: Name of the column in the building blocks file containing building block IDs.
     :param building_blocks_score_column: Name of the column in the building blocks file containing building block scores.
     """
-    # TODO: change MCTS saving to save a CSV file with the node scores for each rollout
-
     # Load data
     data = pd.read_csv(data_path)
     building_blocks = pd.read_csv(building_blocks_path)

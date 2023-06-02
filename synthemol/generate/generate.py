@@ -116,11 +116,9 @@ def generate(
 
     # Set up Generator
     generator = Generator(
-        search_type='mcts',  # TODO: provide random option
         building_block_smiles_to_id=building_block_smiles_to_id,
         max_reactions=max_reactions,
         scoring_fn=model_scoring_fn,
-        n_rollout=n_rollout,
         explore_weight=explore_weight,
         num_expand_nodes=num_expand_nodes,
         optimization=optimization,
@@ -133,7 +131,7 @@ def generate(
 
     # Search for molecules
     start_time = datetime.now()
-    nodes = generator.generate()
+    nodes = generator.generate(n_rollout=n_rollout)
 
     # Compute, print, and save stats
     stats = {
@@ -160,6 +158,7 @@ def generate(
     )
 
     # TODO: add plotting here
+
 
 def generate_command_line() -> None:
     """Run generate function from command line."""

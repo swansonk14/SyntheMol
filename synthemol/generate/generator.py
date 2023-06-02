@@ -17,11 +17,9 @@ class Generator:
     """A class that generates molecules."""
 
     def __init__(self,
-                 search_type: Literal['mcts', 'random'],  # TODO: how to handle different search types?
                  building_block_smiles_to_id: dict[str, int],
                  max_reactions: int,
                  scoring_fn: Callable[[str], float],
-                 n_rollout: int,
                  explore_weight: float,
                  num_expand_nodes: Optional[int],
                  optimization: OPTIMIZATION_TYPES,
@@ -32,11 +30,9 @@ class Generator:
                  verbose: bool) -> None:
         """Creates the Generator.
 
-        :param search_type: Type of search to perform.
         :param building_block_smiles_to_id: A dictionary mapping building block SMILES to their IDs.
         :param max_reactions: The maximum number of reactions to use to construct a molecule.
         :param scoring_fn: A function that takes as input a SMILES representing a molecule and returns a score.
-        :param n_rollout: The number of times to run the tree search.
         :param explore_weight: The hyperparameter that encourages exploration.
         :param num_expand_nodes: The number of tree nodes to expand when extending the child nodes in the search tree.
                                   If None, then all nodes are expanded.
@@ -49,11 +45,9 @@ class Generator:
                             the memory usage (e.g., 450GB for 20,000 rollouts instead of 600 MB).
         :param verbose: Whether to print out additional statements during generation.
         """
-        self.search_type = search_type
         self.building_block_smiles_to_id = building_block_smiles_to_id
         self.max_reactions = max_reactions
         self.scoring_fn = scoring_fn
-        self.n_rollout = n_rollout
         self.explore_weight = explore_weight
         self.num_expand_nodes = num_expand_nodes
         self.optimization = optimization
@@ -81,7 +75,6 @@ class Generator:
             raise ValueError(f'Invalid optimization type: {self.optimization}')
 
         # Initialize the root node
-        self.rollout_num = 0
         self.root = Node(
             explore_weight=explore_weight,
             scoring_fn=scoring_fn,
@@ -89,7 +82,8 @@ class Generator:
             rollout_num=0
         )
 
-        # Initialize the node map, building block counts, and node to children
+        # Initialize the rollout num, node map, building block counts, and node to children
+        self.rollout_num = 1
         self.node_map: dict[Node, Node] = {self.root: self.root}
         self.building_block_counts = Counter()
         self.node_to_children: dict[Node, list[Node]] = {}
@@ -338,21 +332,12 @@ class Generator:
             else:
                 raise ValueError('Failed to expand a partially expanded node.')
 
-        # Select a node based on the search type
-        if self.search_type == 'mcts':
-            total_visit_count = sum(child_node.N for child_node in child_nodes)
-            selected_node = self.optimization_fn(
-                child_nodes,
-                key=partial(self.compute_mcts_score, total_visit_count=total_visit_count)
-            )
-        # TODO: make sure random search works
-        elif self.search_type == 'random':
-            selected_node = random_choice(
-                rng=self.rng,
-                array=child_nodes
-            )
-        else:
-            raise ValueError(f'Search type "{self.search_type}" is not supported.')
+        # Select a node based on the MCTS score
+        total_visit_count = sum(child_node.N for child_node in child_nodes)
+        selected_node = self.optimization_fn(
+            child_nodes,
+            key=partial(self.compute_mcts_score, total_visit_count=total_visit_count)
+        )
 
         # Check the node map and merge with an existing node if available
         if selected_node in self.node_map:
@@ -375,22 +360,31 @@ class Generator:
 
         return v
 
-    def generate(self) -> list[Node]:
-        """Generate molecules.
+    def generate(self, n_rollout: int) -> list[Node]:
+        """Generate molecules for the specified number of rollouts.
 
         NOTE: Only returns Nodes with exactly one molecule and at least one reaction.
 
+        :param n_rollout: The number of rollouts to perform.
         :return: A list of Node objects sorted from best to worst score.
         """
-        # TODO: handle calling this twice
+        # Set up rollout bounds
+        rollout_start = self.rollout_num
+        rollout_end = self.rollout_num + n_rollout
+
+        print(f'Running rollouts {rollout_start} through {rollout_end - 1}')
 
         # Run the generation algorithm for the specified number of rollouts
-        for rollout_index in trange(self.n_rollout):
-            self.rollout_num = rollout_index + 1
+        for rollout_num in trange(rollout_start, rollout_end):
+            self.rollout_num = rollout_num
             self.rollout(node=self.root)
 
-        # Get all the Nodes representing fully constructed molecules that are not initial building blocks
-        nodes = [node for _, node in self.node_map.items() if node.num_molecules == 1 and node.num_reactions > 0]
+        # Get all the Nodes representing fully constructed molecules that are not building blocks within these rollouts
+        nodes = [
+            node
+            for _, node in self.node_map.items()
+            if node.num_molecules == 1 and node.num_reactions > 0 and (rollout_start <= node.rollout_num < rollout_end)
+        ]
 
         # Sort by score and break ties by using Node ID
         nodes = sorted(
