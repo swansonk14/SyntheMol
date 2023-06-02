@@ -2,10 +2,6 @@
 
 Instructions for performing an _in silico_ study of SyntheMol using a computational molecular property, cLogP, which is the computed octanol-water partition coefficient. Assumes relevant data has already been downloaded (see [docs/README.md](README.md)).
 
-TODO: potentially change order of cLogP data in Google Drive and add to supplementary table
-
-TODO: for all models, compute building block scores as CSV rather than JSON
-
 - [Compute cLogP](#compute-clogp)
 - [Binarize clogP](#binarize-clogp)
 - [Train model](#train-model)

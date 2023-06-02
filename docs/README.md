@@ -1,7 +1,5 @@
 # Documentation
 
-TODO: put data on Zenodo and clean up google drive
-
 This directory contains instructions for reproducing the results in our antibiotic generation paper: [TODO](TODO).
 
 The relevant data should be downloaded from [this Google Drive file](https://drive.google.com/uc?id=1ziZJqk1PhDtc-kRFxNA3CDM728zjUfHH) to `SyntheMol/data`. This can be done as follows:

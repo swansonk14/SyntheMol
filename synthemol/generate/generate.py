@@ -157,8 +157,6 @@ def generate(
         save_path=save_dir / 'molecules.csv'
     )
 
-    # TODO: add plotting here
-
 
 def generate_command_line() -> None:
     """Run generate function from command line."""

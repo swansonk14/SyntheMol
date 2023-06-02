@@ -340,8 +340,6 @@ We now have 50 molecules selected from each model's generations that meet our de
 
 ## Map molecules to REAL IDs
 
-TODO: add to google drive?
-
 Map generated molecules to REAL IDs in the format expected by Enamine to enable a lookup in the Enamine REAL Space database.
 ```bash
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest

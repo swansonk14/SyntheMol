@@ -12,6 +12,14 @@ If you use SyntheMol in your research, please cite:
 TODO
 ```
 
+TODO: put SyntheMol on pip
+
+TODO: put data on Zenodo and clean up google drive
+
+TODO: potentially change order of cLogP data in Google Drive and add to supplementary table
+
+TODO: for all models (including antibiotics), compute building block scores as CSV rather than JSON
+
 ## Table of contents
 
 * [Installation](#installation)
@@ -27,8 +35,6 @@ TODO
 
 
 ## Installation
-
-TODO: put SyntheMol on pip
 
 Optionally, create a conda environment.
 ```bash
