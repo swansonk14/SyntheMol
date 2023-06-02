@@ -1,19 +1,17 @@
-# Simulation Study
+# Generating High cLogP Molecules with SyntheMol
 
 Instructions for performing an _in silico_ study of SyntheMol using a computational molecular property, cLogP, which is the computed octanol-water partition coefficient. Assumes relevant data has already been downloaded (see [docs/README.md](README.md)).
 
 TODO: potentially change order of cLogP data in Google Drive and add to supplementary table
 
-TODO: update TOC
-
 TODO: for all models, compute building block scores as CSV rather than JSON
 
-* [Compute cLogP](#compute-clogp)
-* [Binarize clogP](#binarize-clogp)
-* [Train model](#train-model)
-* [Map building blocks to model scores](#map-building-blocks-to-model-scores)
-* [Generate molecules](#generate-molecules)
-* [Compute true cLogP](#compute-true-clogp)
+- [Compute cLogP](#compute-clogp)
+- [Binarize clogP](#binarize-clogp)
+- [Train model](#train-model)
+- [Compute model scores for building blocks](#compute-model-scores-for-building-blocks)
+- [Generate molecules](#generate-molecules)
+- [Compute true cLogP](#compute-true-clogp)
 
 
 ## Compute cLogP
@@ -62,8 +60,6 @@ chemfunc regression_to_classification \
 
 Train a Chemprop model on binary cLogP data using 30 epochs (strong model) or 1 epoch (weak model).
 ```bash
-#!/bin/bash
-
 for EPOCHS in 1 30
 do
 python scripts/models/train.py \
@@ -86,8 +82,6 @@ done
 
 Compute model scores for building blocks.
 ```bash
-#!/bin/bash
-
 for EPOCHS in 1 30
 do
 python scripts/models/predict.py \
@@ -104,8 +98,6 @@ done
 
 Apply SyntheMol to generate molecules.
 ```bash
-#!/bin/bash
-
 for EPOCHS in 1 30
 do
 synthemol \
@@ -130,8 +122,6 @@ done
 
 Compute the true cLogP for generated molecules.
 ```bash
-#!/bin/bash
-
 for EPOCHS in 1 30
 do
 chemfunc compute_properties \
@@ -148,7 +138,7 @@ chemfunc plot_property_distribution \
     data/Data/10_generations_clogp/clogp_chemprop_30_epochs/molecules.csv \
     data/Data/10_generations_clogp/clogp_chemprop_1_epochs/molecules.csv \
     --property_column clogp \
-    --save_dir plots/clogp_generations \
+    --save_path plots/clogp_generations.pdf \
     --min_value -7 \
     --max_value 12
 ```

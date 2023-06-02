@@ -83,8 +83,6 @@ Plot model generalization between training sets.
 
 Separately process each training set.
 ```bash
-#!/bin/bash
-
 for LIBRARY in library_1 library_2 library_3
 do
 python scripts/data/process_data.py \
@@ -146,8 +144,6 @@ Number of non-hits = 5,264
 
 Train models on each training set.
 ```bash
-#!/bin/bash
-
 for LIBRARY in library_1 library_2 library_3
 do
 python train_model.py \
@@ -174,8 +170,6 @@ done
 
 Make predictions on other training sets.
 ```bash
-#!/bin/bash
-
 for LIBRARY_A in library_1 library_2 library_3
 do
     for LIBRARY_B in library_1 library_2 library_3
@@ -349,8 +343,6 @@ Plot building block vs full molecule scores for random sample of REAL molecules.
 
 First, make predictions on a random sample of REAL molecules using each model.
 ```bash
-#!/bin/bash
-
 python predict_model.py \
     --data_path data/4_real_space/random_real.csv \
     --model_path models/antibiotic_random_forest \
@@ -452,8 +444,6 @@ python scripts/plot/plot_mcts_over_time.py \
 
 Assess generated molecules for novelty, score, and diversity for each model.
 ```bash
-#!/bin/bash
-
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
 python scripts/plot/plot_generated_molecule_analysis.py \
@@ -465,8 +455,6 @@ done
 
 Assess selected molecules for novelty, score, and diversity for each model.
 ```bash
-#!/bin/bash
-
 for NAME in chemprop chemprop_rdkit random_forest
 do
 python scripts/plot/plot_generated_molecule_analysis.py \
@@ -480,8 +468,6 @@ done
 
 Visualize the selected molecules.
 ```bash
-#!/bin/bash
-
 for NAME in chemprop chemprop_rdkit random_forest
 do
 chemfunc visualize_molecules \

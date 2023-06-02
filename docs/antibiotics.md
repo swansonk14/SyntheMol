@@ -2,20 +2,18 @@
 
 Instructions for generating antibiotic candidates for _Acinetobacter baumannii_. Includes instructions for processing antibiotics data, training antibacterial activity prediction models, generating molecules with SyntheMol, and selecting candidates. Assumes relevant data has already been downloaded (see [docs/README.md](README.md)).
 
-TODO: update TOC
-
-* [Process antibiotics training data](#process-antibiotics-training-data)
-* [Process ChEMBL antibacterials](#process-chembl-antibacterials)
-* [Build bioactivity prediction models](#build-bioactivity-prediction-models)
-  + [Train models](#train-models)
-  + [Map building blocks to model scores](#map-building-blocks-to-model-scores)
-* [Generate molecules with SyntheMol](#generate-molecules-with-synthemol)
-* [Filter generated molecules](#filter-generated-molecules)
-  + [Novelty](#novelty)
-  + [Bioactivity](#bioactivity)
-  + [Diversity](#diversity)
-* [Map molecules to REAL IDs](#map-molecules-to-real-ids)
-* [Predict toxicity](#predict-toxicity)
+- [Process antibiotics training data](#process-antibiotics-training-data)
+- [Process ChEMBL antibacterials](#process-chembl-antibacterials)
+- [Build bioactivity prediction models](#build-bioactivity-prediction-models)
+  * [Train models](#train-models)
+  * [Compute model scores for building blocks](#compute-model-scores-for-building-blocks)
+- [Generate molecules with SyntheMol](#generate-molecules-with-synthemol)
+- [Filter generated molecules](#filter-generated-molecules)
+  * [Novelty](#novelty)
+  * [Bioactivity](#bioactivity)
+  * [Diversity](#diversity)
+- [Map molecules to REAL IDs](#map-molecules-to-real-ids)
+- [Predict toxicity](#predict-toxicity)
 
 
 ## Process antibiotics training data
@@ -244,12 +242,10 @@ Run three filtering steps to select molecules for experimental testing based on 
 
 Filter for molecules that are structurally novel, i.e., dissimilar from the training hits and the ChEMBL antibacterials.
 
-First, Compute the nearest neighbor Tversky similarity between the generated molecules and the training hits or ChEMBL antibacterials to determine the novelty of each generated molecule. Tversky similarity is used to determine what proportion of the functional groups of known antibacterials are contained within the generated molecules.
+First, compute the nearest neighbor Tversky similarity between the generated molecules and the training hits or ChEMBL antibacterials to determine the novelty of each generated molecule. Tversky similarity is used to determine what proportion of the functional groups of known antibacterials are contained within the generated molecules.
 
 Compute Tversky similarity to train hits.
 ```bash
-#!/bin/bash
-
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
 chemfunc nearest_neighbor \
@@ -262,8 +258,6 @@ done
 
 Compute Tversky similarity to ChEMBL antibacterials.
 ```bash
-#!/bin/bash
-
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
 chemfunc nearest_neighbor \
@@ -278,8 +272,6 @@ Now, filter to only keep molecules with nearest neighbor Tverksy similarity to t
 
 Filter by Tversky similarity to train hits.
 ```bash
-#!/bin/bash
-
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
 chemfunc filter_molecules \
@@ -292,8 +284,6 @@ done
 
 Filter by Tversky similarity to ChEMBL antibacterials.
 ```bash
-#!/bin/bash
-
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
 chemfunc filter_molecules \
@@ -309,8 +299,6 @@ done
 
 Filter for high-scoring molecules (i.e., predicted bioactivity) by only keeping molecules with the top 20% of model scores.
 ```bash
-#!/bin/bash
-
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
 chemfunc filter_molecules \
@@ -328,8 +316,6 @@ Filter for diverse molecules by clustering molecules based on their Morgan finge
 
 Cluster molecules based on their Morgan fingerprint.
 ```bash
-#!/bin/bash
-
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
 chemfunc cluster_molecules \
@@ -340,8 +326,6 @@ done
 
 Select the top scoring molecule from each cluster.
 ```bash
-#!/bin/bash
-
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
 chemfunc select_from_clusters \
@@ -360,8 +344,6 @@ TODO: change to use all possible IDs for each SMILES
 
 Map generated molecules to REAL IDs in the format expected by Enamine to enable a lookup in the Enamine REAL Space database.
 ```bash
-#!/bin/bash
-
 for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
 do
 python -m synthemol.data.map_generated_molecules_to_real_ids \
@@ -377,9 +359,9 @@ Predict the toxicity of the synthesized molecules by training a toxicity predict
 
 Train toxicity model using the `CT_TOX` property of the ClinTox dataset. (Note that the ClinTox properties `CT_TOX` and `FDA_APPROVED` are nearly always identical, so we only use one.)
 ```bash
-python -m synthemol.models.train \
+python scripts/models/train.py \
     --data_path data/Data/1_training_data/clintox.csv \
-    --save_dir models/clintox_chemprop_rdkit \
+    --save_dir data/Models/clintox_chemprop_rdkit \
     --model_type chemprop \
     --dataset_type classification \
     --fingerprint_type rdkit \
@@ -391,9 +373,9 @@ The model has an ROC-AUC of 0.881 +/- 0.045 and a PRC-AUC of 0.514 +/- 0.141 acr
 
 Make toxicity predictions on the synthesized molecules. The list of successfully synthesized generated molecules is in the `Data/8. Synthesized` subfolder of the Google Drive folder.
 ```bash
-python -m synthemol.models.predict \
+python scripts/models/predict.py \
     --data_path data/Data/8_synthesized/synthesized.csv \
-    --model_path models/clintox_chemprop_rdkit \
+    --model_path data/Models/clintox_chemprop_rdkit \
     --model_type chemprop \
     --fingerprint_type rdkit \
     --average_preds
