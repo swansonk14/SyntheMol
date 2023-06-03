@@ -350,7 +350,7 @@ class Generator:
         # Unroll the selected node
         v = self.rollout(node=selected_node)
 
-        # Get max whole molecule (non building block) score across rollouts as feedback
+        # Get max whole molecule (non-building block) score across rollouts as feedback
         if selected_node.num_molecules == 1 and node.num_reactions > 0:
             v = max(v, selected_node.P)
 

@@ -48,28 +48,15 @@ def set_allowed_reaction_building_blocks(
 def load_and_set_allowed_reaction_building_blocks(
         reactions: list[Reaction],
         reaction_to_reactant_to_building_blocks_path: Path,
-        building_blocks_path: Path = BUILDING_BLOCKS_PATH,
-        building_blocks_id_column: str = REAL_BUILDING_BLOCK_ID_COL,
-        building_blocks_smiles_column: str = SMILES_COL
+        building_block_id_to_smiles: dict[int, str],
 ) -> None:
     """Loads a mapping of allowed building blocks for each reaction and sets the allowed SMILES for each reaction.
 
     :param reactions: A list of Reactions whose allowed SMILES will be set.
     :param reaction_to_reactant_to_building_blocks_path: Path to a PKL file mapping from reaction ID
                                                             to reactant index to a set of allowed building block IDs.
-    :param building_blocks_path: Path to a CSV file mapping from building block ID to SMILES.
-    :param building_blocks_id_column: The name of the column in the building blocks file containing building block IDs.
-    :param building_blocks_smiles_column: The name of the column in the building blocks file containing SMILES.
+    :param building_block_id_to_smiles: A dictionary mapping from building block ID to SMILES.
     """
-    # Load building blocks
-    building_blocks = pd.read_csv(building_blocks_path)
-
-    # Create mapping from building block ID to SMILES
-    building_block_id_to_smiles = dict(zip(
-        building_blocks[building_blocks_id_column],
-        building_blocks[building_blocks_smiles_column]
-    ))
-
     # Load allowed building blocks for each reaction
     with open(reaction_to_reactant_to_building_blocks_path, 'rb') as f:
         reaction_to_reactant_to_building_block_ids: dict[int, dict[int, set[int]]] = pickle.load(f)

@@ -93,7 +93,7 @@ def generate(
     # Set all building blocks for each reaction
     set_all_building_blocks(
         reactions=REACTIONS,
-        building_blocks=set(building_block_smiles_to_id.keys())
+        building_blocks=set(building_block_smiles_to_id)
     )
 
     # Optionally, set allowed building blocks for each reaction
@@ -101,9 +101,7 @@ def generate(
         load_and_set_allowed_reaction_building_blocks(
             reactions=REACTIONS,
             reaction_to_reactant_to_building_blocks_path=reaction_to_building_blocks_path,
-            building_blocks_path=building_blocks_path,
-            building_blocks_id_column=building_blocks_id_column,
-            building_blocks_smiles_column=building_blocks_smiles_column,
+            building_block_id_to_smiles=building_block_id_to_smiles
         )
 
     # Define model scoring function
