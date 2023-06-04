@@ -69,8 +69,9 @@ def generate(
     # Load building blocks
     building_block_data = pd.read_csv(building_blocks_path)
 
-    # Drop duplicate building blocks
-    building_block_data.drop_duplicates(subset=building_blocks_smiles_column, inplace=True)
+    # Ensure unique building block IDs
+    if building_block_data[building_blocks_id_column].nunique() != len(building_block_data):
+        raise ValueError('Building block IDs are not unique.')
 
     # Map building blocks SMILES to IDs, IDs to SMILES, and SMILES to scores
     building_block_smiles_to_id = dict(zip(
@@ -85,10 +86,6 @@ def generate(
         building_block_data[building_blocks_smiles_column],
         building_block_data[building_blocks_score_column]
     ))
-
-    # Ensure unique building block IDs
-    if len(building_block_id_to_smiles) != len(building_block_smiles_to_id):
-        raise ValueError('Building block IDs are not unique.')
 
     # Set all building blocks for each reaction
     set_all_building_blocks(
