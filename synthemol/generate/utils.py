@@ -74,14 +74,10 @@ def create_model_scoring_fn(
                 fingerprint=fingerprint
             )
 
-    # Set up smiles_to_score if None
-    if smiles_to_score is None:
-        smiles_to_score = dict()
-
     # Build model scoring function using either chemprop or scikit-learn ensemble and precomputed building block scores
     @cache
     def model_scoring_fn(smiles: str) -> float:
-        if smiles in smiles_to_score:
+        if smiles_to_score is not None and smiles in smiles_to_score:
             return smiles_to_score[smiles]
 
         if fingerprint_type is not None:

@@ -200,7 +200,7 @@ synthemol \
     --save_dir data/Data/5_generations_chemprop \
     --max_reactions 1 \
     --n_rollout 20000 \
-    --deduplicate_building_blocks
+    --replicate
 ```
 
 Chemprop-RDKit
@@ -216,7 +216,7 @@ synthemol \
     --fingerprint_type rdkit \
     --max_reactions 1 \
     --n_rollout 20000 \
-    --deduplicate_building_blocks
+    --replicate
 ```
 
 Random forest
@@ -232,7 +232,7 @@ synthemol \
     --fingerprint_type rdkit \
     --max_reactions 1 \
     --n_rollout 20000 \
-    --deduplicate_building_blocks
+    --replicate
 ```
 
 

@@ -27,7 +27,8 @@ class Generator:
                  rng_seed: int,
                  no_building_block_diversity: bool,
                  store_nodes: bool,
-                 verbose: bool) -> None:
+                 verbose: bool,
+                 replicate: bool = False) -> None:
         """Creates the Generator.
 
         :param building_block_smiles_to_id: A dictionary mapping building block SMILES to their IDs.
@@ -44,6 +45,8 @@ class Generator:
                             This doubles the speed of the search but significantly increases
                             the memory usage (e.g., 450GB for 20,000 rollouts instead of 600 MB).
         :param verbose: Whether to print out additional statements during generation.
+        :param replicate: This is necessary to replicate the results from the paper, but otherwise should not be used
+                          since it limits the potential choices of building blocks.
         """
         self.building_block_smiles_to_id = building_block_smiles_to_id
         self.max_reactions = max_reactions
@@ -58,11 +61,19 @@ class Generator:
         self.verbose = verbose
 
         # Get all building blocks that are used in at least one reaction
-        self.all_building_blocks = sorted(
-            building_block
-            for building_block in self.building_block_smiles_to_id
-            if any(reactant.has_match(building_block) for reaction in reactions for reactant in reaction.reactants)
-        )
+        if replicate:
+            self.all_building_blocks = list(dict.fromkeys(
+                building_block
+                for reaction in self.reactions
+                for reactant in reaction.reactants
+                for building_block in reactant.allowed_building_blocks
+            ))
+        else:
+            self.all_building_blocks = sorted(
+                building_block
+                for building_block in self.building_block_smiles_to_id
+                if any(reactant.has_match(building_block) for reaction in reactions for reactant in reaction.reactants)
+            )
 
         # Get the function to use for optimization
         if self.optimization == 'maximize':

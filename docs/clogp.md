@@ -106,7 +106,7 @@ synthemol \
     --save_dir data/Data/10_generations_clogp/clogp_chemprop_${EPOCHS}_epochs \
     --max_reactions 1 \
     --n_rollout 20000 \
-    --deduplicate_building_blocks
+    --replicate
 done
 ```
 
