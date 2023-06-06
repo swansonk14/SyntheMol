@@ -105,7 +105,8 @@ synthemol \
     --reaction_to_building_blocks_path data/Data/4_real_space/reaction_to_building_blocks.pkl \
     --save_dir data/Data/10_generations_clogp/clogp_chemprop_${EPOCHS}_epochs \
     --max_reactions 1 \
-    --n_rollout 20000
+    --n_rollout 20000 \
+    --deduplicate_building_blocks
 done
 ```
 

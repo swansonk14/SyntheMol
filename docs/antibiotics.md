@@ -199,7 +199,8 @@ synthemol \
     --reaction_to_building_blocks_path data/Data/4_real_space/reaction_to_building_blocks.pkl \
     --save_dir data/Data/5_generations_chemprop \
     --max_reactions 1 \
-    --n_rollout 20000
+    --n_rollout 20000 \
+    --deduplicate_building_blocks
 ```
 
 Chemprop-RDKit
@@ -214,7 +215,8 @@ synthemol \
     --save_dir data/Data/6_generations_chemprop_rdkit \
     --fingerprint_type rdkit \
     --max_reactions 1 \
-    --n_rollout 20000
+    --n_rollout 20000 \
+    --deduplicate_building_blocks
 ```
 
 Random forest
@@ -229,7 +231,8 @@ synthemol \
     --save_dir data/Data/7_generations_random_forest \
     --fingerprint_type rdkit \
     --max_reactions 1 \
-    --n_rollout 20000
+    --n_rollout 20000 \
+    --deduplicate_building_blocks
 ```
 
 

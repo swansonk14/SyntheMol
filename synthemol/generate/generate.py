@@ -38,6 +38,7 @@ def generate(
         rng_seed: int = 0,
         no_building_block_diversity: bool = False,
         store_nodes: bool = False,
+        deduplicate_building_blocks: bool = False,
         verbose: bool = False
 ) -> None:
     """Generate molecules combinatorially using a Monte Carlo tree search guided by a molecular property predictor.
@@ -61,6 +62,10 @@ def generate(
     :param store_nodes: Whether to store in memory all the nodes of the search tree.
                         This doubles the speed of the search but significantly increases
                         the memory usage (e.g., 450 GB for 20,000 rollouts instead of 600 MB).
+    :param deduplicate_building_blocks: Whether to deduplicate building blocks by SMILES.
+                                        This is necessary to reproduce some previous experiments, but otherwise it
+                                        should not be used since it limits the availability of some building blocks
+                                        for certain reactions since they are matched by ID, not by SMILES.
     :param verbose: Whether to print out additional information during generation.
     """
     # Create save directory
@@ -72,6 +77,10 @@ def generate(
     # Ensure unique building block IDs
     if building_block_data[building_blocks_id_column].nunique() != len(building_block_data):
         raise ValueError('Building block IDs are not unique.')
+
+    # Optionally, deduplicate building blocks by SMILES for reproducibility with old experiments
+    if deduplicate_building_blocks:
+        building_block_data.drop_duplicates(subset=building_blocks_smiles_column, inplace=True)
 
     # Map building blocks SMILES to IDs, IDs to SMILES, and SMILES to scores
     building_block_smiles_to_id = dict(zip(

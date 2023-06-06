@@ -18,7 +18,11 @@ TODO: put data on Zenodo and clean up google drive
 
 TODO: potentially change order of cLogP data in Google Drive and add to supplementary table
 
-TODO: for all models (including antibiotics), compute building block scores as CSV rather than JSON
+TODO: for all models (including antibiotics), compute building block scores as CSV rather than JSON, upload to Google Drive
+
+TODO: fix pixel alignment on Figure 1
+
+
 
 ## Table of contents
 
