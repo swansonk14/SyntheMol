@@ -2,13 +2,8 @@
 import pickle
 from pathlib import Path
 
-import pandas as pd
+from tqdm import tqdm
 
-from synthemol.constants import (
-    BUILDING_BLOCKS_PATH,
-    REAL_BUILDING_BLOCK_ID_COL,
-    SMILES_COL
-)
 from synthemol.reactions.reaction import Reaction
 
 
@@ -40,7 +35,7 @@ def set_allowed_reaction_building_blocks(
     :param reaction_to_reactant_to_building_blocks: A dictionary mapping from reaction ID
                                                     to reactant index to a set of allowed SMILES.
     """
-    for reaction in reactions:
+    for reaction in tqdm(reactions):
         for reactant_index, reactant in enumerate(reaction.reactants):
             reactant.allowed_building_blocks = reaction_to_reactant_to_building_blocks[reaction.id][reactant_index]
 

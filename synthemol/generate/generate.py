@@ -106,7 +106,7 @@ def generate(
 
     # Optionally, set allowed building blocks for each reaction
     if reaction_to_building_blocks_path is not None:
-        print('Loading allowed building blocks for each reaction...')
+        print('Loading and setting allowed building blocks for each reaction...')
         load_and_set_allowed_reaction_building_blocks(
             reactions=REACTIONS,
             reaction_to_reactant_to_building_blocks_path=reaction_to_building_blocks_path,

@@ -62,9 +62,10 @@ class Generator:
 
         # Get all building blocks that are used in at least one reaction
         if replicate:
+            old_reactions_order = [275592, 22, 11, 527, 2430, 2708, 240690, 2230, 2718, 40, 1458, 271948, 27]
             self.all_building_blocks = list(dict.fromkeys(
                 building_block
-                for reaction in self.reactions
+                for reaction in sorted(self.reactions, key=lambda reaction: old_reactions_order.index(reaction.id))
                 for reactant in reaction.reactants
                 for building_block in reactant.allowed_building_blocks
             ))
@@ -383,7 +384,7 @@ class Generator:
         rollout_start = self.rollout_num + 1
         rollout_end = rollout_start + n_rollout
 
-        print(f'Running rollouts {rollout_start} through {rollout_end - 1}')
+        print(f'Running rollouts {rollout_start} through {rollout_end - 1}...')
 
         # Run the generation algorithm for the specified number of rollouts
         for rollout_num in trange(rollout_start, rollout_end):
