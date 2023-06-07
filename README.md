@@ -22,6 +22,12 @@ TODO: for all models (including antibiotics), compute building block scores as C
 
 TODO: fix pixel alignment on Figure 1
 
+TODO: author contributions
+
+TODO: reaction SMARTS in supplementary table
+
+TODO: run the commands here
+
 
 
 ## Table of contents

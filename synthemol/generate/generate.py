@@ -70,7 +70,9 @@ def generate(
     save_dir.mkdir(parents=True, exist_ok=True)
 
     # Load building blocks
+    print('Loading building blocks...')
     building_block_data = pd.read_csv(building_blocks_path)
+    print(f'Loaded {len(building_block_data):,} building blocks')
 
     # Ensure unique building block IDs
     if building_block_data[building_blocks_id_column].nunique() != len(building_block_data):
@@ -94,6 +96,8 @@ def generate(
         building_block_data[building_blocks_score_column]
     ))
 
+    print(f'Found {len(building_block_smiles_to_id):,} unique building blocks')
+
     # Set all building blocks for each reaction
     set_all_building_blocks(
         reactions=REACTIONS,
@@ -102,6 +106,7 @@ def generate(
 
     # Optionally, set allowed building blocks for each reaction
     if reaction_to_building_blocks_path is not None:
+        print('Loading allowed building blocks for each reaction...')
         load_and_set_allowed_reaction_building_blocks(
             reactions=REACTIONS,
             reaction_to_reactant_to_building_blocks_path=reaction_to_building_blocks_path,
@@ -109,6 +114,7 @@ def generate(
         )
 
     # Define model scoring function
+    print('Loading models and creating model scoring function...')
     model_scoring_fn = create_model_scoring_fn(
         model_path=model_path,
         model_type=model_type,
@@ -117,6 +123,7 @@ def generate(
     )
 
     # Set up Generator
+    print('Setting up generator...')
     generator = Generator(
         building_block_smiles_to_id=building_block_smiles_to_id,
         max_reactions=max_reactions,
@@ -133,6 +140,7 @@ def generate(
     )
 
     # Search for molecules
+    print('Generating molecules...')
     start_time = datetime.now()
     nodes = generator.generate(n_rollout=n_rollout)
 
@@ -154,6 +162,7 @@ def generate(
     pd.DataFrame(data=[stats]).to_csv(save_dir / 'mcts_stats.csv', index=False)
 
     # Save generated molecules
+    print('Saving molecules...')
     save_generated_molecules(
         nodes=nodes,
         building_block_id_to_smiles=building_block_id_to_smiles,
