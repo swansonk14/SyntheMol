@@ -15,7 +15,12 @@ from synthemol.constants import (
     SCORE_COL,
     SMILES_COL
 )
-from synthemol.reactions import REACTIONS, load_and_set_allowed_reaction_building_blocks, set_all_building_blocks
+from synthemol.reactions import (
+    Reaction,
+    REACTIONS,
+    load_and_set_allowed_reaction_building_blocks,
+    set_all_building_blocks
+)
 from synthemol.generate.generator import Generator
 from synthemol.generate.utils import create_model_scoring_fn, save_generated_molecules
 
@@ -30,6 +35,7 @@ def generate(
         building_blocks_id_column: str = REAL_BUILDING_BLOCK_ID_COL,
         building_blocks_score_column: str = SCORE_COL,
         building_blocks_smiles_column: str = SMILES_COL,
+        reactions: tuple[Reaction] = REACTIONS,
         max_reactions: int = 1,
         n_rollout: int = 10,
         explore_weight: float = 10.0,
@@ -52,6 +58,7 @@ def generate(
     :param building_blocks_id_column: Name of the column containing IDs for each building block.
     :param building_blocks_score_column: Name of column containing scores for each building block.
     :param building_blocks_smiles_column: Name of the column containing SMILES for each building block.
+    :param reactions: A tuple of reactions that combine molecular building blocks.
     :param max_reactions: Maximum number of reactions that can be performed to expand building blocks into molecules.
     :param n_rollout: The number of times to run the generation process.
     :param explore_weight: The hyperparameter that encourages exploration.
@@ -78,8 +85,10 @@ def generate(
     if building_block_data[building_blocks_id_column].nunique() != len(building_block_data):
         raise ValueError('Building block IDs are not unique.')
 
-    # Optionally, to replicate previous experiments, deduplicate building blocks by SMILES
+    # Optionally to replicate previous experiments, reorder reactions and deduplicate building blocks by SMILES
     if replicate:
+        old_reactions_order = [275592, 22, 11, 527, 2430, 2708, 240690, 2230, 2718, 40, 1458, 271948, 27]
+        reactions = tuple(sorted(reactions, key=lambda reaction: old_reactions_order.index(reaction.id)))
         building_block_data.drop_duplicates(subset=building_blocks_smiles_column, inplace=True)
 
     # Map building blocks SMILES to IDs, IDs to SMILES, and SMILES to scores
@@ -100,7 +109,7 @@ def generate(
 
     # Set all building blocks for each reaction
     set_all_building_blocks(
-        reactions=REACTIONS,
+        reactions=reactions,
         building_blocks=set(building_block_smiles_to_id)
     )
 
@@ -108,7 +117,7 @@ def generate(
     if reaction_to_building_blocks_path is not None:
         print('Loading and setting allowed building blocks for each reaction...')
         load_and_set_allowed_reaction_building_blocks(
-            reactions=REACTIONS,
+            reactions=reactions,
             reaction_to_reactant_to_building_blocks_path=reaction_to_building_blocks_path,
             building_block_id_to_smiles=building_block_id_to_smiles
         )
@@ -131,7 +140,7 @@ def generate(
         explore_weight=explore_weight,
         num_expand_nodes=num_expand_nodes,
         optimization=optimization,
-        reactions=REACTIONS,
+        reactions=reactions,
         rng_seed=rng_seed,
         no_building_block_diversity=no_building_block_diversity,
         store_nodes=store_nodes,

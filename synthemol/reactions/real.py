@@ -3,7 +3,7 @@ from synthemol.reactions.query_mol import QueryMol
 from synthemol.reactions.reaction import Reaction
 
 
-REAL_REACTIONS = [
+REAL_REACTIONS = (
     Reaction(
         reactants=[
             QueryMol('CC(C)(C)OC(=O)[N:1]([*:2])[*:3].[*:4][N:5]([H])[*:6]'),
@@ -109,4 +109,4 @@ REAL_REACTIONS = [
         product=QueryMol('[O:4]=[C:2]([*:3])[O:1][*:5]'),
         reaction_id=1458
     ),
-]
+)

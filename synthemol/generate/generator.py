@@ -23,7 +23,7 @@ class Generator:
                  explore_weight: float,
                  num_expand_nodes: Optional[int],
                  optimization: OPTIMIZATION_TYPES,
-                 reactions: list[Reaction],
+                 reactions: tuple[Reaction],
                  rng_seed: int,
                  no_building_block_diversity: bool,
                  store_nodes: bool,
@@ -38,7 +38,7 @@ class Generator:
         :param num_expand_nodes: The number of tree nodes to expand when extending the child nodes in the search tree.
                                   If None, then all nodes are expanded.
         :param optimization: Whether to maximize or minimize the score.
-        :param reactions: A list of chemical reactions that can be used to combine molecular building blocks.
+        :param reactions: A tuple of reactions that combine molecular building blocks.
         :param rng_seed: Seed for the random number generator.
         :param no_building_block_diversity: Whether to turn off the score modification that encourages diverse building blocks.
         :param store_nodes: Whether to store the child nodes of each node in the search tree.
@@ -62,10 +62,9 @@ class Generator:
 
         # Get all building blocks that are used in at least one reaction
         if replicate:
-            old_reactions_order = [275592, 22, 11, 527, 2430, 2708, 240690, 2230, 2718, 40, 1458, 271948, 27]
             self.all_building_blocks = list(dict.fromkeys(
                 building_block
-                for reaction in sorted(self.reactions, key=lambda reaction: old_reactions_order.index(reaction.id))
+                for reaction in self.reactions
                 for reactant in reaction.reactants
                 for building_block in reactant.allowed_building_blocks
             ))

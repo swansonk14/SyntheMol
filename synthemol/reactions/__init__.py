@@ -10,6 +10,6 @@ from synthemol.reactions.utils import (
 )
 
 if CUSTOM_REACTIONS is None:
-    REACTIONS = REAL_REACTIONS
+    REACTIONS: tuple[Reaction] = REAL_REACTIONS
 else:
-    REACTIONS = CUSTOM_REACTIONS
+    REACTIONS: tuple[Reaction] = CUSTOM_REACTIONS

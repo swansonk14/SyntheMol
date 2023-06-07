@@ -181,7 +181,7 @@ chemfunc nearest_neighbor \
     --data_path generations/chemprop/molecules.csv \
     --reference_data_path data/hits.csv \
     --reference_name hits \
-    --metrics tversky
+    --metric tversky
 ```
 
 Filter by similarity, only keeping molecules with a nearest neighbor similarity to hits of at most 0.5

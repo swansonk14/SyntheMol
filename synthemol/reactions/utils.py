@@ -8,14 +8,14 @@ from synthemol.reactions.reaction import Reaction
 
 
 def set_all_building_blocks(
-        reactions: list[Reaction],
+        reactions: tuple[Reaction],
         building_blocks: set[str]
 ) -> None:
     """Sets the allowed building block SMILES for all Reactions in a list of Reactions.
 
     Note: Modifies Reactions in place.
 
-    :param reactions: A list of Reactions whose allowed building block SMILES will be set.
+    :param reactions: A tuple of Reactions whose allowed building block SMILES will be set.
     :param building_blocks: A set of allowed building block SMILES.
     """
     for reaction in reactions:
@@ -24,14 +24,14 @@ def set_all_building_blocks(
 
 
 def set_allowed_reaction_building_blocks(
-        reactions: list[Reaction],
+        reactions: tuple[Reaction],
         reaction_to_reactant_to_building_blocks: dict[int, dict[int, set[str]]]
 ) -> None:
     """Sets the allowed building block SMILES for each reactant in each Reaction in a list of Reactions.
 
     Note: Modifies Reactions in place.
 
-    :param reactions: A list of Reactions whose allowed building block SMILES will be set.
+    :param reactions: A tuple of Reactions whose allowed building block SMILES will be set.
     :param reaction_to_reactant_to_building_blocks: A dictionary mapping from reaction ID
                                                     to reactant index to a set of allowed SMILES.
     """
@@ -41,13 +41,13 @@ def set_allowed_reaction_building_blocks(
 
 
 def load_and_set_allowed_reaction_building_blocks(
-        reactions: list[Reaction],
+        reactions: tuple[Reaction],
         reaction_to_reactant_to_building_blocks_path: Path,
         building_block_id_to_smiles: dict[int, str],
 ) -> None:
     """Loads a mapping of allowed building blocks for each reaction and sets the allowed SMILES for each reaction.
 
-    :param reactions: A list of Reactions whose allowed SMILES will be set.
+    :param reactions: A tuple of Reactions whose allowed SMILES will be set.
     :param reaction_to_reactant_to_building_blocks_path: Path to a PKL file mapping from reaction ID
                                                             to reactant index to a set of allowed building block IDs.
     :param building_block_id_to_smiles: A dictionary mapping from building block ID to SMILES.
