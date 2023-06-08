@@ -78,18 +78,28 @@ def generate(
 
     # Load building blocks
     print('Loading building blocks...')
-    building_block_data = pd.read_csv(building_blocks_path)
+
+    # Optionally alter building blocks loading to precisely replicate previous experiments
+    if replicate:
+        # Change score loading dtype to ensure numerical precision
+        building_block_data = pd.read_csv(building_blocks_path, dtype={building_blocks_score_column: str})
+        building_block_data[building_blocks_score_column] = building_block_data[building_blocks_score_column].astype(float)
+
+        # Reorder reactions
+        old_reactions_order = [275592, 22, 11, 527, 2430, 2708, 240690, 2230, 2718, 40, 1458, 271948, 27]
+        reactions = tuple(sorted(reactions, key=lambda reaction: old_reactions_order.index(reaction.id)))
+
+        # Deduplicate building blocks by SMILES
+        building_block_data.drop_duplicates(subset=building_blocks_smiles_column, inplace=True)
+    # Otherwise, load the building blocks normally
+    else:
+        building_block_data = pd.read_csv(building_blocks_path)
+
     print(f'Loaded {len(building_block_data):,} building blocks')
 
     # Ensure unique building block IDs
     if building_block_data[building_blocks_id_column].nunique() != len(building_block_data):
         raise ValueError('Building block IDs are not unique.')
-
-    # Optionally to replicate previous experiments, reorder reactions and deduplicate building blocks by SMILES
-    if replicate:
-        old_reactions_order = [275592, 22, 11, 527, 2430, 2708, 240690, 2230, 2718, 40, 1458, 271948, 27]
-        reactions = tuple(sorted(reactions, key=lambda reaction: old_reactions_order.index(reaction.id)))
-        building_block_data.drop_duplicates(subset=building_blocks_smiles_column, inplace=True)
 
     # Map building blocks SMILES to IDs, IDs to SMILES, and SMILES to scores
     building_block_smiles_to_id = dict(zip(
