@@ -2,6 +2,7 @@
 from pathlib import Path
 
 import numpy as np
+import torch
 from chemprop.models import MoleculeModel
 from chemprop.utils import load_checkpoint, load_scalers
 from sklearn.preprocessing import StandardScaler
@@ -15,7 +16,10 @@ def chemprop_load(
     :param model_path: A path to a Chemprop model.
     :return: A Chemprop model.
     """
-    return load_checkpoint(path=str(model_path)).eval()
+    return load_checkpoint(
+        path=str(model_path),
+        device=torch.device('cpu')
+    ).eval()
 
 
 def chemprop_load_scaler(

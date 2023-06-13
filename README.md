@@ -16,9 +16,11 @@ TODO: put SyntheMol on pip
 
 TODO: put data on Zenodo and clean up google drive
 
-TODO: potentially change order of cLogP data in Google Drive and add to supplementary table
+TODO: put model on huggingface
 
-TODO: for all models (including antibiotics), compute building block scores as CSV rather than JSON, upload to Google Drive
+TODO: potentially change order of cLogP data in Google Drive (from 10 to 4) and add to supplementary table
+
+TODO: remove building block scores JSON from google drive
 
 TODO: fix pixel alignment on Figure 1
 
@@ -26,7 +28,11 @@ TODO: author contributions
 
 TODO: reaction SMARTS in supplementary table
 
-TODO: run the commands here
+TODO: make loading and setting allowed building blocks faster
+
+TODO: enable random forest RDKit in chemprop
+
+TODO: check REAL molecule numbers with new building blocks
 
 
 
@@ -70,8 +76,6 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
-TODO: check processing of building blocks file
-
 Download the necessary data files to `SyntheMol/synthemol/files`.
 ```bash
 gdown "https://drive.google.com/drive/folders/1LLLwxe_nQAnsRSQpIRq_ngyCm1txS-Sq" -O $(python -c "import synthemol; print(synthemol.__path__[0])")/files --folder
@@ -82,9 +86,7 @@ gdown "https://drive.google.com/drive/folders/1LLLwxe_nQAnsRSQpIRq_ngyCm1txS-Sq"
 
 ## Combinatorial chemical space
 
-SyntheMol is currently designed to use 137,656 unique building blocks and 13 chemical reactions from the [Enamine REAL Space](https://enamine.net/compound-collections/real-compounds/real-space-navigator), which can produce over 30 billion molecules. However, an alternate combinatorial chemical space can optionally be used by replacing the building blocks and chemical reactions as follows.
-
-TODO: check numbers with new building blocks
+SyntheMol is currently designed to use 139,493 building blocks (137,656 unique molecules) and 13 chemical reactions from the [Enamine REAL Space](https://enamine.net/compound-collections/real-compounds/real-space-navigator), which can produce over 30 billion molecules. However, an alternate combinatorial chemical space can optionally be used by replacing the building blocks and chemical reactions as follows.
 
 **Building blocks:** Replace `data/building_blocks.csv` with a custom file containing the building blocks. The file should be a CSV file with a header row and two columns: `smiles` and `ID`. The `smiles` column should contain the SMILES string for each building block, and the `ID` column should contain a unique ID for each building block.
 
@@ -102,11 +104,7 @@ SyntheMol requires a bioactivity prediction model to guide its generative proces
 
 ### Train model
 
-All three model types can be trained using [Chemprop](https://github.com/chemprop/chemprop), which is installed along with SyntheMol. All three model types can be trained on either regression or binary classification bioactivities. Full details are provided in the [Chemprop](https://github.com/chemprop/chemprop) README. Below is an example for training a Chemprop model on a binary classification task.
-
-TODO: enable random forest RDKit in chemprop
-
-TODO: enable regression models
+All three model types can be trained using [Chemprop](https://github.com/chemprop/chemprop), which is installed along with SyntheMol. All three model types can be trained on either regression or binary classification bioactivities. Full details are provided in the [Chemprop](https://github.com/chemprop/chemprop) README. Below is an example for training a Chemprop model on a binary classification task. By default, training is done on a GPU (if available).
 
 Data file
 ```bash
@@ -117,8 +115,6 @@ CC[Hg]Sc1ccccc1C(=O)[O-].[Na+],1
 O=C(O)CCc1ccc(NCc2cccc(Oc3ccccc3)c2)cc1,0
 ...
 ```
-
-TODO: make sure training and predict commands work like this in chemprop
 
 Train Chemprop
 ```bash
@@ -131,31 +127,31 @@ chemprop_train \
 
 ### Pre-compute building block scores
 
-After training, use the model to pre-compute scores of building blocks to accelerate the SyntheMol generation process. Below is an example using the trained Chemprop model.
+After training, use the model to pre-compute scores of building blocks to accelerate the SyntheMol generation process. Below is an example using the trained Chemprop model. By default, prediction is done on a GPU (if available).
 
 ```bash
 chemprop_predict \
     --test_path synthemol/files/building_blocks.csv \
-    --preds_path models/chemprop/building_block_scores.csv \
+    --preds_path models/chemprop/building_blocks.csv \
     --checkpoint_dir models/chemprop
 ```
 
 
 ## Generate molecules
 
-SyntheMol uses the bioactivity prediction model within a Monte Carlo tree search to generate molecules. Below is an example for generating molecules with a trained Chemprop model using 20,000 MCTS rollouts.
-
-TODO: ensure this works with GPU-trained models
+SyntheMol uses the bioactivity prediction model within a Monte Carlo tree search to generate molecules. Below is an example for generating molecules with a trained Chemprop model using 20,000 MCTS rollouts. SyntheMol uses CPUs only (no GPUs).
 
 ```bash
 synthemol \
     --model_path models/chemprop \
     --model_type chemprop \
     --save_dir generations/chemprop \
-    --building_blocks_path models/chemprop/building_block_scores.csv \
+    --building_blocks_path models/chemprop/building_blocks.csv \
     --bulding_blocks_score_column activity \
     --n_rollout 20000
 ```
+
+Note: The `building_blocks_score_column` must match the column name in the building blocks file that contains the building block scores. When using `chemprop_train` and `chemprop_predict`, the column name will be the same as the column that contains target activity/property values in the training data file (e.g., `activity`).
 
 
 ## Filter generated molecules
@@ -221,7 +217,7 @@ chemfunc cluster_molecules \
 Select the top scoring molecule from each cluster
 ```bash
 chemfunc select_from_clusters \
-    --data_path generations/molecules_novel_bioactive.csv \
-    --save_path generations/molecules_novel_bioactive_diverse.csv \
+    --data_path generations/chemprop/molecules_novel_bioactive.csv \
+    --save_path generations/chemprop/molecules_novel_bioactive_diverse.csv \
     --value_column score
 ```
