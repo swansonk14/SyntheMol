@@ -142,6 +142,9 @@ def count_real_space(
     combined_reaction_counts_data['cumulative_count'] = np.cumsum(combined_reaction_counts_data['count'])
     combined_reaction_counts_data['cumulative_percent'] = 100 * combined_reaction_counts_data['cumulative_count'] / REAL_SPACE_SIZE
 
+    # Create save directory
+    save_dir.mkdir(parents=True, exist_ok=True)
+
     # Save reaction counts
     combined_reaction_counts_data.to_csv(
         save_dir / f'reaction_counts{"_selected" if only_selected_reactions else ""}.csv',
