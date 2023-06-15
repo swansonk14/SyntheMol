@@ -28,11 +28,13 @@ TODO: author contributions
 
 TODO: reaction SMARTS in supplementary table
 
-TODO: make loading and setting allowed building blocks faster
+TODO: make loading and setting allowed building blocks faster (precompute allowed building blocks)
 
 TODO: enable random forest RDKit in chemprop
 
 TODO: check REAL molecule numbers with new building blocks
+
+TODO: test SyntheMol GPU time
 
 
 
@@ -86,7 +88,7 @@ gdown "https://drive.google.com/drive/folders/1LLLwxe_nQAnsRSQpIRq_ngyCm1txS-Sq"
 
 ## Combinatorial chemical space
 
-SyntheMol is currently designed to use 139,493 building blocks (137,656 unique molecules) and 13 chemical reactions from the [Enamine REAL Space](https://enamine.net/compound-collections/real-compounds/real-space-navigator), which can produce over 30 billion molecules. However, an alternate combinatorial chemical space can optionally be used by replacing the building blocks and chemical reactions as follows.
+SyntheMol is currently designed to use 139,493 building blocks (137,656 unique molecules) and 13 chemical reactions from the [Enamine REAL Space](https://enamine.net/compound-collections/real-compounds/real-space-navigator), which can produce over 30 billion molecules (30,330,025,259). However, an alternate combinatorial chemical space can optionally be used by replacing the building blocks and chemical reactions as follows.
 
 **Building blocks:** Replace `data/building_blocks.csv` with a custom file containing the building blocks. The file should be a CSV file with a header row and two columns: `smiles` and `ID`. The `smiles` column should contain the SMILES string for each building block, and the `ID` column should contain a unique ID for each building block.
 
