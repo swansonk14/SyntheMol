@@ -1,6 +1,7 @@
 """Contains reinforcement learning models."""
 import torch
 import torch.nn as nn
+from tqdm import trange
 
 from chemfunc.molecular_fingerprints import compute_fingerprints
 
@@ -78,9 +79,11 @@ class RLModel:
         self.num_epochs = num_epochs
         self.num_workers = num_workers
 
-        self.molecules: list[tuple[str]] = []
+        self.molecule_tuples: list[tuple[str]] = []
         self.rewards: list[float] = []
         self.features: list[torch.Tensor] = []
+
+        self.smiles_to_features = {}
 
         self.model = MLP(
             input_dim=self.total_features_size,
@@ -91,6 +94,40 @@ class RLModel:
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
         self.loss_fn = nn.HuberLoss()
 
+    def compute_rdkit_features(self, molecule_tuples: list[tuple[str]]) -> torch.Tensor:
+        """Computes the RDKit features for each molecule in each tuple of molecules.
+
+        :param molecule_tuples: A list of tuples of SMILES strings representing one or more molecules.
+        :return: A tensor containing the features for each molecule in each tuple of molecules (num_tuples, total_features_size).
+        """
+        # Get all molecules
+        molecule_nums = [len(molecules) for molecules in molecule_tuples]
+        all_molecules = [molecule for molecules in molecule_tuples for molecule in molecules]
+
+        # Determine unknown molecules
+        unknown_molecules = [molecule for molecule in all_molecules if molecule not in self.smiles_to_features]
+
+        # Compute features for unknown molecules and add to dictionary
+        if unknown_molecules:
+            unknown_features = compute_fingerprints(mols=unknown_molecules, fingerprint_type='rdkit')
+            unknown_features = torch.from_numpy(unknown_features)
+
+            for i, molecule in enumerate(unknown_molecules):
+                self.smiles_to_features[molecule] = unknown_features[i]
+
+        # Get all molecules and their features
+        all_features = torch.stack([self.smiles_to_features[molecule] for molecule in all_molecules])
+
+        # Set up feature vectors for each combination of molecules
+        features = torch.zeros((len(molecule_tuples), self.total_features_size))
+        index = 0
+        for i, molecule_num in enumerate(molecule_nums):
+            molecules_features = all_features[index:index + molecule_num].flatten()
+            features[i, :len(molecules_features)] = molecules_features
+            index += molecule_num
+
+        return features
+
     def buffer(self, molecules: tuple[str], reward: float) -> None:
         """Adds a training example to the buffer.
 
@@ -99,14 +136,11 @@ class RLModel:
                        from these molecules and potentially others).
         """
         # Add molecules and reward
-        self.molecules.append(molecules)
+        self.molecule_tuples.append(molecules)
         self.rewards.append(reward)
 
         # Compute features
-        features = torch.zeros(self.total_features_size)
-        molecules_features = compute_fingerprints(mols=list(molecules), fingerprint_type='rdkit')
-        features[:len(molecules_features)] = torch.from_numpy(molecules_features)
-        self.features.append(features)
+        self.features.append(self.compute_rdkit_features([molecules])[0])
 
     def train(self) -> None:
         """Trains the model on the examples in the buffer."""
@@ -124,42 +158,31 @@ class RLModel:
         )
 
         # Loop over epochs
-        for epoch in range(self.num_epochs):
+        for _ in trange(self.num_epochs, desc='Training RL model'):
             # Loop over batches of molecule features and rewards
             for batch_features, batch_rewards in dataloader:
                 # Make predictions
-                predictions = self.model(batch_features)
+                predictions = self.model(batch_features).squeeze(dim=-1)
 
                 # Compute loss
-                loss = nn.MSELoss()(predictions, batch_rewards)
+                loss = self.loss_fn(predictions, batch_rewards)
 
                 # Backpropagate
                 self.model.zero_grad()
                 loss.backward()
                 self.optimizer.step()
 
-    def predict(self, molecule_tuples: list[tuple[str]]) -> list[float]:
+    def predict(self, molecule_tuples: list[tuple[str]]) -> torch.Tensor:
         """Predicts the reward for each tuple of molecules.
 
         :param molecule_tuples: A list of tuples of SMILES strings representing one or more molecules.
-        :return: A list of rewards for each tuple of molecules.
+        :return: A 1D tensor of rewards for each tuple of molecules.
         """
         # Set model to eval mode
         self.model.eval()
 
         # Compute features in bulk across all molecules
-        molecule_nums = [len(molecules) for molecules in molecule_tuples]
-        all_molecules = [molecule for molecules in molecule_tuples for molecule in molecules]
-        all_features = compute_fingerprints(mols=all_molecules, fingerprint_type='rdkit')
-        all_features = torch.from_numpy(all_features)
-
-        # Set up feature vectors for each combination of molecules
-        features = torch.zeros((len(molecule_tuples), self.total_features_size))
-        index = 0
-        for i, molecule_num in enumerate(molecule_nums):
-            molecules_features = all_features[index:index + molecule_num]
-            features[i, :len(molecules_features)] = molecules_features
-            index += molecule_num
+        features = self.compute_rdkit_features(molecule_tuples)
 
         # Create dataset
         dataset = torch.utils.data.TensorDataset(features)
@@ -173,11 +196,14 @@ class RLModel:
         rewards = []
 
         with torch.no_grad():
-            for feature_batch in dataloader:
+            for (batch_features,) in dataloader:
                 # Predict rewards
-                rewards_batch = self.model(feature_batch)
+                batch_rewards = self.model(batch_features)
 
                 # Add rewards to list
-                rewards.extend(rewards_batch.flatten().tolist())
+                rewards.extend(batch_rewards.flatten().tolist())
+
+        # Convert to PyTorch
+        rewards = torch.tensor(rewards)
 
         return rewards

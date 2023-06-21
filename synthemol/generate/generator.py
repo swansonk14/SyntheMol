@@ -98,9 +98,11 @@ class Generator:
         # Get the function to use for optimization
         if self.optimization == 'maximize':
             self.optimization_fn = max
+            self.optimization_sign = 1
             self.ascending_scores = False
         elif self.optimization == 'minimize':
             self.optimization_fn = min
+            self.optimization_sign = -1
             self.ascending_scores = True
         else:
             raise ValueError(f'Invalid optimization type: {self.optimization}')
@@ -373,8 +375,11 @@ class Generator:
             )
         elif self.search_type == 'rl':
             # Select node proportional to the RL score
-            child_node_scores = self.rl_model.predict(nodes=child_nodes)
-            selected_node = self.rng.choice(child_nodes, p=softmax(child_node_scores / self.rl_temperature))
+            child_node_molecules = [child_node.molecules for child_node in child_nodes]
+            child_node_scores = self.rl_model.predict(child_node_molecules)
+            child_node_scores *= self.optimization_sign
+            child_node_probs = softmax(child_node_scores / self.rl_temperature)
+            selected_node = self.rng.choice(child_nodes, p=child_node_probs)
         else:
             raise ValueError(f'Invalid search type: {self.search_type}')
 
