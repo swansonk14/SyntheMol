@@ -1,6 +1,6 @@
 """Plots the MCTS results over time."""
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,7 +13,7 @@ def plot_mcts_over_time(
         model_name: str,
         plot_type: Literal['histogram', 'line', 'violin'] = 'violin',
         increment: int = 50000,
-        min_score: Optional[float] = None,
+        min_score: float | None = None,
 ) -> None:
     """Plots the MCTS results over time.
 

@@ -1,14 +1,16 @@
 import itertools
 from collections import Counter
 from functools import partial
-from typing import Callable, Optional
+from typing import Callable, Literal
 
 import numpy as np
 from rdkit import Chem
+from scipy.special import softmax
 from tqdm import trange
 
 from synthemol.constants import OPTIMIZATION_TYPES
 from synthemol.generate.node import Node
+from synthemol.models import RLModel
 from synthemol.reactions import Reaction
 from synthemol.utils import random_choice
 
@@ -16,27 +18,36 @@ from synthemol.utils import random_choice
 class Generator:
     """A class that generates molecules."""
 
-    def __init__(self,
-                 building_block_smiles_to_id: dict[str, int],
-                 max_reactions: int,
-                 scoring_fn: Callable[[str], float],
-                 explore_weight: float,
-                 num_expand_nodes: Optional[int],
-                 optimization: OPTIMIZATION_TYPES,
-                 reactions: tuple[Reaction],
-                 rng_seed: int,
-                 no_building_block_diversity: bool,
-                 store_nodes: bool,
-                 verbose: bool,
-                 replicate: bool = False) -> None:
+    def __init__(
+            self,
+            search_type: Literal['mcts', 'rl'],
+            building_block_smiles_to_id: dict[str, int],
+            max_reactions: int,
+            scoring_fn: Callable[[str], float],
+            explore_weight: float,
+            num_expand_nodes: int | None,
+            rl_temperature: float,
+            rl_train_frequency: int,
+            optimization: OPTIMIZATION_TYPES,
+            reactions: tuple[Reaction],
+            rng_seed: int,
+            no_building_block_diversity: bool,
+            store_nodes: bool,
+            verbose: bool,
+            replicate: bool = False
+    ) -> None:
         """Creates the Generator.
 
+        :param search_type: The type of search to perform. 'mcts' = Monte Carlo tree search. 'rl' = Reinforcement learning.
         :param building_block_smiles_to_id: A dictionary mapping building block SMILES to their IDs.
         :param max_reactions: The maximum number of reactions to use to construct a molecule.
         :param scoring_fn: A function that takes as input a SMILES representing a molecule and returns a score.
         :param explore_weight: The hyperparameter that encourages exploration.
         :param num_expand_nodes: The number of tree nodes to expand when extending the child nodes in the search tree.
                                   If None, then all nodes are expanded.
+        :param rl_temperature: The temperature parameter for the softmax function used to select building blocks.
+                               Higher temperature means more exploration.
+        :param rl_train_frequency: The number of rollouts between each training step of the RL model.
         :param optimization: Whether to maximize or minimize the score.
         :param reactions: A tuple of reactions that combine molecular building blocks.
         :param rng_seed: Seed for the random number generator.
@@ -48,17 +59,26 @@ class Generator:
         :param replicate: This is necessary to replicate the results from the paper, but otherwise should not be used
                           since it limits the potential choices of building blocks.
         """
+        self.search_type = search_type
         self.building_block_smiles_to_id = building_block_smiles_to_id
         self.max_reactions = max_reactions
         self.scoring_fn = scoring_fn
         self.explore_weight = explore_weight
         self.num_expand_nodes = num_expand_nodes
+        self.rl_temperature = rl_temperature
+        self.rl_train_frequency = rl_train_frequency
         self.optimization = optimization
         self.reactions = reactions
         self.rng = np.random.default_rng(seed=rng_seed)
         self.building_block_diversity = not no_building_block_diversity
         self.store_nodes = store_nodes
         self.verbose = verbose
+
+        # If using RL, set up RL model
+        if self.search_type == 'rl':
+            self.rl_model = RLModel()
+        else:
+            self.rl_model = None
 
         # Get all building blocks that are used in at least one reaction
         if replicate:
@@ -343,12 +363,20 @@ class Generator:
             else:
                 raise ValueError('Failed to expand a partially expanded node.')
 
-        # Select a node based on the MCTS score
-        total_visit_count = sum(child_node.N for child_node in child_nodes)
-        selected_node = self.optimization_fn(
-            child_nodes,
-            key=partial(self.compute_mcts_score, total_visit_count=total_visit_count)
-        )
+        # Select a node based on the search type
+        if self.search_type == 'mcts':
+            # Select node with the highest MCTS score
+            total_visit_count = sum(child_node.N for child_node in child_nodes)
+            selected_node = self.optimization_fn(
+                child_nodes,
+                key=partial(self.compute_mcts_score, total_visit_count=total_visit_count)
+            )
+        elif self.search_type == 'rl':
+            # Select node proportional to the RL score
+            child_node_scores = self.rl_model.predict(nodes=child_nodes)
+            selected_node = self.rng.choice(child_nodes, p=softmax(child_node_scores / self.rl_temperature))
+        else:
+            raise ValueError(f'Invalid search type: {self.search_type}')
 
         # Check the node map and merge with an existing node if available
         if selected_node in self.node_map:
@@ -369,6 +397,10 @@ class Generator:
         selected_node.W += v
         selected_node.N += 1
 
+        # Save example to RL buffer
+        if self.rl_model is not None and node.num_molecules > 0:
+            self.rl_model.buffer(molecules=node.molecules, reward=v)
+
         return v
 
     def generate(self, n_rollout: int) -> list[Node]:
@@ -387,8 +419,13 @@ class Generator:
 
         # Run the generation algorithm for the specified number of rollouts
         for rollout_num in trange(rollout_start, rollout_end):
+            # Run rollout
             self.rollout_num = rollout_num
             self.rollout(node=self.root)
+
+            # Train RL model
+            if self.rl_model is not None and rollout_num % self.rl_train_frequency == 0:
+                self.rl_model.train()
 
         # Get all the Nodes representing fully constructed molecules that are not building blocks within these rollouts
         nodes = [

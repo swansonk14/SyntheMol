@@ -9,10 +9,12 @@ from synthemol.utils import convert_to_mol, MOLECULE_TYPE
 class Reaction:
     """A chemical reaction including SMARTS for the reactants, product, and reaction along with helper functions."""
 
-    def __init__(self,
-                 reactants: list[QueryMol],
-                 product: QueryMol,
-                 reaction_id: int | None = None) -> None:
+    def __init__(
+            self,
+            reactants: list[QueryMol],
+            product: QueryMol,
+            reaction_id: int | None = None
+    ) -> None:
         """Initializes the Reaction.
 
         :param reactants: A list of QueryMols containing the reactants of the reaction.

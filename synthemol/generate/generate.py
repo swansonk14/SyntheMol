@@ -1,6 +1,7 @@
 """Generate molecules combinatorially using a Monte Carlo tree search guided by a molecular property predictor."""
 from datetime import datetime
 from pathlib import Path
+from typing import Literal
 
 import pandas as pd
 from tap import tapify
@@ -26,6 +27,7 @@ from synthemol.generate.utils import create_model_scoring_fn, save_generated_mol
 
 
 def generate(
+        search_type: Literal['mcts', 'rl'],
         model_path: Path,
         model_type: MODEL_TYPES,
         save_dir: Path,
@@ -40,6 +42,8 @@ def generate(
         n_rollout: int = 10,
         explore_weight: float = 10.0,
         num_expand_nodes: int | None = None,
+        rl_temperature: float = 1.0,
+        rl_train_frequency: int = 10,
         optimization: OPTIMIZATION_TYPES = 'maximize',
         rng_seed: int = 0,
         no_building_block_diversity: bool = False,
@@ -49,6 +53,7 @@ def generate(
 ) -> None:
     """Generate molecules combinatorially using a Monte Carlo tree search guided by a molecular property predictor.
 
+    :param search_type: The type of search to perform. 'mcts' = Monte Carlo tree search. 'rl' = Reinforcement learning.
     :param model_path: Path to a directory of model checkpoints or to a specific PKL or PT file containing a trained model.
     :param model_type: Type of model to train.
     :param building_blocks_path: Path to CSV file containing molecular building blocks.
@@ -63,6 +68,9 @@ def generate(
     :param n_rollout: The number of times to run the generation process.
     :param explore_weight: The hyperparameter that encourages exploration.
     :param num_expand_nodes: The number of child nodes to include when expanding a given node. If None, all child nodes will be included.
+    :param rl_temperature: The temperature parameter for the softmax function used to select building blocks.
+                           Higher temperature means more exploration.
+    :param rl_train_frequency: The number of rollouts between each training step of the RL model.
     :param optimization: Whether to maximize or minimize the score.
     :param rng_seed: Seed for random number generators.
     :param no_building_block_diversity: Whether to turn off the score modification that encourages diverse building blocks.
@@ -144,11 +152,14 @@ def generate(
     # Set up Generator
     print('Setting up generator...')
     generator = Generator(
+        search_type=search_type,
         building_block_smiles_to_id=building_block_smiles_to_id,
         max_reactions=max_reactions,
         scoring_fn=model_scoring_fn,
         explore_weight=explore_weight,
         num_expand_nodes=num_expand_nodes,
+        rl_temperature=rl_temperature,
+        rl_train_frequency=rl_train_frequency,
         optimization=optimization,
         reactions=reactions,
         rng_seed=rng_seed,
