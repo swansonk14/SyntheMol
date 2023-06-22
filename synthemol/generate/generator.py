@@ -16,19 +16,21 @@ from synthemol.utils import random_choice
 class Generator:
     """A class that generates molecules."""
 
-    def __init__(self,
-                 building_block_smiles_to_id: dict[str, int],
-                 max_reactions: int,
-                 scoring_fn: Callable[[str], float],
-                 explore_weight: float,
-                 num_expand_nodes: Optional[int],
-                 optimization: OPTIMIZATION_TYPES,
-                 reactions: tuple[Reaction],
-                 rng_seed: int,
-                 no_building_block_diversity: bool,
-                 store_nodes: bool,
-                 verbose: bool,
-                 replicate: bool = False) -> None:
+    def __init__(
+            self,
+            building_block_smiles_to_id: dict[str, int],
+            max_reactions: int,
+            scoring_fn: Callable[[str], float],
+            explore_weight: float,
+            num_expand_nodes: Optional[int],
+            optimization: OPTIMIZATION_TYPES,
+            reactions: tuple[Reaction],
+            rng_seed: int,
+            no_building_block_diversity: bool,
+            store_nodes: bool,
+            verbose: bool,
+            replicate: bool = False
+    ) -> None:
         """Creates the Generator.
 
         :param building_block_smiles_to_id: A dictionary mapping building block SMILES to their IDs.

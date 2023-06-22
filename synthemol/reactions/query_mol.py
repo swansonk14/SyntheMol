@@ -20,15 +20,15 @@ class QueryMol:
         self.query_mol = Chem.MolFromSmarts(self.smarts)
 
         # All building block SMILES
-        self._all_building_block_set = None
+        self._all_building_block_set = self._all_building_block_list = None
 
         # Building block SMILES that are allowed to match this QueryMol
         self._allowed_building_block_set = self._allowed_building_block_list = None
 
     @property
-    def all_building_blocks(self) -> set[str] | None:
+    def all_building_blocks(self) -> list[str] | None:
         """Gets a set of all building block SMILES for this QueryMol."""
-        return self._all_building_block_set
+        return self._all_building_block_list
 
     @all_building_blocks.setter
     def all_building_blocks(self, all_building_blocks: Iterable[str]) -> None:
@@ -42,6 +42,7 @@ class QueryMol:
             raise ValueError('All building block SMILES has already been set.')
 
         self._all_building_block_set = set(all_building_blocks)
+        self._all_building_block_list = sorted(self._all_building_block_set)
 
     @property
     def allowed_building_blocks(self) -> list[str] | None:
@@ -59,12 +60,7 @@ class QueryMol:
         if self._allowed_building_block_set is not None:
             raise ValueError('Allowed building block SMILES has already been set.')
 
-        allowed_building_blocks = set(allowed_building_blocks)
-        self._allowed_building_block_set = {
-            smiles
-            for smiles in allowed_building_blocks
-            if self.has_substruct_match(smiles)
-        }
+        self._allowed_building_block_set = set(allowed_building_blocks)
         self._allowed_building_block_list = sorted(self._allowed_building_block_set)
 
     def has_substruct_match(self, smiles: str) -> bool:

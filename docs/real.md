@@ -83,6 +83,13 @@ python scripts/data/map_real_reactions_to_building_blocks.py \
 
 Total number of molecules = 31,507,987,117
 
+Filter out building blocks that do not match the reaction templates.
+```bash
+python scripts/data/filter_real_reactions_to_building_blocks.py \
+    --reaction_to_building_blocks_path data/Data/4_real_space/reaction_to_building_blocks.pkl \
+    --save_path data/Data/4_real_space/reaction_to_building_blocks_filtered.pkl
+```
+
 
 ### Count REAL reactions and building blocks
 
