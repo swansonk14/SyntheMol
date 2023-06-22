@@ -1,7 +1,7 @@
 import itertools
 from collections import Counter
 from functools import partial
-from typing import Callable, Optional
+from typing import Callable
 
 import numpy as np
 from rdkit import Chem
@@ -22,7 +22,7 @@ class Generator:
             max_reactions: int,
             scoring_fn: Callable[[str], float],
             explore_weight: float,
-            num_expand_nodes: Optional[int],
+            num_expand_nodes: int | None,
             optimization: OPTIMIZATION_TYPES,
             reactions: tuple[Reaction],
             rng_seed: int,
