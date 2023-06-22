@@ -1,4 +1,4 @@
-"""Contains reinforcement learning models."""
+"""Contains reinforcement learning models for use in generating molecules."""
 import torch
 import torch.nn as nn
 from tqdm import trange
@@ -65,13 +65,23 @@ class RLModel:
             max_num_molecules: int = 3,
             features_size: int = 200,
             batch_size: int = 32,
-            num_epochs: int = 10,
+            num_epochs: int = 5,
             hidden_dim: int = 100,
             num_layers: int = 2,
             learning_rate: float = 1e-3,
             num_workers: int = 0
     ) -> None:
-        """Initializes the model."""
+        """Initializes the model.
+
+        :param max_num_molecules: The maximum number of molecules to process at a time.
+        :param features_size: The size of the features for each molecule.
+        :param batch_size: The batch size.
+        :param num_epochs: The number of epochs to train for.
+        :param hidden_dim: The dimensionality of the hidden layers.
+        :param num_layers: The number of layers.
+        :param learning_rate: The learning rate.
+        :param num_workers: The number of workers to use for data loading.
+        """
         self.max_num_molecules = max_num_molecules
         self.features_size = features_size
         self.total_features_size = max_num_molecules * features_size
@@ -172,17 +182,49 @@ class RLModel:
                 loss.backward()
                 self.optimizer.step()
 
-    def predict(self, molecule_tuples: list[tuple[str]]) -> torch.Tensor:
+    def evaluate(self) -> dict[str, float]:
+        """Evaluates the model on the examples in the buffer.
+
+        :return: A dictionary of metrics.
+        """
+        # Make predictions on all examples in the buffer
+        predictions = self.predict(features=torch.stack(self.features))
+
+        # Convert rewards to tensor
+        rewards = torch.tensor(self.rewards)
+
+        # Evaluate predictions
+        results = {
+            'RL Mean Squared Error': torch.nn.functional.mse_loss(predictions, rewards),
+            'RL Loss': self.loss_fn(predictions, rewards).item()
+        }
+
+        return results
+
+    def predict(
+            self,
+            molecule_tuples: list[tuple[str]] | None = None,
+            features: torch.Tensor | None = None
+    ) -> torch.Tensor:
         """Predicts the reward for each tuple of molecules.
 
+        Must provide one of `molecule_tuples` or `features` but not both.
+
         :param molecule_tuples: A list of tuples of SMILES strings representing one or more molecules.
+        :param features: A tensor containing the features for each molecule in each tuple of molecules
+                         (num_tuples, total_features_size).
         :return: A 1D tensor of rewards for each tuple of molecules.
         """
+        # Check inputs
+        if (molecule_tuples is None) == (features is None):
+            raise ValueError('Must provide either `molecule_tuples` or `features` but not both.')
+
         # Set model to eval mode
         self.model.eval()
 
         # Compute features in bulk across all molecules
-        features = self.compute_rdkit_features(molecule_tuples)
+        if features is None:
+            features = self.compute_rdkit_features(molecule_tuples)
 
         # Create dataset
         dataset = torch.utils.data.TensorDataset(features)

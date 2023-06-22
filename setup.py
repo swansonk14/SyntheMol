@@ -31,7 +31,7 @@ setup(
         ]
     },
     install_requires=[
-        'chemfunc',
+        'chemfunc>=1.0.3',
         'chemprop',
         'descriptastorus',
         'gdown',
@@ -43,7 +43,8 @@ setup(
         'scikit-learn',
         'scipy',
         'tqdm',
-        'typed-argument-parser>=1.8.0'
+        'typed-argument-parser>=1.8.0',
+        'wandb'
     ],
     python_requires='>=3.10',
     classifiers=[

@@ -11,3 +11,4 @@ scipy==1.10.1
 torch==2.0.1
 tqdm==4.65.0
 typed-argument-parser==1.8.0
+wandb==0.15.4

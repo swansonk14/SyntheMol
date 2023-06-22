@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Literal
 
 import pandas as pd
+import wandb
 from tap import tapify
 
 from synthemol.constants import (
@@ -49,7 +50,10 @@ def generate(
         no_building_block_diversity: bool = False,
         store_nodes: bool = False,
         verbose: bool = False,
-        replicate: bool = False
+        replicate: bool = False,
+        wandb_log: bool = False,
+        wandb_project_name: str = 'synthemol',
+        wandb_run_name: str | None = None,
 ) -> None:
     """Generate molecules combinatorially using a Monte Carlo tree search guided by a molecular property predictor.
 
@@ -77,9 +81,12 @@ def generate(
     :param store_nodes: Whether to store in memory all the nodes of the search tree.
                         This doubles the speed of the search but significantly increases
                         the memory usage (e.g., 450 GB for 20,000 rollouts instead of 600 MB).
+    :param verbose: Whether to print out additional information during generation.
     :param replicate: This is necessary to replicate the results from the paper, but otherwise should not be used
                       since it limits the potential choices of building blocks.
-    :param verbose: Whether to print out additional information during generation.
+    :param wandb_log: Whether to log results to Weights & Biases.
+    :param wandb_project_name: The name of the Weights & Biases project to log results to.
+    :param wandb_run_name: The name of the Weights & Biases run to log results to.
     """
     # Create save directory
     save_dir.mkdir(parents=True, exist_ok=True)
@@ -125,6 +132,51 @@ def generate(
 
     print(f'Found {len(building_block_smiles_to_id):,} unique building blocks')
 
+    # Optionally, set up Weights & Biases logging and log building block stats
+    if wandb_log:
+        # Set up Weights & Biases run name
+        if wandb_run_name is None:
+            wandb_run_name = f'{search_type}_{model_type}' + \
+                             (f'_{fingerprint_type}' if fingerprint_type is not None else '')
+
+        # Initialize Weights & Biases logging
+        wandb.init(
+            project=wandb_project_name,
+            name=wandb_run_name,
+            config={
+                'search_type': search_type,
+                'model_path': model_path,
+                'model_type': model_type,
+                'save_dir': save_dir,
+                'building_blocks_path': building_blocks_path,
+                'fingerprint_type': fingerprint_type,
+                'reaction_to_building_blocks_path': reaction_to_building_blocks_path,
+                'building_blocks_id_column': building_blocks_id_column,
+                'building_blocks_score_column': building_blocks_score_column,
+                'building_blocks_smiles_column': building_blocks_smiles_column,
+                'max_reactions': max_reactions,
+                'n_rollout': n_rollout,
+                'explore_weight': explore_weight,
+                'num_expand_nodes': num_expand_nodes,
+                'rl_temperature': rl_temperature,
+                'rl_train_frequency': rl_train_frequency,
+                'optimization': optimization,
+                'rng_seed': rng_seed,
+                'no_building_block_diversity': no_building_block_diversity,
+                'store_nodes': store_nodes,
+                'verbose': verbose,
+                'replicate': replicate
+            }
+        )
+
+        # Log building block count
+        wandb.log({'Building Block Count': len(building_block_smiles_to_id)})
+
+        # Log building block score histogram
+        building_block_scores = [[score] for score in building_block_smiles_to_score.values()]
+        table = wandb.Table(data=building_block_scores, columns=['Score'])
+        wandb.log({'building_block_scores': wandb.plot.histogram(table, 'Score', title='Building Block Scores')})
+
     # Set all building blocks for each reaction
     set_all_building_blocks(
         reactions=reactions,
@@ -165,7 +217,8 @@ def generate(
         no_building_block_diversity=no_building_block_diversity,
         store_nodes=store_nodes,
         verbose=verbose,
-        replicate=replicate
+        replicate=replicate,
+        wandb_log=wandb_log
     )
 
     # Search for molecules
@@ -175,12 +228,12 @@ def generate(
 
     # Compute, print, and save stats
     stats = {
-        'mcts_time': datetime.now() - start_time,
+        'generation_time': datetime.now() - start_time,
         'num_nonzero_reaction_molecules': len(nodes),
         'approx_num_nodes_searched': generator.approx_num_nodes_searched
     }
 
-    print(f'MCTS time = {stats["mcts_time"]}')
+    print(f'Generation time = {stats["generation_time"]}')
     print(f'Number of full molecule, nonzero reaction nodes = {stats["num_nonzero_reaction_molecules"]:,}')
     print(f'Approximate total number of nodes searched = {stats["approx_num_nodes_searched"]:,}')
 
@@ -188,7 +241,19 @@ def generate(
         stats['num_nodes_searched'] = generator.num_nodes_searched
         print(f'Total number of nodes searched = {stats["num_nodes_searched"]:,}')
 
-    pd.DataFrame(data=[stats]).to_csv(save_dir / 'mcts_stats.csv', index=False)
+    pd.DataFrame(data=[stats]).to_csv(save_dir / 'generation_stats.csv', index=False)
+
+    # Log rollout stats
+    if wandb_log:
+        wandb.log({
+            'Generation Time': stats['generation_time'].total_seconds(),
+            'Number of Generated Molecules': stats['num_nonzero_reaction_molecules'],
+            'Approximate Number of Nodes Searched': stats['approx_num_nodes_searched']
+        } | ({'Exact Number of Nodes Searched': stats['num_nodes_searched']} if store_nodes else {}))
+
+        node_scores = [[node.P] for node in nodes]
+        table = wandb.Table(data=node_scores, columns=['Score'])
+        wandb.log({'generation_scores': wandb.plot.histogram(table, 'Score', title='Generated Molecule Scores')})
 
     # Save generated molecules
     print('Saving molecules...')

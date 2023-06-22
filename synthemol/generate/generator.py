@@ -1,9 +1,13 @@
+"""Contains the Generator class, which generates molecules."""
 import itertools
+import time
 from collections import Counter
 from functools import partial
 from typing import Callable, Literal
 
 import numpy as np
+import torch
+import wandb
 from rdkit import Chem
 from scipy.special import softmax
 from tqdm import trange
@@ -34,7 +38,8 @@ class Generator:
             no_building_block_diversity: bool,
             store_nodes: bool,
             verbose: bool,
-            replicate: bool = False
+            replicate: bool = False,
+            wandb_log: bool = False
     ) -> None:
         """Creates the Generator.
 
@@ -58,6 +63,7 @@ class Generator:
         :param verbose: Whether to print out additional statements during generation.
         :param replicate: This is necessary to replicate the results from the paper, but otherwise should not be used
                           since it limits the potential choices of building blocks.
+        :param wandb_log: Whether to log results to Weights & Biases.
         """
         self.search_type = search_type
         self.building_block_smiles_to_id = building_block_smiles_to_id
@@ -73,9 +79,11 @@ class Generator:
         self.building_block_diversity = not no_building_block_diversity
         self.store_nodes = store_nodes
         self.verbose = verbose
+        self.wandb_log = wandb_log
 
         # If using RL, set up RL model
         if self.search_type == 'rl':
+            torch.manual_seed(rng_seed)
             self.rl_model = RLModel()
         else:
             self.rl_model = None
@@ -424,13 +432,33 @@ class Generator:
 
         # Run the generation algorithm for the specified number of rollouts
         for rollout_num in trange(rollout_start, rollout_end):
-            # Run rollout
+            # Record rollout number
             self.rollout_num = rollout_num
-            self.rollout(node=self.root)
 
-            # Train RL model
+            # Set up rollout stats
+            rollout_stats = {'Rollout Number': rollout_num}
+
+            # Run rollout
+            start_time = time.time()
+            rollout_stats['Rollout Score'] = self.rollout(node=self.root)
+            rollout_stats['Rollout Time'] = time.time() - start_time
+
+            # Train and evaluate RL model
             if self.rl_model is not None and rollout_num % self.rl_train_frequency == 0:
+                # Train model
+                start_time = time.time()
                 self.rl_model.train()
+                rollout_stats['RL Train Time'] = time.time() - start_time
+
+                # Evaluate model
+                if self.wandb_log:
+                    start_time = time.time()
+                    rollout_stats |= self.rl_model.evaluate()
+                    rollout_stats['RL Eval Time'] = time.time() - start_time
+
+            # Log rollout stats
+            if self.wandb_log:
+                wandb.log(rollout_stats)
 
         # Get all the Nodes representing fully constructed molecules that are not building blocks within these rollouts
         nodes = [

@@ -104,9 +104,6 @@ def save_generated_molecules(
     :param building_block_id_to_smiles: A dictionary mapping building block IDs to SMILES.
     :param save_path: A path to a CSV file where the molecules will be saved.
     """
-    # Only keep nodes with one molecule
-    nodes = [node for node in nodes if node.num_molecules == 1]
-
     # Convert construction logs from lists to dictionaries
     construction_dicts = []
     max_reaction_num = 0
