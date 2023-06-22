@@ -5,8 +5,7 @@ from synthemol.reactions.reaction import Reaction
 from synthemol.reactions.real import REAL_REACTIONS
 from synthemol.reactions.utils import (
     load_and_set_allowed_reaction_building_blocks,
-    set_all_building_blocks,
-    set_allowed_reaction_building_blocks
+    set_all_building_blocks
 )
 
 if CUSTOM_REACTIONS is None:

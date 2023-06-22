@@ -136,8 +136,7 @@ def generate(
         print('Loading and setting allowed building blocks for each reaction...')
         load_and_set_allowed_reaction_building_blocks(
             reactions=reactions,
-            reaction_to_reactant_to_building_blocks_path=reaction_to_building_blocks_path,
-            building_block_id_to_smiles=building_block_id_to_smiles
+            reaction_to_reactant_to_building_blocks_path=reaction_to_building_blocks_path
         )
 
     # Define model scoring function
