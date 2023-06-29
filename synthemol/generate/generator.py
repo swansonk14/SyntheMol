@@ -449,6 +449,7 @@ class Generator:
                 start_time = time.time()
                 self.rl_model.train()
                 rollout_stats['RL Train Time'] = time.time() - start_time
+                rollout_stats['RL Train Examples'] = self.rl_model.buffer_size
 
                 # Evaluate model
                 if self.wandb_log:

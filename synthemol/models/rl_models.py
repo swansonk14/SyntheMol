@@ -1,6 +1,7 @@
 """Contains reinforcement learning models for use in generating molecules."""
 import torch
 import torch.nn as nn
+from sklearn.metrics import mean_squared_error, r2_score
 from tqdm import trange
 
 from chemfunc.molecular_fingerprints import compute_fingerprints
@@ -193,10 +194,15 @@ class RLModel:
         # Convert rewards to tensor
         rewards = torch.tensor(self.rewards)
 
+        # Convert to numpy
+        predictions_numpy = predictions.detach().numpy()
+        rewards_numpy = rewards.detach().numpy()
+
         # Evaluate predictions
         results = {
-            'RL Mean Squared Error': torch.nn.functional.mse_loss(predictions, rewards),
-            'RL Loss': self.loss_fn(predictions, rewards).item()
+            'RL Loss': self.loss_fn(predictions, rewards).item(),
+            'RL Mean Squared Error': mean_squared_error(rewards, predictions),
+            'RL R^2': r2_score(rewards, predictions),
         }
 
         return results
@@ -249,3 +255,8 @@ class RLModel:
         rewards = torch.tensor(rewards)
 
         return rewards
+
+    @property
+    def buffer_size(self) -> int:
+        """Returns the number of examples in the buffer."""
+        return len(self.molecule_tuples)
