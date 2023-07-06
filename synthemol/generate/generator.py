@@ -14,7 +14,7 @@ from tqdm import trange
 
 from synthemol.constants import OPTIMIZATION_TYPES
 from synthemol.generate.node import Node
-from synthemol.models import RLModel
+from synthemol.models import RLModelRDKit
 from synthemol.reactions import Reaction
 from synthemol.utils import random_choice
 
@@ -84,7 +84,7 @@ class Generator:
         # If using RL, set up RL model
         if self.search_type == 'rl':
             torch.manual_seed(rng_seed)
-            self.rl_model = RLModel()
+            self.rl_model = RLModelRDKit()
         else:
             self.rl_model = None
 
