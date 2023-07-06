@@ -141,6 +141,7 @@ def generate(
         # Set up Weights & Biases run name
         if wandb_run_name is None:
             wandb_run_name = f'{search_type}_{model_type}' + \
+                             (f'_rl_model_{rl_model_type}' if search_type == 'rl' else '') + \
                              (f'_{fingerprint_type}' if fingerprint_type is not None else '')
 
         # Initialize Weights & Biases logging
