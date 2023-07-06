@@ -8,7 +8,7 @@ import torch.nn as nn
 from chemfunc.molecular_fingerprints import compute_fingerprints
 from chemprop.data import MoleculeDataLoader, MoleculeDatapoint, MoleculeDataset
 from sklearn.metrics import mean_squared_error, r2_score
-from tqdm import trange
+from tqdm import tqdm, trange
 
 from synthemol.models import chemprop_load
 
@@ -178,8 +178,7 @@ class RLModel(ABC):
         rewards = []
 
         with torch.no_grad():
-            from tqdm import tqdm
-            for (batch_data,) in tqdm(dataloader):
+            for (batch_data,) in tqdm(dataloader, desc='Predicting RL model'):
                 # Predict rewards
                 batch_rewards = self.model(batch_data)
 
