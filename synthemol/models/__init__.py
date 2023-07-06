@@ -5,7 +5,11 @@ from synthemol.models.chemprop_models import (
     chemprop_predict_on_molecule,
     chemprop_predict_on_molecule_ensemble
 )
-from synthemol.models.rl_models import RLModelRDKit
+from synthemol.models.rl_models import (
+    RLModel,
+    RLModelChemprop,
+    RLModelRDKit,
+)
 from synthemol.models.sklearn_models import (
     sklearn_load,
     sklearn_predict,

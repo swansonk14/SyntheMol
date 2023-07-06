@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Literal
 
 import pandas as pd
+import torch
 import wandb
 from tap import tapify
 
@@ -17,6 +18,7 @@ from synthemol.constants import (
     SCORE_COL,
     SMILES_COL
 )
+from synthemol.models import RLModelChemprop, RLModelRDKit
 from synthemol.reactions import (
     Reaction,
     REACTIONS,
@@ -43,7 +45,8 @@ def generate(
         n_rollout: int = 10,
         explore_weight: float = 10.0,
         num_expand_nodes: int | None = None,
-        rl_temperature: float = 1.0,
+        rl_model_type: Literal['rdkit', 'chemprop'] = 'rdkit',
+        rl_temperature: float = 0.1,
         rl_train_frequency: int = 10,
         optimization: OPTIMIZATION_TYPES = 'maximize',
         rng_seed: int = 0,
@@ -72,6 +75,7 @@ def generate(
     :param n_rollout: The number of times to run the generation process.
     :param explore_weight: The hyperparameter that encourages exploration.
     :param num_expand_nodes: The number of child nodes to include when expanding a given node. If None, all child nodes will be included.
+    :param rl_model_type: The type of RL model to use. 'rdkit' = MLP RDKIT model. 'chemprop' = pretrained Chemprop model.
     :param rl_temperature: The temperature parameter for the softmax function used to select building blocks.
                            Higher temperature means more exploration.
     :param rl_train_frequency: The number of rollouts between each training step of the RL model.
@@ -200,6 +204,19 @@ def generate(
         smiles_to_score=building_block_smiles_to_score
     )
 
+    # Set up RL model if applicable
+    if search_type == 'rl':
+        torch.manual_seed(rng_seed)
+
+        if rl_model_type == 'rdkit':
+            rl_model = RLModelRDKit()
+        elif rl_model_type == 'chemprop':
+            rl_model = RLModelChemprop(model_path=model_path)
+        else:
+            raise ValueError(f'Invalid RL model type: {rl_model_type}')
+    else:
+        rl_model = None
+
     # Set up Generator
     print('Setting up generator...')
     generator = Generator(
@@ -217,6 +234,7 @@ def generate(
         no_building_block_diversity=no_building_block_diversity,
         store_nodes=store_nodes,
         verbose=verbose,
+        rl_model=rl_model,
         replicate=replicate,
         wandb_log=wandb_log
     )

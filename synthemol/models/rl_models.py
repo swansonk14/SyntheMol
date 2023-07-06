@@ -1,12 +1,16 @@
 """Contains reinforcement learning models for use in generating molecules."""
 from abc import ABC, abstractmethod
+from pathlib import Path
+from typing import Iterator
 
 import torch
 import torch.nn as nn
+from chemfunc.molecular_fingerprints import compute_fingerprints
+from chemprop.data import MoleculeDataLoader, MoleculeDatapoint, MoleculeDataset
 from sklearn.metrics import mean_squared_error, r2_score
 from tqdm import trange
 
-from chemfunc.molecular_fingerprints import compute_fingerprints
+from synthemol.models import chemprop_load
 
 
 class MLP(nn.Module):
@@ -57,6 +61,10 @@ class MLP(nn.Module):
             if i < len(self.layers) - 1:
                 X = self.activation(X)
 
+        # Apply sigmoid during prediction
+        if not self.training:
+            X = torch.sigmoid(X)
+
         return X
 
 
@@ -67,7 +75,7 @@ class RLModel(ABC):
             self,
             num_workers: int = 0,
             num_epochs: int = 5,
-            batch_size: int = 32,
+            batch_size: int = 50,
             learning_rate: float = 1e-3
     ) -> None:
         """Initializes the model.
@@ -86,7 +94,7 @@ class RLModel(ABC):
         self.rewards: list[float] = []
 
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
-        self.loss_fn = nn.HuberLoss()
+        self.loss_fn = nn.BCEWithLogitsLoss()  # TODO: have option for regression
 
     def buffer(self, molecules: tuple[str], reward: float) -> None:
         """Adds a training example to the buffer.
@@ -115,9 +123,9 @@ class RLModel(ABC):
         # Loop over epochs
         for _ in trange(self.num_epochs, desc='Training RL model'):
             # Loop over batches of molecule features and rewards
-            for batch_features, batch_rewards in dataloader:
+            for batch_data, batch_rewards in dataloader:
                 # Make predictions
-                predictions = self.model(batch_features).squeeze(dim=-1)
+                predictions = self.model(batch_data).squeeze(dim=-1)
 
                 # Compute loss
                 loss = self.loss_fn(predictions, batch_rewards)
@@ -151,7 +159,7 @@ class RLModel(ABC):
 
         return results
 
-    def predict(self, molecule_tuples: list[tuple[str]] | None = None) -> torch.Tensor:
+    def predict(self, molecule_tuples: list[tuple[str]]) -> torch.Tensor:
         """Predicts the reward for each tuple of molecules.
 
         :param molecule_tuples: A list of tuples of SMILES strings representing one or more molecules.
@@ -170,7 +178,8 @@ class RLModel(ABC):
         rewards = []
 
         with torch.no_grad():
-            for (batch_data,) in dataloader:
+            from tqdm import tqdm
+            for (batch_data,) in tqdm(dataloader):
                 # Predict rewards
                 batch_rewards = self.model(batch_data)
 
@@ -213,25 +222,25 @@ class RLModel(ABC):
 class RLModelRDKit(RLModel):
     def __init__(
             self,
-            num_workers: int = 0,
-            num_epochs: int = 5,
-            batch_size: int = 32,
-            learning_rate: float = 1e-3,
             max_num_molecules: int = 3,
             features_size: int = 200,
             hidden_dim: int = 100,
-            num_layers: int = 2
+            num_layers: int = 2,
+            num_workers: int = 0,
+            num_epochs: int = 5,
+            batch_size: int = 50,
+            learning_rate: float = 1e-3,
     ) -> None:
         """Initializes the model.
 
-        :param num_workers: The number of workers to use for data loading.
-        :param num_epochs: The number of epochs to train for.
-        :param batch_size: The batch size.
-        :param learning_rate: The learning rate.
         :param max_num_molecules: The maximum number of molecules to process at a time.
         :param features_size: The size of the features for each molecule.
         :param hidden_dim: The dimensionality of the hidden layers.
         :param num_layers: The number of layers.
+        :param num_workers: The number of workers to use for data loading.
+        :param num_epochs: The number of epochs to train for.
+        :param batch_size: The batch size.
+        :param learning_rate: The learning rate.
         """
         self.max_num_molecules = max_num_molecules
         self.features_size = features_size
@@ -323,3 +332,86 @@ class RLModelRDKit(RLModel):
         )
 
         return dataloader
+
+
+class RLMoleculeDataLoader(MoleculeDataLoader):
+    def __iter__(self) -> Iterator[tuple[torch.Tensor, ...]]:
+        """Creates an iterator which returns (x, y) or (x,) pairs
+        where x is a batch of molecules and y is a batch of rewards."""
+        for batch in super(RLMoleculeDataLoader, self).__iter__():
+            data = batch.batch_graph()
+            targets = batch.targets()
+
+            if targets[0] is None:
+                yield (data,)
+            else:
+                yield data, torch.tensor([target[0] for target in targets])
+
+
+class RLModelChemprop(RLModel):
+    def __init__(
+            self,
+            model_path: Path,
+            num_workers: int = 0,
+            num_epochs: int = 5,
+            batch_size: int = 50,
+            learning_rate: float = 1e-3,
+    ) -> None:
+        """Initializes the model.
+
+        :param model_path: The path to pretrained Chemprop checkpoint file.
+        :param num_workers: The number of workers to use for data loading.
+        :param num_epochs: The number of epochs to train for.
+        :param batch_size: The batch size.
+        :param learning_rate: The learning rate.
+        """
+        # If model_path is a directory, take the first model
+        if model_path.is_dir():
+            self.model_path = sorted(model_path.glob('**/*.pt'))[0]
+        else:
+            self.model_path = model_path
+
+        self._model = chemprop_load(
+            model_path=self.model_path
+        )
+
+        super().__init__(
+            num_workers=num_workers,
+            num_epochs=num_epochs,
+            batch_size=batch_size,
+            learning_rate=learning_rate
+        )
+
+    @property
+    def model(self) -> nn.Module:
+        """Returns the model."""
+        return self._model
+
+    def get_dataloader(
+            self,
+            molecule_tuples: list[tuple[str]],
+            rewards: list[float] | None = None,
+            shuffle: bool = False
+    ) -> torch.utils.data.DataLoader:
+        """Returns a dataloader for the given molecules.
+
+        :param molecule_tuples: A list of tuples of SMILES strings representing one or more molecules.
+        :param rewards: A list of rewards for each tuple of molecules.
+        :param shuffle: Whether to shuffle the data.
+        :return: A dataloader.
+        """
+        if rewards is None:
+            rewards = [None] * len(molecule_tuples)
+        else:
+            rewards = [[float(reward)] for reward in rewards]
+
+        return RLMoleculeDataLoader(
+            dataset=MoleculeDataset([
+                MoleculeDatapoint(
+                    smiles=['.'.join(molecule_tuple)],  # Merge multiple molecules into one string
+                    targets=reward,
+                ) for molecule_tuple, reward in zip(molecule_tuples, rewards)
+            ]),
+            num_workers=self.num_workers,
+            shuffle=shuffle
+        )

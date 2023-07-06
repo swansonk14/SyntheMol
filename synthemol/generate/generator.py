@@ -6,7 +6,6 @@ from functools import partial
 from typing import Callable, Literal
 
 import numpy as np
-import torch
 import wandb
 from rdkit import Chem
 from scipy.special import softmax
@@ -14,7 +13,7 @@ from tqdm import trange
 
 from synthemol.constants import OPTIMIZATION_TYPES
 from synthemol.generate.node import Node
-from synthemol.models import RLModelRDKit
+from synthemol.models import RLModel
 from synthemol.reactions import Reaction
 from synthemol.utils import random_choice
 
@@ -38,6 +37,7 @@ class Generator:
             no_building_block_diversity: bool,
             store_nodes: bool,
             verbose: bool,
+            rl_model: RLModel | None = None,
             replicate: bool = False,
             wandb_log: bool = False
     ) -> None:
@@ -61,6 +61,7 @@ class Generator:
                             This doubles the speed of the search but significantly increases
                             the memory usage (e.g., 450GB for 20,000 rollouts instead of 600 MB).
         :param verbose: Whether to print out additional statements during generation.
+        :param rl_model: The RL model to use for the RL search. Must be provided if and only if search_type is 'rl'.
         :param replicate: This is necessary to replicate the results from the paper, but otherwise should not be used
                           since it limits the potential choices of building blocks.
         :param wandb_log: Whether to log results to Weights & Biases.
@@ -79,17 +80,16 @@ class Generator:
         self.building_block_diversity = not no_building_block_diversity
         self.store_nodes = store_nodes
         self.verbose = verbose
+        self.replicate = replicate
+        self.rl_model = rl_model
         self.wandb_log = wandb_log
 
-        # If using RL, set up RL model
-        if self.search_type == 'rl':
-            torch.manual_seed(rng_seed)
-            self.rl_model = RLModelRDKit()
-        else:
-            self.rl_model = None
+        # Check that the search type is valid
+        if (self.search_type == 'rl') != (self.rl_model is not None):
+            raise ValueError('RL model must be provided if and only if search_type is "rl"')
 
         # Get all building blocks that are used in at least one reaction
-        if replicate:
+        if self.replicate:
             self.all_building_blocks = list(dict.fromkeys(
                 building_block
                 for reaction in self.reactions
