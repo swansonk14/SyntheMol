@@ -36,6 +36,10 @@ TODO: check REAL molecule numbers with new building blocks
 
 TODO: test SyntheMol GPU time
 
+TODO: competing interests with Greenstone?
+
+TODO: source data for figures
+
 
 
 ## Table of contents

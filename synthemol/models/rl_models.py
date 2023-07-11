@@ -112,6 +112,7 @@ class RLModel(ABC):
         self.model.train()
 
         # TODO: upsample new examples and downsample old examples
+        # TODO: use GPU (cuda)
 
         # Get dataloader
         dataloader = self.get_dataloader(
@@ -121,7 +122,7 @@ class RLModel(ABC):
         )
 
         # Loop over epochs
-        for _ in trange(self.num_epochs, desc='Training RL model'):
+        for _ in trange(self.num_epochs, desc='Training RL model', leave=False):
             # Loop over batches of molecule features and rewards
             for batch_data, batch_rewards in dataloader:
                 # Make predictions
@@ -178,7 +179,7 @@ class RLModel(ABC):
         rewards = []
 
         with torch.no_grad():
-            for (batch_data,) in tqdm(dataloader, desc='Predicting RL model'):
+            for (batch_data,) in tqdm(dataloader, desc='Predicting RL model', leave=False):
                 # Predict rewards
                 batch_rewards = self.model(batch_data)
 
