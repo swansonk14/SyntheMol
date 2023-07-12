@@ -7,8 +7,10 @@ from typing import Callable, Literal
 
 import numpy as np
 import wandb
+from chemfunc import get_fingerprint_generator
 from rdkit import Chem
 from scipy.special import softmax
+from sklearn.metrics import pairwise_distances
 from tqdm import trange
 
 from synthemol.constants import OPTIMIZATION_TYPES
@@ -16,6 +18,9 @@ from synthemol.generate.node import Node
 from synthemol.models import RLModel
 from synthemol.reactions import Reaction
 from synthemol.utils import random_choice
+
+
+morgan_fingerprint_generator = get_fingerprint_generator('morgan')
 
 
 class Generator:
@@ -128,6 +133,9 @@ class Generator:
         self.node_map: dict[Node, Node] = {self.root: self.root}
         self.building_block_counts = Counter()
         self.node_to_children: dict[Node, list[Node]] = {}
+
+        # Initialize the array of Morgan fingerprints of full molecules for diversity calculations
+        self.full_molecule_morgan_fingerprints: np.ndarray | None = None
 
     def get_next_building_blocks(self, molecules: tuple[str]) -> list[str]:
         """Get the next building blocks that can be added to the given molecules.
@@ -416,6 +424,53 @@ class Generator:
 
         return v
 
+    def update_similarity(self) -> float:
+        """Computes the Tanimoto similarity of the current generation and updates for future comparisons.
+
+        :return: The Tanimoto similarity of the current generation compared to previous generations.
+        """
+        # Get full molecule nodes from this generation
+        new_full_molecule_nodes = self.get_full_molecule_nodes(
+            rollout_start=self.rollout_num
+        )
+
+        # Get full molecule SMILES from this generation
+        new_full_molecule_smiles = [
+            node.molecules[0]
+            for node in new_full_molecule_nodes
+        ]
+
+        # Compute the Morgan fingerprints of the new nodes
+        new_full_molecule_morgan_fingerprints = np.array([
+            morgan_fingerprint_generator(smiles)
+            for smiles in new_full_molecule_smiles
+        ])
+
+        # If this is the first generation, save the fingerprints and return
+        if self.full_molecule_morgan_fingerprints is None:
+            self.full_molecule_morgan_fingerprints = new_full_molecule_morgan_fingerprints
+            return 0.0
+
+        # Compute the Tanimoto similarity between the new molecules and the previous molecules
+        tanimoto_distances = pairwise_distances(
+            new_full_molecule_morgan_fingerprints,
+            self.full_molecule_morgan_fingerprints,
+            metric='jaccard',
+            n_jobs=-1
+        )
+        tanimoto_similarities = 1 - tanimoto_distances
+
+        # Compute average maximum similarity across new molecules
+        avg_max_similarity = float(np.mean(np.max(tanimoto_similarities, axis=1)))
+
+        # Update the full molecule fingerprints
+        self.full_molecule_morgan_fingerprints = np.concatenate(
+            [self.full_molecule_morgan_fingerprints, new_full_molecule_morgan_fingerprints],
+            axis=0
+        )
+
+        return avg_max_similarity
+
     def get_full_molecule_nodes(
             self,
             rollout_start: int | None = None,
@@ -481,6 +536,11 @@ class Generator:
             start_time = time.time()
             rollout_stats['Rollout Score'] = self.rollout(node=self.root)
             rollout_stats['Rollout Time'] = time.time() - start_time
+
+            # Compute similarity of new molecules compared to previous molecules
+            start_time = time.time()
+            rollout_stats['Rollout Similarity'] = self.update_similarity()
+            rollout_stats['Similarity Time'] = time.time() - start_time
 
             # Train and evaluate RL model
             if self.rl_model is not None and rollout_num % self.rl_train_frequency == 0:
