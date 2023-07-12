@@ -416,19 +416,58 @@ class Generator:
 
         return v
 
+    def get_full_molecule_nodes(
+            self,
+            rollout_start: int | None = None,
+            rollout_end: int | None = None
+    ) -> list[Node]:
+        """Returns a list of all nodes with complete molecules.
+
+        :param rollout_start: The first rollout to include. If None, starts from the first rollout.
+        :param rollout_end: The last rollout to include. If None, ends at the last rollout.
+        :return: A list of all nodes with complete molecules, sorted by score.
+        """
+        # Get all the Nodes representing fully constructed molecules
+        nodes = [
+            node
+            for _, node in self.node_map.items()
+            if node.num_molecules == 1 and node.num_reactions > 0
+        ]
+
+        # Set rollout start and end
+        if rollout_start is None:
+            rollout_start = min(node.rollout_num for node in nodes)
+
+        if rollout_end is None:
+            rollout_end = max(node.rollout_num for node in nodes)
+
+        # Get all the Nodes within the provided rollouts
+        nodes = [
+            node
+            for node in nodes
+            if rollout_start <= node.rollout_num <= rollout_end
+        ]
+
+        # Sort Nodes by score and break ties by using Node ID
+        nodes = sorted(
+            nodes,
+            key=lambda node: (node.P, (1 if self.ascending_scores else -1) * node.node_id),
+            reverse=not self.ascending_scores
+        )
+
+        return nodes
+
     def generate(self, n_rollout: int) -> list[Node]:
         """Generate molecules for the specified number of rollouts.
 
         NOTE: Only returns Nodes with exactly one molecule and at least one reaction.
 
         :param n_rollout: The number of rollouts to perform.
-        :return: A list of Node objects sorted from best to worst score.
+        :return: A list of Node objects sorted from best to worst score from these rollouts.
         """
         # Set up rollout bounds
         rollout_start = self.rollout_num + 1
         rollout_end = rollout_start + n_rollout
-
-        print(f'Running rollouts {rollout_start} through {rollout_end - 1}...')
 
         # Run the generation algorithm for the specified number of rollouts
         for rollout_num in trange(rollout_start, rollout_end):
@@ -461,18 +500,10 @@ class Generator:
             if self.wandb_log:
                 wandb.log(rollout_stats)
 
-        # Get all the Nodes representing fully constructed molecules that are not building blocks within these rollouts
-        nodes = [
-            node
-            for _, node in self.node_map.items()
-            if node.num_molecules == 1 and node.num_reactions > 0 and (rollout_start <= node.rollout_num < rollout_end)
-        ]
-
-        # Sort by score and break ties by using Node ID
-        nodes = sorted(
-            nodes,
-            key=lambda node: (node.P, (1 if self.ascending_scores else -1) * node.node_id),
-            reverse=not self.ascending_scores
+        # Get all the Nodes representing fully constructed molecules within these rollouts sorted by score
+        nodes = self.get_full_molecule_nodes(
+            rollout_start=rollout_start,
+            rollout_end=rollout_end
         )
 
         return nodes

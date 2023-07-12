@@ -144,7 +144,7 @@ def save_generated_molecules(
     data = pd.DataFrame(
         data=[
             {
-                'smiles': node.molecules[0],
+                'smiles': '.'.join(node.molecules),
                 'node_id': node.node_id,
                 'num_expansions': node.N,
                 'rollout_num': node.rollout_num,

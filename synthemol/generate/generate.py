@@ -52,6 +52,7 @@ def generate(
         rng_seed: int = 0,
         no_building_block_diversity: bool = False,
         store_nodes: bool = False,
+        save_frequency: int = 1000,
         verbose: bool = False,
         replicate: bool = False,
         wandb_log: bool = False,
@@ -85,6 +86,7 @@ def generate(
     :param store_nodes: Whether to store in memory all the nodes of the search tree.
                         This doubles the speed of the search but significantly increases
                         the memory usage (e.g., 450 GB for 20,000 rollouts instead of 600 MB).
+    :param save_frequency: The number of rollouts between each save of the generated molecules.
     :param verbose: Whether to print out additional information during generation.
     :param replicate: This is necessary to replicate the results from the paper, but otherwise should not be used
                       since it limits the potential choices of building blocks.
@@ -241,9 +243,28 @@ def generate(
     )
 
     # Search for molecules
-    print('Generating molecules...')
+    print(f'Generating molecules for {n_rollout:,} rollouts...')
     start_time = datetime.now()
-    nodes = generator.generate(n_rollout=n_rollout)
+    molecules_save_path = save_dir / 'molecules.csv'
+
+    for rollout_start in range(0, n_rollout, save_frequency):
+        # Set rollout end
+        rollout_end = min(rollout_start + save_frequency, n_rollout)
+
+        # Generate molecules
+        print(f'Running rollouts {rollout_start:,} through {rollout_end - 1:,}...')
+        generator.generate(n_rollout=rollout_end - rollout_start)
+
+        # Get full molecule nodes
+        nodes = generator.get_full_molecule_nodes()
+
+        # Save molecules
+        print('Saving molecules...')
+        save_generated_molecules(
+            nodes=nodes,
+            building_block_id_to_smiles=building_block_id_to_smiles,
+            save_path=molecules_save_path
+        )
 
     # Compute, print, and save stats
     stats = {
@@ -273,14 +294,6 @@ def generate(
         node_scores = [[node.P] for node in nodes]
         table = wandb.Table(data=node_scores, columns=['Score'])
         wandb.log({'generation_scores': wandb.plot.histogram(table, 'Score', title='Generated Molecule Scores')})
-
-    # Save generated molecules
-    print('Saving molecules...')
-    save_generated_molecules(
-        nodes=nodes,
-        building_block_id_to_smiles=building_block_id_to_smiles,
-        save_path=save_dir / 'molecules.csv'
-    )
 
 
 def generate_command_line() -> None:
