@@ -434,6 +434,10 @@ class Generator:
             rollout_start=self.rollout_num
         )
 
+        # If there is no new full molecule, then a duplicate was found
+        if len(new_full_molecule_nodes) == 0:
+            return 1.0
+
         # Get full molecule SMILES from this generation
         new_full_molecule_smiles = [
             node.molecules[0]
