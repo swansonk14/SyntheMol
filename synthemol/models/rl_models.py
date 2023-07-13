@@ -1,16 +1,19 @@
 """Contains reinforcement learning models for use in generating molecules."""
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Iterator
 
 import torch
 import torch.nn as nn
 from chemfunc.molecular_fingerprints import compute_fingerprints
-from chemprop.data import MoleculeDataLoader, MoleculeDatapoint, MoleculeDataset
+from chemprop.features import BatchMolGraph, MolGraph
 from sklearn.metrics import mean_squared_error, r2_score
 from tqdm import tqdm, trange
 
 from synthemol.models import chemprop_load
+
+
+# Caching for Chemprop MolGraphs
+SMILES_TO_MOL_GRAPH = {}
 
 
 class MLP(nn.Module):
@@ -334,18 +337,84 @@ class RLModelRDKit(RLModel):
         return dataloader
 
 
-class RLMoleculeDataLoader(MoleculeDataLoader):
-    def __iter__(self) -> Iterator[tuple[torch.Tensor, ...]]:
-        """Creates an iterator which returns (x, y) or (x,) pairs
-        where x is a batch of molecules and y is a batch of rewards."""
-        for batch in super(RLMoleculeDataLoader, self).__iter__():
-            data = batch.batch_graph()
-            targets = batch.targets()
+class RLMoleculeDataset(torch.utils.data.Dataset):
+    def __init__(
+            self,
+            molecule_tuples: list[tuple[str, ...]],
+            rewards: list[float] | None = None
+    ) -> None:
+        """Initializes the dataset.
 
-            if targets[0] is None:
-                yield (data,)
-            else:
-                yield data, torch.tensor([target[0] for target in targets])
+        :param molecule_tuples: A list of tuples of SMILES strings representing one or more molecules.
+        :param rewards: A list of rewards for each tuple of molecules.
+        """
+        self.molecule_tuples = molecule_tuples
+
+        if rewards is None:
+            self.rewards = [None] * len(molecule_tuples)
+        else:
+            self.rewards = rewards
+
+        # Add each molecule to the MolGraph cache
+        for molecule_tuple in tqdm(molecule_tuples, desc='Caching MolGraphs'):
+            for molecule in molecule_tuple:
+                if molecule not in SMILES_TO_MOL_GRAPH:
+                    SMILES_TO_MOL_GRAPH[molecule] = MolGraph(molecule)
+
+        # Get MolGraphs for each molecule
+        self.mol_graphs_tuples = [
+            tuple(SMILES_TO_MOL_GRAPH[molecule] for molecule in molecule_tuple)
+            for molecule_tuple in molecule_tuples
+        ]
+
+    def __len__(self) -> int:
+        """Returns the number of tuples of molecules."""
+        return len(self.molecule_tuples)
+
+    def __getitem__(self, index: int) -> tuple[tuple[MolGraph, ...], float | None]:
+        """Returns a MolGraph tuple and the corresponding reward (or None)."""
+        return self.mol_graphs_tuples[index], self.rewards[index]
+
+
+def rl_collate_fn(
+        data: list[tuple[tuple[MolGraph, ...], float | None]]
+) -> tuple[list[BatchMolGraph], torch.Tensor] | tuple[list[BatchMolGraph]]:
+    """Collates data into a batch.
+
+    :param data: A list of tuples of MolGraph tuples and rewards.
+    :return: A tuple containing a list of BatchMolGraph and optionally a tensor of rewards.
+    """
+    # Get molecules and rewards
+    mol_graph_tuples, rewards = zip(*data)
+
+    # Create BatchMolGraph from MolGraphs
+    batch_mol_graph = BatchMolGraph([
+        mol_graph
+        for mol_graph_tuple in mol_graph_tuples
+        for mol_graph in mol_graph_tuple
+    ])
+
+    # Create atom and bond scopes for BatchMolGraph based on mol_graph_tuples
+    a_scope, b_scope = [], []
+    n_atoms = n_bonds = 0
+    for mol_graph_tuple in mol_graph_tuples:
+        n_atoms_tuple = sum(mol_graph.n_atoms for mol_graph in mol_graph_tuple)
+        n_bonds_tuple = sum(mol_graph.n_bonds for mol_graph in mol_graph_tuple)
+
+        a_scope.append((n_atoms, n_atoms_tuple))
+        b_scope.append((n_bonds, n_bonds_tuple))
+
+        n_atoms += n_atoms_tuple
+        n_bonds += n_bonds_tuple
+
+    # Set BatchMolGraph atom and bond scopes
+    batch_mol_graph.a_scope = a_scope
+    batch_mol_graph.b_scope = b_scope
+
+    if rewards[0] is None:
+        return ([batch_mol_graph],)
+
+    return [batch_mol_graph], torch.tensor(rewards)
 
 
 class RLModelChemprop(RLModel):
@@ -400,18 +469,19 @@ class RLModelChemprop(RLModel):
         :param shuffle: Whether to shuffle the data.
         :return: A dataloader.
         """
-        if rewards is None:
-            rewards = [None] * len(molecule_tuples)
-        else:
-            rewards = [[float(reward)] for reward in rewards]
-
-        return RLMoleculeDataLoader(
-            dataset=MoleculeDataset([
-                MoleculeDatapoint(
-                    smiles=['.'.join(molecule_tuple)],  # Merge multiple molecules into one string
-                    targets=reward,
-                ) for molecule_tuple, reward in zip(molecule_tuples, rewards)
-            ]),
-            num_workers=self.num_workers,
-            shuffle=shuffle
+        # Create dataset
+        dataset = RLMoleculeDataset(
+            molecule_tuples=molecule_tuples,
+            rewards=rewards
         )
+
+        # Create dataloader
+        dataloader = torch.utils.data.DataLoader(
+            dataset=dataset,
+            batch_size=self.batch_size,
+            shuffle=shuffle,
+            num_workers=self.num_workers,
+            collate_fn=rl_collate_fn
+        )
+
+        return dataloader
