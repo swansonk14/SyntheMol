@@ -6,6 +6,7 @@ from typing import Literal
 import pandas as pd
 import torch
 import wandb
+from chemprop.nn_utils import initialize_weights
 from tap import tapify
 
 from synthemol.constants import (
@@ -45,7 +46,7 @@ def generate(
         n_rollout: int = 10,
         explore_weight: float = 10.0,
         num_expand_nodes: int | None = None,
-        rl_model_type: Literal['rdkit', 'chemprop'] = 'rdkit',
+        rl_model_type: Literal['rdkit', 'chemprop_pretrained', 'chemprop_scratch'] = 'rdkit',
         rl_temperature: float = 0.1,
         rl_train_frequency: int = 10,
         optimization: OPTIMIZATION_TYPES = 'maximize',
@@ -213,8 +214,11 @@ def generate(
 
         if rl_model_type == 'rdkit':
             rl_model = RLModelRDKit()
-        elif rl_model_type == 'chemprop':
+        elif rl_model_type.startswith('chemprop'):
             rl_model = RLModelChemprop(model_path=model_path)
+
+            if rl_model_type == 'chemprop_scratch':
+                initialize_weights(rl_model.model)
         else:
             raise ValueError(f'Invalid RL model type: {rl_model_type}')
     else:
