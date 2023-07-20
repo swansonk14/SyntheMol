@@ -9,16 +9,18 @@ from sklearn.preprocessing import StandardScaler
 
 
 def chemprop_load(
-        model_path: Path
+        model_path: Path,
+        device: torch.device = torch.device('cpu')
 ) -> MoleculeModel:
     """Loads a Chemprop model.
 
     :param model_path: A path to a Chemprop model.
+    :param device: The device on which to load the model.
     :return: A Chemprop model.
     """
     return load_checkpoint(
         path=str(model_path),
-        device=torch.device('cpu')
+        device=device
     ).eval()
 
 

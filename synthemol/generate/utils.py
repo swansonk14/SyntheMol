@@ -55,11 +55,8 @@ def create_model_scoring_fn(
         torch.use_deterministic_algorithms(True)
 
         # Load models
-        models = [chemprop_load(model_path=model_path) for model_path in model_paths]
+        models = [chemprop_load(model_path=model_path, device=device) for model_path in model_paths]
         scalers = [chemprop_load_scaler(model_path=model_path) for model_path in model_paths]
-
-        # Move to device
-        models = [model.to(device) for model in models]
 
         # Set up model scoring function for ensemble of chemprop models
         def model_scorer(smiles: str, fingerprint: np.ndarray | None = None) -> float:

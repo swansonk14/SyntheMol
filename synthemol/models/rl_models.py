@@ -110,8 +110,6 @@ class RLModel(ABC):
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
         self.loss_fn = nn.BCEWithLogitsLoss()  # TODO: have option for regression
 
-        self.model.to(self.device)
-
     def buffer(self, molecules: tuple[str], reward: float) -> None:
         """Adds a training example to the buffer.
 
@@ -286,7 +284,7 @@ class RLModelRDKit(RLModel):
             output_dim=1,
             num_layers=num_layers,
             device=device
-        )
+        ).to(device)
 
         super().__init__(
             num_workers=num_workers,
@@ -474,7 +472,8 @@ class RLModelChemprop(RLModel):
             self.model_path = model_path
 
         self._model = chemprop_load(
-            model_path=self.model_path
+            model_path=self.model_path,
+            device=device
         )
 
         super().__init__(
