@@ -194,6 +194,21 @@ class RLModel(ABC):
 
         return rewards
 
+    def save(self, path: Path) -> None:
+        """Saves the model to the given path.
+
+        :param path: The path to a PT file where the model will be saved.
+        """
+        torch.save(self, path)
+
+    @classmethod
+    def load(cls, path: Path) -> 'RLModel':
+        """Loads the model from the given path.
+
+        :param path: The path to a PT file containing a model to load.
+        """
+        return torch.load(path)
+
     @property
     def buffer_size(self) -> int:
         """Returns the number of examples in the buffer."""

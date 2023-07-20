@@ -287,6 +287,10 @@ def generate(
 
     pd.DataFrame(data=[stats]).to_csv(save_dir / 'generation_stats.csv', index=False)
 
+    # Save RL model if applicable
+    if rl_model is not None:
+        rl_model.save(save_dir / 'rl_model.pt')
+
     # Log rollout stats
     if wandb_log:
         wandb.log({
