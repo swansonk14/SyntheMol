@@ -24,7 +24,8 @@ class MLP(nn.Module):
         input_dim: int,
         hidden_dim: int,
         output_dim: int,
-        num_layers: int
+        num_layers: int,
+        device: torch.device = torch.device('cpu'),
     ) -> None:
         """Initialize the model.
 
@@ -32,6 +33,7 @@ class MLP(nn.Module):
         :param hidden_dim: The dimensionality of the hidden layers.
         :param output_dim: The dimensionality of the output of the model.
         :param num_layers: The number of layers.
+        :param device: The device to use for the model.
         """
         super(MLP, self).__init__()
 
@@ -51,12 +53,18 @@ class MLP(nn.Module):
         # Create activation function
         self.activation = nn.ReLU()
 
+        # Set device
+        self.device = device
+
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """Runs the model on the data.
 
         :param X: A tensor containing the input (batch_size, input_dim).
         :return: A tensor containing the model's prediction (batch_size, output_dim).
         """
+        # Move data to device
+        X = X.to(self.device)
+
         # Apply layers
         for i, layer in enumerate(self.layers):
             X = layer(X)
@@ -79,7 +87,8 @@ class RLModel(ABC):
             num_workers: int = 0,
             num_epochs: int = 5,
             batch_size: int = 50,
-            learning_rate: float = 1e-3
+            learning_rate: float = 1e-3,
+            device: torch.device = torch.device('cpu'),
     ) -> None:
         """Initializes the model.
 
@@ -87,17 +96,21 @@ class RLModel(ABC):
         :param num_epochs: The number of epochs to train for.
         :param batch_size: The batch size.
         :param learning_rate: The learning rate.
+        :param device: The device to use for the model.
         """
         self.num_workers = num_workers
         self.num_epochs = num_epochs
         self.batch_size = batch_size
         self.learning_rate = learning_rate
+        self.device = device
 
         self.molecule_tuples: list[tuple[str]] = []
         self.rewards: list[float] = []
 
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
         self.loss_fn = nn.BCEWithLogitsLoss()  # TODO: have option for regression
+
+        self.model.to(self.device)
 
     def buffer(self, molecules: tuple[str], reward: float) -> None:
         """Adds a training example to the buffer.
@@ -115,7 +128,6 @@ class RLModel(ABC):
         self.model.train()
 
         # TODO: upsample new examples and downsample old examples
-        # TODO: use GPU (cuda)
 
         # Get dataloader
         dataloader = self.get_dataloader(
@@ -132,7 +144,7 @@ class RLModel(ABC):
                 predictions = self.model(batch_data).squeeze(dim=-1)
 
                 # Compute loss
-                loss = self.loss_fn(predictions, batch_rewards)
+                loss = self.loss_fn(predictions, batch_rewards.to(self.device))
 
                 # Backpropagate
                 self.model.zero_grad()
@@ -187,7 +199,7 @@ class RLModel(ABC):
                 batch_rewards = self.model(batch_data)
 
                 # Add rewards to list
-                rewards.extend(batch_rewards.flatten().tolist())
+                rewards.extend(batch_rewards.cpu().flatten().tolist())
 
         # Convert to PyTorch
         rewards = torch.tensor(rewards)
@@ -248,6 +260,7 @@ class RLModelRDKit(RLModel):
             num_epochs: int = 5,
             batch_size: int = 50,
             learning_rate: float = 1e-3,
+            device: torch.device = torch.device('cpu'),
     ) -> None:
         """Initializes the model.
 
@@ -259,6 +272,7 @@ class RLModelRDKit(RLModel):
         :param num_epochs: The number of epochs to train for.
         :param batch_size: The batch size.
         :param learning_rate: The learning rate.
+        :param device: The device to use for the model.
         """
         self.max_num_molecules = max_num_molecules
         self.features_size = features_size
@@ -270,14 +284,16 @@ class RLModelRDKit(RLModel):
             input_dim=self.total_features_size,
             hidden_dim=hidden_dim,
             output_dim=1,
-            num_layers=num_layers
+            num_layers=num_layers,
+            device=device
         )
 
         super().__init__(
             num_workers=num_workers,
             num_epochs=num_epochs,
             batch_size=batch_size,
-            learning_rate=learning_rate
+            learning_rate=learning_rate,
+            device=device
         )
 
     def compute_rdkit_features(self, molecule_tuples: list[tuple[str]]) -> torch.Tensor:
@@ -440,6 +456,7 @@ class RLModelChemprop(RLModel):
             num_epochs: int = 5,
             batch_size: int = 50,
             learning_rate: float = 1e-3,
+            device: torch.device = torch.device('cpu'),
     ) -> None:
         """Initializes the model.
 
@@ -448,6 +465,7 @@ class RLModelChemprop(RLModel):
         :param num_epochs: The number of epochs to train for.
         :param batch_size: The batch size.
         :param learning_rate: The learning rate.
+        :param device: The device to use for the model.
         """
         # If model_path is a directory, take the first model
         if model_path.is_dir():
@@ -463,7 +481,8 @@ class RLModelChemprop(RLModel):
             num_workers=num_workers,
             num_epochs=num_epochs,
             batch_size=batch_size,
-            learning_rate=learning_rate
+            learning_rate=learning_rate,
+            device=device
         )
 
     @property

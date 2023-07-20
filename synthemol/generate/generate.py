@@ -49,6 +49,7 @@ def generate(
         rl_model_type: Literal['rdkit', 'chemprop_pretrained', 'chemprop_scratch'] = 'rdkit',
         rl_temperature: float = 0.1,
         rl_train_frequency: int = 10,
+        use_gpu: bool = False,
         optimization: OPTIMIZATION_TYPES = 'maximize',
         rng_seed: int = 0,
         no_building_block_diversity: bool = False,
@@ -81,6 +82,7 @@ def generate(
     :param rl_temperature: The temperature parameter for the softmax function used to select building blocks.
                            Higher temperature means more exploration.
     :param rl_train_frequency: The number of rollouts between each training step of the RL model.
+    :param use_gpu: Whether to use GPU for model training/prediction. Only affects PyTorch-based models (not sklearn).
     :param optimization: Whether to maximize or minimize the score.
     :param rng_seed: Seed for random number generators.
     :param no_building_block_diversity: Whether to turn off the score modification that encourages diverse building blocks.
@@ -199,13 +201,20 @@ def generate(
             reaction_to_reactant_to_building_blocks_path=reaction_to_building_blocks_path
         )
 
+    # Set up device for model
+    if use_gpu:
+        device = torch.device('cuda')
+    else:
+        device = torch.device('cpu')
+
     # Define model scoring function
     print('Loading models and creating model scoring function...')
     model_scoring_fn = create_model_scoring_fn(
         model_path=model_path,
         model_type=model_type,
         fingerprint_type=fingerprint_type,
-        smiles_to_score=building_block_smiles_to_score
+        smiles_to_score=building_block_smiles_to_score,
+        device=device
     )
 
     # Set up RL model if applicable
@@ -213,9 +222,9 @@ def generate(
         torch.manual_seed(rng_seed)
 
         if rl_model_type == 'rdkit':
-            rl_model = RLModelRDKit()
+            rl_model = RLModelRDKit(device=device)
         elif rl_model_type.startswith('chemprop'):
-            rl_model = RLModelChemprop(model_path=model_path)
+            rl_model = RLModelChemprop(model_path=model_path, device=device)
 
             if rl_model_type == 'chemprop_scratch':
                 initialize_weights(rl_model.model)

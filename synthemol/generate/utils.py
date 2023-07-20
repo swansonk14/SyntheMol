@@ -23,7 +23,8 @@ def create_model_scoring_fn(
         model_path: Path,
         model_type: MODEL_TYPES,
         fingerprint_type: FINGERPRINT_TYPES | None = None,
-        smiles_to_score: dict[str, float] | None = None
+        smiles_to_score: dict[str, float] | None = None,
+        device: torch.device = torch.device('cpu')
 ) -> Callable[[str], float]:
     """Creates a function that scores a molecule using a model or ensemble of models.
 
@@ -31,6 +32,7 @@ def create_model_scoring_fn(
     :param model_type: The type of model.
     :param fingerprint_type: The type of fingerprint to use.
     :param smiles_to_score: An optional dictionary mapping SMILES to precomputed scores.
+    :param device: The device on which to run the model.
     :return: A function that scores a molecule using a model or ensemble of models.
     """
     # Check compatibility of model and fingerprint type
@@ -52,8 +54,12 @@ def create_model_scoring_fn(
         torch.manual_seed(0)
         torch.use_deterministic_algorithms(True)
 
+        # Load models
         models = [chemprop_load(model_path=model_path) for model_path in model_paths]
         scalers = [chemprop_load_scaler(model_path=model_path) for model_path in model_paths]
+
+        # Move to device
+        models = [model.to(device) for model in models]
 
         # Set up model scoring function for ensemble of chemprop models
         def model_scorer(smiles: str, fingerprint: np.ndarray | None = None) -> float:
