@@ -153,7 +153,7 @@ synthemol \
     --model_type chemprop \
     --save_dir generations/chemprop \
     --building_blocks_path models/chemprop/building_blocks.csv \
-    --bulding_blocks_score_column activity \
+    --building_blocks_score_column activity \
     --n_rollout 20000
 ```
 

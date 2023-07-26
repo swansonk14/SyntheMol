@@ -49,6 +49,7 @@ def generate(
         rl_model_type: Literal['rdkit', 'chemprop_pretrained', 'chemprop_scratch'] = 'rdkit',
         rl_temperature: float = 0.1,
         rl_train_frequency: int = 10,
+        num_workers: int = 0,
         use_gpu: bool = False,
         optimization: OPTIMIZATION_TYPES = 'maximize',
         rng_seed: int = 0,
@@ -82,6 +83,7 @@ def generate(
     :param rl_temperature: The temperature parameter for the softmax function used to select building blocks.
                            Higher temperature means more exploration.
     :param rl_train_frequency: The number of rollouts between each training step of the RL model.
+    :param num_workers: The number of workers for RL model data loading.
     :param use_gpu: Whether to use GPU for model training/prediction. Only affects PyTorch-based models (not sklearn).
     :param optimization: Whether to maximize or minimize the score.
     :param rng_seed: Seed for random number generators.
@@ -222,9 +224,9 @@ def generate(
         torch.manual_seed(rng_seed)
 
         if rl_model_type == 'rdkit':
-            rl_model = RLModelRDKit(device=device)
+            rl_model = RLModelRDKit(num_workers=num_workers, device=device)
         elif rl_model_type.startswith('chemprop'):
-            rl_model = RLModelChemprop(model_path=model_path, device=device)
+            rl_model = RLModelChemprop(model_path=model_path, num_workers=num_workers, device=device)
 
             if rl_model_type == 'chemprop_scratch':
                 initialize_weights(rl_model.model)
