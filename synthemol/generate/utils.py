@@ -52,7 +52,9 @@ def create_model_scoring_fn(
     if model_type == 'chemprop':
         # Ensure reproducibility
         torch.manual_seed(0)
-        torch.use_deterministic_algorithms(True)
+
+        if device.type == 'cpu':
+            torch.use_deterministic_algorithms(True)
 
         # Load models
         models = [chemprop_load(model_path=model_path, device=device) for model_path in model_paths]
