@@ -10,7 +10,7 @@ from sklearn.preprocessing import StandardScaler
 
 def chemprop_load(
         model_path: Path,
-        device: torch.device
+        device: torch.device = torch.device('cpu')
 ) -> MoleculeModel:
     """Loads a Chemprop model.
 
