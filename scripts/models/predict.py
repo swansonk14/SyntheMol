@@ -20,7 +20,9 @@ def predict(
         smiles_column: str = SMILES_COL,
         preds_column_prefix: str | None = None,
         fingerprint_type: FINGERPRINT_TYPES | None = None,
-        average_preds: bool = False
+        average_preds: bool = False,
+        num_workers: int = 0,
+        use_gpu: bool = False
 ) -> None:
     """Make predictions with a model or ensemble of models and save them to a file.
 
@@ -32,6 +34,8 @@ def predict(
     :param preds_column_prefix: Prefix for the column containing model predictions.
     :param fingerprint_type: Type of fingerprints to use as input features.
     :param average_preds: Whether to average predictions across models for an ensemble model.
+    :param num_workers: Number of workers for the data loader (only applicable to chemprop model type).
+    :param use_gpu: Whether to use GPU (only applicable to chemprop model type).
     """
     # Load SMILES
     data = pd.read_csv(data_path)
@@ -58,11 +62,19 @@ def predict(
 
     # Load models
     if model_type == 'chemprop':
+        # Set device
+        if use_gpu:
+            device = torch.device('cuda')
+        else:
+            device = torch.device('cpu')
+
         # Ensure reproducibility
         torch.manual_seed(0)
-        torch.use_deterministic_algorithms(True)
 
-        models = [chemprop_load(model_path=model_path) for model_path in model_paths]
+        if device.type == 'cpu':
+            torch.use_deterministic_algorithms(True)
+
+        models = [chemprop_load(model_path=model_path, device=device) for model_path in model_paths]
     else:
         models = [sklearn_load(model_path=model_path) for model_path in model_paths]
 
@@ -73,6 +85,7 @@ def predict(
                 model=model,
                 smiles=smiles,
                 fingerprints=fingerprints,
+                num_workers=num_workers
             ) for model in tqdm(models, desc='models')
         ])
     else:
