@@ -27,7 +27,9 @@ def train(
         smiles_column: str = SMILES_COL,
         fingerprint_type: FINGERPRINT_TYPES | None = None,
         num_models: int = 1,
-        epochs: int = 30
+        epochs: int = 30,
+        num_workers: int = 0,
+        use_gpu: bool = False
 ) -> None:
     """Trains a machine learning property prediction model.
 
@@ -40,6 +42,8 @@ def train(
     :param fingerprint_type: Type of fingerprints to use as input features.
     :param num_models: The number of models to train using 10-fold cross-validation.
     :param epochs: The number of epochs to train the chemprop model.
+    :param num_workers: Number of workers for the data loader (only applicable to chemprop model type).
+    :param use_gpu: Whether to use GPU (only applicable to chemprop model type).
     """
     # Check compatibility of model and fingerprint type
     if model_type != 'chemprop' and fingerprint_type is None:
@@ -105,7 +109,9 @@ def train(
                 train_properties=train_data[property_column],
                 val_properties=val_data[property_column],
                 epochs=epochs,
-                save_path=save_dir / f'model_{model_num}.pt'
+                save_path=save_dir / f'model_{model_num}.pt',
+                num_workers=num_workers,
+                use_gpu=use_gpu
             )
 
             print(model)
@@ -114,7 +120,9 @@ def train(
             test_preds = chemprop_predict(
                 model=model,
                 smiles=test_data[smiles_column],
-                fingerprints=test_fingerprints
+                fingerprints=test_fingerprints,
+                num_workers=num_workers,
+                use_gpu=use_gpu
             )
         else:
             # Train and save sklearn model

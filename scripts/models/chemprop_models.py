@@ -15,18 +15,22 @@ from tqdm import trange
 def chemprop_predict(
         model: MoleculeModel,
         smiles: list[str],
-        fingerprints: np.ndarray | None = None
+        fingerprints: np.ndarray | None = None,
+        num_workers: int = 0
 ) -> np.ndarray:
     """Predicts molecular properties using a Chemprop model.
 
     :param model: A Chemprop model.
     :param smiles: A list of SMILES strings.
     :param fingerprints: A 2D array of molecular fingerprints (num_molecules, num_features).
-    :return: A 1D array of predicted properties (num_molecules,)."""
+    :param num_workers: The number of workers for the data loader.
+    :return: A 1D array of predicted properties (num_molecules,).
+    """
     # Set up data loader
     data_loader = chemprop_build_data_loader(
         smiles=smiles,
-        fingerprints=fingerprints
+        fingerprints=fingerprints,
+        num_workers=num_workers
     )
 
     # Make predictions
@@ -39,7 +43,8 @@ def chemprop_build_data_loader(
         smiles: list[str],
         fingerprints: np.ndarray | None = None,
         properties: list[int] | None = None,
-        shuffle: bool = False
+        shuffle: bool = False,
+        num_workers: int = 0
 ) -> MoleculeDataLoader:
     """Builds a chemprop MoleculeDataLoader.
 
@@ -47,6 +52,8 @@ def chemprop_build_data_loader(
     :param fingerprints: A 2D array of molecular fingerprints (num_molecules, num_features).
     :param properties: A list of molecular properties (num_molecules,).
     :param shuffle: Whether to shuffle the data loader.
+    :param num_workers: The number of workers for the data loader.
+                        Zero workers needed for deterministic behavior and faster training/testing when CPU only.
     :return: A Chemprop data loader.
     """
     if fingerprints is None:
@@ -65,7 +72,7 @@ def chemprop_build_data_loader(
                 features=fingerprint,
             ) for smiles, fingerprint, prop in zip(smiles, fingerprints, properties)
         ]),
-        num_workers=0,  # Needed for deterministic behavior and faster when training/testing on CPU only
+        num_workers=num_workers,
         shuffle=shuffle
     )
 
@@ -81,7 +88,9 @@ def chemprop_train(
         train_properties: list[int],
         val_properties: list[int],
         epochs: int,
-        save_path: Path
+        save_path: Path,
+        num_workers: int = 0,
+        use_gpu: bool = False
 ) -> MoleculeModel:
     """Trains and saves a Chemprop model.
 
@@ -96,6 +105,8 @@ def chemprop_train(
     :param val_properties: A list of molecular properties for validation (num_molecules,).
     :param epochs: The number of epochs to train for.
     :param save_path: The path to save the model to.
+    :param num_workers: The number of workers for the data loader.
+    :param use_gpu: Whether to use GPU.
     """
     # Create args
     arg_list = [
@@ -104,7 +115,7 @@ def chemprop_train(
         '--save_dir', 'foo',
         '--epochs', str(epochs),
         '--quiet'
-    ]
+    ] + ([] if use_gpu else ['--no_cuda'])
 
     match fingerprint_type:
         case 'morgan':
@@ -125,14 +136,17 @@ def chemprop_train(
 
     # Ensure reproducibility
     torch.manual_seed(0)
-    torch.use_deterministic_algorithms(True)
+
+    if not use_gpu:
+        torch.use_deterministic_algorithms(True)
 
     # Build data loaders
     train_data_loader = chemprop_build_data_loader(
         smiles=train_smiles,
         fingerprints=train_fingerprints,
         properties=train_properties,
-        shuffle=True
+        shuffle=True,
+        num_workers=num_workers
     )
 
     # Build model
