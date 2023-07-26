@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import torch
 from chemfunc import compute_fingerprints
+from chemprop.data import set_cache_graph, set_cache_mol
 from tqdm import tqdm
 
 from chemprop_models import chemprop_predict
@@ -22,7 +23,8 @@ def predict(
         fingerprint_type: FINGERPRINT_TYPES | None = None,
         average_preds: bool = False,
         num_workers: int = 0,
-        use_gpu: bool = False
+        use_gpu: bool = False,
+        no_cache: bool = False
 ) -> None:
     """Make predictions with a model or ensemble of models and save them to a file.
 
@@ -36,7 +38,14 @@ def predict(
     :param average_preds: Whether to average predictions across models for an ensemble model.
     :param num_workers: Number of workers for the data loader (only applicable to chemprop model type).
     :param use_gpu: Whether to use GPU (only applicable to chemprop model type).
+    :param no_cache: Whether to disable caching (only applicable to chemprop model type).
+                     Turn off caching when making predictions on large datasets
     """
+    # Disable Chemprop caching for prediction to avoid memory issues with large datasets
+    if no_cache:
+        set_cache_graph(False)
+        set_cache_mol(False)
+
     # Load SMILES
     data = pd.read_csv(data_path)
     smiles = list(data[smiles_column])
