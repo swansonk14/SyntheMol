@@ -32,9 +32,9 @@ from synthemol.generate.utils import create_model_scoring_fn, save_generated_mol
 
 def generate(
         search_type: Literal['mcts', 'rl'],
-        model_path: Path,
-        model_type: MODEL_TYPES,
         save_dir: Path,
+        model_type: MODEL_TYPES,
+        model_path: Path | None = None,
         building_blocks_path: Path = BUILDING_BLOCKS_PATH,
         fingerprint_type: FINGERPRINT_TYPES | None = None,
         reaction_to_building_blocks_path: Path | None = REACTION_TO_BUILDING_BLOCKS_PATH,
@@ -65,10 +65,10 @@ def generate(
     """Generate molecules combinatorially using a Monte Carlo tree search guided by a molecular property predictor.
 
     :param search_type: The type of search to perform. 'mcts' = Monte Carlo tree search. 'rl' = Reinforcement learning.
-    :param model_path: Path to a directory of model checkpoints or to a specific PKL or PT file containing a trained model.
-    :param model_type: Type of model to train.
-    :param building_blocks_path: Path to CSV file containing molecular building blocks.
     :param save_dir: Path to directory where the generated molecules will be saved.
+    :param model_type: Type of model to train.
+    :param model_path: Path to a directory of model checkpoints or to a specific PKL or PT file containing a trained model.
+    :param building_blocks_path: Path to CSV file containing molecular building blocks.
     :param fingerprint_type: Type of fingerprints to use as input features.
     :param reaction_to_building_blocks_path: Path to PKL file containing mapping from REAL reactions to allowed building blocks.
     :param building_blocks_id_column: Name of the column containing IDs for each building block.

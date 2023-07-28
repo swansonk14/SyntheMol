@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 import torch
 from chemfunc import compute_fingerprint
+from rdkit import Chem
+from rdkit.Chem.QED import qed
 
 from synthemol.constants import FINGERPRINT_TYPES, MODEL_TYPES
 from synthemol.generate.node import Node
@@ -20,27 +22,31 @@ from synthemol.models import (
 
 
 def create_model_scoring_fn(
-        model_path: Path,
         model_type: MODEL_TYPES,
+        model_path: Path | None = None,
         fingerprint_type: FINGERPRINT_TYPES | None = None,
         smiles_to_score: dict[str, float] | None = None,
         device: torch.device = torch.device('cpu')
 ) -> Callable[[str], float]:
     """Creates a function that scores a molecule using a model or ensemble of models.
 
-    :param model_path: A path to a model or directory of models.
     :param model_type: The type of model.
+    :param model_path: A path to a model or directory of models.
     :param fingerprint_type: The type of fingerprint to use.
     :param smiles_to_score: An optional dictionary mapping SMILES to precomputed scores.
     :param device: The device on which to run the model.
     :return: A function that scores a molecule using a model or ensemble of models.
     """
+    # Check model path and type
+    if (model_path is not None) != (model_type != 'qed'):
+        raise ValueError('Must define model_path if and only if not using qed model.')
+
     # Check compatibility of model and fingerprint type
-    if model_type != 'chemprop' and fingerprint_type is None:
+    if model_type in {'random_forest', 'mlp'} and fingerprint_type is None:
         raise ValueError('Must define fingerprint_type if using a scikit-learn model.')
 
     # Get model paths
-    if model_path.is_dir():
+    if model_path is not None and model_path.is_dir():
         model_paths = list(model_path.glob('**/*.pt' if model_type == 'chemprop' else '**/*.pkl'))
 
         if len(model_paths) == 0:
@@ -49,7 +55,10 @@ def create_model_scoring_fn(
         model_paths = [model_path]
 
     # Load models and set up scoring function
-    if model_type == 'chemprop':
+    if model_type == 'qed':
+        def model_scorer(smiles: str, fingerprint: None = None) -> float:
+            return qed(Chem.MolFromSmiles(smiles))
+    elif model_type == 'chemprop':
         # Ensure reproducibility
         torch.manual_seed(0)
 
@@ -79,7 +88,7 @@ def create_model_scoring_fn(
                 fingerprint=fingerprint
             )
 
-    # Build model scoring function using either chemprop or scikit-learn ensemble and precomputed building block scores
+    # Build model scoring function including precomputed building block scores
     @cache
     def model_scoring_fn(smiles: str) -> float:
         if smiles_to_score is not None and smiles in smiles_to_score:

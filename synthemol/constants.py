@@ -22,7 +22,7 @@ FINGERPRINT_TYPES = Literal['morgan', 'rdkit']
 MOLECULE_TYPE = str | Mol  # Either a SMILES string or an RDKit Mol object
 SKLEARN_MODEL_TYPES = RandomForestClassifier | RandomForestRegressor | MLPClassifier | MLPRegressor
 SKLEARN_MODEL_NAME_TYPES = Literal['random_forest', 'mlp']
-MODEL_TYPES = Literal['random_forest', 'mlp', 'chemprop']
+MODEL_TYPES = Literal['random_forest', 'mlp', 'chemprop', 'qed']
 DATASET_TYPES = Literal['classification', 'regression']
 OPTIMIZATION_TYPES = Literal['maximize', 'minimize']
 
