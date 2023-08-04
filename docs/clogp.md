@@ -103,7 +103,7 @@ synthemol \
     --building_blocks_score_column chemprop_ensemble_preds \
     --building_blocks_id_column Reagent_ID \
     --reaction_to_building_blocks_path data/Data/4_real_space/reaction_to_building_blocks.pkl \
-    --save_dir data/Data/10_generations_clogp/clogp_chemprop_${EPOCHS}_epochs \
+    --save_dir data/Data/5_generations_clogp/clogp_chemprop_${EPOCHS}_epochs \
     --max_reactions 1 \
     --n_rollout 20000 \
     --replicate
@@ -122,7 +122,7 @@ Compute the true cLogP for generated molecules.
 for EPOCHS in 1 30
 do
 chemfunc compute_properties \
-    --data_path data/Data/10_generations_clogp/clogp_chemprop_${EPOCHS}_epochs/molecules.csv \
+    --data_path data/Data/5_generations_clogp/clogp_chemprop_${EPOCHS}_epochs/molecules.csv \
     --properties clogp
 done
 ```
@@ -132,8 +132,8 @@ Plot distribution of train vs generated vs REAL cLogP.
 chemfunc plot_property_distribution \
     --data_paths data/Data/1_training_data/antibiotics.csv \
     data/Data/4_real_space/random_real.csv \
-    data/Data/10_generations_clogp/clogp_chemprop_30_epochs/molecules.csv \
-    data/Data/10_generations_clogp/clogp_chemprop_1_epochs/molecules.csv \
+    data/Data/5_generations_clogp/clogp_chemprop_30_epochs/molecules.csv \
+    data/Data/5_generations_clogp/clogp_chemprop_1_epochs/molecules.csv \
     --property_column clogp \
     --save_path plots/clogp_generations.pdf \
     --min_value -7 \
@@ -146,7 +146,7 @@ Binarize the true cLogP for generated molecules using the 6.5 threshold.
 for EPOCHS in 1 30
 do
 chemfunc regression_to_classification \
-    --data_path data/Data/10_generations_clogp/clogp_chemprop_${EPOCHS}_epochs/molecules.csv \
+    --data_path data/Data/5_generations_clogp/clogp_chemprop_${EPOCHS}_epochs/molecules.csv \
     --regression_column clogp \
     --threshold 6.5 \
     --classification_column clogp_6.5

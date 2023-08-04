@@ -18,16 +18,6 @@ TODO: put data on Zenodo and clean up google drive
 
 TODO: put model on huggingface
 
-TODO: potentially change order of cLogP data in Google Drive (from 10 to 4) and add to supplementary table
-
-TODO: remove building block scores JSON from google drive
-
-TODO: fix pixel alignment on Figure 1
-
-TODO: author contributions
-
-TODO: reaction SMARTS in supplementary table
-
 TODO: make loading and setting allowed building blocks faster (precompute allowed building blocks)
 
 TODO: enable random forest RDKit in chemprop
@@ -35,6 +25,12 @@ TODO: enable random forest RDKit in chemprop
 TODO: check REAL molecule numbers with new building blocks
 
 TODO: test SyntheMol GPU time
+
+TODO: add discriminator random REAL 10m instructions and plotting code
+
+TODO: add GitHub and Zenodo links to paper
+
+TODO: remove ClinTox?
 
 
 
