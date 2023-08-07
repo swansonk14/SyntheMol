@@ -1,6 +1,7 @@
 """Analyzes the score and similarity of a set of generated molecules."""
 from pathlib import Path
 
+import networkx as nx  # TODO: add to requirements
 import numpy as np
 import pandas as pd
 from chemfunc import compute_pairwise_tanimoto_similarities
@@ -9,18 +10,43 @@ from tqdm import tqdm
 from synthemol.constants import SCORE_COL, SMILES_COL
 
 
-def compute_average_maximum_similarity(molecules: list[str]) -> float:
+def compute_average_maximum_similarity(similarities: np.ndarray) -> float:
     """Computes the average maximum similarity between a set of molecules.
 
-    :param molecules: List of SMILES strings.
+    :param similarities: A 2D numpy array of pairwise molecule similarities.
     :return: Average maximum similarity.
     """
-    pairwise_similarities = compute_pairwise_tanimoto_similarities(molecules)
-    np.fill_diagonal(pairwise_similarities, -np.inf)
-    max_similarities = np.max(pairwise_similarities, axis=1)
+    np.fill_diagonal(similarities, -np.inf)
+    max_similarities = np.max(similarities, axis=1)
     average_max_similarity = float(np.mean(max_similarities))
 
     return average_max_similarity
+
+
+def compute_approximate_maximum_independent_set(
+    similarities: np.ndarray, threshold: float, num_tries: int = 10
+) -> int:
+    """Computes the approximate size of the maximum independent set of molecules within a similarity threshold.
+
+    Note: This does not provide a formal approximation since there are no theoretical guarantees on using
+          maximal independent sets to approximate maximum independent sets.
+
+    :param similarities: A 2D numpy array of pairwise molecule similarities.
+    :param threshold: Similarity threshold.
+    :param num_tries: Number of times to run the approximation (i.e., number of maximal independent sets to try).
+    :return: The approximate size of the maximum independent set.
+    """
+    # Create similarities graph
+    similarities_matrix = similarities >= threshold
+    similarities_graph = nx.from_numpy_array(similarities_matrix)
+
+    # Compute approximate maximum independent set
+    max_independent_set_size = 0
+    for _ in range(num_tries):
+        independent_set = nx.maximal_independent_set(similarities_graph)
+        max_independent_set_size = max(max_independent_set_size, len(independent_set))
+
+    return max_independent_set_size
 
 
 def analyze_score_vs_similarity(
@@ -30,6 +56,7 @@ def analyze_score_vs_similarity(
     score_column: str = SCORE_COL,
     novelty_column: str = "train_hits_tversky_nearest_neighbor_similarity",
     novelty_threshold: float = 0.5,
+    similarity_threshold: float = 0.5,
     score_thresholds: tuple[float, ...] = (0.5, 0.75, 0.9, 0.95, 0.98, 0.99),
 ) -> None:
     """Analyzes the score and similarity of a set of generated molecules.
@@ -40,6 +67,7 @@ def analyze_score_vs_similarity(
     :param score_column: Name of the column containing scores.
     :param novelty_column: Name of the column containing similarity scores compared to known hits (for novelty).
     :param novelty_threshold: Threshold to use for filtering by novelty.
+    :param similarity_threshold: Threshold to use for calculating the maximum independent set.
     :param score_thresholds: Thresholds to use for calculating the hits and similarity.
     """
     # Load data
@@ -47,61 +75,75 @@ def analyze_score_vs_similarity(
 
     print(f"Number of molecules = {len(data):,}")
 
-    # Mark novelty
-    data["novel"] = data[novelty_column] <= novelty_threshold
-
     # For each threshold, calculate the percent of hits and similarity among the hits
-    num_hits = []
-    percent_hits = []
-    similarity = []
-    num_hits_novel = []
-    percent_hits_novel = []
-    similarity_novel = []
+    results = []
     for score_threshold in tqdm(score_thresholds, desc="score thresholds"):
         # Select molecules above threshold as hits
         hits = data[data[score_column] >= score_threshold]
 
         if len(hits) == 0:
-            num_hits.append(0)
-            percent_hits.append(0)
-            similarity.append(0)
-            num_hits_novel.append(0)
-            percent_hits_novel.append(0)
-            similarity_novel.append(0)
+            results.append(
+                {
+                    "score_threshold": score_threshold,
+                    "num_hits": 0,
+                    "percent_hits": 0,
+                    "similarity": 0,
+                    "max_independent_set": 0,
+                    "num_hits_novel": 0,
+                    "percent_hits_novel": 0,
+                    "similarity_novel": 0,
+                    "max_independent_set_novel": 0,
+                }
+            )
             continue
 
         # Calculate statistics
-        num_hits.append(len(hits))
-        percent_hits.append(len(hits) / len(data))
         hit_molecules = hits[smiles_column].tolist()
-        similarity.append(compute_average_maximum_similarity(hit_molecules))
+        pairwise_similarities = compute_pairwise_tanimoto_similarities(hit_molecules)
+
+        result = {
+            "score_threshold": score_threshold,
+            "num_hits": len(hits),
+            "percent_hits": len(hits) / len(data),
+            "similarity": compute_average_maximum_similarity(
+                similarities=pairwise_similarities
+            ),
+            "max_independent_set": compute_approximate_maximum_independent_set(
+                similarities=pairwise_similarities, threshold=similarity_threshold
+            ),
+        }
 
         # Compute same results for novel molecules
-        hits_novel = hits[hits["novel"]]
+        hits_novel = hits[hits[novelty_column] <= novelty_threshold]
 
         if len(hits_novel) == 0:
-            num_hits_novel.append(0)
-            percent_hits_novel.append(0)
-            similarity_novel.append(0)
+            result["num_hits_novel"] = 0
+            result["percent_hits_novel"] = 0
+            result["similarity_novel"] = 0
+            result["max_independent_set_novel"] = 0
+            results.append(result)
             continue
 
-        num_hits_novel.append(len(hits_novel))
-        percent_hits_novel.append(len(hits_novel) / len(data))
         hit_molecules_novel = hits_novel[smiles_column].tolist()
-        similarity_novel.append(compute_average_maximum_similarity(hit_molecules_novel))
+        pairwise_similarities_novel = compute_pairwise_tanimoto_similarities(
+            hit_molecules_novel
+        )
+
+        result["num_hits_novel"] = len(hits_novel)
+        result["percent_hits_novel"] = len(hits_novel) / len(data)
+        result["similarity_novel"] = compute_average_maximum_similarity(
+            similarities=pairwise_similarities_novel
+        )
+        result[
+            "max_independent_set_novel"
+        ] = compute_approximate_maximum_independent_set(
+            similarities=pairwise_similarities_novel, threshold=similarity_threshold
+        )
+
+        results.append(result)
 
     # Create DataFrame with results
-    results = pd.DataFrame(
-        {
-            "score_threshold": score_thresholds,
-            "num_hits": num_hits,
-            "percent_hits": percent_hits,
-            "similarity": similarity,
-            "num_hits_novel": num_hits_novel,
-            "percent_hits_novel": percent_hits_novel,
-            "similarity_novel": similarity_novel,
-        }
-    )
+    results = pd.DataFrame(results)
 
     # Save results
     save_path.parent.mkdir(parents=True, exist_ok=True)
