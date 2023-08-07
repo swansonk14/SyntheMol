@@ -1,0 +1,102 @@
+"""Analyzes the score and diversity of a set of generated molecules."""
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+from chemfunc import compute_pairwise_tanimoto_similarities
+from tqdm import tqdm
+
+from synthemol.constants import SCORE_COL, SMILES_COL
+
+
+def compute_average_maximum_similarity(molecules: list[str]) -> float:
+    """Computes the average maximum similarity between a set of molecules.
+
+    :param molecules: List of SMILES strings.
+    :return: Average maximum similarity.
+    """
+    pairwise_similarities = compute_pairwise_tanimoto_similarities(molecules)
+    np.fill_diagonal(pairwise_similarities, -np.inf)
+    max_similarities = np.max(pairwise_similarities, axis=1)
+    average_max_similarity = float(np.mean(max_similarities))
+
+    return average_max_similarity
+
+
+def analyze_score_vs_diversity(
+    data_path: Path,
+    save_path: Path,
+    smiles_column: str = SMILES_COL,
+    score_column: str = SCORE_COL,
+    novelty_column: str = "train_hits_tversky_nearest_neighbor_similarity",
+    novelty_threshold: float = 0.5,
+    score_thresholds: tuple[float, ...] = (0.5, 0.75, 0.9, 0.95, 0.98, 0.99),
+) -> None:
+    """Analyzes the score and diversity of a set of generated molecules.
+
+    :param data_path: Path to CSV file containing generated molecules.
+    :param save_path: Path to CSV file where the analysis will be saved.
+    :param smiles_column: Name of the column containing SMILES.
+    :param score_column: Name of the column containing scores.
+    :param novelty_column: Name of the column containing similarity scores compared to known hits (for novelty).
+    :param novelty_threshold: Threshold to use for filtering by novelty.
+    :param score_thresholds: Thresholds to use for calculating the hits and diversity.
+    """
+    # Load data
+    data = pd.read_csv(data_path)
+
+    print(f"Number of molecules = {len(data):,}")
+
+    # Mark novelty
+    data["novel"] = data[novelty_column] <= novelty_threshold
+
+    # For each threshold, calculate the percent of hits and diversity among the hits
+    num_hits = []
+    percent_hits = []
+    diversity = []
+    num_hits_novel = []
+    percent_hits_novel = []
+    diversity_novel = []
+    for score_threshold in tqdm(score_thresholds, desc="score thresholds"):
+        # Select molecules above threshold as hits
+        hits = data[data[score_column] >= score_threshold]
+        hits_novel = hits[hits["novel"]]
+
+        # Calculate the number of hits
+        num_hits.append(len(hits))
+        num_hits_novel.append(len(hits_novel))
+
+        # Calculate the percent of hits
+        percent_hits.append(len(hits) / len(data))
+        percent_hits_novel.append(len(hits_novel) / len(data))
+
+        # Get hit molecules
+        hit_molecules = hits[smiles_column].tolist()
+        hit_molecules_novel = hits_novel[smiles_column].tolist()
+
+        # Compute diversity of hit molecules
+        diversity.append(compute_average_maximum_similarity(hit_molecules))
+        diversity_novel.append(compute_average_maximum_similarity(hit_molecules_novel))
+
+    # Create DataFrame with results
+    results = pd.DataFrame(
+        {
+            "score_threshold": score_thresholds,
+            "num_hits": num_hits,
+            "percent_hits": percent_hits,
+            "diversity": diversity,
+            "num_hits_novel": num_hits_novel,
+            "percent_hits_novel": percent_hits_novel,
+            "diversity_novel": diversity_novel,
+        }
+    )
+
+    # Save results
+    save_path.parent.mkdir(parents=True, exist_ok=True)
+    results.to_csv(save_path, index=False)
+
+
+if __name__ == "__main__":
+    from tap import tapify
+
+    tapify(analyze_score_vs_diversity)
