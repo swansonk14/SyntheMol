@@ -60,22 +60,31 @@ def analyze_score_vs_diversity(
     for score_threshold in tqdm(score_thresholds, desc="score thresholds"):
         # Select molecules above threshold as hits
         hits = data[data[score_column] >= score_threshold]
+
+        if len(hits) == 0:
+            num_hits.append(0)
+            percent_hits.append(0)
+            diversity.append(0)
+            continue
+
+        # Calculate statistics
+        num_hits.append(len(hits))
+        percent_hits.append(len(hits) / len(data))
+        hit_molecules = hits[smiles_column].tolist()
+        diversity.append(compute_average_maximum_similarity(hit_molecules))
+
+        # Compute same results for novel molecules
         hits_novel = hits[hits["novel"]]
 
-        # Calculate the number of hits
-        num_hits.append(len(hits))
+        if len(hits_novel) == 0:
+            num_hits_novel.append(0)
+            percent_hits_novel.append(0)
+            diversity_novel.append(0)
+            continue
+
         num_hits_novel.append(len(hits_novel))
-
-        # Calculate the percent of hits
-        percent_hits.append(len(hits) / len(data))
         percent_hits_novel.append(len(hits_novel) / len(data))
-
-        # Get hit molecules
-        hit_molecules = hits[smiles_column].tolist()
         hit_molecules_novel = hits_novel[smiles_column].tolist()
-
-        # Compute diversity of hit molecules
-        diversity.append(compute_average_maximum_similarity(hit_molecules))
         diversity_novel.append(compute_average_maximum_similarity(hit_molecules_novel))
 
     # Create DataFrame with results
