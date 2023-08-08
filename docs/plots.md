@@ -415,7 +415,7 @@ Building block counts before and after building block diversity. Run `SyntheMol.
 Score of molecules binned by rollout.
 ```bash
 python scripts/plot/plot_mcts_over_time.py \
-    --data_path data/5_generations_chemprop/molecules.csv \
+    --data_path data/6_generations_chemprop/molecules.csv \
     --save_dir plots/mcts_over_time/chemprop \
     --model_name "Chemprop" \
     --increment 2000
@@ -423,7 +423,7 @@ python scripts/plot/plot_mcts_over_time.py \
 
 ```bash
 python scripts/plot/plot_mcts_over_time.py \
-    --data_path data/6_generations_chemprop_rdkit/molecules.csv \
+    --data_path data/7_generations_chemprop_rdkit/molecules.csv \
     --save_dir plots/mcts_over_time/chemprop_rdkit \
     --model_name "Chemprop RDKit" \
     --increment 2000
@@ -431,7 +431,7 @@ python scripts/plot/plot_mcts_over_time.py \
 
 ```bash
 python scripts/plot/plot_mcts_over_time.py \
-    --data_path data/7_generations_random_forest/molecules.csv \
+    --data_path data/8_generations_random_forest/molecules.csv \
     --save_dir plots/mcts_over_time/random_forest \
     --model_name "Random Forest" \
     --increment 2000
@@ -444,7 +444,7 @@ python scripts/plot/plot_mcts_over_time.py \
 
 Assess generated molecules for novelty, score, and diversity for each model.
 ```bash
-for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
+for NAME in 6_generations_chemprop 7_generations_chemprop_rdkit 8_generations_random_forest
 do
 python scripts/plot/plot_generated_molecule_analysis.py \
     --data_path data/${NAME}/molecules.csv \
@@ -483,13 +483,13 @@ t-SNE for final generated sets.
 ```bash
 chemfunc dimensionality_reduction \
     --data_paths data/1_training_data/antibiotics.csv \
-    data/5_generations_chemprop/molecules.csv \
-    data/6_generations_chemprop_rdkit/molecules.csv \
-    data/7_generations_random_forest/molecules.csv \
+    data/6_generations_chemprop/molecules.csv \
+    data/7_generations_chemprop_rdkit/molecules.csv \
+    data/8_generations_random_forest/molecules.csv \
     data/1_training_data/antibiotics_hits.csv \
-    data/5_generations_chemprop/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
-    data/6_generations_chemprop_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
-    data/7_generations_random_forest/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
+    data/6_generations_chemprop/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
+    data/7_generations_chemprop_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
+    data/8_generations_random_forest/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
     --data_names train random_forest_full chemprop_full chemprop_rdkit_full train_hits random_forest chemprop chemprop_rdkit \
     --max_molecules 2000 \
     --highlight_data_names train_hits chemprop chemprop_rdkit random_forest \
