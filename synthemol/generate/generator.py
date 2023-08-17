@@ -394,7 +394,6 @@ class Generator:
             )
         elif self.search_type == 'rl':
             # Compute RL scores for any nodes missing RL scores
-            breakpoint()
             child_node_molecules = [
                 child_node.molecules for child_node in child_nodes
             ]
