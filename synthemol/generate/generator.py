@@ -392,11 +392,13 @@ class Generator:
         elif self.search_type == 'rl':
             # Compute RL scores for any nodes missing RL scores
             child_nodes_missing_scores = [child_node for child_node in child_nodes if child_node.rl_score is None]
-            child_nodes_missing_scores_molecules = [child_node.molecules for child_node in child_nodes_missing_scores]
-            child_nodes_missing_scores_preds = self.rl_model.predict(child_nodes_missing_scores_molecules)
 
-            for child_node, pred in zip(child_nodes_missing_scores, child_nodes_missing_scores_preds):
-                child_node.rl_score = pred
+            if len(child_nodes_missing_scores) > 0:
+                child_nodes_missing_scores_molecules = [child_node.molecules for child_node in child_nodes_missing_scores]
+                child_nodes_missing_scores_preds = self.rl_model.predict(child_nodes_missing_scores_molecules)
+    
+                for child_node, pred in zip(child_nodes_missing_scores, child_nodes_missing_scores_preds):
+                    child_node.rl_score = pred
 
             # Convert RL scores to temperature-scaled probabilities
             child_node_scores = np.array([child_node.rl_score for child_node in child_nodes])
