@@ -390,11 +390,19 @@ class Generator:
                 key=partial(self.compute_mcts_score, total_visit_count=total_visit_count)
             )
         elif self.search_type == 'rl':
-            # Select node proportional to the RL score
-            child_node_molecules = [child_node.molecules for child_node in child_nodes]
-            child_node_scores = self.rl_model.predict(child_node_molecules)
-            child_node_scores *= self.optimization_sign
-            child_node_probs = softmax(child_node_scores / self.rl_temperature)
+            # Compute RL scores for any nodes missing RL scores
+            child_nodes_missing_scores = [child_node for child_node in child_nodes if child_node.rl_score is None]
+            child_nodes_missing_scores_molecules = [child_node.molecules for child_node in child_nodes_missing_scores]
+            child_nodes_missing_scores_preds = self.rl_model.predict(child_nodes_missing_scores_molecules)
+
+            for child_node, pred in zip(child_nodes_missing_scores, child_nodes_missing_scores_preds):
+                child_node.rl_score = pred
+
+            # Convert RL scores to temperature-scaled probabilities
+            child_node_scores = np.array([child_node.rl_score for child_node in child_nodes])
+            child_node_probs = softmax(self.optimization_sign * child_node_scores / self.rl_temperature)
+
+            # Select node proportional to the temperature-scaled RL score
             selected_node = self.rng.choice(child_nodes, p=child_node_probs)
         else:
             raise ValueError(f'Invalid search type: {self.search_type}')
@@ -516,6 +524,17 @@ class Generator:
 
         return nodes
 
+    def reset_rl_scores(self) -> None:
+        """Resets the RL scores of all nodes."""
+        for node in self.node_map:
+            node.rl_score = None
+
+        for node, child_nodes in self.node_to_children.items():
+            node.rl_score = None
+
+            for child_node in child_nodes:
+                child_node.rl_score = None
+
     def generate(self, n_rollout: int) -> list[Node]:
         """Generate molecules for the specified number of rollouts.
 
@@ -548,6 +567,9 @@ class Generator:
 
             # Train and evaluate RL model
             if self.rl_model is not None and rollout_num % self.rl_train_frequency == 0:
+                # Reset RL scores for all nodes since RL model is being updated
+                self.reset_rl_scores()
+
                 # Train model
                 start_time = time.time()
                 self.rl_model.train()

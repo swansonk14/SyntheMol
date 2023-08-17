@@ -39,6 +39,16 @@ class Node:
         self.N = 0  # The number of times this Node has been expanded.
         self.rollout_num = rollout_num
         self.num_children = 0
+        self._rl_score = None
+
+    @property
+    def rl_score(self) -> float | None:
+        """The RL score of this Node."""
+        return self._rl_score
+
+    @rl_score.setter
+    def rl_score(self, value: float | None) -> None:
+        self._rl_score = value
 
     @classmethod
     def compute_score(cls, molecules: tuple[str], scoring_fn: Callable[[str], float]) -> float:

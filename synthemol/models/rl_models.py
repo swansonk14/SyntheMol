@@ -157,12 +157,13 @@ class RLModel(ABC):
         # Make predictions on all examples in the buffer
         predictions = self.predict(self.molecule_tuples)
 
-        # Convert rewards to tensor
+        # Convert to tensor
+        predictions = torch.tensor(predictions)
         rewards = torch.tensor(self.rewards)
 
         # Convert to numpy
-        predictions_numpy = predictions.detach().numpy()
-        rewards_numpy = rewards.detach().numpy()
+        predictions_numpy = predictions.numpy()
+        rewards_numpy = rewards.numpy()
 
         # Evaluate predictions
         results = {
@@ -173,11 +174,11 @@ class RLModel(ABC):
 
         return results
 
-    def predict(self, molecule_tuples: list[tuple[str]]) -> torch.Tensor:
+    def predict(self, molecule_tuples: list[tuple[str]]) -> list[float]:
         """Predicts the reward for each tuple of molecules.
 
         :param molecule_tuples: A list of tuples of SMILES strings representing one or more molecules.
-        :return: A 1D tensor of rewards for each tuple of molecules.
+        :return: A list of predicted rewards for each tuple of molecules.
         """
         # Set model to eval mode
         self.model.eval()
@@ -198,9 +199,6 @@ class RLModel(ABC):
 
                 # Add rewards to list
                 rewards.extend(batch_rewards.cpu().flatten().tolist())
-
-        # Convert to PyTorch
-        rewards = torch.tensor(rewards)
 
         return rewards
 
