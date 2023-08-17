@@ -137,6 +137,9 @@ class Generator:
         # Initialize the array of Morgan fingerprints of full molecules for diversity calculations
         self.full_molecule_morgan_fingerprints: np.ndarray | None = None
 
+        # Initialize dictionary mapping tuple of molecules to cached RL score
+        self.molecules_to_rl_score = {}
+
     def get_next_building_blocks(self, molecules: tuple[str]) -> list[str]:
         """Get the next building blocks that can be added to the given molecules.
 
@@ -391,17 +394,23 @@ class Generator:
             )
         elif self.search_type == 'rl':
             # Compute RL scores for any nodes missing RL scores
-            child_nodes_missing_scores = [child_node for child_node in child_nodes if child_node.rl_score is None]
+            breakpoint()
+            child_node_molecules = [
+                child_node.molecules for child_node in child_nodes
+            ]
+            child_node_molecules_missing_scores = [
+                molecules for molecules in child_node_molecules
+                if molecules not in self.molecules_to_rl_score
+            ]
 
-            if len(child_nodes_missing_scores) > 0:
-                child_nodes_missing_scores_molecules = [child_node.molecules for child_node in child_nodes_missing_scores]
-                child_nodes_missing_scores_preds = self.rl_model.predict(child_nodes_missing_scores_molecules)
-    
-                for child_node, pred in zip(child_nodes_missing_scores, child_nodes_missing_scores_preds):
-                    child_node.rl_score = pred
+            if len(child_node_molecules_missing_scores) > 0:
+                rl_scores = self.rl_model.predict(child_node_molecules_missing_scores)
+
+                for molecules, rl_score in zip(child_node_molecules_missing_scores, rl_scores):
+                    self.molecules_to_rl_score[molecules] = rl_score
 
             # Convert RL scores to temperature-scaled probabilities
-            child_node_scores = np.array([child_node.rl_score for child_node in child_nodes])
+            child_node_scores = np.array([self.molecules_to_rl_score[molecules] for molecules in child_node_molecules])
             child_node_probs = softmax(self.optimization_sign * child_node_scores / self.rl_temperature)
 
             # Select node proportional to the temperature-scaled RL score
@@ -526,17 +535,6 @@ class Generator:
 
         return nodes
 
-    def reset_rl_scores(self) -> None:
-        """Resets the RL scores of all nodes."""
-        for node in self.node_map:
-            node.rl_score = None
-
-        for node, child_nodes in self.node_to_children.items():
-            node.rl_score = None
-
-            for child_node in child_nodes:
-                child_node.rl_score = None
-
     def generate(self, n_rollout: int) -> list[Node]:
         """Generate molecules for the specified number of rollouts.
 
@@ -569,8 +567,8 @@ class Generator:
 
             # Train and evaluate RL model
             if self.rl_model is not None and rollout_num % self.rl_train_frequency == 0:
-                # Reset RL scores for all nodes since RL model is being updated
-                self.reset_rl_scores()
+                # Reset RL scores since RL model is being updated
+                self.molecules_to_rl_score = {}
 
                 # Train model
                 start_time = time.time()
