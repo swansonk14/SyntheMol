@@ -197,7 +197,7 @@ synthemol \
     --building_blocks_score_column chemprop_ensemble_preds \
     --building_blocks_id_column Reagent_ID \
     --reaction_to_building_blocks_path data/Data/4_real_space/reaction_to_building_blocks.pkl \
-    --save_dir data/Data/5_generations_chemprop \
+    --save_dir data/Data/6_generations_chemprop \
     --max_reactions 1 \
     --n_rollout 20000 \
     --replicate
@@ -212,7 +212,7 @@ synthemol \
     --building_blocks_score_column chemprop_rdkit_ensemble_preds \
     --building_blocks_id_column Reagent_ID \
     --reaction_to_building_blocks_path data/Data/4_real_space/reaction_to_building_blocks.pkl \
-    --save_dir data/Data/6_generations_chemprop_rdkit \
+    --save_dir data/Data/7_generations_chemprop_rdkit \
     --fingerprint_type rdkit \
     --max_reactions 1 \
     --n_rollout 20000 \
@@ -228,7 +228,7 @@ synthemol \
     --building_blocks_score_column random_forest_rdkit_ensemble_preds \
     --building_blocks_id_column Reagent_ID \
     --reaction_to_building_blocks_path data/Data/4_real_space/reaction_to_building_blocks.pkl \
-    --save_dir data/Data/7_generations_random_forest \
+    --save_dir data/Data/8_generations_random_forest \
     --fingerprint_type rdkit \
     --max_reactions 1 \
     --n_rollout 20000 \
@@ -249,7 +249,7 @@ First, compute the nearest neighbor Tversky similarity between the generated mol
 
 Compute Tversky similarity to train hits.
 ```bash
-for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
+for NAME in 6_generations_chemprop 7_generations_chemprop_rdkit 8_generations_random_forest
 do
 chemfunc nearest_neighbor \
     --data_path data/Data/${NAME}/molecules.csv \
@@ -261,7 +261,7 @@ done
 
 Compute Tversky similarity to ChEMBL antibacterials.
 ```bash
-for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
+for NAME in 6_generations_chemprop 7_generations_chemprop_rdkit 8_generations_random_forest
 do
 chemfunc nearest_neighbor \
     --data_path data/Data/${NAME}/molecules.csv \
@@ -275,7 +275,7 @@ Now, filter to only keep molecules with nearest neighbor Tverksy similarity to t
 
 Filter by Tversky similarity to train hits.
 ```bash
-for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
+for NAME in 6_generations_chemprop 7_generations_chemprop_rdkit 8_generations_random_forest
 do
 chemfunc filter_molecules \
     --data_path data/Data/${NAME}/molecules.csv \
@@ -287,7 +287,7 @@ done
 
 Filter by Tversky similarity to ChEMBL antibacterials.
 ```bash
-for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
+for NAME in 6_generations_chemprop 7_generations_chemprop_rdkit 8_generations_random_forest
 do
 chemfunc filter_molecules \
     --data_path data/Data/${NAME}/molecules_antibiotics_hits_sim_below_0.5.csv \
@@ -302,7 +302,7 @@ done
 
 Filter for high-scoring molecules (i.e., predicted bioactivity) by only keeping molecules with the top 20% of model scores.
 ```bash
-for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
+for NAME in 6_generations_chemprop 7_generations_chemprop_rdkit 8_generations_random_forest
 do
 chemfunc filter_molecules \
     --data_path data/Data/${NAME}/molecules_antibiotics_hits_sim_below_0.5_chembl_sim_below_0.5.csv \
@@ -319,7 +319,7 @@ Filter for diverse molecules by clustering molecules based on their Morgan finge
 
 Cluster molecules based on their Morgan fingerprint.
 ```bash
-for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
+for NAME in 6_generations_chemprop 7_generations_chemprop_rdkit 8_generations_random_forest
 do
 chemfunc cluster_molecules \
     --data_path data/Data/${NAME}/molecules_antibiotics_hits_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
@@ -329,7 +329,7 @@ done
 
 Select the top scoring molecule from each cluster.
 ```bash
-for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
+for NAME in 6_generations_chemprop 7_generations_chemprop_rdkit 8_generations_random_forest
 do
 chemfunc select_from_clusters \
     --data_path data/Data/${NAME}/molecules_antibiotics_hits_sim_below_0.5_chembl_sim_below_0.5_top_20_percent.csv \
@@ -345,7 +345,7 @@ We now have 50 molecules selected from each model's generations that meet our de
 
 Map generated molecules to REAL IDs in the format expected by Enamine to enable a lookup in the Enamine REAL Space database.
 ```bash
-for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
+for NAME in 6_generations_chemprop 7_generations_chemprop_rdkit 8_generations_random_forest
 do
 python scripts/data/map_generated_molecules_to_real_ids.py \
     --data_path data/Data/${NAME}/molecules_antibiotics_hits_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \

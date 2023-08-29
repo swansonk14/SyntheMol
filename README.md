@@ -12,36 +12,6 @@ If you use SyntheMol in your research, please cite:
 TODO
 ```
 
-TODO: put SyntheMol on pip
-
-TODO: put data on Zenodo and clean up google drive
-
-TODO: put model on huggingface
-
-TODO: potentially change order of cLogP data in Google Drive (from 10 to 4) and add to supplementary table
-
-TODO: remove building block scores JSON from google drive
-
-TODO: fix pixel alignment on Figure 1
-
-TODO: author contributions
-
-TODO: reaction SMARTS in supplementary table
-
-TODO: make loading and setting allowed building blocks faster (precompute allowed building blocks)
-
-TODO: enable random forest RDKit in chemprop
-
-TODO: check REAL molecule numbers with new building blocks
-
-TODO: test SyntheMol GPU time
-
-TODO: competing interests with Greenstone?
-
-TODO: source data for figures
-
-
-
 ## Table of contents
 
 * [Installation](#installation)
@@ -57,6 +27,8 @@ TODO: source data for figures
 
 
 ## Installation
+
+SyntheMol can be installed in < 3 minutes on any operating system using pip (optionally within a conda environment). SyntheMol can be run on a standard laptop (e.g., 16 GB memory and 8-16 CPUs), although a GPU is useful for faster training and prediction of the underlying bioactivity prediction model (Chemprop).
 
 Optionally, create a conda environment.
 ```bash

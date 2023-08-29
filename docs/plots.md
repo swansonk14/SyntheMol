@@ -17,6 +17,7 @@ Instructions for producing plots analyzing the data and results. Assumes relevan
   * [Building block scores](#building-block-scores)
   * [Building block vs full molecule scores](#building-block-vs-full-molecule-scores)
   * [Assess REAL molecules](#assess-real-molecules)
+  * [Chemprop vs SyntheMol](#chemprop-vs-synthemol)
 - [MCTS Analysis](#mcts-analysis)
   * [Building block diversity](#building-block-diversity)
   * [Score by rollout](#score-by-rollout)
@@ -36,7 +37,7 @@ Plot data values for each training set.
 for LIBRARY in library_1 library_2 library_3
 do
 python scripts/plot/plot_regression_values.py \
-    --data_path data/1_training_data/${LIBRARY}.csv \
+    --data_path data/Data/1_training_data/${LIBRARY}.csv \
     --rep1_column Rep_1 \
     --rep2_column Rep_2 \
     --save_dir plots/${LIBRARY}
@@ -48,13 +49,13 @@ done
 Plot t-SNE of training data and ChEMBL antibiotics.
 ```bash
 chemfunc dimensionality_reduction \
-    --data_paths data/2_chembl/chembl_antibacterial_antibiotic.csv \
-    data/1_training_data/library_1.csv \
-    data/1_training_data/library_2.csv \
-    data/1_training_data/library_3.csv \
-    data/1_training_data/library_1_hits.csv \
-    data/1_training_data/library_2_hits.csv \
-    data/1_training_data/library_3_hits.csv \
+    --data_paths data/Data/2_chembl/chembl_antibacterial_antibiotic.csv \
+    data/Data/1_training_data/library_1.csv \
+    data/Data/1_training_data/library_2.csv \
+    data/Data/1_training_data/library_3.csv \
+    data/Data/1_training_data/library_1_hits.csv \
+    data/Data/1_training_data/library_2_hits.csv \
+    data/Data/1_training_data/library_3_hits.csv \
     --max_molecules 2000 \
     --colors red orange blue purple orange blue purple \
     --data_names chembl_antibiotic library_1 library_2 library_3 \
@@ -71,7 +72,7 @@ chemfunc dimensionality_reduction \
 Plot ROC-AUC and PRC-AUC curves for each model. (Replace model paths and names as needed and curve type with ROC or PRC.)
 ```bash
 python scripts/plot/plot_auc.py \
-    --data_dir models/antibiotic_random_forest \
+    --data_dir data/Models/antibiotic_random_forest \
     --save_dir plots/auc \
     --model_name "Random Forest" \
     --curve_type ROC
@@ -86,8 +87,8 @@ Separately process each training set.
 for LIBRARY in library_1 library_2 library_3
 do
 python scripts/data/process_data.py \
-    --data_paths data/1_training_data/${LIBRARY}.csv \
-    --save_path data/1_training_data/${LIBRARY}_binarized.csv
+    --data_paths data/Data/1_training_data/${LIBRARY}.csv \
+    --save_path data/Data/1_training_data/${LIBRARY}_binarized.csv
 done
 ```
 
@@ -147,21 +148,21 @@ Train models on each training set.
 for LIBRARY in library_1 library_2 library_3
 do
 python train_model.py \
-    --data_path data/1_training_data/${LIBRARY}_binarized.csv \
-    --save_dir models/${LIBRARY}_random_forest \
+    --data_path data/Data/1_training_data/${LIBRARY}_binarized.csv \
+    --save_dir data/Models/${LIBRARY}_random_forest \
     --model_type random_forest \
     --fingerprint_type rdkit \
     --num_models 10
 
 python train_model.py \
-    --data_path data/1_training_data/${LIBRARY}_binarized.csv \
-    --save_dir models/${LIBRARY}_chemprop \
+    --data_path data/Data/1_training_data/${LIBRARY}_binarized.csv \
+    --save_dir data/Models/${LIBRARY}_chemprop \
     --model_type chemprop \
-    --num_models 10
+    --num_modeldata/D 10
 
 python train_model.py \
-    --data_path data/1_training_data/${LIBRARY}_binarized.csv \
-    --save_dir models/${LIBRARY}_chemprop_rdkit \
+    --data_path data/Data/1_training_data/${LIBRARY}_binarized.csv \
+    --save_dir data/Models/${LIBRARY}_chemprop_rdkit \
     --model_type chemprop \
     --fingerprint_type rdkit \
     --num_models 10
@@ -178,40 +179,40 @@ do
         then
             echo $LIBRARY_A $LIBRARY_B
             python scripts/models/predict.py \
-                --data_path data/1_training_data/${LIBRARY_B}_binarized.csv \
-                --model_path models/${LIBRARY_A}_random_forest \
-                --save_path models/${LIBRARY_A}_random_forest/${LIBRARY_B}_preds.csv \
+                --data_path data/Data/1_training_data/${LIBRARY_B}_binarized.csv \
+                --model_path data/Models/${LIBRARY_A}_random_forest \
+                --save_path data/Models/${LIBRARY_A}_random_forest/${LIBRARY_B}_preds.csv \
                 --model_type random_forest \
                 --fingerprint_type rdkit \
                 --average_preds
 
             python scripts/models/compute_auc.py \
-                --data_path models/${LIBRARY_A}_random_forest/${LIBRARY_B}_preds.csv \
+                --data_path data/Models/${LIBRARY_A}_random_forest/${LIBRARY_B}_preds.csv \
                 --pred_column random_forest_ensemble_preds \
                 --true_column activity
 
             python scripts/models/predict.py \
-                --data_path data/1_training_data/${LIBRARY_B}_binarized.csv \
-                --model_path models/${LIBRARY_A}_chemprop \
-                --save_path models/${LIBRARY_A}_chemprop/${LIBRARY_B}_preds.csv \
+                --data_path data/Data/1_training_data/${LIBRARY_B}_binarized.csv \
+                --model_path data/Models/${LIBRARY_A}_chemprop \
+                --save_path data/Models/${LIBRARY_A}_chemprop/${LIBRARY_B}_preds.csv \
                 --model_type chemprop \
                 --average_preds
 
             python scripts/models/compute_auc.py \
-                --data_path models/${LIBRARY_A}_chemprop/${LIBRARY_B}_preds.csv \
+                --data_path data/Models/${LIBRARY_A}_chemprop/${LIBRARY_B}_preds.csv \
                 --pred_column chemprop_ensemble_preds \
                 --true_column activity
 
             python scripts/models/predict.py \
-                --data_path data/1_training_data/${LIBRARY_B}_binarized.csv \
-                --model_path models/${LIBRARY_A}_chemprop_rdkit \
-                --save_path models/${LIBRARY_A}_chemprop_rdkit/${LIBRARY_B}_preds.csv \
+                --data_path data/Data/1_training_data/${LIBRARY_B}_binarized.csv \
+                --model_path data/Models/${LIBRARY_A}_chemprop_rdkit \
+                --save_path data/Models/${LIBRARY_A}_chemprop_rdkit/${LIBRARY_B}_preds.csv \
                 --model_type chemprop \
                 --fingerprint_type rdkit \
                 --average_preds
 
             python scripts/models/compute_auc.py \
-                --data_path models/${LIBRARY_A}_chemprop_rdkit/${DATA2_NAME}_preds.csv \
+                --data_path data/Models/${LIBRARY_A}_chemprop_rdkit/${DATA2_NAME}_preds.csv \
                 --pred_column chemprop_rdkit_ensemble_preds \
                 --true_column activity
         fi
@@ -234,7 +235,7 @@ python scripts/plot/plot_model_generalization.py \
 Visualize REAL reactions.
 ```bash
 chemfunc visualize_reactions \
-    --data_path data/4_real_space/reactions.csv \
+    --data_path data/Data/4_real_space/reactions.csv \
     --save_dir plots/real_reactions \
     --smarts_column reaction_smarts \
     --name_column reaction_id
@@ -245,8 +246,8 @@ chemfunc visualize_reactions \
 Plot REAL reaction and reactant counts.
 ```bash
 python scripts/plot/plot_real_counts.py \
-    --reaction_counts_path data/4_real_space/reaction_counts.csv \
-    --building_block_counts_path data/4_real_space/building_block_counts.csv \
+    --reaction_counts_path data/Data/4_real_space/reaction_counts.csv \
+    --building_block_counts_path data/Data/4_real_space/building_block_counts.csv \
     --save_dir plots/real_counts
 ```
 
@@ -255,8 +256,8 @@ python scripts/plot/plot_real_counts.py \
 Deduplicate building blocks by SMILES.
 ```bash
 chemfunc deduplicate_smiles \
-    --data_path data/4_real_space/building_blocks.csv \
-    --save_path data/4_real_space/building_blocks_unique.csv
+    --data_path data/Data/4_real_space/building_blocks.csv \
+    --save_path data/Data/4_real_space/building_blocks_unique.csv
 ```
 
 This leaves 132,479 unique building block molecules.
@@ -266,7 +267,7 @@ Compute properties of REAL building blocks, REAL molecules, and train molecules.
 for DATA in 4_real_space/building_blocks_unique 4_real_space/random_real 1_training_data/antibiotics
 do
 chemfunc compute_properties \
-    --data_path data/${DATA}.csv \
+    --data_path data/Data/${DATA}.csv \
     --properties logp mol_weight
 done
 ```
@@ -274,9 +275,9 @@ done
 Plot logP distributions.
 ```bash
 chemfunc plot_property_distribution \
-    --data_paths data/4_real_space/building_blocks_unique.csv \
-    data/4_real_space/random_real.csv \
-    data/1_training_data/antibiotics.csv \
+    --data_paths data/Data/4_real_space/building_blocks_unique.csv \
+    data/Data/4_real_space/random_real.csv \
+    data/Data/1_training_data/antibiotics.csv \
     --property_column logp \
     --save_dir plots/properties/logp_train_vs_real \
     --min_value -10 \
@@ -286,9 +287,9 @@ chemfunc plot_property_distribution \
 Plot molecular weight distributions.
 ```bash
 chemfunc plot_property_distribution \
-    --data_paths data/4_real_space/building_blocks_unique.csv \
-    data/4_real_space/random_real.csv \
-    data/1_training_data/antibiotics.csv \
+    --data_paths data/Data/4_real_space/building_blocks_unique.csv \
+    data/Data/4_real_space/random_real.csv \
+    data/Data/1_training_data/antibiotics.csv \
     --property_column mol_weight \
     --save_dir plots/properties/mol_weight_train_vs_real \
     --max_value 1000
@@ -300,10 +301,10 @@ chemfunc plot_property_distribution \
 Plot t-SNE of training data and REAL space sample.
 ```bash
 chemfunc dimensionality_reduction \
-    --data_paths data/4_real_space/random_real.csv \
-    data/4_real_space/building_blocks_unique.csv \
-    data/1_training_data/antibiotics.csv \
-    data/1_training_data/antibiotics_hits.csv \
+    --data_paths data/Data/4_real_space/random_real.csv \
+    data/Data/4_real_space/building_blocks_unique.csv \
+    data/Data/1_training_data/antibiotics.csv \
+    data/Data/1_training_data/antibiotics_hits.csv \
     --max_molecules 7500 1000 1000 500 \
     --data_names REAL_molecules REAL_building_blocks train train_hits \
     --highlight_data_names train_hits \
@@ -318,21 +319,21 @@ chemfunc dimensionality_reduction \
 Plot building block score distribution for each model.
 ```bash
 python scripts/plot/plot_building_block_scores.py \
-    --building_blocks_path models/antibiotic_random_forest/building_block_scores.csv \
+    --building_blocks_path data/Models/antibiotic_random_forest/building_block_scores.csv \
     --title "Random Forest Building Block Score Distribution" \
     --save_dir plots/building_block_scores/random_forest_building_block_scores
 ```
 
 ```bash
 python scripts/plot/plot_building_block_scores.py \
-    --building_blocks_path models/antibiotic_chemprop/building_block_scores.csv \
+    --building_blocks_path data/Models/antibiotic_chemprop/building_block_scores.csv \
     --title "Chemprop Building Block Score Distribution" \
     --save_dir plots/building_block_scores/chemprop_building_block_scores
 ```
 
 ```bash
 python scripts/plot/plot_building_block_scores.py \
-    --building_blocks_path models/antibiotic_chemprop_rdkit/building_block_scores.csv \
+    --building_blocks_path data/Models/antibiotic_chemprop_rdkit/building_block_scores.csv \
     --title "Chemprop RDKit Building Block Score Distribution" \
     --save_dir plots/building_block_scores/chemprop_rdkit_building_block_scores
 ```
@@ -344,21 +345,21 @@ Plot building block vs full molecule scores for random sample of REAL molecules.
 First, make predictions on a random sample of REAL molecules using each model.
 ```bash
 python predict_model.py \
-    --data_path data/4_real_space/random_real.csv \
-    --model_path models/antibiotic_random_forest \
+    --data_path data/Data/4_real_space/random_real.csv \
+    --model_path data/Models/antibiotic_random_forest \
     --model_type random_forest \
     --fingerprint_type rdkit \
     --average_preds
 
 python predict_model.py \
-    --data_path data/4_real_space/random_real.csv \
-    --model_path models/antibiotic_chemprop \
+    --data_path data/Data/4_real_space/random_real.csv \
+    --model_path data/Models/antibiotic_chemprop \
     --model_type chemprop \
     --average_preds
 
 python predict_model.py \
-    --data_path data/4_real_space/random_real.csv \
-    --model_path models/antibiotic_chemprop_rdkit \
+    --data_path data/Data/4_real_space/random_real.csv \
+    --model_path data/Models/antibiotic_chemprop_rdkit \
     --model_type chemprop \
     --fingerprint_type rdkit \
     --average_preds
@@ -367,8 +368,8 @@ python predict_model.py \
 Then, plot the building block vs full molecule scores. (Note: Only 24,276 out of 25,000 molecules have all required building block SMILES.)
 ```bash
 python scripts/plot/plot_building_block_vs_molecule_scores.py \
-    --data_path data/4_real_space/random_real.csv \
-    --building_blocks_path models/random_forest/building_block_scores.csv \
+    --data_path data/Data/4_real_space/random_real.csv \
+    --building_blocks_path data/Models/random_forest/building_block_scores.csv \
     --building_blocks_score_column random_forest_rdkit_ensemble_preds \
     --title "Random Forest Full Molecule vs Average Building Block Scores" \
     --save_dir plots/full_vs_building_block_scores/random_forest_full_vs_building_block_scores
@@ -376,8 +377,8 @@ python scripts/plot/plot_building_block_vs_molecule_scores.py \
 
 ```bash
 python scripts/plot/plot_building_block_vs_molecule_scores.py \
-    --data_path data/4_real_space/random_real.csv \
-    --building_blocks_path models/chemprop/building_block_scores.csv \
+    --data_path data/Data/4_real_space/random_real.csv \
+    --building_blocks_path data/Models/chemprop/building_block_scores.csv \
     --building_blocks_score_column chemprop_ensemble_preds \
     --title "Chemprop Full Molecule vs Average Building Block Scores" \
     --save_dir plots/full_vs_building_block_scores/chemprop_full_vs_building_block_scores
@@ -385,8 +386,8 @@ python scripts/plot/plot_building_block_vs_molecule_scores.py \
 
 ```bash
 python plots/plot_building_block_vs_molecule_scores.py \
-    --data_path data/4_real_space/random_real.csv \
-    --building_blocks_path models/chemprop_rdkit/building_block_scores.csv \
+    --data_path data/Data/4_real_space/random_real.csv \
+    --building_blocks_path data/Models/chemprop_rdkit/building_block_scores.csv \
     --building_blocks_score_column chemprop_rdkit_ensemble_preds \
     --title "Chemprop RDKit Full Molecule vs Average Building Block Scores" \
     --save_dir plots/full_vs_building_block_scores/chemprop_rdkit_full_vs_building_block_scores
@@ -397,10 +398,33 @@ python plots/plot_building_block_vs_molecule_scores.py \
 Assess scores and similarity distributions of REAL molecules.
 ```bash
 python scripts/plot/plot_molecule_analysis.py \
-    --data_path data/4_real_space/random_real.csv \
+    --data_path data/Data/4_real_space/random_real.csv \
     --save_dir plots/real_analysis \
-    --train_hits_path data/1_training_data/antibiotics_hits.csv \
+    --train_hits_path data/Data/1_training_data/antibiotics_hits.csv \
     --score_columns random_forest_rdkit_ensemble_preds chemprop_ensemble_preds chemprop_rdkit_ensemble_preds
+```
+
+
+### Chemprop vs SyntheMol
+
+Make predictions on a random sample of 10 million REAL molecules using the Chemprop model for a time-based comparison against SyntheMol with Chemprop. Note that is uses a GPU and 16 parallel data loaders.
+
+First, unzip the random sample of 10 million REAL molecules if necessary.
+```bash
+gunzip data/Data/4_real_space/random_real_10m.csv.gz
+```
+
+Now, make Chemprop predictions.
+```bash
+python scripts/models/predict.py \
+    --data_path data/Data/4_real_space/random_real_10m.csv \
+    --model_path data/Models/clogp_chemprop_30_epochs \
+    --model_type chemprop \
+    --average_preds \
+    --num_workers 16 \
+    --no_cache \
+    --use_gpu \
+    --save_path data/Data/4_real_space/random_real_10m.csv
 ```
 
 
@@ -415,7 +439,7 @@ Building block counts before and after building block diversity. Run `SyntheMol.
 Score of molecules binned by rollout.
 ```bash
 python scripts/plot/plot_mcts_over_time.py \
-    --data_path data/5_generations_chemprop/molecules.csv \
+    --data_path data/Data/6_generations_chemprop/molecules.csv \
     --save_dir plots/mcts_over_time/chemprop \
     --model_name "Chemprop" \
     --increment 2000
@@ -423,7 +447,7 @@ python scripts/plot/plot_mcts_over_time.py \
 
 ```bash
 python scripts/plot/plot_mcts_over_time.py \
-    --data_path data/6_generations_chemprop_rdkit/molecules.csv \
+    --data_path data/Data/7_generations_chemprop_rdkit/molecules.csv \
     --save_dir plots/mcts_over_time/chemprop_rdkit \
     --model_name "Chemprop RDKit" \
     --increment 2000
@@ -431,7 +455,7 @@ python scripts/plot/plot_mcts_over_time.py \
 
 ```bash
 python scripts/plot/plot_mcts_over_time.py \
-    --data_path data/7_generations_random_forest/molecules.csv \
+    --data_path data/Data/8_generations_random_forest/molecules.csv \
     --save_dir plots/mcts_over_time/random_forest \
     --model_name "Random Forest" \
     --increment 2000
@@ -444,12 +468,12 @@ python scripts/plot/plot_mcts_over_time.py \
 
 Assess generated molecules for novelty, score, and diversity for each model.
 ```bash
-for NAME in 5_generations_chemprop 6_generations_chemprop_rdkit 7_generations_random_forest
+for NAME in 6_generations_chemprop 7_generations_chemprop_rdkit 8_generations_random_forest
 do
 python scripts/plot/plot_generated_molecule_analysis.py \
-    --data_path data/${NAME}/molecules.csv \
-    --save_dir data/${NAME} \
-    --reference_paths data/1_training_data/antibiotics_hits.csv data/2_chembl/chembl.csv
+    --data_path data/Data/${NAME}/molecules.csv \
+    --save_dir data/Data/${NAME} \
+    --reference_paths data/Data/1_training_data/antibiotics_hits.csv data/2_chembl/chembl.csv
 done
 ```
 
@@ -458,9 +482,9 @@ Assess selected molecules for novelty, score, and diversity for each model.
 for NAME in chemprop chemprop_rdkit random_forest
 do
 python scripts/plot/plot_generated_molecule_analysis.py \
-    --data_path data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
-    --save_dir data/${NAME}/analysis_molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50 \
-    --reference_paths data/1_training_data/antibiotics_hits.csv data/2_chembl/chembl.csv
+    --data_path data/Data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
+    --save_dir data/Data/${NAME}/analysis_molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50 \
+    --reference_paths data/Data/1_training_data/antibiotics_hits.csv data/2_chembl/chembl.csv
 done
 ```
 
@@ -471,8 +495,8 @@ Visualize the selected molecules.
 for NAME in chemprop chemprop_rdkit random_forest
 do
 chemfunc visualize_molecules \
-    --data_path data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
-    --save_dir data/${NAME}
+    --data_path data/Data/${NAME}/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
+    --save_dir data/Data/${NAME}
 done
 ```
 
@@ -482,14 +506,14 @@ done
 t-SNE for final generated sets.
 ```bash
 chemfunc dimensionality_reduction \
-    --data_paths data/1_training_data/antibiotics.csv \
-    data/5_generations_chemprop/molecules.csv \
-    data/6_generations_chemprop_rdkit/molecules.csv \
-    data/7_generations_random_forest/molecules.csv \
-    data/1_training_data/antibiotics_hits.csv \
-    data/5_generations_chemprop/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
-    data/6_generations_chemprop_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
-    data/7_generations_random_forest/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
+    --data_paths data/Data/1_training_data/antibiotics.csv \
+    data/Data/6_generations_chemprop/molecules.csv \
+    data/Data/7_generations_chemprop_rdkit/molecules.csv \
+    data/Data/8_generations_random_forest/molecules.csv \
+    data/Data/1_training_data/antibiotics_hits.csv \
+    data/Data/6_generations_chemprop/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
+    data/Data/7_generations_chemprop_rdkit/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
+    data/Data/8_generations_random_forest/molecules_train_sim_below_0.5_chembl_sim_below_0.5_top_20_percent_selected_50.csv \
     --data_names train random_forest_full chemprop_full chemprop_rdkit_full train_hits random_forest chemprop chemprop_rdkit \
     --max_molecules 2000 \
     --highlight_data_names train_hits chemprop chemprop_rdkit random_forest \
@@ -502,8 +526,8 @@ chemfunc dimensionality_reduction \
 Show potent molecules vs test molecules.
 ```bash
 python scripts/plot/plot_toxicity.py \
-    --test_dir models/clintox_chemprop_rdkit \
-    --generated_path data/8_synthesized/potent.csv \
+    --test_dir data/Models/clintox_chemprop_rdkit \
+    --generated_path data/Data/8_synthesized/potent.csv \
     --save_dir plots/toxicity
 ```
 
