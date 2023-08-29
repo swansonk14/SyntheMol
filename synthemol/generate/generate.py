@@ -174,6 +174,7 @@ def generate(
                 'num_expand_nodes': num_expand_nodes,
                 'rl_temperature': rl_temperature,
                 'rl_train_frequency': rl_train_frequency,
+                'rl_train_epochs': rl_train_epochs,
                 'optimization': optimization,
                 'rng_seed': rng_seed,
                 'no_building_block_diversity': no_building_block_diversity,
