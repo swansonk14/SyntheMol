@@ -125,8 +125,6 @@ class RLModel(ABC):
         # Set model to train mode
         self.model.train()
 
-        # TODO: upsample new examples and downsample old examples
-
         # Get dataloader
         dataloader = self.get_dataloader(
             molecule_tuples=self.molecule_tuples,
