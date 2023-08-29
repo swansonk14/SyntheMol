@@ -53,8 +53,6 @@ class QueryMol:
     def allowed_building_blocks(self, allowed_building_blocks: Iterable[str]) -> None:
         """Sets the allowed building block SMILES for this QueryMol. Can only be set once.
 
-        Note: Filters the allowed SMILES to only include those that match the SMARTS of this QueryMol.
-
         :param allowed_building_blocks: An iterable of building block SMILES that are allowed for this QueryMol.
         """
         if self._allowed_building_block_set is not None:

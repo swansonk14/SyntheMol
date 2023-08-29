@@ -29,6 +29,8 @@ TODO
 
 ## Installation
 
+SyntheMol can be installed in < 3 minutes on any operating system using pip (optionally within a conda environment). SyntheMol can be run on a standard laptop (e.g., 16 GB memory and 8-16 CPUs), although a GPU is useful for faster training and prediction of the underlying bioactivity prediction model (Chemprop).
+
 Optionally, create a conda environment.
 ```bash
 conda create -y -n synthemol python=3.10
