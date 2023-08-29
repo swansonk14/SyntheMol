@@ -404,6 +404,29 @@ python scripts/plot/plot_molecule_analysis.py \
 ```
 
 
+### Chemprop vs SyntheMol
+
+Make predictions on a random sample of 10 million REAL molecules using the Chemprop model for a time-based comparison against SyntheMol with Chemprop. Note that is uses a GPU and 16 parallel data loaders.
+
+First, unzip the random sample of 10 million REAL molecules if necessary.
+```bash
+gunzip data/4_real_space/random_real_10m.csv.gz
+```
+
+Now, make Chemprop predictions.
+```bash
+python scripts/models/predict.py \
+    --data_path data/Data/4_real_space/random_real_10m.csv \
+    --model_path data/Models/clogp_chemprop_30_epochs \
+    --model_type chemprop \
+    --average_preds \
+    --num_workers 16 \
+    --no_cache \
+    --use_gpu \
+    --save_path data/Data/4_real_space/random_real_10m.csv
+```
+
+
 ## MCTS Analysis
 
 ### Building block diversity

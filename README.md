@@ -12,27 +12,6 @@ If you use SyntheMol in your research, please cite:
 TODO
 ```
 
-TODO: put SyntheMol on pip
-
-TODO: put data on Zenodo and clean up google drive
-
-TODO: put model on huggingface
-
-TODO: make loading and setting allowed building blocks faster (precompute allowed building blocks)
-
-TODO: enable random forest RDKit in chemprop
-
-TODO: check REAL molecule numbers with new building blocks
-
-TODO: test SyntheMol GPU time
-
-TODO: add discriminator random REAL 10m instructions and plotting code
-
-TODO: add GitHub and Zenodo links to paper
-
-TODO: remove ClinTox?
-
-
 
 ## Table of contents
 
