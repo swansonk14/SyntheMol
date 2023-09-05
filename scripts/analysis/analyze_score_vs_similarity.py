@@ -57,7 +57,7 @@ def analyze_score_vs_similarity(
     novelty_column: str = "train_hits_tversky_nearest_neighbor_similarity",
     novelty_threshold: float = 0.5,
     similarity_threshold: float = 0.5,
-    score_thresholds: tuple[float, ...] = (0.5, 0.75, 0.9, 0.95, 0.98, 0.99),
+    score_thresholds: tuple[float, ...] = (0.9, 0.95, 0.98, 0.99),
 ) -> None:
     """Analyzes the score and similarity of a set of generated molecules.
 
