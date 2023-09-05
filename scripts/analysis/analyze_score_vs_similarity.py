@@ -10,19 +10,6 @@ from tqdm import tqdm
 from synthemol.constants import SCORE_COL, SMILES_COL
 
 
-def compute_average_maximum_similarity(similarities: np.ndarray) -> float:
-    """Computes the average maximum similarity between a set of molecules.
-
-    :param similarities: A 2D numpy array of pairwise molecule similarities.
-    :return: Average maximum similarity.
-    """
-    np.fill_diagonal(similarities, -np.inf)
-    max_similarities = np.max(similarities, axis=1)
-    average_max_similarity = float(np.mean(max_similarities))
-
-    return average_max_similarity
-
-
 def compute_approximate_maximum_independent_set(
     similarities: np.ndarray, threshold: float, num_tries: int = 10
 ) -> int:
@@ -87,11 +74,9 @@ def analyze_score_vs_similarity(
                     "score_threshold": score_threshold,
                     "num_hits": 0,
                     "percent_hits": 0,
-                    "similarity": 0,
                     "max_independent_set": 0,
                     "num_hits_novel": 0,
                     "percent_hits_novel": 0,
-                    "similarity_novel": 0,
                     "max_independent_set_novel": 0,
                 }
             )
@@ -105,9 +90,6 @@ def analyze_score_vs_similarity(
             "score_threshold": score_threshold,
             "num_hits": len(hits),
             "percent_hits": len(hits) / len(data),
-            "similarity": compute_average_maximum_similarity(
-                similarities=pairwise_similarities
-            ),
             "max_independent_set": compute_approximate_maximum_independent_set(
                 similarities=pairwise_similarities, threshold=similarity_threshold
             ),
@@ -119,7 +101,6 @@ def analyze_score_vs_similarity(
         if len(hits_novel) == 0:
             result["num_hits_novel"] = 0
             result["percent_hits_novel"] = 0
-            result["similarity_novel"] = 0
             result["max_independent_set_novel"] = 0
             results.append(result)
             continue
@@ -131,9 +112,6 @@ def analyze_score_vs_similarity(
 
         result["num_hits_novel"] = len(hits_novel)
         result["percent_hits_novel"] = len(hits_novel) / len(data)
-        result["similarity_novel"] = compute_average_maximum_similarity(
-            similarities=pairwise_similarities_novel
-        )
         result[
             "max_independent_set_novel"
         ] = compute_approximate_maximum_independent_set(
