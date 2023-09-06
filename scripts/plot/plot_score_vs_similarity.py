@@ -8,7 +8,7 @@ import pandas as pd
 
 def plot_score_vs_similarity(
     data_dir: Path,
-    save_dir: Path
+    save_dir: Path,
 ) -> None:
     """Plot score vs similarity for generated molecules.
 
@@ -31,17 +31,22 @@ def plot_score_vs_similarity(
 
         # Plot each method
         for paths, marker, label, cmap in [
-            (mcts_paths, "o", "mcts", "sprint"),
+            (mcts_paths, "o", "mcts", "spring"),
             (rl_rdkit_paths, "x", "rl_rdkit", "winter"),
             (rl_chemprop_paths, "*", "rl_chemprop", "winter"),
         ]:
-            # Get data
+            # Get relevant statistics
             num_hits_novel = []
             similarity_novel = []
             explore = []
             for path in paths:
+                # Load data
                 data = pd.read_csv(path)
+
+                # Select results matching score threshold
                 data = data[data["score_threshold"] == score_threshold]
+
+                # Collect statistics
                 num_hits_novel.append(data["num_hits_novel"].iloc[0])
                 similarity_novel.append(data["max_independent_set_novel"].iloc[0])
                 explore.append(float(path.parent.name.split("_")[-1]))
@@ -71,6 +76,7 @@ def plot_score_vs_similarity(
         plt.title(f"Hits vs Similarity for Score Threshold {score_threshold}")
 
         # Save plot
+        save_dir.mkdir(parents=True, exist_ok=True)
         plt.savefig(
             save_dir / f"score_threshold_{score_threshold}_novel_max_independent.pdf",
             bbox_inches="tight",

@@ -58,6 +58,7 @@ def analyze_score_vs_similarity(
     novelty_threshold: float = 0.5,
     similarity_threshold: float = 0.5,
     score_thresholds: tuple[float, ...] = (0.9, 0.95, 0.98, 0.99),
+    max_rollout: int | None = None
 ) -> None:
     """Analyzes the score and similarity of a set of generated molecules.
 
@@ -69,11 +70,17 @@ def analyze_score_vs_similarity(
     :param novelty_threshold: Threshold to use for filtering by novelty.
     :param similarity_threshold: Threshold to use for calculating the maximum independent set.
     :param score_thresholds: Thresholds to use for calculating the hits and similarity.
+    :param max_rollout: Maximum rollout number to include in the analysis.
     """
     # Load data
     data = pd.read_csv(data_path)
 
     print(f"Number of molecules = {len(data):,}")
+
+    # Filter by rollout
+    if max_rollout is not None:
+        data = data[data["rollout"] <= max_rollout]
+        print(f"Number of molecules after filtering by rollout = {len(data):,}")
 
     # For each threshold, calculate the percent of hits and similarity among the hits
     results = []
