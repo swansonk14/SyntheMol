@@ -5,6 +5,8 @@ import pandas as pd
 from rdkit import Chem
 from rdkit.Chem.PandasTools import WriteSDF
 
+from synthemol.constants import SMILES_COL
+
 
 def map_generated_molecules_to_real_ids(
         data_path: Path,
@@ -37,7 +39,7 @@ def map_generated_molecules_to_real_ids(
     ]
 
     # Compute mols
-    mols = [Chem.MolFromSmiles(smiles) for smiles in data['smiles']]
+    mols = [Chem.MolFromSmiles(smiles) for smiles in data[SMILES_COL]]
 
     # Create save directory
     save_dir.mkdir(parents=True, exist_ok=True)
@@ -47,7 +49,7 @@ def map_generated_molecules_to_real_ids(
         # Create new DataFrame with molecules and REAL IDs
         real_data = pd.DataFrame(data={
             'real_id': [f'{prefix}_{real_id}' for real_id in real_ids],
-            'smiles': data['smiles'],
+            SMILES_COL: data[SMILES_COL],
             'mol': mols
         })
 

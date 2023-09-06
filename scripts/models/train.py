@@ -154,7 +154,7 @@ def train(
 
         # Save test predictions
         test_df = pd.DataFrame({
-            'smiles': test_data[smiles_column],
+            SMILES_COL: test_data[smiles_column],
             property_column: test_data[property_column],
             'prediction': test_preds
         })

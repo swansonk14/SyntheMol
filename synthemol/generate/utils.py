@@ -10,7 +10,13 @@ from chemfunc import compute_fingerprint
 from rdkit import Chem
 from rdkit.Chem.QED import qed
 
-from synthemol.constants import FINGERPRINT_TYPES, MODEL_TYPES
+from synthemol.constants import (
+    FINGERPRINT_TYPES,
+    MODEL_TYPES,
+    ROLLOUT_COL,
+    SCORE_COL,
+    SMILES_COL
+)
 from synthemol.generate.node import Node
 from synthemol.models import (
     chemprop_load,
@@ -144,7 +150,7 @@ def save_generated_molecules(
         construction_dicts.append(construction_dict)
 
     # Specify column order for CSV file
-    columns = ['smiles', 'node_id', 'num_expansions', 'rollout_num', 'score', 'Q_value', 'num_reactions']
+    columns = [SMILES_COL, 'node_id', 'num_expansions', ROLLOUT_COL, SCORE_COL, 'Q_value', 'num_reactions']
 
     for reaction_num in range(1, max_reaction_num + 1):
         columns.append(f'reaction_{reaction_num}_id')
@@ -158,11 +164,11 @@ def save_generated_molecules(
     data = pd.DataFrame(
         data=[
             {
-                'smiles': '.'.join(node.molecules),
+                SMILES_COL: '.'.join(node.molecules),
                 'node_id': node.node_id,
                 'num_expansions': node.N,
-                'rollout_num': node.rollout_num,
-                'score': node.P,
+                ROLLOUT_COL: node.rollout_num,
+                SCORE_COL: node.P,
                 'Q_value': node.Q(),
                 **construction_dict
             }

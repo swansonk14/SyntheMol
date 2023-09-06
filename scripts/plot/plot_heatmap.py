@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from tqdm import trange
 
-from synthemol.constants import REAL_BUILDING_BLOCK_ID_COL, SCORE_COL
+from synthemol.constants import REAL_BUILDING_BLOCK_ID_COL, ROLLOUT_COL, SCORE_COL
 
 
 def plot_heatmap(
@@ -39,7 +39,7 @@ def plot_heatmap(
 
     # Map rollout to row indices
     rollout_to_row_index = defaultdict(list)
-    for row_index, rollout in enumerate(data['rollout_num']):
+    for row_index, rollout in enumerate(data[ROLLOUT_COL]):
         rollout_to_row_index[rollout].append(row_index)
 
     # Build heatmap with rollouts as columns and nodes as rows
@@ -48,7 +48,7 @@ def plot_heatmap(
         for column in data.columns
         if column.startswith('building_block_') and column.endswith('_id') and int(column.split('_')[2]) <= num_reactions
     )
-    max_rollout = max(data['rollout_num'])
+    max_rollout = max(data[ROLLOUT_COL])
 
     row_size = 100
     heatmap = np.zeros((row_size * (len(building_block_id_columns) + 1), len(data)))
@@ -67,7 +67,7 @@ def plot_heatmap(
                 )
 
             # Get full molecule score
-            heatmap[-row_size:, molecule_index] = data.loc[row_index, 'score']
+            heatmap[-row_size:, molecule_index] = data.loc[row_index, SCORE_COL]
             molecule_index += 1
 
     heatmap = heatmap[:, :molecule_index]

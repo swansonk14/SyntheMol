@@ -79,7 +79,7 @@ def analyze_score_vs_similarity(
 
     # Filter by rollout
     if max_rollout is not None:
-        data = data[data["rollout"] <= max_rollout]
+        data = data[data["rollout_num"] <= max_rollout]
         print(f"Number of molecules after filtering by rollout = {len(data):,}")
 
     # For each threshold, calculate the percent of hits and similarity among the hits

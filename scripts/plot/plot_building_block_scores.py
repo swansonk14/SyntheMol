@@ -40,7 +40,7 @@ def plot_building_block_scores(
     plt.savefig(save_dir / 'building_block_scores.pdf', bbox_inches='tight')
 
     # Save data
-    fig_data = pd.DataFrame({'score': scores})
+    fig_data = pd.DataFrame({SCORE_COL: scores})
     fig_data.to_csv(save_dir / 'building_block_scores.csv', index=False)
 
 

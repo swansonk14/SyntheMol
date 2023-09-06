@@ -17,6 +17,7 @@ REAL_SMILES_COL = 'smiles'
 SMILES_COL = 'smiles'
 ACTIVITY_COL = 'activity'
 SCORE_COL = 'score'
+ROLLOUT_COL = 'rollout_num'
 MODEL_TYPE = Literal['random_forest', 'mlp', 'chemprop']
 FINGERPRINT_TYPES = Literal['morgan', 'rdkit']
 MOLECULE_TYPE = str | Mol  # Either a SMILES string or an RDKit Mol object

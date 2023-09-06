@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from synthemol.constants import ROLLOUT_COL, SCORE_COL
+
 
 def plot_mcts_over_time(
         data_path: Path,
@@ -29,16 +31,16 @@ def plot_mcts_over_time(
 
     # Optionally threshold by score
     if min_score is not None:
-        data = data[data['score'] >= min_score]
+        data = data[data[SCORE_COL] >= min_score]
 
     # Bin rollouts
-    num_rollouts = data['rollout_num'].max()
+    num_rollouts = data[ROLLOUT_COL].max()
     rollout_bins, rollout_bin_scores = [], []
 
     for rollout_num in range(0, num_rollouts, increment):
-        rollout_data = data[(data['rollout_num'] > rollout_num) & (data['rollout_num'] <= rollout_num + increment)]
+        rollout_data = data[(data[ROLLOUT_COL] > rollout_num) & (data[ROLLOUT_COL] <= rollout_num + increment)]
         rollout_bins.append((rollout_num, rollout_num + increment))
-        rollout_bin_scores.append(rollout_data['score'])
+        rollout_bin_scores.append(rollout_data[SCORE_COL])
 
     rollout_bin_labels = [
         f'{rollout_bin_start + 1:,} - {rollout_bin_end:,}' for
