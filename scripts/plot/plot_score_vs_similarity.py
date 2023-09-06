@@ -9,16 +9,18 @@ import pandas as pd
 def plot_score_vs_similarity(
     data_dir: Path,
     save_dir: Path,
+    data_name: str = "score_vs_similarity.csv",
 ) -> None:
     """Plot score vs similarity for generated molecules.
 
     :param data_dir: Path to a directory containing directories with CSV files containing score vs similarity data.
     :param save_dir: Path to a directory where the plots will be saved.
+    :param data_name: Name of the CSV file containing score vs similarity data.
     """
     # Load results
-    mcts_paths = list(data_dir.glob("mcts_*/score_vs_similarity.csv"))
-    rl_rdkit_paths = list(data_dir.glob("rl_rdkit_*/score_vs_similarity.csv"))
-    rl_chemprop_paths = list(data_dir.glob("rl_chemprop_*/score_vs_similarity.csv"))
+    mcts_paths = list(data_dir.glob(f"mcts_*/{data_name}"))
+    rl_rdkit_paths = list(data_dir.glob(f"rl_rdkit_*/{data_name}"))
+    rl_chemprop_paths = list(data_dir.glob(f"rl_chemprop_*/{data_name}"))
 
     # Get score thresholds
     data = pd.read_csv(mcts_paths[0])
