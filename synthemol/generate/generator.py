@@ -507,7 +507,7 @@ class Generator:
         # Get all the Nodes representing fully constructed molecules
         nodes = [
             node
-            for _, node in self.node_map.items()
+            for node in self.node_map
             if node.num_molecules == 1 and node.num_reactions > 0
         ]
 
@@ -563,6 +563,12 @@ class Generator:
             start_time = time.time()
             rollout_stats['Rollout Similarity'] = self.update_similarity()
             rollout_stats['Similarity Time'] = time.time() - start_time
+
+            # Determine number of unique full molecules found
+            rollout_stats['Unique Molecules'] = sum(
+                node.num_molecules == 1 and node.num_reactions > 0
+                for node in self.node_map
+            )
 
             # Train and evaluate RL model
             if self.rl_model is not None and rollout_num % self.rl_train_frequency == 0:
