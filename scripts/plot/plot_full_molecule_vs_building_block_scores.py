@@ -93,13 +93,13 @@ def plot_full_molecule_vs_building_block_scores(
             plt.xlabel(f'Average Building Block Score (#BB = {num_building_blocks_to_average})')
             plt.ylabel(f'Full Molecule Score (#BB = {num_building_blocks_in_full_molecule})')
             plt.title(title)
-            plt.text(0.98, 0.98, f'$PearsonR = {pearson_r:.3f}$\nSpearmanR$ = {spearman_r:.3f}$',
+            plt.text(0.98, 0.10, f'PearsonR$ = {pearson_r:.3f}$\nSpearmanR$ = {spearman_r:.3f}$',
                      horizontalalignment='right', verticalalignment='top',
                      transform=plt.gca().transAxes)
 
             # Save plot
             save_path = save_dir / (f'score_correlation_{num_building_blocks_in_full_molecule}_bb_full_molecule_'
-                                    f'vs_{num_building_blocks_to_average}_bbs_.pdf')
+                                    f'vs_{num_building_blocks_to_average}_bbs.pdf')
             plt.savefig(save_path, bbox_inches='tight')
 
             # Save data
