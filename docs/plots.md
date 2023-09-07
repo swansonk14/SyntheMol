@@ -367,7 +367,7 @@ python predict_model.py \
 
 Then, plot the building block vs full molecule scores. (Note: Only 24,276 out of 25,000 molecules have all required building block SMILES.)
 ```bash
-python scripts/plot/plot_building_block_vs_molecule_scores.py \
+python scripts/plot/plot_full_molecule_vs_building_block_scores.py \
     --data_path data/Data/4_real_space/random_real.csv \
     --building_blocks_path data/Models/random_forest/building_block_scores.csv \
     --building_blocks_score_column random_forest_rdkit_ensemble_preds \
@@ -376,7 +376,7 @@ python scripts/plot/plot_building_block_vs_molecule_scores.py \
 ```
 
 ```bash
-python scripts/plot/plot_building_block_vs_molecule_scores.py \
+python scripts/plot/plot_full_molecule_vs_building_block_scores.py \
     --data_path data/Data/4_real_space/random_real.csv \
     --building_blocks_path data/Models/chemprop/building_block_scores.csv \
     --building_blocks_score_column chemprop_ensemble_preds \
@@ -385,7 +385,7 @@ python scripts/plot/plot_building_block_vs_molecule_scores.py \
 ```
 
 ```bash
-python plots/plot_building_block_vs_molecule_scores.py \
+python scripts/plots/plot_full_molecule_vs_building_block_scores.py \
     --data_path data/Data/4_real_space/random_real.csv \
     --building_blocks_path data/Models/chemprop_rdkit/building_block_scores.csv \
     --building_blocks_score_column chemprop_rdkit_ensemble_preds \
