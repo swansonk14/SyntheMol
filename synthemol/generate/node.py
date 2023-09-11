@@ -76,6 +76,11 @@ class Node:
         """Gets the number of reactions used so far to generate the molecule in the Node."""
         return self.construction_log.num_reactions
 
+    @property
+    def num_building_blocks(self) -> int:
+        """Gets the number of building blocks used to generate the molecule in the Node."""
+        return self.construction_log.num_building_blocks
+
     def __hash__(self) -> int:
         """Hashes the Node based on the building blocks."""
         return hash(self.molecules)

@@ -333,11 +333,11 @@ class Generator:
 
         return mcts_score
 
-    def rollout(self, node: Node) -> float:
+    def rollout(self, node: Node) -> Node:
         """Performs a generation rollout.
 
-        :param node: A Node representing the root of the generation.
-        :return: The value (reward) of the rollout.
+        :param node: A Node representing the current state of the rollout.
+        :return: A Node containing a molecule with the maximum reward on the rollout.
         """
         if self.verbose:
             print(f'Node {node.node_id} (rollout {self.rollout_num})')
@@ -350,7 +350,7 @@ class Generator:
 
         # Stop the search if we've reached the maximum number of reactions
         if node.num_reactions >= self.max_reactions:
-            return node.P
+            return node
 
         # If this node has already been visited and the children have been stored, get its children from the dictionary
         if node in self.node_to_children:
@@ -378,10 +378,10 @@ class Generator:
             if self.store_nodes:
                 self.node_to_children[node] = child_nodes
 
-        # If no new nodes were generated, return the current node's value as the reward
+        # If no new nodes were generated, return the current node
         if len(child_nodes) == 0:
             if node.num_molecules == 1:
-                return node.P
+                return node
             else:
                 raise ValueError('Failed to expand a partially expanded node.')
 
@@ -427,27 +427,24 @@ class Generator:
             self.node_map[selected_node] = selected_node
 
         # Unroll the selected node
-        reward = self.rollout(node=selected_node)
+        best_node = self.rollout(node=selected_node)
 
-        # Get max whole molecule (non-building block) score across rollouts as the reward
+        # Get full molecule (non-building block) with max score across rollouts
         if selected_node.num_molecules == 1 and node.num_reactions > 0:
-            reward = max(reward, selected_node.P)
+            best_node = max(best_node, selected_node, key=lambda n: n.P)
 
         # Update exploit score and visit count
-        selected_node.W += reward
+        selected_node.W += best_node.P
         selected_node.N += 1
 
-        # Add RL training examples if the selected node is a full molecule
-        if self.rl_model is not None and selected_node.num_molecules == 1:
-            # Add a training example for each set of reactants forming the full molecule
-            for num_reactants in range(1, node.num_molecules + 1):
-                # Add the training example
-                self.rl_model.buffer(
-                    molecule_tuple=tuple(node.molecules[:num_reactants]),
-                    reward=reward
-                )
+        # Add RL training example
+        if self.rl_model is not None:
+            self.rl_model.buffer(
+                source_node=selected_node,
+                target_node=best_node
+            )
 
-        return reward
+        return best_node
 
     def update_similarity(self) -> float:
         """Computes the Tanimoto similarity of the current generation and updates for future comparisons.
@@ -563,7 +560,8 @@ class Generator:
 
             # Run rollout
             start_time = time.time()
-            rollout_stats['Rollout Score'] = self.rollout(node=self.root)
+            best_node = self.rollout(node=self.root)
+            rollout_stats['Rollout Score'] = best_node.P
             rollout_stats['Rollout Time'] = time.time() - start_time
 
             # Compute similarity of new molecules compared to previous molecules
