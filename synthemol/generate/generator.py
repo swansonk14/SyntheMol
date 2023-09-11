@@ -14,6 +14,7 @@ from sklearn.metrics import pairwise_distances
 from tqdm import trange
 
 from synthemol.constants import OPTIMIZATION_TYPES
+from synthemol.generate.logs import ConstructionLog, ReactionLog
 from synthemol.generate.node import Node
 from synthemol.models import RLModel
 from synthemol.reactions import Reaction
@@ -240,13 +241,13 @@ class Generator:
             product_set |= set(products)
 
             # Create reaction log
-            reaction_log = {
-                'reaction_id': reaction.id,
-                'building_block_ids': tuple(
+            reaction_log = ReactionLog(
+                reaction_id=reaction.id,
+                reactant_ids=tuple(
                     self.building_block_smiles_to_id.get(molecule, -1)
                     for molecule in molecules
-                ),
-            }
+                )
+            )
 
             product_nodes += [
                 Node(
@@ -254,7 +255,7 @@ class Generator:
                     scoring_fn=self.scoring_fn,
                     molecules=(product,),
                     unique_building_block_ids=node.unique_building_block_ids,
-                    construction_log=node.construction_log + (reaction_log,),
+                    construction_log=ConstructionLog(node.construction_log.reaction_logs + (reaction_log,)),
                     rollout_num=self.rollout_num
                 )
                 for product in products
@@ -377,7 +378,7 @@ class Generator:
             if self.store_nodes:
                 self.node_to_children[node] = child_nodes
 
-        # If no new nodes were generated, return the current node's value
+        # If no new nodes were generated, return the current node's value as the reward
         if len(child_nodes) == 0:
             if node.num_molecules == 1:
                 return node.P
@@ -426,21 +427,27 @@ class Generator:
             self.node_map[selected_node] = selected_node
 
         # Unroll the selected node
-        v = self.rollout(node=selected_node)
+        reward = self.rollout(node=selected_node)
 
-        # Get max whole molecule (non-building block) score across rollouts as feedback
+        # Get max whole molecule (non-building block) score across rollouts as the reward
         if selected_node.num_molecules == 1 and node.num_reactions > 0:
-            v = max(v, selected_node.P)
+            reward = max(reward, selected_node.P)
 
         # Update exploit score and visit count
-        selected_node.W += v
+        selected_node.W += reward
         selected_node.N += 1
 
-        # Save example to RL buffer
-        if self.rl_model is not None and node.num_molecules > 0:
-            self.rl_model.buffer(molecules=node.molecules, reward=v)
+        # Add RL training examples if the selected node is a full molecule
+        if self.rl_model is not None and selected_node.num_molecules == 1:
+            # Add a training example for each set of reactants forming the full molecule
+            for num_reactants in range(1, node.num_molecules + 1):
+                # Add the training example
+                self.rl_model.buffer(
+                    molecule_tuple=tuple(node.molecules[:num_reactants]),
+                    reward=reward
+                )
 
-        return v
+        return reward
 
     def update_similarity(self) -> float:
         """Computes the Tanimoto similarity of the current generation and updates for future comparisons.
@@ -575,17 +582,27 @@ class Generator:
                 # Reset RL scores since RL model is being updated
                 self.molecules_to_rl_score = {}
 
+                # Evaluate model on test set
+                if self.wandb_log:
+                    start_time = time.time()
+                    rollout_stats |= self.rl_model.evaluate(split='test')
+                    rollout_stats['RL Test Eval Time'] = time.time() - start_time
+
+                # Move test set to train
+                self.rl_model.test_to_train()
+
                 # Train model
                 start_time = time.time()
                 self.rl_model.train()
                 rollout_stats['RL Train Time'] = time.time() - start_time
-                rollout_stats['RL Train Examples'] = self.rl_model.buffer_size
+                rollout_stats['RL Train Examples'] = self.rl_model.train_size
+                rollout_stats['RL Test Examples'] = self.rl_model.test_size
 
-                # Evaluate model
+                # Evaluate model on train set
                 if self.wandb_log:
                     start_time = time.time()
-                    rollout_stats |= self.rl_model.evaluate()
-                    rollout_stats['RL Eval Time'] = time.time() - start_time
+                    rollout_stats |= self.rl_model.evaluate(split='train')
+                    rollout_stats['RL Train Eval Time'] = time.time() - start_time
 
             # Log rollout stats
             if self.wandb_log:

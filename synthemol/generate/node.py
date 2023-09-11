@@ -3,6 +3,8 @@ import math
 from functools import cached_property
 from typing import Any, Callable
 
+from synthemol.generate.logs import ConstructionLog
+
 
 class Node:
     """A Node represents a step in the combinatorial molecule construction process."""
@@ -14,7 +16,7 @@ class Node:
             node_id: int | None = None,
             molecules: tuple[str] | None = None,
             unique_building_block_ids: set[int] | None = None,
-            construction_log: tuple[dict[str, Any]] | None = None,
+            construction_log: ConstructionLog = None,
             rollout_num: int | None = None
     ) -> None:
         """Initializes the Node.
@@ -25,7 +27,7 @@ class Node:
         :param molecules: A tuple of SMILES. The first element is the currently constructed molecule
                           while the remaining elements are the building blocks that are about to be added.
         :param unique_building_block_ids: A set of building block IDS used in this Node.
-        :param construction_log: A tuple of dictionaries containing information about each reaction
+        :param construction_log: A ConstructionLog containing information about each reaction
                                  used to construct the molecules in this Node.
         :param rollout_num: The number of the rollout on which this Node was created.
         """
@@ -34,7 +36,7 @@ class Node:
         self.node_id = node_id
         self.molecules = molecules if molecules is not None else tuple()
         self.unique_building_block_ids = unique_building_block_ids if unique_building_block_ids is not None else set()
-        self.construction_log = construction_log if construction_log is not None else tuple()
+        self.construction_log = construction_log if construction_log is not None else ConstructionLog()
         self.W = 0.0  # The sum of the leaf Node values for leaf Nodes that descend from this Node.
         self.N = 0  # The number of times this Node has been expanded.
         self.rollout_num = rollout_num
@@ -72,7 +74,7 @@ class Node:
     @property
     def num_reactions(self) -> int:
         """Gets the number of reactions used so far to generate the molecule in the Node."""
-        return len(self.construction_log)
+        return self.construction_log.num_reactions
 
     def __hash__(self) -> int:
         """Hashes the Node based on the building blocks."""

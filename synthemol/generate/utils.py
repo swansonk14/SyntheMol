@@ -135,17 +135,17 @@ def save_generated_molecules(
 
         for reaction_index, reaction_log in enumerate(node.construction_log):
             reaction_num = reaction_index + 1
-            construction_dict[f'reaction_{reaction_num}_id'] = reaction_log['reaction_id']
+            construction_dict[f'reaction_{reaction_num}_id'] = reaction_log.reaction_id
 
             reaction_num_to_max_reactant_num[reaction_num] = max(
                 reaction_num_to_max_reactant_num.get(reaction_num, 0),
-                len(reaction_log['building_block_ids'])
+                len(reaction_log.reactant_ids)
             )
 
-            for reactant_index, building_block_id in enumerate(reaction_log['building_block_ids']):
+            for reactant_index, reactant_id in enumerate(reaction_log.reactant_ids):
                 reactant_num = reactant_index + 1
-                construction_dict[f'building_block_{reaction_num}_{reactant_num}_id'] = building_block_id
-                construction_dict[f'building_block_{reaction_num}_{reactant_num}_smiles'] = building_block_id_to_smiles.get(building_block_id, '')
+                construction_dict[f'building_block_{reaction_num}_{reactant_num}_id'] = reactant_id
+                construction_dict[f'building_block_{reaction_num}_{reactant_num}_smiles'] = building_block_id_to_smiles.get(reactant_id, '')
 
         construction_dicts.append(construction_dict)
 

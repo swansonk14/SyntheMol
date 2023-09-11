@@ -1,11 +1,13 @@
 """Contains reinforcement learning models for use in generating molecules."""
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Literal
 
 import torch
 import torch.nn as nn
 from chemfunc.molecular_fingerprints import compute_fingerprints
 from chemprop.features import BatchMolGraph, MolGraph
+from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import mean_squared_error, r2_score
 from tqdm import tqdm, trange
 
@@ -104,31 +106,40 @@ class RLModel(ABC):
         self.learning_rate = learning_rate
         self.device = device
 
-        self.molecule_tuples: list[tuple[str]] = []
-        self.rewards: list[float] = []
+        self.train_molecule_tuples: list[tuple[str]] = []
+        self.train_rewards: list[float] = []
+        self.test_molecule_tuples: list[tuple[str]] = []
+        self.test_rewards: list[float] = []
 
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
         self.loss_fn = nn.BCEWithLogitsLoss()  # TODO: have option for regression
 
-    def buffer(self, molecules: tuple[str], reward: float) -> None:
-        """Adds a training example to the buffer.
+    def buffer(self, molecule_tuple: tuple[str], reward: float) -> None:
+        """Adds a new molecule/reward pair to the buffer (test set).
 
-        :param molecules: A tuple of SMILES strings representing one or more molecules.
-        :param reward: The reward of those molecules (i.e., the score of the final molecule constructed
+        :param molecule_tuple: A tuple of SMILES strings representing one or more molecules.
+        :param reward: The reward of those molecules (i.e., the score of the best molecule constructed
                        from these molecules and potentially others).
         """
-        self.molecule_tuples.append(molecules)
-        self.rewards.append(reward)
+        self.test_molecule_tuples.append(molecule_tuple)
+        self.test_rewards.append(reward)
+
+    def test_to_train(self) -> None:
+        """Moves the test set of new molecule/reward pairs to the training set."""
+        self.train_molecule_tuples += self.test_molecule_tuples
+        self.train_rewards += self.test_rewards
+        self.test_molecule_tuples = []
+        self.test_rewards = []
 
     def train(self) -> None:
-        """Trains the model on the examples in the buffer."""
+        """Trains the model on the examples in the training set."""
         # Set model to train mode
         self.model.train()
 
         # Get dataloader
         dataloader = self.get_dataloader(
-            molecule_tuples=self.molecule_tuples,
-            rewards=self.rewards,
+            molecule_tuples=self.train_molecule_tuples,
+            rewards=self.train_rewards,
             shuffle=True
         )
 
@@ -147,27 +158,43 @@ class RLModel(ABC):
                 loss.backward()
                 self.optimizer.step()
 
-    def evaluate(self) -> dict[str, float]:
-        """Evaluates the model on the examples in the buffer.
+    def evaluate(self, split: Literal['train', 'test']) -> dict[str, float]:
+        """Evaluates the model on the train or test set.
 
+        :param split: Whether to evaluate on train molecules or test molecules.
         :return: A dictionary of metrics.
         """
-        # Make predictions on all examples in the buffer
-        predictions = self.predict(self.molecule_tuples)
+        # Select split
+        if split == 'train':
+            molecule_tuples = self.train_molecule_tuples
+            rewards = self.train_rewards
+        elif split == 'test':
+            molecule_tuples = self.test_molecule_tuples
+            rewards = self.test_rewards
+        else:
+            raise ValueError(f'Split type {split} is not supported.')
+
+        # Make predictions
+        predictions = self.predict(molecule_tuples)
 
         # Convert to tensor
         predictions = torch.tensor(predictions)
-        rewards = torch.tensor(self.rewards)
+        rewards = torch.tensor(rewards)
 
         # Convert to numpy
         predictions_numpy = predictions.numpy()
         rewards_numpy = rewards.numpy()
 
+        # TODO: stratify statistics by number of building blocks
+
         # Evaluate predictions
+        split_name = split.title()
         results = {
-            'RL Loss': self.loss_fn(predictions, rewards).item(),
-            'RL Mean Squared Error': mean_squared_error(rewards_numpy, predictions_numpy),
-            'RL R^2': r2_score(rewards_numpy, predictions_numpy),
+            f'RL {split_name} Loss': self.loss_fn(predictions, rewards).item(),
+            f'RL {split_name} Mean Squared Error': mean_squared_error(rewards_numpy, predictions_numpy),
+            f'RL {split_name} R^2': r2_score(rewards_numpy, predictions_numpy),
+            f'RL {split_name} PearsonR': pearsonr(predictions_numpy, rewards_numpy)[0],
+            f'RL {split_name} SpearmanR': spearmanr(predictions_numpy, rewards_numpy)[0],
         }
 
         return results
@@ -216,9 +243,14 @@ class RLModel(ABC):
         return torch.load(path)
 
     @property
-    def buffer_size(self) -> int:
-        """Returns the number of examples in the buffer."""
-        return len(self.molecule_tuples)
+    def train_size(self) -> int:
+        """Returns the number of examples in the training set."""
+        return len(self.train_molecule_tuples)
+
+    @property
+    def test_size(self) -> int:
+        """Returns the number of examples in the test set (buffer)."""
+        return len(self.test_molecule_tuples)
 
     @property
     @abstractmethod
