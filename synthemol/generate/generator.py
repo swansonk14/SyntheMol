@@ -585,6 +585,7 @@ class Generator:
                     start_time = time.time()
                     rollout_stats |= self.rl_model.evaluate(split='test')
                     rollout_stats['RL Test Eval Time'] = time.time() - start_time
+                    rollout_stats['RL Test Examples'] = self.rl_model.test_size
 
                 # Move test set to train
                 self.rl_model.test_to_train()
@@ -593,14 +594,13 @@ class Generator:
                 start_time = time.time()
                 self.rl_model.train()
                 rollout_stats['RL Train Time'] = time.time() - start_time
-                rollout_stats['RL Train Examples'] = self.rl_model.train_size
-                rollout_stats['RL Test Examples'] = self.rl_model.test_size
 
                 # Evaluate model on train set
                 if self.wandb_log:
                     start_time = time.time()
                     rollout_stats |= self.rl_model.evaluate(split='train')
                     rollout_stats['RL Train Eval Time'] = time.time() - start_time
+                    rollout_stats['RL Train Examples'] = self.rl_model.train_size
 
             # Log rollout stats
             if self.wandb_log:

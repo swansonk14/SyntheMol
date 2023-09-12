@@ -187,50 +187,81 @@ class RLModel(ABC):
         predictions = np.array(predictions)
         rewards = np.array(rewards)
 
-        # TODO: stratify statistics by number of building blocks
-
         # Determine source/target number of building blocks
         source_num_building_blocks = np.array([node.num_building_blocks for node in source_nodes])
         target_num_building_blocks = np.array([node.num_building_blocks for node in target_nodes])
+
+        # Determine source/target number of reactions
+        source_num_reactions = np.array([node.num_reactions for node in source_nodes])
+        target_num_reactions = np.array([node.num_reactions for node in target_nodes])
 
         # Get unique source/target number of building blocks (including None option for all)
         unique_source_num_building_blocks = [None] + sorted(set(source_num_building_blocks))
         unique_target_num_building_blocks = [None] + sorted(set(target_num_building_blocks))
 
+        # Get unique source/target number of reactions (including None option for all)
+        unique_source_num_reactions = [None] + sorted(set(source_num_reactions))
+        unique_target_num_reactions = [None] + sorted(set(target_num_reactions))
+
         # Set up results dictionary
         results = {}
         split_name = split.title()
 
-        # Get statistics for each unique source/target number of building blocks
+        # Get statistics for each unique source/target number of building blocks and reactions
         for source_num_bb in unique_source_num_building_blocks:
             for target_num_bb in unique_target_num_building_blocks:
-                # Get mask for source/target number of building blocks
-                bb_string = ''
-                mask = np.ones(len(source_num_building_blocks), dtype=bool)
+                for source_num_react in unique_source_num_reactions:
+                    for target_num_react in unique_target_num_reactions:
+                        # Get mask for source/target number of building blocks and reactions
+                        mask = np.ones(len(source_num_building_blocks), dtype=bool)
+                        bb_string = ''
+                        react_string = ''
 
-                if source_num_bb is not None:
-                    bb_string += f' {source_num_bb} source BBs'
-                    mask &= source_num_building_blocks == source_num_bb
+                        if source_num_bb is not None:
+                            bb_string += f' {source_num_bb} Source BBs'
+                            mask &= source_num_building_blocks == source_num_bb
 
-                if target_num_bb is not None:
-                    bb_string += f' {target_num_bb} target BBs'
-                    mask &= target_num_building_blocks == target_num_bb
+                        if target_num_bb is not None:
+                            bb_string += f' {target_num_bb} Target BBs'
+                            mask &= target_num_building_blocks == target_num_bb
 
-                # Get predictions and rewards for source/target number of building blocks
-                predictions_masked = predictions[mask]
-                rewards_masked = rewards[mask]
+                        if source_num_react is not None:
+                            react_string += f' {source_num_react} Source Reactions'
+                            mask &= source_num_reactions == source_num_react
 
-                # Evaluate predictions
-                results |= {
-                    f'RL {split_name}{bb_string} Loss': self.loss_fn(
-                        torch.from_numpy(predictions_masked),
-                        torch.from_numpy(rewards_masked)
-                    ).item(),
-                    f'RL {split_name}{bb_string} Mean Squared Error': mean_squared_error(rewards_masked, predictions_masked),
-                    f'RL {split_name}{bb_string} R^2': r2_score(rewards_masked, predictions_masked),
-                    f'RL {split_name}{bb_string} PearsonR': pearsonr(predictions_masked, rewards_masked)[0],
-                    f'RL {split_name}{bb_string} SpearmanR': spearmanr(predictions_masked, rewards_masked)[0],
-                }
+                        if target_num_react is not None:
+                            react_string += f' {target_num_react} Target Reactions'
+                            mask &= target_num_reactions == target_num_react
+
+                        # Skip if no examples
+                        if not np.any(mask):
+                            continue
+
+                        # Get predictions and rewards for source/target number of building blocks
+                        predictions_masked = predictions[mask]
+                        rewards_masked = rewards[mask]
+
+                        # Create description of this subset
+                        description = f'{split_name}{bb_string}{react_string}'
+
+                        # Evaluate predictions
+                        results |= {
+                            f'RL {description} Loss': self.loss_fn(
+                                torch.from_numpy(predictions_masked),
+                                torch.from_numpy(rewards_masked)
+                            ).item(),
+                            f'RL {description} Mean Squared Error': mean_squared_error(
+                                rewards_masked,
+                                predictions_masked
+                            )
+                        }
+
+                        if len(np.unique(predictions_masked)) > 2 & len(np.unique(rewards_masked)) > 2:
+                            results |= {
+                                f'RL {description} R^2': r2_score(rewards_masked, predictions_masked),
+                                f'RL {description} PearsonR': pearsonr(predictions_masked, rewards_masked)[0],
+                                f'RL {description} SpearmanR': spearmanr(predictions_masked, rewards_masked)[0],
+                            }
 
         return results
 
