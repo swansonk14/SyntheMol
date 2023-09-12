@@ -256,7 +256,7 @@ class RLModel(ABC):
                             )
                         }
 
-                        if len(np.unique(predictions_masked)) > 2 & len(np.unique(rewards_masked)) > 2:
+                        if (len(np.unique(predictions_masked)) > 2) & (len(np.unique(rewards_masked)) > 2):
                             results |= {
                                 f'RL {description} R^2': r2_score(rewards_masked, predictions_masked),
                                 f'RL {description} PearsonR': pearsonr(predictions_masked, rewards_masked)[0],
