@@ -246,7 +246,7 @@ class RLModel(ABC):
 
                         # Evaluate predictions
                         results |= {
-                            f'RL {description} Loss': self.loss_fn(
+                            f'RL {description} Loss': nn.functional.binary_cross_entropy(
                                 torch.from_numpy(predictions_masked),
                                 torch.from_numpy(rewards_masked)
                             ).item(),
