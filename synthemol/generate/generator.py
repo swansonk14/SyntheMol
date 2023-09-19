@@ -36,7 +36,7 @@ class Generator:
             explore_weight: float,
             num_expand_nodes: int | None,
             rl_temperature: float,
-            rl_temperature_max_similarity: float | None,
+            rl_temperature_similarity_target: float | None,
             rl_train_frequency: int,
             optimization: OPTIMIZATION_TYPES,
             reactions: tuple[Reaction],
@@ -58,11 +58,11 @@ class Generator:
         :param num_expand_nodes: The number of tree nodes to expand when extending the child nodes in the search tree.
                                   If None, then all nodes are expanded.
         :param rl_temperature: The temperature parameter for the softmax function used to select building blocks.
-                               Higher temperature means more exploration. If rl_temperature_max_similarity is provided,
+                               Higher temperature means more exploration. If rl_temperature_similarity_target is provided,
                                the temperature is adjusted based on generated molecule diversity.
-        :param rl_temperature_max_similarity: If provided, adjusts the temperature to obtain the maximally scoring molecules
-                                              that are at most this similar to previously generated molecules. Starts with
-                                              the temperature provided by rl_temperature.
+        :param rl_temperature_similarity_target: If provided, adjusts the temperature to obtain the maximally scoring molecules
+                                                 that are at most this similar to previously generated molecules. Starts with
+                                                 the temperature provided by rl_temperature.
         :param rl_train_frequency: The number of rollouts between each training step of the RL model.
         :param optimization: Whether to maximize or minimize the score.
         :param reactions: A tuple of reactions that combine molecular building blocks.
@@ -84,7 +84,7 @@ class Generator:
         self.explore_weight = explore_weight
         self.num_expand_nodes = num_expand_nodes
         self.rl_temperature = rl_temperature
-        self.rl_temperature_max_similarity = rl_temperature_max_similarity
+        self.rl_temperature_similarity_target = rl_temperature_similarity_target
         self.rl_train_frequency = rl_train_frequency
         self.optimization = optimization
         self.reactions = reactions
@@ -148,13 +148,14 @@ class Generator:
         self.molecules_to_rl_score = {}
 
         # Set up rolling average similarity for temperature adjustment
-        if self.rl_temperature_max_similarity is not None:
-            self.rolling_average_similarity = self.rl_temperature_max_similarity
+        if self.rl_temperature_similarity_target is not None:
+            self.rolling_average_similarity = self.rl_temperature_similarity_target
         else:
             self.rolling_average_similarity = 0.0
 
         self.rolling_average_weight = 0.9
         self.min_temperature = 0.001
+        self.max_temperature = 10.0
 
     def get_next_building_blocks(self, molecules: tuple[str]) -> list[str]:
         """Get the next building blocks that can be added to the given molecules.
@@ -586,22 +587,23 @@ class Generator:
             rollout_stats['Similarity Time'] = time.time() - start_time
 
             # Optionally, update temperature based on similarity of new molecules to previous molecules
-            if self.rl_temperature_max_similarity is not None:
+            if self.rl_temperature_similarity_target is not None:
                 # Update rolling average similarity with weighted combination of new and old similarity
                 self.rolling_average_similarity = self.rolling_average_weight * self.rolling_average_similarity + \
                     (1 - self.rolling_average_weight) * new_similarity
 
                 # Determine percent difference between rolling average similarity and max similarity
                 percent_similarity_difference = (
-                        (self.rolling_average_similarity - self.rl_temperature_max_similarity) /
-                        self.rl_temperature_max_similarity
+                        (self.rolling_average_similarity - self.rl_temperature_similarity_target) /
+                        self.rl_temperature_similarity_target
                 )
 
-                # Adjust temperature based on similarity difference
-                self.rl_temperature = max(
-                    self.min_temperature,
-                    self.rl_temperature * (1 + percent_similarity_difference)
-                )
+                # Update temperature based on similarity difference using rolling average
+                self.rl_temperature = self.rolling_average_weight * self.rl_temperature + \
+                    (1 - self.rolling_average_weight) * self.rl_temperature * (1 + percent_similarity_difference)
+
+                # Clip temperature within min/max bounds
+                self.rl_temperature = max(self.min_temperature, min(self.rl_temperature, self.max_temperature))
 
             # Add RL temperature to rollout stats
             rollout_stats['RL Temperature'] = self.rl_temperature
