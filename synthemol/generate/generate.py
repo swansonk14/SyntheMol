@@ -48,6 +48,7 @@ def generate(
         num_expand_nodes: int | None = None,
         rl_model_type: Literal['rdkit', 'chemprop_pretrained', 'chemprop_scratch'] = 'rdkit',
         rl_temperature: float = 0.1,
+        rl_temperature_max_similarity: float | None = None,
         rl_train_frequency: int = 10,
         rl_train_epochs: int = 5,
         num_workers: int = 0,
@@ -82,7 +83,11 @@ def generate(
     :param num_expand_nodes: The number of child nodes to include when expanding a given node. If None, all child nodes will be included.
     :param rl_model_type: The type of RL model to use. 'rdkit' = MLP RDKIT model. 'chemprop' = pretrained Chemprop model.
     :param rl_temperature: The temperature parameter for the softmax function used to select building blocks.
-                           Higher temperature means more exploration.
+                           Higher temperature means more exploration. If rl_temperature_max_similarity is provided,
+                           the temperature is adjusted based on generated molecule diversity.
+    :param rl_temperature_max_similarity: If provided, adjusts the temperature to obtain the maximally scoring molecules
+                                          that are at most this similar to previously generated molecules. Starts with
+                                          the temperature provided by rl_temperature.
     :param rl_train_frequency: The number of rollouts between each training step of the RL model.
     :param rl_train_epochs: The number of epochs to train the RL model for each training step.
     :param num_workers: The number of workers for RL model data loading.
@@ -173,6 +178,7 @@ def generate(
                 'explore_weight': explore_weight,
                 'num_expand_nodes': num_expand_nodes,
                 'rl_temperature': rl_temperature,
+                'rl_temperature_max_similarity': rl_temperature_max_similarity,
                 'rl_train_frequency': rl_train_frequency,
                 'rl_train_epochs': rl_train_epochs,
                 'optimization': optimization,
@@ -248,6 +254,7 @@ def generate(
         explore_weight=explore_weight,
         num_expand_nodes=num_expand_nodes,
         rl_temperature=rl_temperature,
+        rl_temperature_max_similarity=rl_temperature_max_similarity,
         rl_train_frequency=rl_train_frequency,
         optimization=optimization,
         reactions=reactions,
