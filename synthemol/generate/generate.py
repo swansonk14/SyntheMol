@@ -33,10 +33,11 @@ from synthemol.generate.utils import create_model_scoring_fn, save_generated_mol
 def generate(
         search_type: Literal['mcts', 'rl'],
         save_dir: Path,
-        model_type: MODEL_TYPES,
-        model_path: Path | None = None,
+        model_types: tuple[MODEL_TYPES],
+        model_paths: tuple[Path],
+        fingerprint_types: tuple[FINGERPRINT_TYPES],
+        model_weights: tuple[float] = (1.0,),
         building_blocks_path: Path = BUILDING_BLOCKS_PATH,
-        fingerprint_type: FINGERPRINT_TYPES | None = None,
         reaction_to_building_blocks_path: Path | None = REACTION_TO_BUILDING_BLOCKS_PATH,
         building_blocks_id_column: str = REAL_BUILDING_BLOCK_ID_COL,
         building_blocks_score_column: str = SCORE_COL,
@@ -68,10 +69,13 @@ def generate(
 
     :param search_type: The type of search to perform. 'mcts' = Monte Carlo tree search. 'rl' = Reinforcement learning.
     :param save_dir: Path to directory where the generated molecules will be saved.
-    :param model_type: Type of model to train.
-    :param model_path: Path to a directory of model checkpoints or to a specific PKL or PT file containing a trained model.
+    :param model_types: List of types of models provided by model_paths.
+    :param model_paths: List of paths with each path pointing to a directory of model checkpoints (ensemble)
+                        or to a specific PKL or PT file containing a trained model.
+                        Note: All models must have a single output.
+    :param fingerprint_types: List of types of fingerprints to use as input features for the model_paths.
+    :param model_weights: List of weights for each model/ensemble in model_paths for defining the reward function.
     :param building_blocks_path: Path to CSV file containing molecular building blocks.
-    :param fingerprint_type: Type of fingerprints to use as input features.
     :param reaction_to_building_blocks_path: Path to PKL file containing mapping from REAL reactions to allowed building blocks.
     :param building_blocks_id_column: Name of the column containing IDs for each building block.
     :param building_blocks_score_column: Name of column containing scores for each building block.
@@ -106,6 +110,10 @@ def generate(
     :param wandb_project_name: The name of the Weights & Biases project to log results to.
     :param wandb_run_name: The name of the Weights & Biases run to log results to.
     """
+    # Check lengths of model arguments match
+    if len({len(arg) for arg in [model_types, model_paths, fingerprint_types, model_weights]}) == 1:
+        raise ValueError('model_types, model_paths, fingerprint_types, and model_weights must all have the same length.')
+
     # Create save directory
     save_dir.mkdir(parents=True, exist_ok=True)
 
@@ -154,9 +162,14 @@ def generate(
     if wandb_log:
         # Set up Weights & Biases run name
         if wandb_run_name is None:
-            wandb_run_name = f'{search_type}_{model_type}' + \
-                             (f'_rl_model_{rl_model_type}' if search_type == 'rl' else '') + \
-                             (f'_{fingerprint_type}' if fingerprint_type is not None else '')
+            wandb_run_name = f'{search_type}' + (f'_{rl_model_type}' if search_type == 'rl' else '')
+            for model_type, fingerprint_type, model_weight in zip(
+                    model_types,
+                    fingerprint_types,
+                    model_weights
+            ):
+                wandb_run_name += (f'_{model_weight}_{model_type}' +
+                                   (f'_{fingerprint_type}' if fingerprint_type != 'none' else ''))
 
         # Initialize Weights & Biases logging
         wandb.init(
@@ -164,11 +177,12 @@ def generate(
             name=wandb_run_name,
             config={
                 'search_type': search_type,
-                'model_path': model_path,
-                'model_type': model_type,
                 'save_dir': save_dir,
+                'model_paths': model_paths,
+                'model_types': model_types,
+                'fingerprint_types': fingerprint_types,
+                'model_weights': model_weights,
                 'building_blocks_path': building_blocks_path,
-                'fingerprint_type': fingerprint_type,
                 'reaction_to_building_blocks_path': reaction_to_building_blocks_path,
                 'building_blocks_id_column': building_blocks_id_column,
                 'building_blocks_score_column': building_blocks_score_column,
@@ -221,11 +235,12 @@ def generate(
     # Define model scoring function
     print('Loading models and creating model scoring function...')
     model_scoring_fn = create_model_scoring_fn(
-        model_path=model_path,
-        model_type=model_type,
-        fingerprint_type=fingerprint_type,
-        smiles_to_score=building_block_smiles_to_score,
-        device=device
+        model_paths=model_paths,
+        model_types=model_types,
+        fingerprint_types=fingerprint_types,
+        model_weights=model_weights,
+        device=device,
+        smiles_to_score=building_block_smiles_to_score
     )
 
     # Set up RL model if applicable
@@ -235,7 +250,14 @@ def generate(
         if rl_model_type == 'rdkit':
             rl_model = RLModelRDKit(num_workers=num_workers, num_epochs=rl_train_epochs, device=device)
         elif rl_model_type.startswith('chemprop'):
-            rl_model = RLModelChemprop(model_path=model_path, num_workers=num_workers, device=device)
+            if len(model_paths) > 1 and rl_model_type == 'chemprop_pretrained':
+                raise ValueError('Cannot use pretrained RL Chemprop model with multiple model paths.')
+
+            # TODO: Fix this so that chemprop_scratch works without a pretrained Chemprop model
+            if model_types[0] != 'chemprop':
+                raise ValueError('For RL Chemprop, the first model in model_paths must be a Chemprop model.')
+
+            rl_model = RLModelChemprop(model_path=model_paths[0], num_workers=num_workers, device=device)
 
             if rl_model_type == 'chemprop_scratch':
                 initialize_weights(rl_model.model)
