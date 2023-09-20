@@ -20,7 +20,8 @@ def plot_score_vs_similarity(
     # Load results
     mcts_paths = list(data_dir.glob(f"mcts_*/{data_name}"))
     rl_rdkit_paths = list(data_dir.glob(f"rl_rdkit_*/{data_name}"))
-    rl_chemprop_paths = list(data_dir.glob(f"rl_chemprop_*/{data_name}"))
+    rl_chemprop_pretrained_paths = list(data_dir.glob(f"rl_chemprop_pretrained_*/{data_name}"))
+    rl_chemprop_scratch_paths = list(data_dir.glob(f"rl_chemprop_scratch_*/{data_name}"))
 
     # Get score thresholds
     data = pd.read_csv(mcts_paths[0])
@@ -35,7 +36,8 @@ def plot_score_vs_similarity(
         for paths, marker, label, cmap in [
             (mcts_paths, "o", "mcts", "spring"),
             (rl_rdkit_paths, "x", "rl_rdkit", "winter"),
-            (rl_chemprop_paths, "*", "rl_chemprop", "winter"),
+            (rl_chemprop_pretrained_paths, "*", "rl_chemprop_pretrained", "winter"),
+            (rl_chemprop_scratch_paths, "D", "rl_chemprop_scratch", "winter"),
         ]:
             # Get relevant statistics
             num_hits_novel = []
