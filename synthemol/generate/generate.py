@@ -330,10 +330,6 @@ def generate(
 
     pd.DataFrame(data=[stats]).to_csv(save_dir / 'generation_stats.csv', index=False)
 
-    # Save RL model if applicable
-    if rl_model is not None:
-        rl_model.save(save_dir / 'rl_model.pt')
-
     # Log rollout stats
     if wandb_log:
         wandb.log({
@@ -345,6 +341,11 @@ def generate(
         node_scores = [[node.P] for node in nodes]
         table = wandb.Table(data=node_scores, columns=['Score'])
         wandb.log({'generation_scores': wandb.plot.histogram(table, 'Score', title='Generated Molecule Scores')})
+
+    # Save RL model if applicable
+    # TODO: fix RL model saving
+    if rl_model is not None:
+        rl_model.save(save_dir / 'rl_model.pt')
 
 
 def generate_command_line() -> None:
