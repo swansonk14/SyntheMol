@@ -1,7 +1,7 @@
 """Analyzes the score and similarity of a set of generated molecules."""
 from pathlib import Path
 
-import networkx as nx  # TODO: add to requirements
+import networkx as nx
 import numpy as np
 import pandas as pd
 from chemfunc import compute_pairwise_tanimoto_similarities

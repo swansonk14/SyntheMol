@@ -16,6 +16,8 @@ from synthemol.constants import (
     OPTIMIZATION_TYPES,
     REACTION_TO_BUILDING_BLOCKS_PATH,
     REAL_BUILDING_BLOCK_ID_COL,
+    RL_MODEL_TYPES,
+    RL_PREDICTION_TYPES,
     SCORE_COL,
     SMILES_COL
 )
@@ -47,7 +49,8 @@ def generate(
         n_rollout: int = 10,
         explore_weight: float = 10.0,
         num_expand_nodes: int | None = None,
-        rl_model_type: Literal['rdkit', 'chemprop_pretrained', 'chemprop_scratch'] = 'rdkit',
+        rl_model_type: RL_MODEL_TYPES = 'rdkit',
+        rl_prediction_type: RL_PREDICTION_TYPES = 'classification',
         rl_temperature: float = 0.1,
         rl_temperature_similarity_target: float | None = None,
         rl_train_frequency: int = 10,
@@ -86,6 +89,8 @@ def generate(
     :param explore_weight: The hyperparameter that encourages exploration.
     :param num_expand_nodes: The number of child nodes to include when expanding a given node. If None, all child nodes will be included.
     :param rl_model_type: The type of RL model to use. 'rdkit' = MLP RDKIT model. 'chemprop' = pretrained Chemprop model.
+    :param rl_prediction_type: The type of prediction made by the RL model, which determines the loss function.
+                               'classification' = binary classification. 'regression' = regression.
     :param rl_temperature: The temperature parameter for the softmax function used to select building blocks.
                            Higher temperature means more exploration. If rl_temperature_similarity_target is provided,
                            the temperature is adjusted based on generated molecule diversity.
@@ -191,6 +196,8 @@ def generate(
                 'n_rollout': n_rollout,
                 'explore_weight': explore_weight,
                 'num_expand_nodes': num_expand_nodes,
+                'rl_model_type': rl_model_type,
+                'rl_prediction_type': rl_prediction_type,
                 'rl_temperature': rl_temperature,
                 'rl_temperature_similarity_target': rl_temperature_similarity_target,
                 'rl_train_frequency': rl_train_frequency,
@@ -248,7 +255,11 @@ def generate(
         torch.manual_seed(rng_seed)
 
         if rl_model_type == 'rdkit':
-            rl_model = RLModelRDKit(num_workers=num_workers, num_epochs=rl_train_epochs, device=device)
+            rl_model = RLModelRDKit(
+                num_workers=num_workers,
+                num_epochs=rl_train_epochs,
+                device=device
+            )
         elif rl_model_type.startswith('chemprop'):
             if len(model_paths) > 1 and rl_model_type == 'chemprop_pretrained':
                 raise ValueError('Cannot use pretrained RL Chemprop model with multiple model paths.')
@@ -257,7 +268,11 @@ def generate(
             if model_types[0] != 'chemprop':
                 raise ValueError('For RL Chemprop, the first model in model_paths must be a Chemprop model.')
 
-            rl_model = RLModelChemprop(model_path=model_paths[0], num_workers=num_workers, device=device)
+            rl_model = RLModelChemprop(
+                model_path=model_paths[0],
+                num_workers=num_workers,
+                device=device
+            )
 
             if rl_model_type == 'chemprop_scratch':
                 initialize_weights(rl_model.model)

@@ -12,6 +12,7 @@ from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import mean_squared_error, r2_score
 from tqdm import tqdm, trange
 
+from synthemol.constants import RL_PREDICTION_TYPES
 from synthemol.generate.node import Node
 from synthemol.models import chemprop_load
 
@@ -29,6 +30,7 @@ class MLP(nn.Module):
         hidden_dim: int,
         output_dim: int,
         num_layers: int,
+        sigmoid: bool,
         device: torch.device = torch.device('cpu'),
     ) -> None:
         """Initialize the model.
@@ -37,6 +39,7 @@ class MLP(nn.Module):
         :param hidden_dim: The dimensionality of the hidden layers.
         :param output_dim: The dimensionality of the output of the model.
         :param num_layers: The number of layers.
+        :param sigmoid: Whether to apply a sigmoid function to the output (during inference only).
         :param device: The device to use for the model.
         """
         super(MLP, self).__init__()
@@ -53,6 +56,8 @@ class MLP(nn.Module):
                 for i in range(len(layer_dims) - 1)
             ]
         )
+
+        self.sigmoid = sigmoid
 
         # Create activation function
         self.activation = nn.ReLU()
@@ -76,8 +81,8 @@ class MLP(nn.Module):
             if i < len(self.layers) - 1:
                 X = self.activation(X)
 
-        # Apply sigmoid during prediction
-        if not self.training:
+        # Apply sigmoid during inference if desired
+        if self.sigmoid and not self.training:
             X = torch.sigmoid(X)
 
         return X
@@ -88,6 +93,7 @@ class RLModel(ABC):
 
     def __init__(
             self,
+            prediction_type: RL_PREDICTION_TYPES,
             num_workers: int = 0,
             num_epochs: int = 5,
             batch_size: int = 50,
@@ -96,12 +102,15 @@ class RLModel(ABC):
     ) -> None:
         """Initializes the model.
 
+        :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
+                                'classification' = binary classification. 'regression' = regression.
         :param num_workers: The number of workers to use for data loading.
         :param num_epochs: The number of epochs to train for.
         :param batch_size: The batch size.
         :param learning_rate: The learning rate.
         :param device: The device to use for the model.
         """
+        self.prediction_type = prediction_type
         self.num_workers = num_workers
         self.num_epochs = num_epochs
         self.batch_size = batch_size
@@ -113,8 +122,16 @@ class RLModel(ABC):
         self.test_source_nodes: list[Node] = []
         self.test_target_nodes: list[Node] = []
 
+        # Set optimizer
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
-        self.loss_fn = nn.BCEWithLogitsLoss()  # TODO: have option for regression
+
+        # Set loss function
+        if self.prediction_type == 'classification':
+            self.loss_fn = nn.BCEWithLogitsLoss()
+        elif self.prediction_type == 'regression':
+            self.loss_fn = nn.MSELoss()
+        else:
+            raise ValueError(f'Prediction type {self.prediction_type} is not supported.')
 
     def buffer(self, source_node: Node, target_node: Node) -> None:
         """Adds a new source/target node pair to the buffer (test set).
@@ -344,6 +361,7 @@ class RLModel(ABC):
 class RLModelRDKit(RLModel):
     def __init__(
             self,
+            prediction_type: RL_PREDICTION_TYPES,
             max_num_molecules: int = 3,
             features_size: int = 200,
             hidden_dim: int = 100,
@@ -356,6 +374,8 @@ class RLModelRDKit(RLModel):
     ) -> None:
         """Initializes the model.
 
+        :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
+                                'classification' = binary classification. 'regression' = regression.
         :param max_num_molecules: The maximum number of molecules to process at a time.
         :param features_size: The size of the features for each molecule.
         :param hidden_dim: The dimensionality of the hidden layers.
@@ -377,10 +397,12 @@ class RLModelRDKit(RLModel):
             hidden_dim=hidden_dim,
             output_dim=1,
             num_layers=num_layers,
+            sigmoid=prediction_type == 'classification',
             device=device
         ).to(device)
 
         super().__init__(
+            prediction_type=prediction_type,
             num_workers=num_workers,
             num_epochs=num_epochs,
             batch_size=batch_size,
@@ -543,6 +565,7 @@ def rl_collate_fn(
 class RLModelChemprop(RLModel):
     def __init__(
             self,
+            prediction_type: RL_PREDICTION_TYPES,
             model_path: Path,
             num_workers: int = 0,
             num_epochs: int = 5,
@@ -552,6 +575,8 @@ class RLModelChemprop(RLModel):
     ) -> None:
         """Initializes the model.
 
+        :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
+                                'classification' = binary classification. 'regression' = regression.
         :param model_path: The path to pretrained Chemprop checkpoint file.
         :param num_workers: The number of workers to use for data loading.
         :param num_epochs: The number of epochs to train for.
@@ -571,6 +596,7 @@ class RLModelChemprop(RLModel):
         )
 
         super().__init__(
+            prediction_type=prediction_type,
             num_workers=num_workers,
             num_epochs=num_epochs,
             batch_size=batch_size,
