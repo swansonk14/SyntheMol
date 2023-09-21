@@ -32,7 +32,7 @@ def average_scores(
     if save_path is None:
         save_path = data_path
 
-    save_path.mkdir(parents=True, exist_ok=True)
+    save_path.parent.mkdir(parents=True, exist_ok=True)
     data.to_csv(save_path, index=False)
 
 
