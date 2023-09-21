@@ -105,7 +105,7 @@ def create_model_scoring_fn(
         model_types: list[MODEL_TYPES],
         model_paths: list[Path],
         fingerprint_types: list[FINGERPRINT_TYPES],
-        model_weights: tuple[float] = (1.0,),
+        model_weights: tuple[float, ...] = (1.0,),
         device: torch.device = torch.device('cpu'),
         smiles_to_score: dict[str, float] | None = None
 ) -> Callable[[str], float]:

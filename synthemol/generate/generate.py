@@ -33,9 +33,9 @@ from synthemol.generate.utils import create_model_scoring_fn, save_generated_mol
 def generate(
         search_type: Literal['mcts', 'rl'],
         save_dir: Path,
-        model_types: tuple[MODEL_TYPES, ...],
-        model_paths: tuple[Path, ...],
-        fingerprint_types: tuple[FINGERPRINT_TYPES, ...],
+        model_types: list[MODEL_TYPES, ...],
+        model_paths: list[Path, ...],
+        fingerprint_types: list[FINGERPRINT_TYPES, ...],
         model_weights: tuple[float, ...] = (1.0,),
         building_blocks_path: Path = BUILDING_BLOCKS_PATH,
         reaction_to_building_blocks_path: Path | None = REACTION_TO_BUILDING_BLOCKS_PATH,
