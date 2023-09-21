@@ -111,7 +111,7 @@ def generate(
     :param wandb_run_name: The name of the Weights & Biases run to log results to.
     """
     # Check lengths of model arguments match
-    if len({len(arg) for arg in [model_types, model_paths, fingerprint_types, model_weights]}) == 1:
+    if len({len(arg) for arg in [model_types, model_paths, fingerprint_types, model_weights]}) != 1:
         raise ValueError('model_types, model_paths, fingerprint_types, and model_weights must all have the same length.')
 
     # Create save directory
