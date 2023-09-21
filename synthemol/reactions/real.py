@@ -11,7 +11,8 @@ REAL_REACTIONS = (
             QueryMol('[OH1][C:10]([*:11])=[O:12]')
         ],
         product=QueryMol('[*:4][N:5]([*:6])[C:7](=[O:9])[*:8].[*:3][N:1]([*:2])[C:10](=[O:12])[*:11]'),
-        reaction_id=275592
+        reaction_id=275592,
+        chemical_space='Enamine'
     ),
     Reaction(
         reactants=[
@@ -19,7 +20,8 @@ REAL_REACTIONS = (
             QueryMol('[OH1][C:4]([*:5])=[O:6]')
         ],
         product=QueryMol('[*:5][C:4](=[O:6])[N:2]([*:1])[*:3]'),
-        reaction_id=22
+        reaction_id=22,
+        chemical_space='Enamine'
     ),
     Reaction(
         reactants=[
@@ -27,7 +29,8 @@ REAL_REACTIONS = (
             QueryMol('[OH1][C:4]([*:5])=[O:6]')
         ],
         product=QueryMol('[*:5][C:4](=[O:6])[N:2]([*:1])[*:3]'),
-        reaction_id=11
+        reaction_id=11,
+        chemical_space='Enamine'
     ),
     Reaction(
         reactants=[
@@ -35,7 +38,8 @@ REAL_REACTIONS = (
             QueryMol('[OH1][C:4]([*:5])=[O:6]')
         ],
         product=QueryMol('[*:5][C:4](=[O:6])[N:2]([*:1])[*:3]'),
-        reaction_id=527
+        reaction_id=527,
+        chemical_space='Enamine'
     ),
     Reaction(
         reactants=[
@@ -43,7 +47,8 @@ REAL_REACTIONS = (
             QueryMol('[OH1][C:4]([*:5])=[O:6]')
         ],
         product=QueryMol('[*:5][C:4](=[O:6])[N:2]([*:1])[*:3]'),
-        reaction_id=240690
+        reaction_id=240690,
+        chemical_space='Enamine'
     ),
     Reaction(
         reactants=[
@@ -51,7 +56,8 @@ REAL_REACTIONS = (
             QueryMol('[*:4][N:5]([H])[*:6]')
         ],
         product=QueryMol('O=C([N:2]([*:1])[H:3])[N:5]([*:4])[*:6]'),
-        reaction_id=2430
+        reaction_id=2430,
+        chemical_space='Enamine'
     ),
     Reaction(
         reactants=[
@@ -59,7 +65,8 @@ REAL_REACTIONS = (
             QueryMol('[*:4][N:5]([H])[H:6]')
         ],
         product=QueryMol('O=C([N:2]([*:1])[H:3])[N:5]([*:4])[H:6]'),
-        reaction_id=2708
+        reaction_id=2708,
+        chemical_space='Enamine'
     ),
     Reaction(
         reactants=[
@@ -67,7 +74,8 @@ REAL_REACTIONS = (
             QueryMol('[F,Cl,Br,I][*:4]')
         ],
         product=QueryMol('[*:1][N:2]([*:3])[*:4]'),
-        reaction_id=2230
+        reaction_id=2230,
+        chemical_space='Enamine'
     ),
     Reaction(
         reactants=[
@@ -75,7 +83,8 @@ REAL_REACTIONS = (
             QueryMol('[*:4][N:5]([H])[H:6]')
         ],
         product=QueryMol('O=C(C(=O)[N:2]([*:1])[H:3])[N:5]([*:4])[H:6]'),
-        reaction_id=2718
+        reaction_id=2718,
+        chemical_space='Enamine'
     ),
     Reaction(
         reactants=[
@@ -83,7 +92,8 @@ REAL_REACTIONS = (
             QueryMol('[O:4]=[S:5](=[O:6])([F,Cl,Br,I])[*:7]')
         ],
         product=QueryMol('[O:4]=[S:5](=[O:6])([*:7])[N:2]([*:1])[*:3]'),
-        reaction_id=40
+        reaction_id=40,
+        chemical_space='Enamine'
     ),
     Reaction(
         reactants=[
@@ -91,7 +101,8 @@ REAL_REACTIONS = (
             QueryMol('[F,Cl,Br,I][*:4]')
         ],
         product=QueryMol('[*:1][N:2]([*:3])[*:4]'),
-        reaction_id=27
+        reaction_id=27,
+        chemical_space='Enamine'
     ),
     Reaction(
         reactants=[
@@ -99,7 +110,8 @@ REAL_REACTIONS = (
             QueryMol('[*:4][N:5]([H])[H:6]')
         ],
         product=QueryMol('O=C(C(=O)[N:2]([*:1])[*:3])[N:5]([*:4])[H:6]'),
-        reaction_id=271948
+        reaction_id=271948,
+        chemical_space='Enamine'
     ),
     Reaction(
         reactants=[
@@ -107,6 +119,7 @@ REAL_REACTIONS = (
             QueryMol('[F,Cl,Br,I][*:5]')
         ],
         product=QueryMol('[O:4]=[C:2]([*:3])[O:1][*:5]'),
-        reaction_id=1458
+        reaction_id=1458,
+        chemical_space='Enamine'
     ),
 )
