@@ -128,8 +128,9 @@ class RLModel(ABC):
         # Set loss function
         if self.prediction_type == 'classification':
             self.loss_fn = nn.BCEWithLogitsLoss()
+            self.eval_loss_fn = nn.BCELoss()
         elif self.prediction_type == 'regression':
-            self.loss_fn = nn.MSELoss()
+            self.loss_fn = self.eval_loss_fn = nn.MSELoss()
         else:
             raise ValueError(f'Prediction type {self.prediction_type} is not supported.')
 
@@ -263,7 +264,7 @@ class RLModel(ABC):
 
                         # Evaluate predictions
                         results |= {
-                            f'RL {description} Loss': nn.functional.binary_cross_entropy(
+                            f'RL {description} Loss': self.eval_loss_fn(
                                 torch.from_numpy(predictions_masked),
                                 torch.from_numpy(rewards_masked)
                             ).item(),
