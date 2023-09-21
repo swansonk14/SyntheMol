@@ -256,6 +256,7 @@ def generate(
 
         if rl_model_type == 'rdkit':
             rl_model = RLModelRDKit(
+                prediction_type=rl_prediction_type,
                 num_workers=num_workers,
                 num_epochs=rl_train_epochs,
                 device=device
@@ -269,6 +270,7 @@ def generate(
                 raise ValueError('For RL Chemprop, the first model in model_paths must be a Chemprop model.')
 
             rl_model = RLModelChemprop(
+                prediction_type=rl_prediction_type,
                 model_path=model_paths[0],
                 num_workers=num_workers,
                 device=device
