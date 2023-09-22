@@ -106,7 +106,7 @@ WUXI_REACTIONS_PHASE_3 = (
         chemical_space='WuXi'
     ),
     # BR_N-Boc + BT + YV
-        Reaction(
+    Reaction(
         reactants=[
             QueryMol('[c:11]-[#35].CC(C)(C)OC(=O)[N:12]-[C:13]'),  # BR_N-Boc
             QueryMol('[#6:21]-[#5](-[#8])-[#8]'),  # BT
@@ -117,7 +117,7 @@ WUXI_REACTIONS_PHASE_3 = (
         chemical_space='WuXi'
     ),
     # BR_N-Boc + BT + LP
-        Reaction(
+    Reaction(
         reactants=[
             QueryMol('[c:11]-[#35].CC(C)(C)OC(=O)[N:12]-[C:13]'),  # BR_N-Boc
             QueryMol('[#6:21]-[#5](-[#8])-[#8]'),  # BT
@@ -128,7 +128,7 @@ WUXI_REACTIONS_PHASE_3 = (
         chemical_space='WuXi'
     ),
     # BR_N-Boc + BT + HU
-        Reaction(
+    Reaction(
         reactants=[
             QueryMol('[c:11]-[#35].CC(C)(C)OC(=O)[N:12]'),  # BR_N-Boc
             QueryMol('[#6:21]-[#5](-[#8])-[#8]'),  # BT
@@ -139,7 +139,7 @@ WUXI_REACTIONS_PHASE_3 = (
         chemical_space='WuXi'
     ),
     # BR_N-Boc + BT + QS
-        Reaction(
+    Reaction(
         reactants=[
             QueryMol('[c:11]-[#35].CC(C)(C)OC(=O)[N:12]-[C:13]'),  # BR_N-Boc
             QueryMol('[#6:21]-[#5](-[#8])-[#8]'),  # BT
@@ -150,7 +150,7 @@ WUXI_REACTIONS_PHASE_3 = (
         chemical_space='WuXi'
     ),
     # COOH_N-Boc + AF/AG/AK/AN + YV
-        Reaction(
+    Reaction(
         reactants=[
             QueryMol('[O:12]=[C:11]([OH,O-])[*:13].CC(C)(C)OC(=O)[N:14]-[C:15]'),  # COOH_N-Boc
             QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):21]'),  # AF/AG/AK/AN
@@ -161,7 +161,7 @@ WUXI_REACTIONS_PHASE_3 = (
         chemical_space='WuXi'
     ),
     # COOH_N-Boc + AF/AG/AK/AN + LP
-        Reaction(
+    Reaction(
         reactants=[
             QueryMol('[O:12]=[C:11]([OH,O-])[*:13].CC(C)(C)OC(=O)[N:14]-[C:15]'),  # COOH_N-Boc
             QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):21]'),  # AF/AG/AK/AN
@@ -172,7 +172,7 @@ WUXI_REACTIONS_PHASE_3 = (
         chemical_space='WuXi'
     ),
     # COOH_N-Boc + AF/AG/AK/AN + HU
-        Reaction(
+    Reaction(
         reactants=[
             QueryMol('[O:12]=[C:11]([OH,O-])[*:13].CC(C)(C)OC(=O)[N:14]'),  # COOH_N-Boc
             QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):21]'),  # AF/AG/AK/AN
@@ -183,7 +183,7 @@ WUXI_REACTIONS_PHASE_3 = (
         chemical_space='WuXi'
     ),
     # COOH_N-Boc + AF/AG/AK/AN + QS
-        Reaction(
+    Reaction(
         reactants=[
             QueryMol('[O:12]=[C:11]([OH,O-])[*:13].CC(C)(C)OC(=O)[N:14]-[C:15]'),  # COOH_N-Boc
             QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):21]'),  # AF/AG/AK/AN
@@ -194,7 +194,7 @@ WUXI_REACTIONS_PHASE_3 = (
         chemical_space='WuXi'
     ),
     # NH_N-Boc + YV + SA/SB/SC/SD/SE
-        Reaction(
+    Reaction(
         reactants=[
             QueryMol('[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]'),  # NH_N-Boc
             QueryMol('[#6:21]-[#7]=C=O'),  # YV
@@ -205,7 +205,7 @@ WUXI_REACTIONS_PHASE_3 = (
         chemical_space='WuXi'
     ),
     # NH_N-Boc + YV + YV
-        Reaction(
+    Reaction(
         reactants=[
             QueryMol('[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]-[C:14]'),  # NH_N-Boc
             QueryMol('[#6:21]-[#7]=C=O'),  # YV
@@ -216,7 +216,7 @@ WUXI_REACTIONS_PHASE_3 = (
         chemical_space='WuXi'
     ),
     # NH_N-Boc + YV + LP
-        Reaction(
+    Reaction(
         reactants=[
             QueryMol('[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]-[C:14]'),  # NH_N-Boc
             QueryMol('[#6:21]-[#7]=C=O'),  # YV
@@ -227,7 +227,7 @@ WUXI_REACTIONS_PHASE_3 = (
         chemical_space='WuXi'
     ),
     # NH_N-Boc + YV + HU
-        Reaction(
+    Reaction(
         reactants=[
             QueryMol('[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]'),  # NH_N-Boc
             QueryMol('[#6:21]-[#7]=C=O'),  # YV
@@ -238,7 +238,7 @@ WUXI_REACTIONS_PHASE_3 = (
         chemical_space='WuXi'
     ),
     # NH_N-Boc + YV + QS
-        Reaction(
+    Reaction(
         reactants=[
             QueryMol('[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]-[C:14]'),  # NH_N-Boc
             QueryMol('[#6:21]-[#7]=C=O'),  # YV
@@ -249,7 +249,7 @@ WUXI_REACTIONS_PHASE_3 = (
         chemical_space='WuXi'
     ),
     # NH_N-Boc + LP + SA/SB/SC/SD/SE
-        Reaction(
+    Reaction(
         reactants=[
             QueryMol('[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]'),  # NH_N-Boc
             QueryMol('[#6:21]-[#17]'),  # LP
@@ -260,7 +260,7 @@ WUXI_REACTIONS_PHASE_3 = (
         chemical_space='WuXi'
     ),
     # NH_N-Boc + LP + YV
-        Reaction(
+    Reaction(
         reactants=[
             QueryMol('[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]-[C:14]'),  # NH_N-Boc
             QueryMol('[#6:21]-[#17]'),  # LP
@@ -271,7 +271,7 @@ WUXI_REACTIONS_PHASE_3 = (
         chemical_space='WuXi'
     ),
     # NH_N-Boc + LP + LP
-        Reaction(
+    Reaction(
         reactants=[
             QueryMol('[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]-[C:14]'),  # NH_N-Boc
             QueryMol('[#6:21]-[#17]'),  # LP
@@ -282,7 +282,7 @@ WUXI_REACTIONS_PHASE_3 = (
         chemical_space='WuXi'
     ),
     # NH_N-Boc + LP + HU
-        Reaction(
+    Reaction(
         reactants=[
             QueryMol('[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]'),  # NH_N-Boc
             QueryMol('[#6:21]-[#17]'),  # LP
@@ -293,7 +293,7 @@ WUXI_REACTIONS_PHASE_3 = (
         chemical_space='WuXi'
     ),
     # NH_N-Boc + LP + QS
-        Reaction(
+    Reaction(
         reactants=[
             QueryMol('[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]-[C:14]'),  # NH_N-Boc
             QueryMol('[#6:21]-[#17]'),  # LP
@@ -304,7 +304,7 @@ WUXI_REACTIONS_PHASE_3 = (
         chemical_space='WuXi'
     ),
     # NH_N-Boc + HU + SA/SB/SC/SD/SE
-        Reaction(
+    Reaction(
         reactants=[
             QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]'),  # NH_N-Boc
             QueryMol('Cl[S:21]([*:23])(=[O:22])=[O:24]'),  # HU
@@ -315,7 +315,7 @@ WUXI_REACTIONS_PHASE_3 = (
         chemical_space='WuXi'
     ),
     # NH_N-Boc + HU + YV
-        Reaction(
+    Reaction(
         reactants=[
             QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]-[C:13]'),  # NH_N-Boc
             QueryMol('Cl[S:21]([*:23])(=[O:22])=[O:24]'),  # HU
@@ -326,7 +326,7 @@ WUXI_REACTIONS_PHASE_3 = (
         chemical_space='WuXi'
     ),
     # NH_N-Boc + HU + LP
-        Reaction(
+    Reaction(
         reactants=[
             QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]-[C:13]'),  # NH_N-Boc
             QueryMol('Cl[S:21]([*:23])(=[O:22])=[O:24]'),  # HU
@@ -337,7 +337,7 @@ WUXI_REACTIONS_PHASE_3 = (
         chemical_space='WuXi'
     ),
     # NH_N-Boc + HU + HU
-        Reaction(
+    Reaction(
         reactants=[
             QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]'),  # NH_N-Boc
             QueryMol('Cl[S:21]([*:23])(=[O:22])=[O:24]'),  # HU
@@ -348,7 +348,7 @@ WUXI_REACTIONS_PHASE_3 = (
         chemical_space='WuXi'
     ),
     # NH_N-Boc + HU + QS
-        Reaction(
+    Reaction(
         reactants=[
             QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]-[C:13]'),  # NH_N-Boc
             QueryMol('Cl[S:21]([*:23])(=[O:22])=[O:24]'),  # HU
@@ -359,7 +359,7 @@ WUXI_REACTIONS_PHASE_3 = (
         chemical_space='WuXi'
     ),
     # NH_N-Boc + SA/SB/SC/SD/SE + YV
-        Reaction(
+    Reaction(
         reactants=[
             QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]-[C:13]'),  # NH_N-Boc
             QueryMol('[O:22]=[C:21]([OH,O-])[*:23]'),  # SA/SB/SC/SD/SE
@@ -370,7 +370,7 @@ WUXI_REACTIONS_PHASE_3 = (
         chemical_space='WuXi'
     ),
     # NH_N-Boc + SA/SB/SC/SD/SE + LP
-        Reaction(
+    Reaction(
         reactants=[
             QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]-[C:13]'),  # NH_N-Boc
             QueryMol('[O:22]=[C:21]([OH,O-])[*:23]'),  # SA/SB/SC/SD/SE
@@ -381,7 +381,7 @@ WUXI_REACTIONS_PHASE_3 = (
         chemical_space='WuXi'
     ),
     # NH_N-Boc + SA/SB/SC/SD/SE + HU
-        Reaction(
+    Reaction(
         reactants=[
             QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]'),  # NH_N-Boc
             QueryMol('[O:22]=[C:21]([OH,O-])[*:23]'),  # SA/SB/SC/SD/SE
@@ -392,7 +392,7 @@ WUXI_REACTIONS_PHASE_3 = (
         chemical_space='WuXi'
     ),
     # NH_N-Boc + SA/SB/SC/SD/SE + QS
-        Reaction(
+    Reaction(
         reactants=[
             QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]-[C:13]'),  # NH_N-Boc
             QueryMol('[O:22]=[C:21]([OH,O-])[*:23]'),  # SA/SB/SC/SD/SE
