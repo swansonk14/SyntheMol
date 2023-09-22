@@ -2,44 +2,45 @@
 from synthemol.reactions.query_mol import QueryMol
 from synthemol.reactions.reaction import Reaction
 
+
 WUXI_REACTIONS_PHASE_1 = (
     # AF/AK/AG/AN + SA/SB/SC/SD/SE
     Reaction(
         reactants=[
-            QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):4]'),  # AF/AK/AG/AN
-            QueryMol('[O:2]=[C:1]([OH,O-])[*:3]')  # SA/SB/SC/SD/SE
+            QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):11]'),  # AF/AK/AG/AN
+            QueryMol('[O:22]=[C:21]([OH,O-])[*:23]')  # SA/SB/SC/SD/SE
         ],
-        product=QueryMol('[O:2]=[C:1]([N:4])[*:3]'),
+        product=QueryMol('[O:22]=[C:21]([N:11])[*:23]'),
         reaction_id=1,
         chemical_space='WuXi'
     ),
     # AF/AK/AG/AN + HU
     Reaction(
         reactants=[
-            QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):5]'),  # AF/AK/AG/AN
-            QueryMol('Cl[S:1]([*:3])(=[O:2])=[O:4]'),  # HU
+            QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):11]'),  # AF/AK/AG/AN
+            QueryMol('Cl[S:21]([*:23])(=[O:22])=[O:24]'),  # HU
         ],
-        product=QueryMol('[N:5][S:1]([*:3])(=[O:2])=[O:4]'),
+        product=QueryMol('[N:11][S:21]([*:23])(=[O:22])=[O:24]'),
         reaction_id=2,
         chemical_space='WuXi',
     ),
     # AF/AK/AG/AN + YV
     Reaction(
         reactants=[
-            QueryMol('[#6:1]-[N&!H0;!$(N[C,S]=[O,S,N]):2]'),  # AF/AK/AG/AN
-            QueryMol('[#6:3]-[#7]=C=O'),  # YV
+            QueryMol('[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12]'),  # AF/AK/AG/AN
+            QueryMol('[#6:21]-[#7]=C=O'),  # YV
         ],
-        product=QueryMol('[#6:3]-[#7]-[#6](=O)-[#7:2]-[#6:1]'),
+        product=QueryMol('[#6:21]-[#7]-[#6](=O)-[#7:12]-[#6:11]'),
         reaction_id=3,
         chemical_space='WuXi',
     ),
     # LR + BT
     Reaction(
         reactants=[
-            QueryMol('[c:2]-[#35]'),  # LR
-            QueryMol('[#6:1]-[#5](-[#8])-[#8]'),  # BT
+            QueryMol('[c:11]-[#35]'),  # LR
+            QueryMol('[#6:21]-[#5](-[#8])-[#8]'),  # BT
         ],
-        product=QueryMol('[#6:1]-[#6:2]'),
+        product=QueryMol('[#6:21]-[#6:11]'),
         reaction_id=4,
         chemical_space='WuXi',
     ),
@@ -49,33 +50,33 @@ WUXI_REACTIONS_PHASE_2 = (
     # NH_N-Boc + SA/SB/SC/SD/SE + SA/SB/SC/SD/SE
     Reaction(
         reactants=[
-            QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):1].CC(C)(C)OC(=O)[N:2]'),  # NH_N-Boc
-            QueryMol('[O:4]=[C:3]([OH,O-])[*:5]'),  # SA/SB/SC/SD/SE
-            QueryMol('[O:7]=[C:6]([OH,O-])[*:8]')  # SA/SB/SC/SD/SE
+            QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]'),  # NH_N-Boc
+            QueryMol('[O:22]=[C:21]([OH,O-])[*:23]'),  # SA/SB/SC/SD/SE
+            QueryMol('[O:32]=[C:31]([OH,O-])[*:33]')  # SA/SB/SC/SD/SE
         ],
-        product=QueryMol('[O:4]=[C:3]([N:1])[*:5].[O:7]=[C:6]([N:2])[*:8]'),
+        product=QueryMol('[O:22]=[C:21]([N:11])[*:23].[O:32]=[C:31]([N:12])[*:33]'),
         reaction_id=5,
         chemical_space='WuXi'
     ),
     # COOH_N-Boc + AF/AG/AK/AN + SA/SB/SC/SD/SE
     Reaction(
         reactants=[
-            QueryMol('[O:2]=[C:1]([OH,O-])[*:3].CC(C)(C)OC(=O)[N:4]'),  # COOH_N-Boc
-            QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):5]'),  # AF/AG/AK/AN
-            QueryMol('[O:7]=[C:6]([OH,O-])[*:8]')  # SA/SB/SC/SD/SE
+            QueryMol('[O:12]=[C:11]([OH,O-])[*:13].CC(C)(C)OC(=O)[N:14]'),  # COOH_N-Boc
+            QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):21]'),  # AF/AG/AK/AN
+            QueryMol('[O:32]=[C:31]([OH,O-])[*:33]')  # SA/SB/SC/SD/SE
         ],
-        product=QueryMol('[O:2]=[C:1]([N:5])[*:3].[O:7]=[C:6]([N:4])[*:8]'),
+        product=QueryMol('[O:12]=[C:11]([N:21])[*:13].[O:32]=[C:31]([N:14])[*:33]'),
         reaction_id=6,
         chemical_space='WuXi'
     ),
     # COOH_COOMe/COOH_COOEt + AF/AG/AK/AN + AF/AG/AK/AN
     Reaction(
         reactants=[
-            QueryMol('[O:2]=[C:1]([OH,O-])[*:3].[O:5]=[C:4](O[C,CC])[*:6]'),  # COOH_COOMe/COOH_COOEt
-            QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):7]'),  # AF/AG/AK/AN
-            QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):8]')  # AF/AG/AK/AN
+            QueryMol('[O:12]=[C:11]([OH,O-])[*:13].[O:15]=[C:14](O[C,CC])[*:16]'),  # COOH_COOMe/COOH_COOEt
+            QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):21]'),  # AF/AG/AK/AN
+            QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):31]')  # AF/AG/AK/AN
         ],
-        product=QueryMol('[O:2]=[C:1]([N:7])[*:3].[O:5]=[C:4]([N:8])[*:6]'),
+        product=QueryMol('[O:12]=[C:11]([N:21])[*:13].[O:15]=[C:14]([N:31])[*:16]'),
         reaction_id=7,
         chemical_space='WuXi',
     ),
@@ -85,275 +86,275 @@ WUXI_REACTIONS_PHASE_3 = (
     # BR_COOH/COOMe/COOEt + BT + AF/AG/AK/AN
     Reaction(
         reactants=[
-            QueryMol('[c:1]-[#35].[O:3]=[C:2]([OH,O-])[*:4]'),  # BR_COOH/COOMe/COOEt
-            QueryMol('[#6:5]-[#5](-[#8])-[#8]'),  # BT
-            QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):6]')  # AF/AG/AK/AN
+            QueryMol('[c:11]-[#35].[O:13]=[C:12]([OH,O-])[*:14]'),  # BR_COOH/COOMe/COOEt
+            QueryMol('[#6:21]-[#5](-[#8])-[#8]'),  # BT
+            QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):31]')  # AF/AG/AK/AN
         ],
-        product=QueryMol('[#6:5]-[#6:1].[O:3]=[C:2]([N:6])[*:4]'),
+        product=QueryMol('[#6:21]-[#6:11].[O:13]=[C:12]([N:31])[*:14]'),
         reaction_id=8,
         chemical_space='WuXi'
     ),
     # BR_N-Boc + BT + SA/SB/SC/SD/SE
     Reaction(
         reactants=[
-            QueryMol('[c:1]-[#35].CC(C)(C)OC(=O)[N:2]'),  # BR_N-Boc
-            QueryMol('[#6:3]-[#5](-[#8])-[#8]'),  # BT
-            QueryMol('[O:5]=[C:4]([OH,O-])[*:6]')  # SA/SB/SC/SD/SE
+            QueryMol('[c:11]-[#35].CC(C)(C)OC(=O)[N:12]'),  # BR_N-Boc
+            QueryMol('[#6:21]-[#5](-[#8])-[#8]'),  # BT
+            QueryMol('[O:32]=[C:31]([OH,O-])[*:33]')  # SA/SB/SC/SD/SE
         ],
-        product=QueryMol('[#6:3]-[#6:1].[O:5]=[C:4]([N:2])[*:6]'),
+        product=QueryMol('[#6:21]-[#6:11].[O:32]=[C:31]([N:12])[*:33]'),
         reaction_id=9,
         chemical_space='WuXi'
     ),
     # BR_N-Boc + BT + YV
         Reaction(
         reactants=[
-            QueryMol('[c:1]-[#35].CC(C)(C)OC(=O)[N:2]-[C:3]'),  # BR_N-Boc
-            QueryMol('[#6:4]-[#5](-[#8])-[#8]'),  # BT
-            QueryMol('[#6:5]-[#7]=C=O')  # YV
+            QueryMol('[c:11]-[#35].CC(C)(C)OC(=O)[N:12]-[C:13]'),  # BR_N-Boc
+            QueryMol('[#6:21]-[#5](-[#8])-[#8]'),  # BT
+            QueryMol('[#6:31]-[#7]=C=O')  # YV
         ],
-        product=QueryMol('[#6:4]-[#6:1].[#6:5]-[#7]-[#6](=O)-[#7:2]-[#6:3]'),
+        product=QueryMol('[#6:21]-[#6:11].[#6:31]-[#7]-[#6](=O)-[#7:12]-[#6:13]'),
         reaction_id=10,
         chemical_space='WuXi'
     ),
     # BR_N-Boc + BT + LP
         Reaction(
         reactants=[
-            QueryMol('[c:1]-[#35].CC(C)(C)OC(=O)[N:2]-[C:3]'),  # BR_N-Boc
-            QueryMol('[#6:4]-[#5](-[#8])-[#8]'),  # BT
-            QueryMol('[#6:5]-[#17]')  # LP
+            QueryMol('[c:11]-[#35].CC(C)(C)OC(=O)[N:12]-[C:13]'),  # BR_N-Boc
+            QueryMol('[#6:21]-[#5](-[#8])-[#8]'),  # BT
+            QueryMol('[#6:31]-[#17]')  # LP
         ],
-        product=QueryMol('[#6:4]-[#6:1].[#6:3]-[#7:2]-[#6:5]'),
+        product=QueryMol('[#6:21]-[#6:11].[#6:13]-[#7:12]-[#6:31]'),
         reaction_id=11,
         chemical_space='WuXi'
     ),
     # BR_N-Boc + BT + HU
         Reaction(
         reactants=[
-            QueryMol('[c:1]-[#35].CC(C)(C)OC(=O)[N:2]'),  # BR_N-Boc
-            QueryMol('[#6:3]-[#5](-[#8])-[#8]'),  # BT
-            QueryMol('Cl[S:4]([*:6])(=[O:5])=[O:7]')  # HU
+            QueryMol('[c:11]-[#35].CC(C)(C)OC(=O)[N:12]'),  # BR_N-Boc
+            QueryMol('[#6:21]-[#5](-[#8])-[#8]'),  # BT
+            QueryMol('Cl[S:31]([*:33])(=[O:32])=[O:34]')  # HU
         ],
-        product=QueryMol('[#6:3]-[#6:1].[N:2][S:4]([*:6])(=[O:5])=[O:7]'),
+        product=QueryMol('[#6:21]-[#6:11].[N:12][S:31]([*:33])(=[O:32])=[O:34]'),
         reaction_id=12,
         chemical_space='WuXi'
     ),
     # BR_N-Boc + BT + QS
         Reaction(
         reactants=[
-            QueryMol('[c:1]-[#35].CC(C)(C)OC(=O)[N:2]-[C:3]'),  # BR_N-Boc
-            QueryMol('[#6:4]-[#5](-[#8])-[#8]'),  # BT
-            QueryMol('[#6:5]-[#6;D2:6]=O')  # QS
+            QueryMol('[c:11]-[#35].CC(C)(C)OC(=O)[N:12]-[C:13]'),  # BR_N-Boc
+            QueryMol('[#6:21]-[#5](-[#8])-[#8]'),  # BT
+            QueryMol('[#6:31]-[#6;D2:32]=O')  # QS
         ],
-        product=QueryMol('[#6:4]-[#6:1].[#6:5]-[#6:6]-[#7:2]-[#6:3]'),
+        product=QueryMol('[#6:21]-[#6:11].[#6:31]-[#6:32]-[#7:12]-[#6:13]'),
         reaction_id=13,
         chemical_space='WuXi'
     ),
     # COOH_N-Boc + AF/AG/AK/AN + YV
         Reaction(
         reactants=[
-            QueryMol('[O:2]=[C:1]([OH,O-])[*:3].CC(C)(C)OC(=O)[N:4]-[C:5]'),  # COOH_N-Boc
-            QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):6]'),  # AF/AG/AK/AN
-            QueryMol('[#6:7]-[#7]=C=O')  # YV
+            QueryMol('[O:12]=[C:11]([OH,O-])[*:13].CC(C)(C)OC(=O)[N:14]-[C:15]'),  # COOH_N-Boc
+            QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):21]'),  # AF/AG/AK/AN
+            QueryMol('[#6:31]-[#7]=C=O')  # YV
         ],
-        product=QueryMol('[O:2]=[C:1]([N:6])[*:3].[#6:7]-[#7]-[#6](=O)-[#7:4]-[#6:5]'),
+        product=QueryMol('[O:12]=[C:11]([N:21])[*:13].[#6:31]-[#7]-[#6](=O)-[#7:14]-[#6:15]'),
         reaction_id=14,
         chemical_space='WuXi'
     ),
     # COOH_N-Boc + AF/AG/AK/AN + LP
         Reaction(
         reactants=[
-            QueryMol('[O:2]=[C:1]([OH,O-])[*:3].CC(C)(C)OC(=O)[N:4]-[C:5]'),  # COOH_N-Boc
-            QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):6]'),  # AF/AG/AK/AN
-            QueryMol('[#6:7]-[#17]')  # LP
+            QueryMol('[O:12]=[C:11]([OH,O-])[*:13].CC(C)(C)OC(=O)[N:14]-[C:15]'),  # COOH_N-Boc
+            QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):21]'),  # AF/AG/AK/AN
+            QueryMol('[#6:31]-[#17]')  # LP
         ],
-        product=QueryMol('[O:2]=[C:1]([N:6])[*:3].[#6:5]-[#7:4]-[#6:7]'),
+        product=QueryMol('[O:12]=[C:11]([N:21])[*:13].[#6:15]-[#7:14]-[#6:31]'),
         reaction_id=15,
         chemical_space='WuXi'
     ),
     # COOH_N-Boc + AF/AG/AK/AN + HU
         Reaction(
         reactants=[
-            QueryMol('[O:2]=[C:1]([OH,O-])[*:3].CC(C)(C)OC(=O)[N:4]'),  # COOH_N-Boc
-            QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):5]'),  # AF/AG/AK/AN
-            QueryMol('Cl[S:6]([*:8])(=[O:7])=[O:9]')  # HU
+            QueryMol('[O:12]=[C:11]([OH,O-])[*:13].CC(C)(C)OC(=O)[N:14]'),  # COOH_N-Boc
+            QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):21]'),  # AF/AG/AK/AN
+            QueryMol('Cl[S:31]([*:33])(=[O:32])=[O:34]')  # HU
         ],
-        product=QueryMol('[O:2]=[C:1]([N:5])[*:3].[N:4][S:6]([*:8])(=[O:7])=[O:9]'),
+        product=QueryMol('[O:12]=[C:11]([N:21])[*:13].[N:14][S:31]([*:33])(=[O:32])=[O:34]'),
         reaction_id=16,
         chemical_space='WuXi'
     ),
     # COOH_N-Boc + AF/AG/AK/AN + QS
         Reaction(
         reactants=[
-            QueryMol('[O:2]=[C:1]([OH,O-])[*:3].CC(C)(C)OC(=O)[N:4]-[C:5]'),  # COOH_N-Boc
-            QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):6]'),  # AF/AG/AK/AN
-            QueryMol('[#6:7]-[#6;D2:8]=O')  # QS
+            QueryMol('[O:12]=[C:11]([OH,O-])[*:13].CC(C)(C)OC(=O)[N:14]-[C:15]'),  # COOH_N-Boc
+            QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):21]'),  # AF/AG/AK/AN
+            QueryMol('[#6:31]-[#6;D2:32]=O')  # QS
         ],
-        product=QueryMol('[O:2]=[C:1]([N:6])[*:3].[#6:7]-[#6:8]-[#7:4]-[#6:5]'),
+        product=QueryMol('[O:12]=[C:11]([N:21])[*:13].[#6:31]-[#6:32]-[#7:14]-[#6:15]'),
         reaction_id=17,
         chemical_space='WuXi'
     ),
     # NH_N-Boc + YV + SA/SB/SC/SD/SE
         Reaction(
         reactants=[
-            QueryMol(''),  # NH_N-Boc
-            QueryMol(''),  # YV
-            QueryMol('')  # SA/SB/SC/SD/SE
+            QueryMol('[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]'),  # NH_N-Boc
+            QueryMol('[#6:21]-[#7]=C=O'),  # YV
+            QueryMol('[O:32]=[C:31]([OH,O-])[*:33]')  # SA/SB/SC/SD/SE
         ],
-        product=QueryMol(''),
+        product=QueryMol('[#6:21]-[#7]-[#6](=O)-[#7:12]-[#6:11].[O:32]=[C:31]([N:13])[*:33]'),
         reaction_id=18,
         chemical_space='WuXi'
     ),
     # NH_N-Boc + YV + YV
         Reaction(
         reactants=[
-            QueryMol(''),  # NH_N-Boc
-            QueryMol(''),  # YV
-            QueryMol('')  # YV
+            QueryMol('[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]-[C:14]'),  # NH_N-Boc
+            QueryMol('[#6:21]-[#7]=C=O'),  # YV
+            QueryMol('[#6:31]-[#7]=C=O')  # YV
         ],
-        product=QueryMol(''),
+        product=QueryMol('[#6:21]-[#7]-[#6](=O)-[#7:12]-[#6:11].[#6:31]-[#7]-[#6](=O)-[#7:13]-[#6:14]'),
         reaction_id=19,
         chemical_space='WuXi'
     ),
     # NH_N-Boc + YV + LP
         Reaction(
         reactants=[
-            QueryMol(''),  # NH_N-Boc
-            QueryMol(''),  # YV
-            QueryMol('')  # LP
+            QueryMol('[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]-[C:14]'),  # NH_N-Boc
+            QueryMol('[#6:21]-[#7]=C=O'),  # YV
+            QueryMol('[#6:31]-[#17]')  # LP
         ],
-        product=QueryMol(''),
+        product=QueryMol('[#6:21]-[#7]-[#6](=O)-[#7:12]-[#6:11].[#6:14]-[#7:13]-[#6:31]'),
         reaction_id=20,
         chemical_space='WuXi'
     ),
     # NH_N-Boc + YV + HU
         Reaction(
         reactants=[
-            QueryMol(''),  # NH_N-Boc
-            QueryMol(''),  # YV
-            QueryMol('')  # HU
+            QueryMol('[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]'),  # NH_N-Boc
+            QueryMol('[#6:21]-[#7]=C=O'),  # YV
+            QueryMol('Cl[S:31]([*:33])(=[O:32])=[O:34]')  # HU
         ],
-        product=QueryMol(''),
+        product=QueryMol('[#6:21]-[#7]-[#6](=O)-[#7:12]-[#6:11].[N:13][S:31]([*:33])(=[O:32])=[O:34]'),
         reaction_id=21,
         chemical_space='WuXi'
     ),
     # NH_N-Boc + YV + QS
         Reaction(
         reactants=[
-            QueryMol(''),  # NH_N-Boc
-            QueryMol(''),  # YV
-            QueryMol('')  # QS
+            QueryMol('[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]-[C:14]'),  # NH_N-Boc
+            QueryMol('[#6:21]-[#7]=C=O'),  # YV
+            QueryMol('[#6:31]-[#6;D2:32]=O')  # QS
         ],
-        product=QueryMol(''),
+        product=QueryMol('[#6:21]-[#7]-[#6](=O)-[#7:12]-[#6:11].[#6:31]-[#6:32]-[#7:13]-[#6:14]'),
         reaction_id=22,
         chemical_space='WuXi'
     ),
     # NH_N-Boc + LP + SA/SB/SC/SD/SE
         Reaction(
         reactants=[
-            QueryMol(''),  # NH_N-Boc
-            QueryMol(''),  # LP
-            QueryMol('')  # SA/SB/SC/SD/SE
+            QueryMol('[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]'),  # NH_N-Boc
+            QueryMol('[#6:21]-[#17]'),  # LP
+            QueryMol('[O:32]=[C:31]([OH,O-])[*:33]')  # SA/SB/SC/SD/SE
         ],
-        product=QueryMol(''),
+        product=QueryMol('[#6:11]-[#7:12]-[#6:21].[O:32]=[C:31]([N:13])[*:33]'),
         reaction_id=23,
         chemical_space='WuXi'
     ),
     # NH_N-Boc + LP + YV
         Reaction(
         reactants=[
-            QueryMol(''),  # NH_N-Boc
-            QueryMol(''),  # LP
-            QueryMol('')  # YV
+            QueryMol('[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]-[C:14]'),  # NH_N-Boc
+            QueryMol('[#6:21]-[#17]'),  # LP
+            QueryMol('[#6:31]-[#7]=C=O')  # YV
         ],
-        product=QueryMol(''),
+        product=QueryMol('[#6:11]-[#7:12]-[#6:21].[#6:31]-[#7]-[#6](=O)-[#7:13]-[#6:14]'),
         reaction_id=24,
         chemical_space='WuXi'
     ),
     # NH_N-Boc + LP + LP
         Reaction(
         reactants=[
-            QueryMol(''),  # NH_N-Boc
-            QueryMol(''),  # LP
-            QueryMol('')  # LP
+            QueryMol('[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]-[C:14]'),  # NH_N-Boc
+            QueryMol('[#6:21]-[#17]'),  # LP
+            QueryMol('[#6:31]-[#17]')  # LP
         ],
-        product=QueryMol(''),
+        product=QueryMol('[#6:11]-[#7:12]-[#6:21].[#6:14]-[#7:13]-[#6:31]'),
         reaction_id=25,
         chemical_space='WuXi'
     ),
     # NH_N-Boc + LP + HU
         Reaction(
         reactants=[
-            QueryMol(''),  # NH_N-Boc
-            QueryMol(''),  # LP
-            QueryMol('')  # HU
+            QueryMol('[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]'),  # NH_N-Boc
+            QueryMol('[#6:21]-[#17]'),  # LP
+            QueryMol('Cl[S:31]([*:33])(=[O:32])=[O:34]')  # HU
         ],
-        product=QueryMol(''),
+        product=QueryMol('[#6:11]-[#7:12]-[#6:21].[N:13][S:31]([*:33])(=[O:32])=[O:34]'),
         reaction_id=26,
         chemical_space='WuXi'
     ),
     # NH_N-Boc + LP + QS
         Reaction(
         reactants=[
-            QueryMol(''),  # NH_N-Boc
-            QueryMol(''),  # LP
-            QueryMol('')  # QS
+            QueryMol('[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]-[C:14]'),  # NH_N-Boc
+            QueryMol('[#6:21]-[#17]'),  # LP
+            QueryMol('[#6:31]-[#6;D2:32]=O')  # QS
         ],
-        product=QueryMol(''),
+        product=QueryMol('[#6:11]-[#7:12]-[#6:21].[#6:31]-[#6:32]-[#7:13]-[#6:14]'),
         reaction_id=27,
         chemical_space='WuXi'
     ),
     # NH_N-Boc + HU + SA/SB/SC/SD/SE
         Reaction(
         reactants=[
-            QueryMol(''),  # NH_N-Boc
-            QueryMol(''),  # HU
-            QueryMol('')  # SA/SB/SC/SD/SE
+            QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]'),  # NH_N-Boc
+            QueryMol('Cl[S:21]([*:23])(=[O:22])=[O:24]'),  # HU
+            QueryMol('[O:32]=[C:31]([OH,O-])[*:33]')  # SA/SB/SC/SD/SE
         ],
-        product=QueryMol(''),
+        product=QueryMol('[N:11][S:21]([*:23])(=[O:22])=[O:24].[O:32]=[C:31]([N:12])[*:33]'),
         reaction_id=28,
         chemical_space='WuXi'
     ),
     # NH_N-Boc + HU + YV
         Reaction(
         reactants=[
-            QueryMol(''),  # NH_N-Boc
-            QueryMol(''),  # HU
-            QueryMol('')  # YV
+            QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]-[C:13]'),  # NH_N-Boc
+            QueryMol('Cl[S:21]([*:23])(=[O:22])=[O:24]'),  # HU
+            QueryMol('[#6:31]-[#7]=C=O')  # YV
         ],
-        product=QueryMol(''),
+        product=QueryMol('[N:11][S:21]([*:23])(=[O:22])=[O:24].[#6:31]-[#7]-[#6](=O)-[#7:12]-[#6:13]'),
         reaction_id=29,
         chemical_space='WuXi'
     ),
     # NH_N-Boc + HU + LP
         Reaction(
         reactants=[
-            QueryMol(''),  # NH_N-Boc
-            QueryMol(''),  # HU
-            QueryMol('')  # LP
+            QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]-[C:13]'),  # NH_N-Boc
+            QueryMol('Cl[S:21]([*:23])(=[O:22])=[O:24]'),  # HU
+            QueryMol('[#6:31]-[#17]')  # LP
         ],
-        product=QueryMol(''),
+        product=QueryMol('[N:11][S:21]([*:23])(=[O:22])=[O:24].[#6:13]-[#7:12]-[#6:31]'),
         reaction_id=30,
         chemical_space='WuXi'
     ),
     # NH_N-Boc + HU + HU
         Reaction(
         reactants=[
-            QueryMol(''),  # NH_N-Boc
-            QueryMol(''),  # HU
-            QueryMol('')  # HU
+            QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]'),  # NH_N-Boc
+            QueryMol('Cl[S:21]([*:23])(=[O:22])=[O:24]'),  # HU
+            QueryMol('Cl[S:31]([*:33])(=[O:32])=[O:34]')  # HU
         ],
-        product=QueryMol(''),
+        product=QueryMol('[N:11][S:21]([*:23])(=[O:22])=[O:24].[N:12][S:31]([*:33])(=[O:32])=[O:34]'),
         reaction_id=31,
         chemical_space='WuXi'
     ),
     # NH_N-Boc + HU + QS
         Reaction(
         reactants=[
-            QueryMol(''),  # NH_N-Boc
-            QueryMol(''),  # HU
-            QueryMol('')  # QS
+            QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]-[C:13]'),  # NH_N-Boc
+            QueryMol('Cl[S:21]([*:23])(=[O:22])=[O:24]'),  # HU
+            QueryMol('[#6:31]-[#6;D2:32]=O')  # QS
         ],
-        product=QueryMol(''),
+        product=QueryMol('[N:11][S:21]([*:23])(=[O:22])=[O:24].[#6:31]-[#6:32]-[#7:12]-[#6:13]'),
         reaction_id=32,
         chemical_space='WuXi'
     ),
