@@ -86,7 +86,7 @@ WUXI_REACTIONS_PHASE_3 = (
     # BR_COOH/COOMe/COOEt + BT + AF/AG/AK/AN
     Reaction(
         reactants=[
-            QueryMol('[c:11]-[#35].[O:13]=[C:12]([OH,O-])[*:14]'),  # BR_COOH/COOMe/COOEt
+            QueryMol('[c:11]-[#35].[O:13]=[C:12]([$([OH,O-]),$(O[C,CC])])[*:14]'),  # BR_COOH/COOMe/COOEt
             QueryMol('[#6:21]-[#5](-[#8])-[#8]'),  # BT
             QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):31]')  # AF/AG/AK/AN
         ],
@@ -143,7 +143,7 @@ WUXI_REACTIONS_PHASE_3 = (
         reactants=[
             QueryMol('[c:11]-[#35].CC(C)(C)OC(=O)[N:12]-[C:13]'),  # BR_N-Boc
             QueryMol('[#6:21]-[#5](-[#8])-[#8]'),  # BT
-            QueryMol('[#6:31]-[#6;D2:32]=O')  # QS
+            QueryMol('[#6:31]-[#6;D3:32]=O')  # QS
         ],
         product=QueryMol('[#6:21]-[#6:11].[#6:31]-[#6:32]-[#7:12]-[#6:13]'),
         reaction_id=13,
@@ -187,7 +187,7 @@ WUXI_REACTIONS_PHASE_3 = (
         reactants=[
             QueryMol('[O:12]=[C:11]([OH,O-])[*:13].CC(C)(C)OC(=O)[N:14]-[C:15]'),  # COOH_N-Boc
             QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):21]'),  # AF/AG/AK/AN
-            QueryMol('[#6:31]-[#6;D2:32]=O')  # QS
+            QueryMol('[#6:31]-[#6;D3:32]=O')  # QS
         ],
         product=QueryMol('[O:12]=[C:11]([N:21])[*:13].[#6:31]-[#6:32]-[#7:14]-[#6:15]'),
         reaction_id=17,
@@ -242,7 +242,7 @@ WUXI_REACTIONS_PHASE_3 = (
         reactants=[
             QueryMol('[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]-[C:14]'),  # NH_N-Boc
             QueryMol('[#6:21]-[#7]=C=O'),  # YV
-            QueryMol('[#6:31]-[#6;D2:32]=O')  # QS
+            QueryMol('[#6:31]-[#6;D3:32]=O')  # QS
         ],
         product=QueryMol('[#6:21]-[#7]-[#6](=O)-[#7:12]-[#6:11].[#6:31]-[#6:32]-[#7:13]-[#6:14]'),
         reaction_id=22,
@@ -297,7 +297,7 @@ WUXI_REACTIONS_PHASE_3 = (
         reactants=[
             QueryMol('[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]-[C:14]'),  # NH_N-Boc
             QueryMol('[#6:21]-[#17]'),  # LP
-            QueryMol('[#6:31]-[#6;D2:32]=O')  # QS
+            QueryMol('[#6:31]-[#6;D3:32]=O')  # QS
         ],
         product=QueryMol('[#6:11]-[#7:12]-[#6:21].[#6:31]-[#6:32]-[#7:13]-[#6:14]'),
         reaction_id=27,
@@ -352,7 +352,7 @@ WUXI_REACTIONS_PHASE_3 = (
         reactants=[
             QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]-[C:13]'),  # NH_N-Boc
             QueryMol('Cl[S:21]([*:23])(=[O:22])=[O:24]'),  # HU
-            QueryMol('[#6:31]-[#6;D2:32]=O')  # QS
+            QueryMol('[#6:31]-[#6;D3:32]=O')  # QS
         ],
         product=QueryMol('[N:11][S:21]([*:23])(=[O:22])=[O:24].[#6:31]-[#6:32]-[#7:12]-[#6:13]'),
         reaction_id=32,
@@ -396,7 +396,7 @@ WUXI_REACTIONS_PHASE_3 = (
         reactants=[
             QueryMol('[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]-[C:13]'),  # NH_N-Boc
             QueryMol('[O:22]=[C:21]([OH,O-])[*:23]'),  # SA/SB/SC/SD/SE
-            QueryMol('[#6:31]-[#6;D2:32]=O')  # QS
+            QueryMol('[#6:31]-[#6;D3:32]=O')  # QS
         ],
         product=QueryMol('[O:22]=[C:21]([N:11])[*:23].[#6:31]-[#6:32]-[#7:12]-[#6:13]'),
         reaction_id=36,
