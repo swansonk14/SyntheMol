@@ -266,6 +266,7 @@ def generate(
                 raise ValueError('Cannot use pretrained RL Chemprop model with multiple model paths.')
 
             # TODO: Fix this so that chemprop_scratch works without a pretrained Chemprop model
+            # TODO: Fix to support Chemprop with features (e.g., RDKit features)
             if model_types[0] != 'chemprop':
                 raise ValueError('For RL Chemprop, the first model in model_paths must be a Chemprop model.')
 
