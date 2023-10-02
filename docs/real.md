@@ -1,6 +1,6 @@
 # Enamine REAL Space Data Processing
 
-Instructions for processing Enamine REAL building blocks, reactions, and molecules. Assumes relevant data has already been downloaded (see [docs/README.md](README.md)).
+Instructions for processing Enamine REAL reactions, building blocks, and molecules. Assumes relevant data has already been downloaded (see [docs/README.md](README.md)).
 
 
 - [Reactions](#reactions)

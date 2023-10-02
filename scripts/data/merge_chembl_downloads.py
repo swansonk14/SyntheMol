@@ -1,4 +1,4 @@
-""" Merges and deduplicates CSV files downloaded from ChEMBL using various search terms."""
+"""Merges and deduplicates CSV files downloaded from ChEMBL using various search terms."""
 from collections import defaultdict
 from pathlib import Path
 
