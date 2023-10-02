@@ -31,6 +31,7 @@ from synthemol.generate.generator import Generator
 from synthemol.generate.utils import create_model_scoring_fn, save_generated_molecules
 
 
+# TODO: once tuple[Literal] fix is done in tap, add ('none',) default to fingerprint_types and add literal to reaction_sets
 def generate(
         search_type: Literal['mcts', 'rl'],
         save_dir: Path,
@@ -43,7 +44,7 @@ def generate(
         building_blocks_id_column: str = REAL_BUILDING_BLOCK_ID_COL,
         building_blocks_score_column: str = SCORE_COL,
         building_blocks_smiles_column: str = SMILES_COL,
-        reactions_sets: tuple[str, ...] = ('real',),
+        reaction_sets: tuple[str, ...] = ('real',),
         max_reactions: int = 1,
         n_rollout: int = 10,
         explore_weight: float = 10.0,
@@ -82,7 +83,7 @@ def generate(
     :param building_blocks_id_column: Name of the column containing IDs for each building block.
     :param building_blocks_score_column: Name of column containing scores for each building block.
     :param building_blocks_smiles_column: Name of the column containing SMILES for each building block.
-    :param reactions_sets: A tuple of names of reaction sets to use. 'real' = REAL reactions. 'wuxi' = WuXi reactions.
+    :param reaction_sets: A tuple of names of reaction sets to use. 'real' = REAL reactions. 'wuxi' = WuXi reactions.
                       'custom' = Custom reactions.
     :param max_reactions: Maximum number of reactions that can be performed to expand building blocks into molecules.
     :param n_rollout: The number of times to run the generation process.
@@ -125,7 +126,7 @@ def generate(
     # Get reactions
     reactions = tuple(
         reaction
-        for reaction_set in sorted(set(reactions_sets))
+        for reaction_set in sorted(set(reaction_sets))
         for reaction in REACTION_SETS[reaction_set]
     )
 
@@ -201,7 +202,7 @@ def generate(
                 'building_blocks_id_column': building_blocks_id_column,
                 'building_blocks_score_column': building_blocks_score_column,
                 'building_blocks_smiles_column': building_blocks_smiles_column,
-                'reactions_sets': reactions_sets,
+                'reactions_sets': reaction_sets,
                 'max_reactions': max_reactions,
                 'n_rollout': n_rollout,
                 'explore_weight': explore_weight,
