@@ -7,8 +7,10 @@ from synthemol.reactions.utils import (
     load_and_set_allowed_reaction_building_blocks,
     set_all_building_blocks
 )
+from synthemol.reactions.wuxi import WUXI_REACTIONS
 
-if CUSTOM_REACTIONS is None:
-    REACTIONS: tuple[Reaction] = REAL_REACTIONS
-else:
-    REACTIONS: tuple[Reaction] = CUSTOM_REACTIONS
+REACTION_SETS: dict[str, tuple[Reaction, ...]] = {
+    'real': REAL_REACTIONS,
+    'wuxi': WUXI_REACTIONS,
+    'custom': CUSTOM_REACTIONS,
+}

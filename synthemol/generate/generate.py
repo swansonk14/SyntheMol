@@ -23,8 +23,7 @@ from synthemol.constants import (
 )
 from synthemol.models import RLModelChemprop, RLModelRDKit
 from synthemol.reactions import (
-    Reaction,
-    REACTIONS,
+    REACTION_SETS,
     load_and_set_allowed_reaction_building_blocks,
     set_all_building_blocks
 )
@@ -44,7 +43,7 @@ def generate(
         building_blocks_id_column: str = REAL_BUILDING_BLOCK_ID_COL,
         building_blocks_score_column: str = SCORE_COL,
         building_blocks_smiles_column: str = SMILES_COL,
-        reactions: tuple[Reaction, ...] = REACTIONS,
+        reactions_sets: tuple[str, ...] = ('real',),
         max_reactions: int = 1,
         n_rollout: int = 10,
         explore_weight: float = 10.0,
@@ -83,7 +82,8 @@ def generate(
     :param building_blocks_id_column: Name of the column containing IDs for each building block.
     :param building_blocks_score_column: Name of column containing scores for each building block.
     :param building_blocks_smiles_column: Name of the column containing SMILES for each building block.
-    :param reactions: A tuple of reactions that combine molecular building blocks.
+    :param reactions_sets: A tuple of names of reaction sets to use. 'real' = REAL reactions. 'wuxi' = WuXi reactions.
+                      'custom' = Custom reactions.
     :param max_reactions: Maximum number of reactions that can be performed to expand building blocks into molecules.
     :param n_rollout: The number of times to run the generation process.
     :param explore_weight: The hyperparameter that encourages exploration.
@@ -121,6 +121,15 @@ def generate(
 
     # Create save directory
     save_dir.mkdir(parents=True, exist_ok=True)
+
+    # Get reactions
+    reactions = tuple(
+        reaction
+        for reaction_set in sorted(set(reactions_sets))
+        for reaction in REACTION_SETS[reaction_set]
+    )
+
+    print(f'Using {len(reactions):,} reactions')
 
     # Load building blocks
     print('Loading building blocks...')
@@ -192,6 +201,7 @@ def generate(
                 'building_blocks_id_column': building_blocks_id_column,
                 'building_blocks_score_column': building_blocks_score_column,
                 'building_blocks_smiles_column': building_blocks_smiles_column,
+                'reactions_sets': reactions_sets,
                 'max_reactions': max_reactions,
                 'n_rollout': n_rollout,
                 'explore_weight': explore_weight,

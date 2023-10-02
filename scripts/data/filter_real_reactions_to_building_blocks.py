@@ -5,14 +5,14 @@ from pathlib import Path
 import pandas as pd
 from tqdm import tqdm
 
-from synthemol.reactions import Reaction, REACTIONS
+from synthemol.reactions import Reaction, REAL_REACTIONS
 from synthemol.constants import BUILDING_BLOCKS_PATH, REAL_BUILDING_BLOCK_ID_COL, SMILES_COL
 
 
 def filter_real_reactions_to_building_blocks(
         reaction_to_building_blocks_path: Path,
         save_path: Path,
-        reactions: tuple[Reaction] = REACTIONS,
+        reactions: tuple[Reaction] = REAL_REACTIONS,
         building_blocks_path: Path = BUILDING_BLOCKS_PATH,
         building_blocks_id_column: str = REAL_BUILDING_BLOCK_ID_COL,
         building_blocks_smiles_column: str = SMILES_COL

@@ -14,11 +14,11 @@ from synthemol.constants import (
     REAL_BUILDING_BLOCK_ID_COL,
     REAL_SPACE_SIZE
 )
-from synthemol.reactions import REACTIONS
+from synthemol.reactions import REAL_REACTIONS
 
 
 USE_COLS = [REAL_REACTION_COL] + REAL_BUILDING_BLOCK_COLS
-REAL_REACTION_IDS = {reaction.id for reaction in REACTIONS}
+REAL_REACTION_IDS = {reaction.id for reaction in REAL_REACTIONS}
 
 
 def count_real_space_for_file(
