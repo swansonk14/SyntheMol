@@ -75,18 +75,9 @@ chemfunc canonicalize_smiles \
 
 ### Map WuXi reactions to building blocks
 
-TODO
-
 Determine which building blocks are valid in which WuXi reactions.
 ```bash
-python scripts/data/map_real_reactions_to_building_blocks.py \
-    --data_dir data/Data/4_real_space/full_real \
-    --save_path data/Data/4_real_space/reaction_to_building_blocks.pkl
-```
-
-Filter out building blocks that do not match the reaction templates.
-```bash
-python scripts/data/filter_real_reactions_to_building_blocks.py \
-    --reaction_to_building_blocks_path data/Data/4_real_space/reaction_to_building_blocks.pkl \
-    --save_path data/Data/4_real_space/reaction_to_building_blocks_filtered.pkl
+python scripts/data/map_wuxi_reactions_to_building_blocks.py \
+    --building_blocks_path data/wuxi/building_blocks.csv \
+    --save_path data/wuxi/reaction_to_building_blocks.pkl
 ```

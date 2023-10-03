@@ -29,7 +29,6 @@ def map_wuxi_reactions_to_building_blocks(
     data = pd.read_csv(building_blocks_path)
 
     # Create mapping from reaction ID to reactant ID to list of building block SMILES
-    # TODO: implement reactant.subsets
     reaction_to_reactant_to_building_blocks: dict[int, dict[int, set[str]]] = {
         reaction.id: {
             reactant_index: sorted({
@@ -41,6 +40,12 @@ def map_wuxi_reactions_to_building_blocks(
         }
         for reaction in tqdm(WUXI_REACTIONS)
     }
+
+    # Ensure that all reactions and reactants have building blocks
+    for reaction, reactant_to_building_blocks in reaction_to_reactant_to_building_blocks.items():
+        for reactant, building_blocks in reactant_to_building_blocks.items():
+            if len(building_blocks) == 0:
+                raise ValueError(f'No building blocks found for reaction {reaction} reactant {reactant}')
 
     # Save mapping
     with open(save_path, 'wb') as f:
