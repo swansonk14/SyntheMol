@@ -37,6 +37,7 @@ setup(
         'gdown',
         'matplotlib',
         'numpy',
+        'openpyxl',
         'pandas',
         'torch',
         'rdkit',

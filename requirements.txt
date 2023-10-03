@@ -5,6 +5,7 @@ gdown==4.7.1
 matplotlib==3.7.1
 networkx==3.1
 numpy==1.24.3
+openpyxl==3.1.2
 pandas==2.0.1
 rdkit==2022.3.4
 scikit-learn==1.2.2
