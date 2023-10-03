@@ -10,14 +10,16 @@ from synthemol.utils import convert_to_mol, strip_atom_mapping
 class QueryMol:
     """Contains a molecule query in the form of a SMARTS string along with helper functions."""
 
-    def __init__(self, smarts: str) -> None:
+    def __init__(self, smarts: str, subsets: tuple[str, ...] | None = None) -> None:
         """Initializes the QueryMol.
 
         :param smarts: A SMARTS string representing the molecular query.
+        :param subsets: An optional tuple of building block subsets that this QueryMol belongs to.
         """
         self.smarts_with_atom_mapping = smarts
         self.smarts = strip_atom_mapping(smarts)
         self.query_mol = Chem.MolFromSmarts(self.smarts)
+        self.subsets = subsets
 
         # All building block SMILES
         self._all_building_block_set = self._all_building_block_list = None
