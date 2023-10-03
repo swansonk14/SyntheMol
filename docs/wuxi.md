@@ -54,9 +54,10 @@ Data size = 15,488
 Data size after removing rows with missing IDs = 15,488
 Data size after removing rows with missing SMILES = 15,484
 Data size after removing rows with invalid SMILES = 15,484
-Number of unique building block IDs = 15,399
-Number of unique building block SMILES = 14,975
+Number of unique building block IDs = 15,484
+Number of unique building block WuXi IDs = 15,399
 Number of unique building block subsets = 25
+Number of unique building block SMILES = 14,975
 ```
 
 ### Remove salts
