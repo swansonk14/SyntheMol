@@ -80,8 +80,8 @@ def generate(
                         Note: All models must have a single output.
     :param fingerprint_types: List of types of fingerprints to use as input features for the model_paths.
     :param model_weights: List of weights for each model/ensemble in model_paths for defining the reward function.
-    :param chemical_spaces: A tuple of names of reaction sets to use. 'real' = REAL reactions. 'wuxi' = WuXi reactions.
-                            'custom' = Custom reactions.
+    :param chemical_spaces: A tuple of names of reaction sets to use. 'real' = Enamine REAL Space reactions.
+                            'wuxi' = WuXi GalaXi reactions. 'custom' = Custom reactions (in synthemol/reactions/custom.py).
     :param building_blocks_paths: Paths to CSV files containing molecular building blocks.
     :param reaction_to_building_blocks_paths: Paths to PKL files containing mapping from reactions to allowed building blocks.
     :param building_blocks_id_column: Name of the column containing IDs for each building block.
@@ -149,7 +149,13 @@ def generate(
         assert chemical_spaces == ('real',)
 
         # Change score loading dtype to ensure numerical precision
-        real_building_block_data = pd.read_csv(building_blocks_paths[0], dtype={building_blocks_score_column: str})
+        real_building_block_data = pd.read_csv(
+            building_blocks_paths[0],
+            dtype={
+                building_blocks_id_column: str,
+                building_blocks_score_column: str
+            }
+        )
         real_building_block_data[building_blocks_score_column] = real_building_block_data[building_blocks_score_column].astype(float)
 
         # Reorder reactions
@@ -166,7 +172,7 @@ def generate(
     # Otherwise, load the building blocks normally
     else:
         chemical_space_to_building_block_data = {
-            chemical_space: pd.read_csv(building_blocks_path)
+            chemical_space: pd.read_csv(building_blocks_path, dtype={building_blocks_id_column: str})
             for chemical_space, building_blocks_path in zip(chemical_spaces, building_blocks_paths)
         }
 
@@ -178,7 +184,7 @@ def generate(
             raise ValueError(f'Building block IDs are not unique in {chemical_space} chemical space.')
 
     # Unique set of building block SMILES
-    building_block_smiles = set.union(*[
+    building_block_smiles: set[str] = set.union(*[
         set(building_block_data[building_blocks_smiles_column])
         for building_block_data in chemical_space_to_building_block_data.values()
     ])
@@ -186,7 +192,7 @@ def generate(
     print(f'Found {len(building_block_smiles):,} unique building blocks')
 
     # Map chemical space to building block SMILES to IDs
-    chemical_space_to_building_block_smiles_to_id = {
+    chemical_space_to_building_block_smiles_to_id: dict[str, dict[str, str]] = {
         chemical_space: dict(zip(
             building_block_data[building_blocks_smiles_column],
             building_block_data[building_blocks_id_column]
@@ -195,7 +201,7 @@ def generate(
     }
 
     # Map chemical space to building block ID to SMILES
-    chemical_space_to_building_block_id_to_smiles = {
+    chemical_space_to_building_block_id_to_smiles: dict[str, dict[str, str]] = {
         chemical_space: dict(zip(
             building_block_data[building_blocks_id_column],
             building_block_data[building_blocks_smiles_column]
@@ -204,7 +210,7 @@ def generate(
     }
 
     # Map building block SMILES to score
-    building_block_smiles_to_score = {
+    building_block_smiles_to_score: dict[str, float] = {
         smiles: score
         for building_block_data in chemical_space_to_building_block_data.values()
         for smiles, score in zip(

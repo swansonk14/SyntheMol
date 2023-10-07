@@ -30,7 +30,7 @@ class Generator:
     def __init__(
             self,
             search_type: Literal['mcts', 'rl'],
-            chemical_space_to_building_block_smiles_to_id: dict[str, dict[str, int]],
+            chemical_space_to_building_block_smiles_to_id: dict[str, dict[str, str]],
             max_reactions: int,
             scoring_fn: Callable[[str], float],
             explore_weight: float,
@@ -263,7 +263,7 @@ class Generator:
                 chemical_space=reaction.chemical_space,
                 reaction_id=reaction.id,
                 reactant_ids=tuple(
-                    self.chemical_space_to_building_block_smiles_to_id[reaction.chemical_space].get(molecule, -1)
+                    self.chemical_space_to_building_block_smiles_to_id[reaction.chemical_space].get(molecule, '-1')
                     for molecule in molecules
                 )
             )

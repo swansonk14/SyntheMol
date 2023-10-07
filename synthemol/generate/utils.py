@@ -150,7 +150,7 @@ def create_model_scoring_fn(
 
 def save_generated_molecules(
         nodes: list[Node],
-        chemical_space_to_building_block_id_to_smiles: dict[str, dict[int, str]],
+        chemical_space_to_building_block_id_to_smiles: dict[str, dict[str, str]],
         save_path: Path
 ) -> None:
     """Save generated molecules to a CSV file.
@@ -189,6 +189,7 @@ def save_generated_molecules(
     columns = [SMILES_COL, 'node_id', 'num_expansions', ROLLOUT_COL, SCORE_COL, 'Q_value', 'num_reactions']
 
     for reaction_num in range(1, max_reaction_num + 1):
+        columns.append(f'reaction_{reaction_num}_chemical_space')
         columns.append(f'reaction_{reaction_num}_id')
 
         for reactant_num in range(1, reaction_num_to_max_reactant_num[reaction_num] + 1):
