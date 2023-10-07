@@ -30,7 +30,7 @@ class Generator:
     def __init__(
             self,
             search_type: Literal['mcts', 'rl'],
-            building_block_smiles_to_id: dict[str, int],
+            chemical_space_to_building_block_smiles_to_id: dict[str, dict[str, int]],
             max_reactions: int,
             scoring_fn: Callable[[str], float],
             explore_weight: float,
@@ -51,7 +51,8 @@ class Generator:
         """Creates the Generator.
 
         :param search_type: The type of search to perform. 'mcts' = Monte Carlo tree search. 'rl' = Reinforcement learning.
-        :param building_block_smiles_to_id: A dictionary mapping building block SMILES to their IDs.
+        :param chemical_space_to_building_block_smiles_to_id: A dictionary mapping chemical space to building block
+                                                              SMILES to IDs.
         :param max_reactions: The maximum number of reactions to use to construct a molecule.
         :param scoring_fn: A function that takes as input a SMILES representing a molecule and returns a score.
         :param explore_weight: The hyperparameter that encourages exploration.
@@ -78,7 +79,7 @@ class Generator:
         :param wandb_log: Whether to log results to Weights & Biases.
         """
         self.search_type = search_type
-        self.building_block_smiles_to_id = building_block_smiles_to_id
+        self.chemical_space_to_building_block_smiles_to_id = chemical_space_to_building_block_smiles_to_id
         self.max_reactions = max_reactions
         self.scoring_fn = scoring_fn
         self.explore_weight = explore_weight
@@ -111,7 +112,8 @@ class Generator:
         else:
             self.all_building_blocks = sorted(
                 building_block
-                for building_block in self.building_block_smiles_to_id
+                for building_block_smiles_to_id in self.chemical_space_to_building_block_smiles_to_id.values()
+                for building_block in building_block_smiles_to_id
                 if any(reactant.has_match(building_block) for reaction in reactions for reactant in reaction.reactants)
             )
 
@@ -258,9 +260,10 @@ class Generator:
 
             # Create reaction log
             reaction_log = ReactionLog(
+                chemical_space=reaction.chemical_space,
                 reaction_id=reaction.id,
                 reactant_ids=tuple(
-                    self.building_block_smiles_to_id.get(molecule, -1)
+                    self.chemical_space_to_building_block_smiles_to_id[reaction.chemical_space].get(molecule, -1)
                     for molecule in molecules
                 )
             )

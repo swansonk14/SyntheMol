@@ -5,14 +5,16 @@ from typing import Iterator
 class ReactionLog:
     """A ReactionLog contains information about a reaction and the building blocks combined by that reaction."""
 
-    def __init__(self, reaction_id: int, reactant_ids: tuple[int]) -> None:
+    def __init__(self, chemical_space: str, reaction_id: int, reactant_ids: tuple[int, ...]) -> None:
         """Initializes the ReactionLog.
 
+        :param chemical_space: The chemical space the reaction belongs to.
         :param reaction_id: The ID of the reaction.
         :param reactant_ids: A tuple of reactant IDs, which are building block IDs except for -1,
                              which indicates a non-building block molecule (i.e., a molecule already
                              containing multiple building blocks).
         """
+        self.chemical_space = chemical_space
         self.reaction_id = reaction_id
         self.reactant_ids = reactant_ids
 
@@ -33,7 +35,7 @@ class ConstructionLog:
     Note: The ConstructionLog is immutable.
     """
 
-    def __init__(self, reaction_logs: tuple[ReactionLog] | None = None) -> None:
+    def __init__(self, reaction_logs: tuple[ReactionLog, ...] | None = None) -> None:
         """Initializes the ConstructionLog.
 
         :param reaction_logs: A tuple of ReactionLogs.

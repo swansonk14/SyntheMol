@@ -3,6 +3,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
+import numpy as np
 import pandas as pd
 import torch
 import wandb
@@ -23,7 +24,7 @@ from synthemol.constants import (
 )
 from synthemol.models import RLModelChemprop, RLModelRDKit
 from synthemol.reactions import (
-    REACTION_SETS,
+    CHEMICAL_SPACE_TO_REACTIONS,
     load_and_set_allowed_reaction_building_blocks,
     set_all_building_blocks
 )
@@ -32,6 +33,7 @@ from synthemol.generate.utils import create_model_scoring_fn, save_generated_mol
 
 
 # TODO: once tuple[Literal] fix is done in tap, add ('none',) default to fingerprint_types and add literal to reaction_sets
+# TODO: change rl temperature to base temperature or init temperature and set desired similarity target by default
 def generate(
         search_type: Literal['mcts', 'rl'],
         save_dir: Path,
@@ -39,12 +41,12 @@ def generate(
         model_paths: list[Path],
         fingerprint_types: list[FINGERPRINT_TYPES],
         model_weights: tuple[float, ...] = (1.0,),
-        building_blocks_path: Path = BUILDING_BLOCKS_PATH,
-        reaction_to_building_blocks_path: Path | None = REACTION_TO_BUILDING_BLOCKS_PATH,
+        chemical_spaces: tuple[str, ...] = ('real',),
+        building_blocks_paths: tuple[Path, ...] = (BUILDING_BLOCKS_PATH,),
+        reaction_to_building_blocks_paths: tuple[Path, ...] = (REACTION_TO_BUILDING_BLOCKS_PATH,),
         building_blocks_id_column: str = ID_COL,
         building_blocks_score_column: str = SCORE_COL,
         building_blocks_smiles_column: str = SMILES_COL,
-        reaction_sets: tuple[str, ...] = ('real',),
         max_reactions: int = 1,
         n_rollout: int = 10,
         explore_weight: float = 10.0,
@@ -78,13 +80,13 @@ def generate(
                         Note: All models must have a single output.
     :param fingerprint_types: List of types of fingerprints to use as input features for the model_paths.
     :param model_weights: List of weights for each model/ensemble in model_paths for defining the reward function.
-    :param building_blocks_path: Path to CSV file containing molecular building blocks.
-    :param reaction_to_building_blocks_path: Path to PKL file containing mapping from REAL reactions to allowed building blocks.
+    :param chemical_spaces: A tuple of names of reaction sets to use. 'real' = REAL reactions. 'wuxi' = WuXi reactions.
+                            'custom' = Custom reactions.
+    :param building_blocks_paths: Paths to CSV files containing molecular building blocks.
+    :param reaction_to_building_blocks_paths: Paths to PKL files containing mapping from reactions to allowed building blocks.
     :param building_blocks_id_column: Name of the column containing IDs for each building block.
     :param building_blocks_score_column: Name of column containing scores for each building block.
     :param building_blocks_smiles_column: Name of the column containing SMILES for each building block.
-    :param reaction_sets: A tuple of names of reaction sets to use. 'real' = REAL reactions. 'wuxi' = WuXi reactions.
-                      'custom' = Custom reactions.
     :param max_reactions: Maximum number of reactions that can be performed to expand building blocks into molecules.
     :param n_rollout: The number of times to run the generation process.
     :param explore_weight: The hyperparameter that encourages exploration.
@@ -118,7 +120,13 @@ def generate(
     """
     # Check lengths of model arguments match
     if len({len(arg) for arg in [model_types, model_paths, fingerprint_types, model_weights]}) != 1:
-        raise ValueError('model_types, model_paths, fingerprint_types, and model_weights must all have the same length.')
+        raise ValueError('model_types, model_paths, fingerprint_types, and model_weights '
+                         'must have the same length.')
+
+    # Check lengths of building block arguments match
+    if len({len(arg) for arg in [chemical_spaces, building_blocks_paths, reaction_to_building_blocks_paths]}) != 1:
+        raise ValueError('chemical_spaces, building_blocks_paths, and reaction_to_building_blocks_paths '
+                         'must have the same length.')
 
     # Create save directory
     save_dir.mkdir(parents=True, exist_ok=True)
@@ -126,8 +134,8 @@ def generate(
     # Get reactions
     reactions = tuple(
         reaction
-        for reaction_set in sorted(set(reaction_sets))
-        for reaction in REACTION_SETS[reaction_set]
+        for chemical_space in sorted(set(chemical_spaces))
+        for reaction in CHEMICAL_SPACE_TO_REACTIONS[chemical_space]
     )
 
     print(f'Using {len(reactions):,} reactions')
@@ -137,47 +145,80 @@ def generate(
 
     # Optionally alter building blocks loading to precisely replicate previous experiments
     if replicate:
+        # Ensure only REAL space
+        assert chemical_spaces == ('real',)
+
         # Change score loading dtype to ensure numerical precision
-        building_block_data = pd.read_csv(building_blocks_path, dtype={building_blocks_score_column: str})
-        building_block_data[building_blocks_score_column] = building_block_data[building_blocks_score_column].astype(float)
+        real_building_block_data = pd.read_csv(building_blocks_paths[0], dtype={building_blocks_score_column: str})
+        real_building_block_data[building_blocks_score_column] = real_building_block_data[building_blocks_score_column].astype(float)
 
         # Reorder reactions
         old_reactions_order = [275592, 22, 11, 527, 2430, 2708, 240690, 2230, 2718, 40, 1458, 271948, 27]
         reactions = tuple(sorted(reactions, key=lambda reaction: old_reactions_order.index(reaction.id)))
 
         # Deduplicate building blocks by SMILES
-        building_block_data.drop_duplicates(subset=building_blocks_smiles_column, inplace=True)
+        real_building_block_data.drop_duplicates(subset=building_blocks_smiles_column, inplace=True)
+
+        # Put building block data in a dictionary
+        chemical_space_to_building_block_data = {
+            chemical_spaces[0]: real_building_block_data
+        }
     # Otherwise, load the building blocks normally
     else:
-        building_block_data = pd.read_csv(building_blocks_path)
+        chemical_space_to_building_block_data = {
+            chemical_space: pd.read_csv(building_blocks_path)
+            for chemical_space, building_blocks_path in zip(chemical_spaces, building_blocks_paths)
+        }
 
-    print(f'Loaded {len(building_block_data):,} building blocks')
+    # Print building block stats and check that building block IDs are unique
+    for chemical_space, building_block_data in chemical_space_to_building_block_data.items():
+        print(f'Loaded {len(building_block_data):,} {chemical_space} building blocks')
 
-    # Ensure unique building block IDs
-    if building_block_data[building_blocks_id_column].nunique() != len(building_block_data):
-        raise ValueError('Building block IDs are not unique.')
+        if building_block_data[building_blocks_id_column].nunique() != len(building_block_data):
+            raise ValueError(f'Building block IDs are not unique in {chemical_space} chemical space.')
 
-    # Map building blocks SMILES to IDs, IDs to SMILES, and SMILES to scores
-    building_block_smiles_to_id = dict(zip(
-        building_block_data[building_blocks_smiles_column],
-        building_block_data[building_blocks_id_column]
-    ))
-    building_block_id_to_smiles = dict(zip(
-        building_block_data[building_blocks_id_column],
-        building_block_data[building_blocks_smiles_column]
-    ))
-    building_block_smiles_to_score = dict(zip(
-        building_block_data[building_blocks_smiles_column],
-        building_block_data[building_blocks_score_column]
-    ))
+    # Unique set of building block SMILES
+    building_block_smiles = set.union(*[
+        set(building_block_data[building_blocks_smiles_column])
+        for building_block_data in chemical_space_to_building_block_data.values()
+    ])
 
-    print(f'Found {len(building_block_smiles_to_id):,} unique building blocks')
+    print(f'Found {len(building_block_smiles):,} unique building blocks')
+
+    # Map chemical space to building block SMILES to IDs
+    chemical_space_to_building_block_smiles_to_id = {
+        chemical_space: dict(zip(
+            building_block_data[building_blocks_smiles_column],
+            building_block_data[building_blocks_id_column]
+        ))
+        for chemical_space, building_block_data in chemical_space_to_building_block_data.items()
+    }
+
+    # Map chemical space to building block ID to SMILES
+    chemical_space_to_building_block_id_to_smiles = {
+        chemical_space: dict(zip(
+            building_block_data[building_blocks_id_column],
+            building_block_data[building_blocks_smiles_column]
+        ))
+        for chemical_space, building_block_data in chemical_space_to_building_block_data.items()
+    }
+
+    # Map building block SMILES to score
+    building_block_smiles_to_score = {
+        smiles: score
+        for building_block_data in chemical_space_to_building_block_data.values()
+        for smiles, score in zip(
+            building_block_data[building_blocks_smiles_column],
+            building_block_data[building_blocks_score_column]
+        )
+    }
 
     # Optionally, set up Weights & Biases logging and log building block stats
     if wandb_log:
         # Set up Weights & Biases run name
         if wandb_run_name is None:
             wandb_run_name = f'{search_type}' + (f'_{rl_model_type}' if search_type == 'rl' else '')
+
             for model_type, fingerprint_type, model_weight in zip(
                     model_types,
                     fingerprint_types,
@@ -185,6 +226,8 @@ def generate(
             ):
                 wandb_run_name += (f'_{model_weight}_{model_type}' +
                                    (f'_{fingerprint_type}' if fingerprint_type != 'none' else ''))
+
+            wandb_run_name += f'_{"_".join(chemical_spaces)}'
 
         # Initialize Weights & Biases logging
         wandb.init(
@@ -197,12 +240,12 @@ def generate(
                 'model_types': model_types,
                 'fingerprint_types': fingerprint_types,
                 'model_weights': model_weights,
-                'building_blocks_path': building_blocks_path,
-                'reaction_to_building_blocks_path': reaction_to_building_blocks_path,
+                'chemical_spaces': chemical_spaces,
+                'building_blocks_paths': building_blocks_paths,
+                'reaction_to_building_blocks_paths': reaction_to_building_blocks_paths,
                 'building_blocks_id_column': building_blocks_id_column,
                 'building_blocks_score_column': building_blocks_score_column,
                 'building_blocks_smiles_column': building_blocks_smiles_column,
-                'reactions_sets': reaction_sets,
                 'max_reactions': max_reactions,
                 'n_rollout': n_rollout,
                 'explore_weight': explore_weight,
@@ -222,27 +265,32 @@ def generate(
             }
         )
 
-        # Log building block count
-        wandb.log({'Building Block Count': len(building_block_smiles_to_id)})
-
-        # Log building block score histogram
-        building_block_scores = [[score] for score in building_block_smiles_to_score.values()]
-        table = wandb.Table(data=building_block_scores, columns=['Score'])
-        wandb.log({'building_block_scores': wandb.plot.histogram(table, 'Score', title='Building Block Scores')})
+        # For each chemical space, log number of building blocks and score histogram
+        for chemical_space, building_block_data in chemical_space_to_building_block_data.items():
+            wandb.log({
+                f'{chemical_space} Building Block Count': len(building_block_data),
+                f'{chemical_space} Building Block Scores': wandb.plot.histogram(
+                    wandb.Table(
+                        data=building_block_data[building_blocks_score_column].values[:, np.newaxis],
+                        columns=['Score']
+                    ),
+                    'Score',
+                    title=f'{chemical_space} Building Block Scores')
+            })
 
     # Set all building blocks for each reaction
     set_all_building_blocks(
         reactions=reactions,
-        building_blocks=set(building_block_smiles_to_id)
+        building_blocks=building_block_smiles
     )
 
-    # Optionally, set allowed building blocks for each reaction
-    if reaction_to_building_blocks_path is not None:
-        print('Loading and setting allowed building blocks for each reaction...')
-        load_and_set_allowed_reaction_building_blocks(
-            reactions=reactions,
-            reaction_to_reactant_to_building_blocks_path=reaction_to_building_blocks_path
-        )
+    # Set allowed building blocks for each reaction
+    print('Loading and setting allowed building blocks for each reaction...')
+    load_and_set_allowed_reaction_building_blocks(
+        reactions=reactions,
+        chemical_spaces=chemical_spaces,
+        reaction_to_building_blocks_paths=reaction_to_building_blocks_paths
+    )
 
     # Set up device for model
     if use_gpu:
@@ -299,7 +347,7 @@ def generate(
     print('Setting up generator...')
     generator = Generator(
         search_type=search_type,
-        building_block_smiles_to_id=building_block_smiles_to_id,
+        chemical_space_to_building_block_smiles_to_id=chemical_space_to_building_block_smiles_to_id,
         max_reactions=max_reactions,
         scoring_fn=model_scoring_fn,
         explore_weight=explore_weight,
@@ -338,7 +386,7 @@ def generate(
         print('Saving molecules...')
         save_generated_molecules(
             nodes=nodes,
-            building_block_id_to_smiles=building_block_id_to_smiles,
+            chemical_space_to_building_block_id_to_smiles=chemical_space_to_building_block_id_to_smiles,
             save_path=molecules_save_path
         )
 

@@ -150,13 +150,13 @@ def create_model_scoring_fn(
 
 def save_generated_molecules(
         nodes: list[Node],
-        building_block_id_to_smiles: dict[int, str],
+        chemical_space_to_building_block_id_to_smiles: dict[str, dict[int, str]],
         save_path: Path
 ) -> None:
     """Save generated molecules to a CSV file.
 
     :param nodes: A list of Nodes containing molecules. Only nodes with a single molecule are saved.
-    :param building_block_id_to_smiles: A dictionary mapping building block IDs to SMILES.
+    :param chemical_space_to_building_block_id_to_smiles: A dictionary mapping building block IDs to SMILES.
     :param save_path: A path to a CSV file where the molecules will be saved.
     """
     # Convert construction logs from lists to dictionaries
@@ -170,6 +170,7 @@ def save_generated_molecules(
 
         for reaction_index, reaction_log in enumerate(node.construction_log):
             reaction_num = reaction_index + 1
+            construction_dict[f'reaction_{reaction_num}_chemical_space'] = reaction_log.chemical_space
             construction_dict[f'reaction_{reaction_num}_id'] = reaction_log.reaction_id
 
             reaction_num_to_max_reactant_num[reaction_num] = max(
@@ -180,7 +181,7 @@ def save_generated_molecules(
             for reactant_index, reactant_id in enumerate(reaction_log.reactant_ids):
                 reactant_num = reactant_index + 1
                 construction_dict[f'building_block_{reaction_num}_{reactant_num}_id'] = reactant_id
-                construction_dict[f'building_block_{reaction_num}_{reactant_num}_smiles'] = building_block_id_to_smiles.get(reactant_id, '')
+                construction_dict[f'building_block_{reaction_num}_{reactant_num}_smiles'] = chemical_space_to_building_block_id_to_smiles[reaction_log.chemical_space].get(reactant_id, '')
 
         construction_dicts.append(construction_dict)
 

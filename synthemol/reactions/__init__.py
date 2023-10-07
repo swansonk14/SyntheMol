@@ -9,7 +9,7 @@ from synthemol.reactions.utils import (
 )
 from synthemol.reactions.wuxi import WUXI_REACTIONS
 
-REACTION_SETS: dict[str, tuple[Reaction, ...]] = {
+CHEMICAL_SPACE_TO_REACTIONS: dict[str, tuple[Reaction, ...]] = {
     'real': REAL_REACTIONS,
     'wuxi': WUXI_REACTIONS,
     'custom': CUSTOM_REACTIONS,
