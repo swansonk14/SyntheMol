@@ -601,9 +601,8 @@ class Generator:
                         self.rl_temperature_similarity_target
                 )
 
-                # Update temperature based on similarity difference using rolling average
-                self.rl_temperature = self.rolling_average_weight * self.rl_temperature + \
-                    (1 - self.rolling_average_weight) * self.rl_temperature * (1 + percent_similarity_difference)
+                # Update temperature based on percent similarity difference
+                self.rl_temperature += percent_similarity_difference * self.rl_temperature
 
                 # Clip temperature within min/max bounds
                 self.rl_temperature = max(self.min_temperature, min(self.rl_temperature, self.max_temperature))
