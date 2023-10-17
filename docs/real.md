@@ -71,6 +71,15 @@ lftp -c "open -p 21 -u username,password ftp-rdb-fr.chem-space.com; mirror -c --
 
 In the above command, replace `username` and `password` with the appropriate values provided by Enamine.
 
+Alternatively, you can run the following commands for newer versions of the REAL Space (e.g., September 25, 2023). However, the rest of this README assumes the August 30, 2022 version.
+
+Run the following with the `username` replaced by the username provided by Enamine, and type in the password provided by Enamine when prompted after the first command.
+```bash
+sftp -oPort=22 username@ftp-rdb-fr.chem-space.com
+lcd data/Data/4_real_space/full_real_09_25_2023
+get -r .
+```
+
 
 ### Map REAL reactions to building blocks
 
