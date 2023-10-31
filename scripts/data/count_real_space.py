@@ -10,6 +10,7 @@ from tqdm import tqdm
 
 from synthemol.constants import (
     REAL_BUILDING_BLOCK_COLS,
+    REAL_ID_COL,
     REAL_REACTION_COL,
     REAL_BUILDING_BLOCK_ID_COL,
     REAL_SPACE_SIZE
@@ -17,28 +18,59 @@ from synthemol.constants import (
 from synthemol.reactions import REAL_REACTIONS
 
 
-USE_COLS = [REAL_REACTION_COL] + REAL_BUILDING_BLOCK_COLS
+USE_COLS_MULTIPLE_ID = [REAL_REACTION_COL] + REAL_BUILDING_BLOCK_COLS
+USE_COLS_SINGLE_ID = [REAL_ID_COL]
 REAL_REACTION_IDS = {reaction.id for reaction in REAL_REACTIONS}
+
+
+def expand_single_id_column(data: pd.DataFrame) -> pd.DataFrame:
+    """Expands a single ID column into separate reaction and building block ID columns.
+
+    :param data: DataFrame with a single ID column.
+    :return: DataFrame with separate reaction and building block ID columns.
+    """
+    # Drop 'm_' or 's_' prefix
+    real_ids = data[REAL_ID_COL].str[2:]
+
+    # Split single ID into reaction and building block IDs
+    reaction_building_block_ids = real_ids.str.split('_', expand=True)
+
+    # Extract reaction IDs
+    data[REAL_REACTION_COL] = reaction_building_block_ids[0].astype(int)
+
+    # Extract building block IDs
+    num_building_block_cols = len(reaction_building_block_ids.columns) - 1
+    building_block_cols = REAL_BUILDING_BLOCK_COLS[:num_building_block_cols]
+    data[building_block_cols] = reaction_building_block_ids.drop(columns=0).astype(float)
+
+    return data
 
 
 def count_real_space_for_file(
         path: Path,
         building_block_set: set | None = None,
-        only_selected_reactions: bool = False
+        only_selected_reactions: bool = False,
+        single_id_column: bool = False
 ) -> tuple[Counter, Counter, int, int]:
     """Counts reactions and building blocks for a single REAL space file.
 
     :param path: Path to a REAL space file.
     :param building_block_set: Set of building blocks to filter by.
     :param only_selected_reactions: Whether to only count reactions in REAL_REACTION_IDS.
+    :param single_id_column: Whether the reaction and building blocks are in a single ID column (newer versions of REAL)
+                             or in separate columns (older versions of REAL).
     :return: A tuple containing the reaction counts, building block counts,
              number of molecules in the file, and number of molecules counted.
     """
     # Load REAL data file
-    data = pd.read_csv(path, sep='\t', usecols=USE_COLS)
+    data = pd.read_csv(path, sep='\t', usecols=USE_COLS_SINGLE_ID if single_id_column else USE_COLS_MULTIPLE_ID)
 
     # Get number of molecules in file
     num_molecules_in_file = len(data)
+
+    # If single ID column, expand to multiple ID columns
+    if single_id_column:
+        data = expand_single_id_column(data)
 
     # Optionally filter by building blocks
     if building_block_set is not None:
@@ -68,7 +100,8 @@ def count_real_space(
         save_dir: Path,
         building_blocks_path: Path | None = None,
         building_block_id_column: str = REAL_BUILDING_BLOCK_ID_COL,
-        only_selected_reactions: bool = False
+        only_selected_reactions: bool = False,
+        single_id_column: bool = False
 ) -> None:
     """Counts reactions and building blocks in REAL space.
 
@@ -77,6 +110,8 @@ def count_real_space(
     :param building_blocks_path: If provided, only count reactions and building blocks that contain the building blocks in this file.
     :param building_block_id_column: Column in building block file that contains building block IDs.
     :param only_selected_reactions: If True, only count reactions that are in the selected reactions in real_reactions.py.
+    :param single_id_column: Whether the reaction and building blocks are in a single ID column (newer versions of REAL)
+                             or in separate columns (older versions of REAL).
     """
     # Get paths to data files
     data_paths = sorted(data_dir.rglob('*.cxsmiles.bz2'))
@@ -98,7 +133,8 @@ def count_real_space(
     count_real_space_for_file_fn = partial(
         count_real_space_for_file,
         building_block_set=building_block_set,
-        only_selected_reactions=only_selected_reactions
+        only_selected_reactions=only_selected_reactions,
+        single_id_column=single_id_column
     )
 
     # Create combined counters
