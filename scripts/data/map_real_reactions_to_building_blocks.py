@@ -43,7 +43,9 @@ def map_reactions_for_file(
 
     # If single ID column, expand to multiple ID columns and ensure only those columns remain in order
     if single_id_column:
-        data = expand_single_id_column(data)[USE_COLS_MULTIPLE_ID]
+        data = expand_single_id_column(data)
+        building_blocks_cols = sorted(set(REAL_BUILDING_BLOCK_COLS) & set(data.columns))
+        data = data[[REAL_REACTION_COL] + building_blocks_cols]
 
     # Update mapping
     for row_tuple in data.itertuples(index=False):

@@ -72,9 +72,12 @@ def count_real_space_for_file(
     if single_id_column:
         data = expand_single_id_column(data)
 
+    # Get building blocks columns
+    building_blocks_cols = sorted(set(REAL_BUILDING_BLOCK_COLS) & set(data.columns))
+
     # Optionally filter by building blocks
     if building_block_set is not None:
-        data = data[data[REAL_BUILDING_BLOCK_COLS].isin(building_block_set).all(axis=1)]
+        data = data[data[building_blocks_cols].isin(building_block_set).all(axis=1)]
 
     # Optionally filter by selected reactions
     if only_selected_reactions:
@@ -88,7 +91,7 @@ def count_real_space_for_file(
 
     # Count building blocks
     building_block_counts = Counter()
-    for building_blocks in data[REAL_BUILDING_BLOCK_COLS].itertuples(index=False):
+    for building_blocks in data[building_blocks_cols].itertuples(index=False):
         unique_building_blocks = {building_block for building_block in building_blocks if not np.isnan(building_block)}
         building_block_counts.update(unique_building_blocks)
 
