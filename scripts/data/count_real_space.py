@@ -33,7 +33,7 @@ def expand_single_id_column(data: pd.DataFrame) -> pd.DataFrame:
     real_ids = data[REAL_ID_COL].str[2:]
 
     # Split single ID into reaction and building block IDs
-    reaction_building_block_ids = real_ids.str.split('_', expand=True)
+    reaction_building_block_ids = real_ids.str.split('____', expand=True)
 
     # Extract reaction IDs
     data[REAL_REACTION_COL] = reaction_building_block_ids[0].astype(int)
@@ -48,7 +48,7 @@ def expand_single_id_column(data: pd.DataFrame) -> pd.DataFrame:
 
 def count_real_space_for_file(
         path: Path,
-        building_block_set: set | None = None,
+        building_block_set: set[int] | None = None,
         only_selected_reactions: bool = False,
         single_id_column: bool = False
 ) -> tuple[Counter, Counter, int, int]:
