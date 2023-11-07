@@ -459,7 +459,7 @@ def generate(
         else:
             raise ValueError(f"Invalid RL model type: {rl_model_type}")
 
-        print(f"RL model architecture: {rl_model.model}")
+        print(f"RL model architecture: {rl_model.models}")
     else:
         rl_model = None
 

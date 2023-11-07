@@ -47,6 +47,9 @@ class MLP(nn.Module):
         # Set device
         self.device = device
 
+        # Move to device
+        self.to(self.device)
+
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """Runs the model on the data.
 
