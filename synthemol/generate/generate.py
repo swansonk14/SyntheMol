@@ -43,7 +43,7 @@ def generate(
         building_blocks_paths: tuple[Path, ...] = (BUILDING_BLOCKS_PATH,),
         reaction_to_building_blocks_paths: tuple[Path, ...] = (REACTION_TO_BUILDING_BLOCKS_PATH,),
         building_blocks_id_column: str = ID_COL,
-        building_blocks_score_column: str = SCORE_COL,
+        building_blocks_score_columns: tuple[str, ...] = (SCORE_COL,),
         building_blocks_smiles_column: str = SMILES_COL,
         max_reactions: int = 1,
         n_rollout: int = 10,
@@ -83,7 +83,7 @@ def generate(
     :param building_blocks_paths: Paths to CSV files containing molecular building blocks.
     :param reaction_to_building_blocks_paths: Paths to PKL files containing mapping from reactions to allowed building blocks.
     :param building_blocks_id_column: Name of the column containing IDs for each building block.
-    :param building_blocks_score_column: Name of column containing scores for each building block.
+    :param building_blocks_score_columns: Name of columns containing scores for each building block.
     :param building_blocks_smiles_column: Name of the column containing SMILES for each building block.
     :param max_reactions: Maximum number of reactions that can be performed to expand building blocks into molecules.
     :param n_rollout: The number of times to run the generation process.
@@ -119,11 +119,11 @@ def generate(
     :param wandb_run_name: The name of the Weights & Biases run to log results to.
     """
     # Check lengths of model arguments match
-    if len({len(arg) for arg in [model_types, model_paths, fingerprint_types, model_weights]}) != 1:
-        raise ValueError('model_types, model_paths, fingerprint_types, and model_weights '
-                         'must have the same length.')
+    if len({len(arg) for arg in [model_types, model_paths, fingerprint_types, model_weights, building_blocks_score_columns]}) != 1:
+        raise ValueError('model_types, model_paths, fingerprint_types, model_weights, '
+                         'and building_blocks_score_columns must have the same length.')
 
-    # Check lengths of building block arguments match
+    # Check lengths of chemical space arguments match
     if len({len(arg) for arg in [chemical_spaces, building_blocks_paths, reaction_to_building_blocks_paths]}) != 1:
         raise ValueError('chemical_spaces, building_blocks_paths, and reaction_to_building_blocks_paths '
                          'must have the same length.')
@@ -151,6 +151,10 @@ def generate(
     if replicate:
         # Ensure only REAL space
         assert chemical_spaces == ('real',)
+
+        # Ensure only one building blocks score column
+        assert len(building_blocks_score_columns) == 1
+        building_blocks_score_column = building_blocks_score_columns[0]
 
         # Change score loading dtype to ensure numerical precision
         real_building_block_data = pd.read_csv(
@@ -213,13 +217,13 @@ def generate(
         for chemical_space, building_block_data in chemical_space_to_building_block_data.items()
     }
 
-    # Map building block SMILES to score
+    # Map building block SMILES to (weighted average) score
     building_block_smiles_to_score: dict[str, float] = {
-        smiles: score
+        smiles: sum(model_weight * score for model_weight, score in zip(model_weights, scores))
         for building_block_data in chemical_space_to_building_block_data.values()
-        for smiles, score in zip(
+        for smiles, scores in zip(
             building_block_data[building_blocks_smiles_column],
-            building_block_data[building_blocks_score_column]
+            building_block_data[building_blocks_score_columns].itertuples(index=False)
         )
     }
 
@@ -254,7 +258,7 @@ def generate(
                 'building_blocks_paths': building_blocks_paths,
                 'reaction_to_building_blocks_paths': reaction_to_building_blocks_paths,
                 'building_blocks_id_column': building_blocks_id_column,
-                'building_blocks_score_column': building_blocks_score_column,
+                'building_blocks_score_columns': building_blocks_score_columns,
                 'building_blocks_smiles_column': building_blocks_smiles_column,
                 'max_reactions': max_reactions,
                 'n_rollout': n_rollout,
@@ -278,15 +282,18 @@ def generate(
         # For each chemical space, log number of building blocks and score histogram
         for chemical_space, building_block_data in chemical_space_to_building_block_data.items():
             wandb.log({
-                f'{chemical_space} Building Block Count': len(building_block_data),
-                f'{chemical_space} Building Block Scores': wandb.plot.histogram(
-                    wandb.Table(
-                        data=building_block_data[building_blocks_score_column].values[:, np.newaxis],
-                        columns=['Score']
-                    ),
-                    'Score',
-                    title=f'{chemical_space} Building Block Scores')
-            })
+                f'{chemical_space} Building Block Count': len(building_block_data)})
+
+            for building_blocks_score_column in building_blocks_score_columns:
+                wandb.log({
+                    f'{chemical_space} Building Block Scores': wandb.plot.histogram(
+                        wandb.Table(
+                            data=building_block_data[building_blocks_score_column].values[:, np.newaxis],
+                            columns=[building_blocks_score_column]
+                        ),
+                        building_blocks_score_column,
+                        title=f'{chemical_space} Building Block Scores')
+                })
 
     # Set all building blocks for each reaction
     set_all_building_blocks(
@@ -340,6 +347,8 @@ def generate(
             )
         else:
             raise ValueError(f'Invalid RL model type: {rl_model_type}')
+
+        print(f"RL model architecture: {rl_model.model}")
     else:
         rl_model = None
 
