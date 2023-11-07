@@ -243,7 +243,7 @@ class MoleculeScorer:
             return self.smiles_to_score[smiles]
 
         # Look up individual scores
-        if self.smiles_to_individual_scores is not None:
+        if smiles in self.smiles_to_individual_scores:
             individual_scores = self.smiles_to_individual_scores[smiles]
         else:
             individual_scores = [scorer(smiles) for scorer in self.scorers]
