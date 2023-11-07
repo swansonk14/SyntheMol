@@ -8,6 +8,7 @@ from rdkit import Chem
 from rdkit.Chem.QED import qed
 
 from synthemol.constants import FINGERPRINT_TYPES, MODEL_TYPES
+from synthemol.generate.model_weights import ModelWeights
 from synthemol.models import (
     chemprop_load,
     chemprop_load_scaler,
@@ -191,7 +192,7 @@ class MoleculeScorer:
         model_types: list[MODEL_TYPES],
         model_paths: list[Path],
         fingerprint_types: list[FINGERPRINT_TYPES],
-        model_weights: tuple[float, ...] = (1.0,),
+        model_weights: ModelWeights,
         device: torch.device = torch.device("cpu"),
         smiles_to_scores: dict[str, list[float]] | None = None,
     ) -> None:
@@ -220,24 +221,11 @@ class MoleculeScorer:
         ]
 
         # Save model weights and smiles to scores
-        self._model_weights = model_weights
+        self.model_weights = model_weights
         self.smiles_to_individual_scores = smiles_to_scores
 
         # Initialize a cache for molecule scores
         self.smiles_to_score: dict[str, float] = {}
-
-    @property
-    def model_weights(self) -> tuple[float, ...]:
-        """Returns the model weights."""
-        return self._model_weights
-
-    @model_weights.setter
-    def model_weights(self, model_weights: tuple[float, ...]) -> None:
-        """Sets the model weights and clears the score cache."""
-        self._model_weights = model_weights
-
-        # Clear cache
-        self.smiles_to_score = {}
 
     def compute_individual_scores(self, smiles: str) -> list[float]:
         """Computes the individual scores of a molecule (with caching).
@@ -269,7 +257,9 @@ class MoleculeScorer:
         # Compute weighted average score
         score = sum(
             individual_score * weight
-            for individual_score, weight in zip(individual_scores, self.model_weights)
+            for individual_score, weight in zip(
+                individual_scores, self.model_weights.weights
+            )
         )
 
         # Cache score

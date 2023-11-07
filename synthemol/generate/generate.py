@@ -1,7 +1,7 @@
 """Generate molecules combinatorially using a Monte Carlo tree search guided by a molecular property predictor."""
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, Literal
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -21,6 +21,7 @@ from synthemol.constants import (
     SCORE_COL,
     SMILES_COL,
 )
+from synthemol.generate.model_weights import ModelWeights
 from synthemol.generate.rl_models import RLModelChemprop, RLModelMLP
 from synthemol.reactions import (
     CHEMICAL_SPACE_TO_REACTIONS,
@@ -39,8 +40,8 @@ def generate(
     model_types: list[MODEL_TYPES],
     model_paths: list[Path],
     fingerprint_types: list[FINGERPRINT_TYPES],
-    base_model_weights: tuple[float, ...] = (1.0,),
-    success_thresholds: tuple[str, ...] | None = None,
+    base_model_weights: list[float] | None = None,
+    success_thresholds: list[str] | None = None,
     chemical_spaces: tuple[str, ...] = ("real",),
     building_blocks_paths: tuple[Path, ...] = (BUILDING_BLOCKS_PATH,),
     reaction_to_building_blocks_paths: tuple[Path, ...] = (
@@ -82,6 +83,7 @@ def generate(
                         Note: All models must have a single output.
     :param fingerprint_types: List of types of fingerprints to use as input features for the model_paths.
     :param base_model_weights: Initial weights for each model/ensemble in model_paths for defining the reward function.
+                               If None, defaults to equal weights for each model/ensemble.
     :param success_thresholds: The threshold for each model/ensemble in model_paths for defining success of the form "> 0.5".
                                If provided, the model weights will be dynamically set to maximize joint success
                                across all models/ensembles.
@@ -125,6 +127,11 @@ def generate(
     :param wandb_project_name: The name of the Weights & Biases project to log results to.
     :param wandb_run_name: The name of the Weights & Biases run to log results to.
     """
+    # Set up default model weights as equal weighting
+    if base_model_weights is None:
+        num_weights = len(model_types)
+        base_model_weights = [1 / num_weights] * num_weights
+
     # Check lengths of model arguments match
     if (
         len(
@@ -177,18 +184,20 @@ def generate(
     if rl_temperature_similarity_target == -1:
         rl_temperature_similarity_target = None
 
-    # Set up dynamic model weights if success thresholds are provided
+    # Set up model weights, with option for dynamic weights if success_thresholds is provided
     if success_thresholds is not None:
         success_comparators = tuple(
             parse_success_threshold(success_threshold)
             for success_threshold in success_thresholds
         )
-        dynamic_model_weights = True
-        model_weights = list(base_model_weights)
+        model_weights = ModelWeights(
+            base_model_weights=base_model_weights, immutable=False
+        )
     else:
         success_comparators = None
-        dynamic_model_weights = False
-        model_weights = base_model_weights
+        model_weights = ModelWeights(
+            base_model_weights=base_model_weights, immutable=True
+        )
 
     # Create save directory
     save_dir.mkdir(parents=True, exist_ok=True)

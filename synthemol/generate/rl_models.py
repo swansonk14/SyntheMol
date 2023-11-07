@@ -28,6 +28,8 @@ class RLModel(ABC):
     def __init__(
         self,
         prediction_type: RL_PREDICTION_TYPES,
+        num_models: int = 1,
+        model_paths: list[Path] | None = None,
         max_num_molecules: int = 3,
         features_size: int = 200,
         num_workers: int = 0,
@@ -40,6 +42,9 @@ class RLModel(ABC):
 
         :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
                                 'classification' = binary classification. 'regression' = regression.
+        :param num_models: The number of models to use, one for each property being predicted.
+        :param model_paths: A list of paths to PT files containing models to load if using pretrained models.
+                            Otherwise, models are trained from scratch.
         :param max_num_molecules: The maximum number of molecules to process at a time.
         :param features_size: The size of the features for each molecule.
         :param num_workers: The number of workers to use for data loading.
@@ -48,7 +53,14 @@ class RLModel(ABC):
         :param learning_rate: The learning rate.
         :param device: The device to use for the model.
         """
+        if model_paths is not None and len(model_paths) != num_models:
+            raise ValueError(
+                f"Number of model paths ({len(model_paths):,}) must match number of models ({num_models:,})."
+            )
+
         self.prediction_type = prediction_type
+        self.num_models = num_models
+        self.model_paths = model_paths
         self.max_num_molecules = max_num_molecules
         self.features_size = features_size
         self.total_features_size = max_num_molecules * features_size
@@ -183,7 +195,7 @@ class RLModel(ABC):
             # Loop over batches of molecule features and rewards
             for batch_data, batch_rewards in dataloader:
                 # Make predictions
-                predictions = self.model_predict(batch_data).squeeze(dim=-1)
+                predictions = self.run_models(batch_data).squeeze(dim=-1)
 
                 # Compute loss
                 loss = self.loss_fn(predictions, batch_rewards.to(self.device))
@@ -333,7 +345,7 @@ class RLModel(ABC):
                 dataloader, desc="Predicting RL model", leave=False
             ):
                 # Predict rewards
-                batch_rewards = self.model_predict(batch_data)
+                batch_rewards = self.run_models(batch_data)
 
                 # Add rewards to list
                 rewards.extend(batch_rewards.cpu().flatten().tolist())
@@ -365,6 +377,21 @@ class RLModel(ABC):
         """Returns the number of examples in the test set (buffer)."""
         return len(self.test_source_nodes)
 
+    @classmethod
+    @abstractmethod
+    def build_model(cls) -> nn.Module:
+        """Builds a model (for predicting an individual property) from scratch."""
+        pass
+
+    @classmethod
+    @abstractmethod
+    def load_model(cls, model_path: Path) -> nn.Module:
+        """Loads a pretrained model (for predicting an individual property).
+
+        :param model_path: The path to a PT file containing a model to load.
+        """
+        pass
+
     @property
     @abstractmethod
     def model(self) -> nn.Module:
@@ -372,11 +399,11 @@ class RLModel(ABC):
         pass
 
     @abstractmethod
-    def model_predict(self, batch_data: Any) -> torch.Tensor:
-        """Makes predictions using the model.
+    def run_models(self, batch_data: Any) -> torch.Tensor:
+        """Makes predictions using the models.
 
         :param batch_data: Data for the batch.
-        :return: A tensor containing the model's prediction (batch_size, output_dim).
+        :return: A tensor containing the weighted averaged of the models' predictions (batch_size, output_dim).
         """
         pass
 
@@ -401,6 +428,8 @@ class RLModelMLP(RLModel):
     def __init__(
         self,
         prediction_type: RL_PREDICTION_TYPES,
+        num_models: int = 1,
+        model_paths: list[Path] | None = None,
         max_num_molecules: int = 3,
         features_size: int = 200,
         hidden_dim: int = 100,
@@ -415,6 +444,8 @@ class RLModelMLP(RLModel):
 
         :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
                                 'classification' = binary classification. 'regression' = regression.
+        :param num_models: The number of models to use, one for each property being predicted.
+        :param model_paths: A list of paths to PT files containing models to load if using pretrained models.
         :param max_num_molecules: The maximum number of molecules to process at a time.
         :param features_size: The size of the features for each molecule.
         :param hidden_dim: The dimensionality of the hidden layers.
@@ -437,6 +468,8 @@ class RLModelMLP(RLModel):
 
         super().__init__(
             prediction_type=prediction_type,
+            num_models=num_models,
+            model_paths=model_paths,
             max_num_molecules=max_num_molecules,
             features_size=features_size,
             num_workers=num_workers,
@@ -451,7 +484,7 @@ class RLModelMLP(RLModel):
         """Returns the model."""
         return self._model
 
-    def model_predict(self, batch_data: torch.Tensor) -> torch.Tensor:
+    def run_models(self, batch_data: torch.Tensor) -> torch.Tensor:
         """Makes predictions using the model.
 
         :param batch_data: A Tensor containing the data for the batch.
@@ -609,6 +642,8 @@ class RLModelChemprop(RLModel):
         self,
         use_rdkit_features: bool,
         prediction_type: RL_PREDICTION_TYPES,
+        num_models: int = 1,
+        model_paths: list[Path] | None = None,
         max_num_molecules: int = 3,
         features_size: int = 200,
         num_workers: int = 0,
@@ -622,6 +657,8 @@ class RLModelChemprop(RLModel):
         :param use_rdkit_features: Whether to use RDKit fingerprints as features.
         :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
                                 'classification' = binary classification. 'regression' = regression.
+        :param num_models: The number of models to use, one for each property being predicted.
+        :param model_paths: A list of paths to PT files containing models to load if using pretrained models.
         :param max_num_molecules: The maximum number of molecules to process at a time.
         :param features_size: The size of the features for each molecule.
         :param num_workers: The number of workers to use for data loading.
@@ -643,6 +680,8 @@ class RLModelChemprop(RLModel):
 
         super().__init__(
             prediction_type=prediction_type,
+            num_models=num_models,
+            model_paths=model_paths,
             max_num_molecules=max_num_molecules,
             features_size=features_size,
             num_workers=num_workers,
@@ -657,7 +696,7 @@ class RLModelChemprop(RLModel):
         """Returns the model."""
         return self._model
 
-    def model_predict(
+    def run_models(
         self, batch_data: tuple[list[BatchMolGraph], list[np.ndarray] | None]
     ) -> torch.Tensor:
         """Makes predictions using the model.

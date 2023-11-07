@@ -15,6 +15,7 @@ from tqdm import trange
 
 from synthemol.constants import OPTIMIZATION_TYPES
 from synthemol.generate.logs import ConstructionLog, ReactionLog
+from synthemol.generate.model_weights import ModelWeights
 from synthemol.generate.node import Node
 from synthemol.generate.scorer import MoleculeScorer
 from synthemol.generate.rl_models import RLModel
@@ -34,7 +35,7 @@ class Generator:
         chemical_space_to_building_block_smiles_to_id: dict[str, dict[str, str]],
         max_reactions: int,
         scorer: MoleculeScorer,
-        model_weights: list[float, ...],
+        model_weights: ModelWeights,
         success_comparators: tuple[Callable[[float], bool], ...] | None,
         explore_weight: float,
         num_expand_nodes: int | None,
@@ -115,11 +116,9 @@ class Generator:
             )
 
         # Check that model weights is a list if success comparators is provided
-        if self.success_comparators is not None and not isinstance(
-            self.model_weights, list
-        ):
+        if self.success_comparators is not None and self.model_weights.immutable:
             raise ValueError(
-                "Model weights must be a list if success comparators are provided"
+                "Model weights must be mutable if success comparators are provided"
             )
 
         # Get all building blocks that are used in at least one reaction
@@ -187,7 +186,7 @@ class Generator:
         self.max_temperature = 10.0
 
         # Set up rolling average successes for model weight adjustment
-        self.rolling_average_success_rate = np.zeros(len(model_weights))
+        self.rolling_average_success_rate = np.zeros(self.model_weights.num_weights)
 
     def get_next_building_blocks(self, molecules: tuple[str]) -> list[str]:
         """Get the next building blocks that can be added to the given molecules.
@@ -695,13 +694,13 @@ class Generator:
         )
 
         # Update model weights as proportional to failure rate (i.e., higher failure rate means higher weight)
-        self.model_weights = 1 - self.rolling_average_success_rate
+        weights = 1 - self.rolling_average_success_rate
 
         # Normalize model weights
-        self.model_weights = self.model_weights / np.sum(self.model_weights)
+        weights = weights / np.sum(weights)
 
-        # Update model weights in scorer
-        self.scorer.model_weights = self.model_weights.tolist()
+        # Update model weights object with new weights
+        self.model_weights.weights = weights
 
     def generate(self, n_rollout: int) -> list[Node]:
         """Generate molecules for the specified number of rollouts.
@@ -761,7 +760,7 @@ class Generator:
             rollout_stats["RL Temperature"] = self.rl_temperature
 
             # Add model weights to rollout stats
-            for i, model_weight in enumerate(self.model_weights):
+            for i, model_weight in enumerate(self.model_weights.weights):
                 rollout_stats[f"Model Weight {i + 1}"] = model_weight
 
             # Determine number of unique full molecules found
