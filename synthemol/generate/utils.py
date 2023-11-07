@@ -115,7 +115,7 @@ def parse_success_threshold(success_threshold: str) -> Callable[[float], bool]:
     :return: A function that determines whether a molecule is successful according to the threshold.
     """
     # Create regex to match the success threshold pattern
-    success_threshold_pattern = r'^(?P<comparator>[<>!=]{1,2})\s*(?P<threshold>\d+(?:\.\d+)?)$'
+    success_threshold_pattern = r'^(?P<comparator>[<>!=]{1,2})\s*(?P<threshold>-*\d+(?:\.\d+)?)$'
 
     # Parse success threshold
     match = re.match(success_threshold_pattern, success_threshold)
