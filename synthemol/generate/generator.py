@@ -664,7 +664,7 @@ class Generator:
                 self.scorer.model_weights = self.model_weights
 
             # Add model weights to rollout stats
-            for i, model_weight in self.model_weights:
+            for i, model_weight in enumerate(self.model_weights):
                 rollout_stats[f'Model Weight {i + 1}'] = model_weight
 
             # Determine number of unique full molecules found

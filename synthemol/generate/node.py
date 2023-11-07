@@ -54,6 +54,7 @@ class Node:
         """
         return sum(scorer(molecule) for molecule in molecules) / len(molecules) if len(molecules) > 0 else 0.0
 
+    @property
     def P(self) -> float:
         """The property score of this Node."""
         return self.compute_score(molecules=self.molecules, scorer=self.scorer)
