@@ -56,6 +56,7 @@ def generate(
     explore_weight: float = 10.0,
     num_expand_nodes: int | None = None,
     rl_model_type: RL_MODEL_TYPES = "mlp_rdkit",
+    rl_pretrained: bool = False,
     rl_prediction_type: RL_PREDICTION_TYPES = "classification",
     rl_base_temperature: float = 0.1,
     rl_temperature_similarity_target: float = 0.5,
@@ -103,6 +104,9 @@ def generate(
     :param num_expand_nodes: The number of child nodes to include when expanding a given node. If None, all child nodes will be included.
     :param rl_model_type: The type of RL model to use. 'mlp_rdkit' = MLP RDKit model.
                           'chemprop' = Chemprop model. 'chemprop_rdkit' = Chemprop RDKit model.
+    :param rl_pretrained: Whether to use pretrained model checkpoints from model_paths to initialize the RL models.
+                          If True, the first model in each ensemble in model_paths will be used as the initialization.
+                          If False, RL models are randomly initialized.
     :param rl_prediction_type: The type of prediction made by the RL model, which determines the loss function.
                                'classification' = binary classification. 'regression' = regression.
     :param rl_base_temperature: The initial temperature parameter for the softmax function used to select building blocks.
@@ -352,10 +356,10 @@ def generate(
             config={
                 "search_type": search_type,
                 "save_dir": save_dir,
-                "model_names": model_names,
                 "model_paths": model_paths,
                 "model_types": model_types,
                 "fingerprint_types": fingerprint_types,
+                "model_names": model_names,
                 "base_model_weights": base_model_weights,
                 "success_thresholds": success_thresholds,
                 "chemical_spaces": chemical_spaces,
@@ -369,6 +373,7 @@ def generate(
                 "explore_weight": explore_weight,
                 "num_expand_nodes": num_expand_nodes,
                 "rl_model_type": rl_model_type,
+                "rl_pretrained": rl_pretrained,
                 "rl_prediction_type": rl_prediction_type,
                 "rl_base_temperature": rl_base_temperature,
                 "rl_temperature_similarity_target": rl_temperature_similarity_target,
@@ -441,9 +446,14 @@ def generate(
     if search_type == "rl":
         torch.manual_seed(rng_seed)
 
+        # Get model paths if using pretrained RL
+        rl_model_paths = model_paths if rl_pretrained else None
+
         if rl_model_type == "mlp_rdkit":
             rl_model = RLModelMLP(
                 prediction_type=rl_prediction_type,
+                model_weights=model_weights,
+                model_paths=rl_model_paths,
                 num_workers=num_workers,
                 num_epochs=rl_train_epochs,
                 device=device,
@@ -452,6 +462,8 @@ def generate(
             rl_model = RLModelChemprop(
                 use_rdkit_features=rl_model_type == "chemprop_rdkit",
                 prediction_type=rl_prediction_type,
+                model_weights=model_weights,
+                model_paths=rl_model_paths,
                 num_workers=num_workers,
                 num_epochs=rl_train_epochs,
                 device=device,
