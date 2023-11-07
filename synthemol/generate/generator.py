@@ -634,36 +634,37 @@ class Generator:
                     rollout_start=self.rollout_num
                 )
 
-                # Compute scores of generated molecules and determine average success rate
-                all_successes = []
-                for node in new_full_molecule_nodes:
-                    scores = self.scorer.compute_individual_scores(smiles=node.molecules[0])
-                    successes = [
-                        success_comparator(score)
-                        for success_comparator, score in zip(self.success_comparators, scores)
-                    ]
-                    all_successes.append(successes)
+                if len(new_full_molecule_nodes) != 0:
+                    # Compute scores of generated molecules and determine average success rate
+                    all_successes = []
+                    for node in new_full_molecule_nodes:
+                        scores = self.scorer.compute_individual_scores(smiles=node.molecules[0])
+                        successes = [
+                            success_comparator(score)
+                            for success_comparator, score in zip(self.success_comparators, scores)
+                        ]
+                        all_successes.append(successes)
 
-                new_success_rate = np.mean(np.array(all_successes), axis=0)
+                    new_success_rate = np.mean(np.array(all_successes), axis=0)
 
-                # Add success rates to rollout stats
-                for i, success_rate in enumerate(new_success_rate):
-                    rollout_stats[f'Success Rate {i + 1}'] = success_rate
+                    # Add success rates to rollout stats
+                    for i, success_rate in enumerate(new_success_rate):
+                        rollout_stats[f'Success Rate {i + 1}'] = success_rate
 
-                rollout_stats[f'Joint Success Rate'] = int(np.all(new_success_rate))
+                    rollout_stats[f'Joint Success Rate'] = int(np.all(new_success_rate))
 
-                # Update rolling average successes with weighted combination of new and old successes
-                self.rolling_average_success_rate = self.rolling_average_weight * self.rolling_average_success_rate + \
-                                                    (1 - self.rolling_average_weight) * new_success_rate
+                    # Update rolling average successes with weighted combination of new and old successes
+                    self.rolling_average_success_rate = self.rolling_average_weight * self.rolling_average_success_rate + \
+                                                        (1 - self.rolling_average_weight) * new_success_rate
+    
+                    # Update model weights as proportional to failure rate (i.e., higher failure rate means higher weight)
+                    self.model_weights = 1 - self.rolling_average_success_rate
 
-                # Update model weights as proportional to failure rate (i.e., higher failure rate means higher weight)
-                self.model_weights = 1 - self.rolling_average_success_rate
+                    # Normalize model weights
+                    self.model_weights = self.model_weights / np.sum(self.model_weights)
 
-                # Normalize model weights
-                self.model_weights = self.model_weights / np.sum(self.model_weights)
-
-                # Update model weights in scorer
-                self.scorer.model_weights = self.model_weights.tolist()
+                    # Update model weights in scorer
+                    self.scorer.model_weights = self.model_weights.tolist()
 
             # Add model weights to rollout stats
             for i, model_weight in enumerate(self.model_weights):
