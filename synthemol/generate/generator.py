@@ -16,6 +16,7 @@ from tqdm import trange
 from synthemol.constants import OPTIMIZATION_TYPES
 from synthemol.generate.logs import ConstructionLog, ReactionLog
 from synthemol.generate.node import Node
+from synthemol.generate.scorer import MoleculeScorer
 from synthemol.models import RLModel
 from synthemol.reactions import Reaction
 from synthemol.utils import random_choice
@@ -32,7 +33,9 @@ class Generator:
             search_type: Literal['mcts', 'rl'],
             chemical_space_to_building_block_smiles_to_id: dict[str, dict[str, str]],
             max_reactions: int,
-            scoring_fn: Callable[[str], float],
+            scorer: MoleculeScorer,
+            model_weights: list[float, ...],
+            success_comparators: tuple[Callable[[float], bool], ...] | None,
             explore_weight: float,
             num_expand_nodes: int | None,
             rl_base_temperature: float,
@@ -54,7 +57,11 @@ class Generator:
         :param chemical_space_to_building_block_smiles_to_id: A dictionary mapping chemical space to building block
                                                               SMILES to IDs.
         :param max_reactions: The maximum number of reactions to use to construct a molecule.
-        :param scoring_fn: A function that takes as input a SMILES representing a molecule and returns a score.
+        :param scorer: A callable object that takes as input a SMILES representing a molecule and returns a score.
+        :param model_weights: The weights to use for the scoring function.
+        :param success_comparators: A tuple of functions that take as input a score and return whether the score
+                                    indicates a successful molecule.
+                                    If provided, then the model weights are dynamically set.
         :param explore_weight: The hyperparameter that encourages exploration.
         :param num_expand_nodes: The number of tree nodes to expand when extending the child nodes in the search tree.
                                   If None, then all nodes are expanded.
@@ -81,7 +88,9 @@ class Generator:
         self.search_type = search_type
         self.chemical_space_to_building_block_smiles_to_id = chemical_space_to_building_block_smiles_to_id
         self.max_reactions = max_reactions
-        self.scoring_fn = scoring_fn
+        self.scorer = scorer
+        self.model_weights = model_weights
+        self.success_comparators = success_comparators
         self.explore_weight = explore_weight
         self.num_expand_nodes = num_expand_nodes
         self.rl_base_temperature = rl_base_temperature
@@ -100,6 +109,10 @@ class Generator:
         # Check that the search type is valid
         if (self.search_type == 'rl') != (self.rl_model is not None):
             raise ValueError('RL model must be provided if and only if search_type is "rl"')
+
+        # Check that model weights is a list if success comparators is provided
+        if self.success_comparators is not None and not isinstance(self.model_weights, list):
+            raise ValueError('Model weights must be a list if success comparators are provided')
 
         # Get all building blocks that are used in at least one reaction
         if self.replicate:
@@ -133,7 +146,7 @@ class Generator:
         self.rollout_num = 0
         self.root = Node(
             explore_weight=explore_weight,
-            scoring_fn=scoring_fn,
+            scorer=scorer,
             node_id=0,
             rollout_num=self.rollout_num
         )
@@ -271,7 +284,7 @@ class Generator:
             product_nodes += [
                 Node(
                     explore_weight=self.explore_weight,
-                    scoring_fn=self.scoring_fn,
+                    scorer=self.scorer,
                     molecules=(product,),
                     unique_building_block_ids=node.unique_building_block_ids,
                     construction_log=ConstructionLog(node.construction_log.reaction_logs + (reaction_log,)),
@@ -314,7 +327,7 @@ class Generator:
         new_nodes += [
             Node(
                 explore_weight=self.explore_weight,
-                scoring_fn=self.scoring_fn,
+                scorer=self.scorer,
                 molecules=node.molecules + (next_building_block,),
                 unique_building_block_ids=node.unique_building_block_ids | {next_building_block},
                 construction_log=node.construction_log,

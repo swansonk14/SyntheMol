@@ -28,7 +28,8 @@ from synthemol.reactions import (
     set_all_building_blocks
 )
 from synthemol.generate.generator import Generator
-from synthemol.generate.utils import create_model_scoring_fn, parse_success_threshold, save_generated_molecules
+from synthemol.generate.scorer import MoleculeScorer
+from synthemol.generate.utils import parse_success_threshold, save_generated_molecules
 
 
 # TODO: once tuple[Literal] fix is done in tap, add ('none',) default to fingerprint_types and add literal to reaction_sets
@@ -142,13 +143,14 @@ def generate(
 
     # Set up dynamic model weights if success thresholds are provided
     if success_thresholds is not None:
-        success_comparators: tuple[Callable[[float], bool], ...] = tuple(
+        success_comparators = tuple(
             parse_success_threshold(success_threshold)
             for success_threshold in success_thresholds
         )
         dynamic_model_weights = True
         model_weights = list(base_model_weights)
     else:
+        success_comparators = None
         dynamic_model_weights = False
         model_weights = base_model_weights
 
@@ -333,15 +335,14 @@ def generate(
         device = torch.device('cpu')
 
     # Define model scoring function
-    print('Loading models and creating model scoring function...')
-    model_scoring_fn = create_model_scoring_fn(
+    print('Loading models and creating model scorer...')
+    scorer = MoleculeScorer(
         model_paths=model_paths,
         model_types=model_types,
         fingerprint_types=fingerprint_types,
         model_weights=model_weights,
         device=device,
-        smiles_to_scores=building_block_smiles_to_scores,
-        cache_scores=not dynamic_model_weights
+        smiles_to_scores=building_block_smiles_to_scores
     )
 
     # Set up RL model if applicable
@@ -376,7 +377,9 @@ def generate(
         search_type=search_type,
         chemical_space_to_building_block_smiles_to_id=chemical_space_to_building_block_smiles_to_id,
         max_reactions=max_reactions,
-        scoring_fn=model_scoring_fn,
+        scorer=scorer,
+        model_weights=model_weights,
+        success_comparators=success_comparators,
         explore_weight=explore_weight,
         num_expand_nodes=num_expand_nodes,
         rl_base_temperature=rl_base_temperature,
@@ -447,8 +450,9 @@ def generate(
         wandb.log({'generation_scores': wandb.plot.histogram(table, 'Score', title='Generated Molecule Scores')})
 
     # Save RL model
-    if rl_model is not None:
-        rl_model.save(save_dir / 'rl_model.pt')
+    # TODO: resolve pickling errors
+    # if rl_model is not None:
+    #     rl_model.save(save_dir / 'rl_model.pt')
 
 
 def generate_command_line() -> None:
