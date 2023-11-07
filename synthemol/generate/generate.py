@@ -40,6 +40,7 @@ def generate(
     model_types: list[MODEL_TYPES],
     model_paths: list[Path],
     fingerprint_types: list[FINGERPRINT_TYPES],
+    model_names: list[str] = None,
     base_model_weights: list[float] | None = None,
     success_thresholds: list[str] | None = None,
     chemical_spaces: tuple[str, ...] = ("real",),
@@ -82,6 +83,8 @@ def generate(
                         or to a specific PKL or PT file containing a trained model.
                         Note: All models must have a single output.
     :param fingerprint_types: List of types of fingerprints to use as input features for the model_paths.
+    :param model_names: List of names for each model/ensemble in model_paths.
+                        If None, models will be named "Model 1", "Model 2", etc.
     :param base_model_weights: Initial weights for each model/ensemble in model_paths for defining the reward function.
                                If None, defaults to equal weights for each model/ensemble.
     :param success_thresholds: The threshold for each model/ensemble in model_paths for defining success of the form "> 0.5".
@@ -127,39 +130,34 @@ def generate(
     :param wandb_project_name: The name of the Weights & Biases project to log results to.
     :param wandb_run_name: The name of the Weights & Biases run to log results to.
     """
+    # Get number of models
+    num_models = len(model_types)
+
     # Set up default model weights as equal weighting
     if base_model_weights is None:
-        num_weights = len(model_types)
-        base_model_weights = [1 / num_weights] * num_weights
+        base_model_weights = [1 / num_models] * num_models
+
+    # Set up default model names
+    if model_names is None:
+        model_names = [f"Model {i + 1}" for i in range(num_models)]
 
     # Check lengths of model arguments match
-    if (
-        len(
-            {
-                len(arg)
-                for arg in [
-                    model_types,
-                    model_paths,
-                    fingerprint_types,
-                    base_model_weights,
-                    building_blocks_score_columns,
-                ]
-            }
-        )
-        != 1
+    if not all(
+        len(arg) == num_models
+        for arg in [
+            model_names,
+            model_types,
+            model_paths,
+            fingerprint_types,
+            base_model_weights,
+            building_blocks_score_columns,
+        ]
     ):
-        raise ValueError(
-            "model_types, model_paths, fingerprint_types, model_weights, "
-            "and building_blocks_score_columns must have the same length."
-        )
+        raise ValueError("Model parameters have the same length.")
 
     # Check length of success_thresholds
-    if success_thresholds is not None and len(success_thresholds) != len(
-        base_model_weights
-    ):
-        raise ValueError(
-            "success_thresholds must have the same length as model_weights."
-        )
+    if success_thresholds is not None and len(success_thresholds) != num_models:
+        raise ValueError("Model parameters must have the same length.")
 
     # Check lengths of chemical space arguments match
     if (
@@ -354,6 +352,7 @@ def generate(
             config={
                 "search_type": search_type,
                 "save_dir": save_dir,
+                "model_names": model_names,
                 "model_paths": model_paths,
                 "model_types": model_types,
                 "fingerprint_types": fingerprint_types,
@@ -429,6 +428,7 @@ def generate(
     # Define model scoring function
     print("Loading models and creating model scorer...")
     scorer = MoleculeScorer(
+        model_names=model_names,
         model_paths=model_paths,
         model_types=model_types,
         fingerprint_types=fingerprint_types,
@@ -509,6 +509,7 @@ def generate(
         save_generated_molecules(
             nodes=nodes,
             chemical_space_to_building_block_id_to_smiles=chemical_space_to_building_block_id_to_smiles,
+            model_names=model_names,
             save_path=molecules_save_path,
         )
 
@@ -552,7 +553,7 @@ def generate(
             )
         )
 
-        node_scores = [[node.P] for node in nodes]
+        node_scores = [[node.property_score] for node in nodes]
         table = wandb.Table(data=node_scores, columns=["Score"])
         wandb.log(
             {

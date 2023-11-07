@@ -1,7 +1,8 @@
 """Contains the Node class, which represents a step in the combinatorial molecule construction process."""
 import math
-from functools import cached_property
 from typing import Any
+
+import numpy as np
 
 from synthemol.generate.logs import ConstructionLog
 from synthemol.generate.scorer import MoleculeScorer
@@ -49,33 +50,53 @@ class Node:
         self.rollout_num = rollout_num
         self.num_children = 0
 
-    @classmethod
-    def compute_score(cls, molecules: tuple[str], scorer: MoleculeScorer) -> float:
-        """Computes the score of the molecules.
+    @property
+    def individual_scores(self) -> list[float]:
+        """Computes the average individual scores of the Node's molecules.
 
-        :param molecules: A tuple of SMILES. The first element is the currently constructed molecule
-                          while the remaining elements are the building blocks that are about to be added.
-        :param scorer: A callable object that takes as input a SMILES representing a molecule and returns a score.
-        :return: The score of the molecules.
+        :return: The average individual scores of the Node's molecules.
         """
-        return (
-            sum(scorer(molecule) for molecule in molecules) / len(molecules)
-            if len(molecules) > 0
-            else 0.0
-        )
+        if self.num_molecules == 0:
+            return [0.0] * self.scorer.num_scores
+
+        # Compute individual scores for each molecule
+        individual_scores = np.array(
+            [
+                self.scorer.compute_individual_scores(molecule)
+                for molecule in self.molecules
+            ]
+        )  # (num_molecules, num_scores)
+
+        # Average individual scores for the molecules
+        average_individual_scores = np.mean(
+            individual_scores, axis=0
+        ).tolist()  # (num_scores,)
+
+        return average_individual_scores
 
     @property
-    def P(self) -> float:
-        """The property score of this Node."""
-        return self.compute_score(molecules=self.molecules, scorer=self.scorer)
+    def property_score(self) -> float:
+        """Computes the average property score of the Node's molecules (weighted average of individual property scores).
 
-    def Q(self) -> float:
+        :return: The average property score of the Node's molecules (weighted average of individual property scores).
+        """
+        if self.num_molecules == 0:
+            return 0.0
+
+        return (
+            sum(self.scorer(molecule) for molecule in self.molecules)
+            / self.num_molecules
+        )
+
+    def exploit_score(self) -> float:
         """Value that encourages exploitation of Nodes with high reward."""
         return self.W / self.N if self.N > 0 else 0.0
 
-    def U(self, n: int) -> float:
+    def explore_score(self, n: int) -> float:
         """Value that encourages exploration of Nodes with few visits."""
-        return self.explore_weight * self.P * math.sqrt(1 + n) / (1 + self.N)
+        return (
+            self.explore_weight * self.property_score * math.sqrt(1 + n) / (1 + self.N)
+        )
 
     @property
     def num_molecules(self) -> int:

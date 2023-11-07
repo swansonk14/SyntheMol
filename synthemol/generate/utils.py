@@ -24,20 +24,24 @@ OPERATORS = {
 def save_generated_molecules(
     nodes: list[Node],
     chemical_space_to_building_block_id_to_smiles: dict[str, dict[str, str]],
+    model_names: list[str],
     save_path: Path,
 ) -> None:
     """Save generated molecules to a CSV file.
 
     :param nodes: A list of Nodes containing molecules. Only nodes with a single molecule are saved.
     :param chemical_space_to_building_block_id_to_smiles: A dictionary mapping building block IDs to SMILES.
+    :param model_names: A list of model names corresponding to the individual scores of the Nodes.
     :param save_path: A path to a CSV file where the molecules will be saved.
     """
-    # Convert construction logs from lists to dictionaries
     construction_dicts = []
+    individual_score_dicts = []
     max_reaction_num = 0
     reaction_num_to_max_reactant_num = {}
 
+    # Process construction logs and individual scores for each node
     for node in nodes:
+        # Convert construction logs from lists to dictionaries
         construction_dict = {"num_reactions": len(node.construction_log)}
         max_reaction_num = max(max_reaction_num, len(node.construction_log))
 
@@ -68,6 +72,14 @@ def save_generated_molecules(
 
         construction_dicts.append(construction_dict)
 
+        # Get individual scores
+        individual_score_dicts.append(
+            {
+                model_name: score
+                for model_name, score in zip(model_names, node.individual_scores)
+            }
+        )
+
     # Specify column order for CSV file
     columns = [
         SMILES_COL,
@@ -75,6 +87,7 @@ def save_generated_molecules(
         "num_expansions",
         ROLLOUT_COL,
         SCORE_COL,
+        *model_names,
         "Q_value",
         "num_reactions",
     ]
@@ -98,11 +111,14 @@ def save_generated_molecules(
                 "node_id": node.node_id,
                 "num_expansions": node.N,
                 ROLLOUT_COL: node.rollout_num,
-                SCORE_COL: node.P,
-                "Q_value": node.Q(),
+                SCORE_COL: node.property_score,
+                "Q_value": node.exploit_score(),
                 **construction_dict,
+                **individual_score_dict,
             }
-            for node, construction_dict in zip(nodes, construction_dicts)
+            for node, construction_dict, individual_score_dict in zip(
+                nodes, construction_dicts, individual_score_dicts
+            )
         ],
         columns=columns,
     )

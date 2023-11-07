@@ -391,7 +391,7 @@ class Generator:
         :return: The MCTS score of the Node.
         """
         # Compute initial MCTS score
-        mcts_score = node.Q() + node.U(n=total_visit_count)
+        mcts_score = node.exploit_score() + node.explore_score(n=total_visit_count)
 
         # Optionally encourage building block diversity by reducing MCTS score based on building block usage
         if self.building_block_diversity and node.num_molecules > 0:
@@ -419,7 +419,7 @@ class Generator:
             print(f"Num molecules = {node.num_molecules}")
             print(f"Num unique building blocks = {len(node.unique_building_block_ids)}")
             print(f"Num reactions = {node.num_reactions}")
-            print(f"Score = {node.P}")
+            print(f"Score = {node.property_score}")
             print()
 
         # Stop the search if we've reached the maximum number of reactions
@@ -519,10 +519,10 @@ class Generator:
 
         # Get full molecule (non-building block) with max score across rollouts
         if selected_node.num_molecules == 1 and node.num_reactions > 0:
-            best_node = max(best_node, selected_node, key=lambda n: n.P)
+            best_node = max(best_node, selected_node, key=lambda n: n.property_score)
 
         # Update exploit score and visit count
-        selected_node.W += best_node.P
+        selected_node.W += best_node.property_score
         selected_node.N += 1
 
         # Add RL training example
@@ -621,7 +621,7 @@ class Generator:
         nodes = sorted(
             nodes,
             key=lambda node: (
-                node.P,
+                node.property_score,
                 (1 if self.ascending_scores else -1) * node.node_id,
             ),
             reverse=not self.ascending_scores,
@@ -725,7 +725,7 @@ class Generator:
             # Run rollout
             start_time = time.time()
             best_node = self.rollout(node=self.root)
-            rollout_stats["Rollout Score"] = best_node.P
+            rollout_stats["Rollout Score"] = best_node.property_score
             rollout_stats["Rollout Time"] = time.time() - start_time
 
             # Compute similarity of new molecules compared to previous molecules
@@ -746,8 +746,10 @@ class Generator:
                 # If there are new molecules, log success rates and update model weights
                 if new_success_rates is not None:
                     # Add success rates to rollout stats
-                    for i, success_rate in enumerate(new_success_rates):
-                        rollout_stats[f"Success Rate {i + 1}"] = success_rate
+                    for model_name, success_rate in zip(
+                        self.scorer.model_names, new_success_rates
+                    ):
+                        rollout_stats[f"{model_name} Success Rate"] = success_rate
 
                     rollout_stats[f"Joint Success Rate"] = int(
                         np.all(new_success_rates)
@@ -760,8 +762,10 @@ class Generator:
             rollout_stats["RL Temperature"] = self.rl_temperature
 
             # Add model weights to rollout stats
-            for i, model_weight in enumerate(self.model_weights.weights):
-                rollout_stats[f"Model Weight {i + 1}"] = model_weight
+            for model_name, model_weight in zip(
+                self.scorer.model_names, self.model_weights.weights
+            ):
+                rollout_stats[f"{model_name} Weight"] = model_weight
 
             # Determine number of unique full molecules found
             rollout_stats["Unique Molecules"] = sum(

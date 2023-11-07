@@ -195,7 +195,7 @@ class RLModel(ABC):
         # Get dataloader
         dataloader = self.get_dataloader(
             molecule_tuples=[node.molecules for node in self.train_source_nodes],
-            rewards=[node.P for node in self.train_target_nodes],
+            rewards=[node.individual_scores for node in self.train_target_nodes],
             shuffle=True,
         )
 
@@ -203,19 +203,27 @@ class RLModel(ABC):
         for _ in trange(self.num_epochs, desc="Training RL model", leave=False):
             # Loop over batches of molecule features and rewards
             for batch_data, batch_rewards in dataloader:
-                # Make predictions
-                predictions = self.run_models(batch_data).squeeze(dim=-1)
+                # Move batch rewards to device
+                batch_rewards = batch_rewards.to(self.device)
 
-                # Compute loss
-                # TODO: separate loss by model
-                loss = self.loss_fn(predictions, batch_rewards.to(self.device))
+                # Loop over models and train each one on the batch
+                for property_index, (model, optimizer) in enumerate(
+                    zip(self.models, self.optimizers)
+                ):
+                    # Make predictions
+                    predictions = self.run_model(
+                        model=model, batch_data=batch_data
+                    ).squeeze(dim=-1)
 
-                # Backpropagate
-                for model, optimizer in zip(self.models, self.optimizers):
+                    # Compute loss
+                    loss = self.loss_fn(predictions, batch_rewards[property_index])
+
+                    # Backpropagate
                     model.zero_grad()
                     loss.backward()
                     optimizer.step()
 
+    # TODO: should the evaluation be on individual properties instead of the weighted average?
     def evaluate(self, split: Literal["train", "test"]) -> dict[str, float]:
         """Evaluates the model on the train or test set.
 
@@ -232,9 +240,9 @@ class RLModel(ABC):
         else:
             raise ValueError(f"Split type {split} is not supported.")
 
-        # Get molecule tuples and rewards
+        # Get molecule tuples and rewards (here, rewards are weighted average scores)
         molecule_tuples = [node.molecules for node in source_nodes]
-        rewards = [node.P for node in target_nodes]
+        rewards = [node.property_score for node in target_nodes]
 
         # Make predictions
         predictions = self.predict(molecule_tuples)
@@ -448,21 +456,48 @@ class RLModel(ABC):
 
         return predictions
 
+    @property
+    def num_models(self) -> int:
+        """Returns the number of models."""
+        return len(self.models)
+
     @abstractmethod
     def get_dataloader(
         self,
         molecule_tuples: list[tuple[str]],
-        rewards: list[float] | None = None,
+        rewards: list[list[float]] | None = None,
         shuffle: bool = False,
     ) -> torch.utils.data.DataLoader:
         """Returns a dataloader for the given molecules.
 
         :param molecule_tuples: A list of tuples of SMILES strings representing one or more molecules.
-        :param rewards: A list of rewards for each tuple of molecules.
+        :param rewards: A list of lists of rewards for each tuple of molecules of shape (num_molecules, num_properties).
         :param shuffle: Whether to shuffle the data.
         :return: A dataloader.
         """
         pass
+
+
+def rl_mlp_collate_fn(
+    data: list[tuple[torch.Tensor], tuple[torch.Tensor, torch.Tensor]]
+) -> tuple[torch.Tensor, torch.Tensor | None]:
+    """Collates a batch of data for the RL MLP model.
+
+    :param data: A list of tuples of features (and possibly rewards).
+    :return: A tuple of features and rewards (or None).
+    """
+    # Get features and rewards
+    if len(data[0]) == 1:
+        features = torch.stack(
+            [element[0] for element in data]
+        )  # (num_molecules, features_size)
+        rewards = None
+    else:
+        features, rewards = zip(*data)
+        features = torch.stack(features)  # (num_molecules, features_size)
+        rewards = torch.stack(rewards)  # (num_molecules, num_properties)
+
+    return features, rewards
 
 
 class RLModelMLP(RLModel):
@@ -559,13 +594,13 @@ class RLModelMLP(RLModel):
     def get_dataloader(
         self,
         molecule_tuples: list[tuple[str]],
-        rewards: list[float] | None = None,
+        rewards: list[list[float]] | None = None,
         shuffle: bool = False,
     ) -> torch.utils.data.DataLoader:
         """Returns a dataloader for the given molecules.
 
         :param molecule_tuples: A list of tuples of SMILES strings representing one or more molecules.
-        :param rewards: A list of rewards for each tuple of molecules.
+        :param rewards: A list of lists of rewards for each tuple of molecules of shape (num_molecules, num_properties).
         :param shuffle: Whether to shuffle the data.
         :return: A dataloader.
         """
@@ -574,14 +609,14 @@ class RLModelMLP(RLModel):
             molecule_tuples=molecule_tuples, average_across_tuple=False
         )
 
-        # Set up empty rewards if None
+        # Set up data based on presence of rewards
         if rewards is None:
-            rewards = torch.zeros(len(molecule_tuples)) * torch.nan
+            data = (features,)
         else:
-            rewards = torch.tensor(rewards)
+            data = (features, torch.tensor(rewards))
 
         # Create dataset
-        dataset = torch.utils.data.TensorDataset(features, rewards)
+        dataset = torch.utils.data.TensorDataset(*data)
 
         # Create dataloader
         dataloader = torch.utils.data.DataLoader(
@@ -589,24 +624,25 @@ class RLModelMLP(RLModel):
             batch_size=self.batch_size,
             shuffle=shuffle,
             num_workers=self.num_workers,
+            collate_fn=rl_mlp_collate_fn,
         )
 
         return dataloader
 
 
-class RLMoleculeDataset(torch.utils.data.Dataset):
+class RLChempropMoleculeDataset(torch.utils.data.Dataset):
     def __init__(
         self,
         molecule_tuples: list[tuple[str, ...]],
         features: torch.Tensor | None = None,
-        rewards: list[float] | None = None,
+        rewards: list[list[float]] | None = None,
     ) -> None:
         """Initializes the dataset.
 
         :param molecule_tuples: A list of tuples of SMILES strings representing one or more molecules.
         :param features: A tensor containing the features for each molecule in each tuple of molecules
                          (num_tuples, total_features_size).
-        :param rewards: A list of rewards for each tuple of molecules.
+        :param rewards: A list of lists of rewards for each tuple of molecules of shape (num_molecules, num_properties).
         """
         # Store molecule tuples
         self.molecule_tuples = molecule_tuples
@@ -641,20 +677,20 @@ class RLMoleculeDataset(torch.utils.data.Dataset):
 
     def __getitem__(
         self, index: int
-    ) -> tuple[tuple[MolGraph, ...], torch.Tensor | None, float | None]:
+    ) -> tuple[tuple[MolGraph, ...], torch.Tensor | None, list[float] | None]:
         """Returns a MolGraph tuple and the corresponding features (or None) and reward (or None)."""
         return self.mol_graphs_tuples[index], self.features[index], self.rewards[index]
 
 
-def rl_collate_fn(
-    data: list[tuple[tuple[MolGraph, ...], torch.Tensor | None, float | None]]
-) -> tuple[tuple[list[BatchMolGraph], list[np.ndarray] | None], torch.Tensor]:
-    """Collates data into a batch.
+def rl_chemprop_collate_fn(
+    data: list[tuple[tuple[MolGraph, ...], torch.Tensor | None, list[float] | None]]
+) -> tuple[tuple[list[BatchMolGraph], list[np.ndarray] | None], torch.Tensor | None]:
+    """Collates data into a batch for the RL Chemprop model.
 
     :param data: A list of tuples of MolGraph tuples, features, and rewards.
-    :return: A tuple with a tuple containing a list of BatchMolGraph and features, and a tensor of rewards.
+    :return: A tuple with a tuple containing a list of BatchMolGraph and features, and a tensor of rewards (or None).
     """
-    # Get molecules and rewards
+    # Get molecules, features, and rewards
     mol_graph_tuples, features, rewards = zip(*data)
 
     # Create BatchMolGraph from MolGraphs
@@ -691,7 +727,7 @@ def rl_collate_fn(
 
     # Set up rewards
     if rewards[0] is None:
-        rewards = torch.zeros(len(data)) * torch.nan
+        rewards = None
     else:
         rewards = torch.tensor(rewards)
 
@@ -790,13 +826,13 @@ class RLModelChemprop(RLModel):
     def get_dataloader(
         self,
         molecule_tuples: list[tuple[str]],
-        rewards: list[float] | None = None,
+        rewards: list[list[float]] | None = None,
         shuffle: bool = False,
     ) -> torch.utils.data.DataLoader:
         """Returns a dataloader for the given molecules.
 
         :param molecule_tuples: A list of tuples of SMILES strings representing one or more molecules.
-        :param rewards: A list of rewards for each tuple of molecules.
+        :param rewards: A list of lists of rewards for each tuple of molecules of shape (num_molecules, num_properties).
         :param shuffle: Whether to shuffle the data.
         :return: A dataloader.
         """
@@ -810,7 +846,7 @@ class RLModelChemprop(RLModel):
             features = None
 
         # Create dataset
-        dataset = RLMoleculeDataset(
+        dataset = RLChempropMoleculeDataset(
             molecule_tuples=molecule_tuples, features=features, rewards=rewards
         )
 
@@ -820,7 +856,7 @@ class RLModelChemprop(RLModel):
             batch_size=self.batch_size,
             shuffle=shuffle,
             num_workers=self.num_workers,
-            collate_fn=rl_collate_fn,
+            collate_fn=rl_chemprop_collate_fn,
         )
 
         return dataloader
