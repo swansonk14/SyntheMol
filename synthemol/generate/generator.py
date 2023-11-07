@@ -35,7 +35,7 @@ class Generator:
             scoring_fn: Callable[[str], float],
             explore_weight: float,
             num_expand_nodes: int | None,
-            rl_temperature: float,
+            rl_base_temperature: float,
             rl_temperature_similarity_target: float | None,
             rl_train_frequency: int,
             optimization: OPTIMIZATION_TYPES,
@@ -58,12 +58,12 @@ class Generator:
         :param explore_weight: The hyperparameter that encourages exploration.
         :param num_expand_nodes: The number of tree nodes to expand when extending the child nodes in the search tree.
                                   If None, then all nodes are expanded.
-        :param rl_temperature: The temperature parameter for the softmax function used to select building blocks.
+        :param rl_base_temperature: The temperature parameter for the softmax function used to select building blocks.
                                Higher temperature means more exploration. If rl_temperature_similarity_target is provided,
                                the temperature is adjusted based on generated molecule diversity.
         :param rl_temperature_similarity_target: If provided, adjusts the temperature to obtain the maximally scoring molecules
                                                  that are at most this similar to previously generated molecules. Starts with
-                                                 the temperature provided by rl_temperature.
+                                                 the temperature provided by rl_base_temperature.
         :param rl_train_frequency: The number of rollouts between each training step of the RL model.
         :param optimization: Whether to maximize or minimize the score.
         :param reactions: A tuple of reactions that combine molecular building blocks.
@@ -84,7 +84,7 @@ class Generator:
         self.scoring_fn = scoring_fn
         self.explore_weight = explore_weight
         self.num_expand_nodes = num_expand_nodes
-        self.rl_temperature = rl_temperature
+        self.rl_base_temperature = rl_base_temperature
         self.rl_temperature_similarity_target = rl_temperature_similarity_target
         self.rl_train_frequency = rl_train_frequency
         self.optimization = optimization
@@ -430,7 +430,7 @@ class Generator:
 
             # Convert RL scores to temperature-scaled probabilities
             child_node_scores = np.array([self.molecules_to_rl_score[molecules] for molecules in child_node_molecules])
-            child_node_probs = softmax(self.optimization_sign * child_node_scores / self.rl_temperature)
+            child_node_probs = softmax(self.optimization_sign * child_node_scores / self.rl_base_temperature)
 
             # Select node proportional to the temperature-scaled RL score
             selected_node = self.rng.choice(child_nodes, p=child_node_probs)
@@ -602,13 +602,13 @@ class Generator:
                 )
 
                 # Update temperature based on percent similarity difference
-                self.rl_temperature += percent_similarity_difference * self.rl_temperature
+                self.rl_base_temperature += percent_similarity_difference * self.rl_base_temperature
 
                 # Clip temperature within min/max bounds
-                self.rl_temperature = max(self.min_temperature, min(self.rl_temperature, self.max_temperature))
+                self.rl_base_temperature = max(self.min_temperature, min(self.rl_base_temperature, self.max_temperature))
 
             # Add RL temperature to rollout stats
-            rollout_stats['RL Temperature'] = self.rl_temperature
+            rollout_stats['RL Temperature'] = self.rl_base_temperature
 
             # Determine number of unique full molecules found
             rollout_stats['Unique Molecules'] = sum(

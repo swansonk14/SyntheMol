@@ -3,9 +3,49 @@ from pathlib import Path
 
 import numpy as np
 import torch
+from chemprop.args import TrainArgs
 from chemprop.models import MoleculeModel
 from chemprop.utils import load_checkpoint, load_scalers
 from sklearn.preprocessing import StandardScaler
+
+
+def chemprop_build_model(
+        dataset_type: str,
+        use_rdkit_fingerprints: bool = False,
+        rdkit_fingerprint_size: int = 200,
+        property_name: str = "task"
+) -> MoleculeModel:
+    """Builds a Chemprop model.
+
+    :param dataset_type: The type of dataset (classification or regression).
+    :param use_rdkit_fingerprints: Whether to use RDKit fingerprints as features.
+    :param rdkit_fingerprint_size: The size of the RDKit fingerprint vector.
+    :param property_name: The name of the property being predicted.
+    :return: A Chemprop model.
+    """
+    arg_list = [
+       '--data_path', 'foo.csv',
+       '--dataset_type', dataset_type,
+       '--save_dir', 'foo',
+       '--quiet'
+   ]
+
+    if use_rdkit_fingerprints:
+        arg_list += ['--features_generator', 'rdkit_2d_normalized', '--no_features_scaling']
+
+    args = TrainArgs().parse_args(arg_list)
+    args.task_names = [property_name]
+
+    if use_rdkit_fingerprints:
+        args.features_size = rdkit_fingerprint_size
+
+    # Ensure reproducibility
+    torch.manual_seed(0)
+
+    # Build model
+    model = MoleculeModel(args)
+
+    return model
 
 
 def chemprop_load(

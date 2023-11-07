@@ -9,85 +9,17 @@ import torch.nn as nn
 from chemfunc.molecular_fingerprints import compute_fingerprints
 from chemprop.models import MoleculeModel
 from chemprop.features import BatchMolGraph, MolGraph
-from chemprop.utils import load_args
 from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import mean_squared_error, r2_score
 from tqdm import tqdm, trange
 
 from synthemol.constants import RL_PREDICTION_TYPES
 from synthemol.generate.node import Node
-from synthemol.models import chemprop_load
+from synthemol.models import chemprop_build_model, MLP
 
 
 # Caching for Chemprop MolGraphs
 SMILES_TO_MOL_GRAPH = {}
-
-
-class MLP(nn.Module):
-    """A multilayer perceptron model."""
-
-    def __init__(
-        self,
-        input_dim: int,
-        hidden_dim: int,
-        output_dim: int,
-        num_layers: int,
-        sigmoid: bool,
-        device: torch.device = torch.device('cpu'),
-    ) -> None:
-        """Initialize the model.
-
-        :param input_dim: The dimensionality of the input to the model.
-        :param hidden_dim: The dimensionality of the hidden layers.
-        :param output_dim: The dimensionality of the output of the model.
-        :param num_layers: The number of layers.
-        :param sigmoid: Whether to apply a sigmoid function to the output (during inference only).
-        :param device: The device to use for the model.
-        """
-        super(MLP, self).__init__()
-
-        assert num_layers > 1
-
-        # Create layer dimensions
-        layer_dims = [input_dim] + [hidden_dim] * (num_layers - 1) + [output_dim]
-
-        # Create layers
-        self.layers = nn.ModuleList(
-            [
-                nn.Linear(layer_dims[i], layer_dims[i + 1])
-                for i in range(len(layer_dims) - 1)
-            ]
-        )
-
-        self.sigmoid = sigmoid
-
-        # Create activation function
-        self.activation = nn.ReLU()
-
-        # Set device
-        self.device = device
-
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
-        """Runs the model on the data.
-
-        :param X: A tensor containing the input (batch_size, input_dim).
-        :return: A tensor containing the model's prediction (batch_size, output_dim).
-        """
-        # Move data to device
-        X = X.to(self.device)
-
-        # Apply layers
-        for i, layer in enumerate(self.layers):
-            X = layer(X)
-
-            if i < len(self.layers) - 1:
-                X = self.activation(X)
-
-        # Apply sigmoid during inference if desired
-        if self.sigmoid and not self.training:
-            X = torch.sigmoid(X)
-
-        return X
 
 
 class RLModel(ABC):
@@ -427,8 +359,7 @@ class RLModel(ABC):
         pass
 
 
-# TODO: Change to load weights from pretrained model
-class RLModelRDKit(RLModel):
+class RLModelMLP(RLModel):
     def __init__(
             self,
             prediction_type: RL_PREDICTION_TYPES,
@@ -442,7 +373,7 @@ class RLModelRDKit(RLModel):
             learning_rate: float = 1e-3,
             device: torch.device = torch.device('cpu'),
     ) -> None:
-        """Initializes the model.
+        """Initializes the RL MLP model.
 
         :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
                                 'classification' = binary classification. 'regression' = regression.
@@ -456,7 +387,7 @@ class RLModelRDKit(RLModel):
         :param learning_rate: The learning rate.
         :param device: The device to use for the model.
         """
-        # Create MLP model
+        # Build MLP model
         self._model = MLP(
             input_dim=self.total_features_size,
             hidden_dim=hidden_dim,
@@ -616,8 +547,8 @@ def rl_collate_fn(
 class RLModelChemprop(RLModel):
     def __init__(
             self,
+            use_rdkit_fingerprints: bool,
             prediction_type: RL_PREDICTION_TYPES,
-            model_path: Path,
             max_num_molecules: int = 3,
             features_size: int = 200,
             num_workers: int = 0,
@@ -626,11 +557,11 @@ class RLModelChemprop(RLModel):
             learning_rate: float = 1e-3,
             device: torch.device = torch.device('cpu'),
     ) -> None:
-        """Initializes the model.
+        """Initializes the RL Chemprop model.
 
+        :param use_rdkit_fingerprints: Whether to use RDKit fingerprints as features.
         :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
                                 'classification' = binary classification. 'regression' = regression.
-        :param model_path: The path to pretrained Chemprop checkpoint file.
         :param max_num_molecules: The maximum number of molecules to process at a time.
         :param features_size: The size of the features for each molecule.
         :param num_workers: The number of workers to use for data loading.
@@ -639,21 +570,13 @@ class RLModelChemprop(RLModel):
         :param learning_rate: The learning rate.
         :param device: The device to use for the model.
         """
-        # If model_path is a directory, take the first model
-        if model_path.is_dir():
-            self.model_path = sorted(model_path.glob('**/*.pt'))[0]
-        else:
-            self.model_path = model_path
-
-        # Load pretrained model
-        self._model = chemprop_load(
-            model_path=self.model_path,
-            device=device
-        )
-
-        # Determine whether RDKit features were used (note: assumes features are RDKit features)
-        args = load_args(path=str(self.model_path))
-        self.use_rdkit_features = args.use_input_features
+        # Build Chemprop model
+        self._model = chemprop_build_model(
+            dataset_type=prediction_type,
+            use_rdkit_fingerprints=use_rdkit_fingerprints,
+            rdkit_fingerprint_size=features_size,
+            property_name="rl_objective"
+        ).to(device)
 
         super().__init__(
             prediction_type=prediction_type,

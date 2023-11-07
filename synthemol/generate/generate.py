@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 import torch
 import wandb
-from chemprop.nn_utils import initialize_weights
 from tap import tapify
 
 from synthemol.constants import (
@@ -22,7 +21,7 @@ from synthemol.constants import (
     SCORE_COL,
     SMILES_COL
 )
-from synthemol.models import RLModelChemprop, RLModelRDKit
+from synthemol.models import RLModelChemprop, RLModelMLP
 from synthemol.reactions import (
     CHEMICAL_SPACE_TO_REACTIONS,
     load_and_set_allowed_reaction_building_blocks,
@@ -33,7 +32,6 @@ from synthemol.generate.utils import create_model_scoring_fn, save_generated_mol
 
 
 # TODO: once tuple[Literal] fix is done in tap, add ('none',) default to fingerprint_types and add literal to reaction_sets
-# TODO: change rl temperature to base temperature or init temperature and set desired similarity target by default
 def generate(
         search_type: Literal['mcts', 'rl'],
         save_dir: Path,
@@ -51,10 +49,10 @@ def generate(
         n_rollout: int = 10,
         explore_weight: float = 10.0,
         num_expand_nodes: int | None = None,
-        rl_model_type: RL_MODEL_TYPES = 'rdkit',
+        rl_model_type: RL_MODEL_TYPES = 'mlp_rdkit',
         rl_prediction_type: RL_PREDICTION_TYPES = 'classification',
-        rl_temperature: float = 0.1,
-        rl_temperature_similarity_target: float | None = None,
+        rl_base_temperature: float = 0.1,
+        rl_temperature_similarity_target: float = 0.5,
         rl_train_frequency: int = 10,
         rl_train_epochs: int = 5,
         num_workers: int = 0,
@@ -91,15 +89,17 @@ def generate(
     :param n_rollout: The number of times to run the generation process.
     :param explore_weight: The hyperparameter that encourages exploration.
     :param num_expand_nodes: The number of child nodes to include when expanding a given node. If None, all child nodes will be included.
-    :param rl_model_type: The type of RL model to use. 'rdkit' = MLP RDKIT model. 'chemprop' = pretrained Chemprop model.
+    :param rl_model_type: The type of RL model to use. 'mlp_rdkit' = MLP RDKit model.
+                          'chemprop' = Chemprop model. 'chemprop_rdkit' = Chemprop RDKit model.
     :param rl_prediction_type: The type of prediction made by the RL model, which determines the loss function.
                                'classification' = binary classification. 'regression' = regression.
-    :param rl_temperature: The temperature parameter for the softmax function used to select building blocks.
+    :param rl_base_temperature: The temperature parameter for the softmax function used to select building blocks.
                            Higher temperature means more exploration. If rl_temperature_similarity_target is provided,
                            the temperature is adjusted based on generated molecule diversity.
-    :param rl_temperature_similarity_target: If provided, adjusts the temperature to obtain the maximally scoring molecules
+    :param rl_temperature_similarity_target: Adjusts the temperature to obtain the maximally scoring molecules
                                              that are at most this similar to previously generated molecules. Starts with
-                                             the temperature provided by rl_temperature.
+                                             the temperature provided by rl_base_temperature.
+                                             If -1, the temperature is not adjusted.
     :param rl_train_frequency: The number of rollouts between each training step of the RL model.
     :param rl_train_epochs: The number of epochs to train the RL model for each training step.
     :param num_workers: The number of workers for RL model data loading.
@@ -127,6 +127,10 @@ def generate(
     if len({len(arg) for arg in [chemical_spaces, building_blocks_paths, reaction_to_building_blocks_paths]}) != 1:
         raise ValueError('chemical_spaces, building_blocks_paths, and reaction_to_building_blocks_paths '
                          'must have the same length.')
+
+    # Set RL temperature similarity target to None if not desired
+    if rl_temperature_similarity_target == -1:
+        rl_temperature_similarity_target = None
 
     # Create save directory
     save_dir.mkdir(parents=True, exist_ok=True)
@@ -258,7 +262,7 @@ def generate(
                 'num_expand_nodes': num_expand_nodes,
                 'rl_model_type': rl_model_type,
                 'rl_prediction_type': rl_prediction_type,
-                'rl_temperature': rl_temperature,
+                'rl_base_temperature': rl_base_temperature,
                 'rl_temperature_similarity_target': rl_temperature_similarity_target,
                 'rl_train_frequency': rl_train_frequency,
                 'rl_train_epochs': rl_train_epochs,
@@ -319,31 +323,21 @@ def generate(
     if search_type == 'rl':
         torch.manual_seed(rng_seed)
 
-        if rl_model_type == 'rdkit':
-            rl_model = RLModelRDKit(
+        if rl_model_type == 'mlp_rdkit':
+            rl_model = RLModelMLP(
                 prediction_type=rl_prediction_type,
                 num_workers=num_workers,
                 num_epochs=rl_train_epochs,
                 device=device
             )
         elif rl_model_type.startswith('chemprop'):
-            if len(model_paths) > 1 and rl_model_type == 'chemprop_pretrained':
-                raise ValueError('Cannot use pretrained RL Chemprop model with multiple model paths.')
-
-            # TODO: Fix this so that chemprop_scratch works without a pretrained Chemprop model
-            # TODO: Fix to support Chemprop with features (e.g., RDKit features)
-            if model_types[0] != 'chemprop':
-                raise ValueError('For RL Chemprop, the first model in model_paths must be a Chemprop model.')
-
             rl_model = RLModelChemprop(
+                use_rdkit_fingerprints=rl_model_type == 'chemprop_rdkit',
                 prediction_type=rl_prediction_type,
-                model_path=model_paths[0],
                 num_workers=num_workers,
+                num_epochs=rl_train_epochs,
                 device=device
             )
-
-            if rl_model_type == 'chemprop_scratch':
-                initialize_weights(rl_model.model)
         else:
             raise ValueError(f'Invalid RL model type: {rl_model_type}')
     else:
@@ -358,7 +352,7 @@ def generate(
         scoring_fn=model_scoring_fn,
         explore_weight=explore_weight,
         num_expand_nodes=num_expand_nodes,
-        rl_temperature=rl_temperature,
+        rl_base_temperature=rl_base_temperature,
         rl_temperature_similarity_target=rl_temperature_similarity_target,
         rl_train_frequency=rl_train_frequency,
         optimization=optimization,
