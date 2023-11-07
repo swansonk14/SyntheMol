@@ -141,27 +141,18 @@ def generate(
     if base_model_weights is None:
         base_model_weights = [1 / num_models] * num_models
 
-    # Set up default model names
-    if model_names is None:
-        model_names = [f"Model {i + 1}" for i in range(num_models)]
-
     # Check lengths of model arguments match
-    if not all(
-        len(arg) == num_models
-        for arg in [
-            model_names,
-            model_types,
-            model_paths,
-            fingerprint_types,
-            base_model_weights,
-            building_blocks_score_columns,
-        ]
-    ):
-        raise ValueError("Model parameters have the same length.")
-
-    # Check length of success_thresholds
-    if success_thresholds is not None and len(success_thresholds) != num_models:
-        raise ValueError("Model parameters must have the same length.")
+    for arg in [
+        model_types,
+        model_paths,
+        fingerprint_types,
+        model_names,
+        base_model_weights,
+        building_blocks_score_columns,
+        success_thresholds,
+    ]:
+        if arg is not None and len(arg) != num_models:
+            raise ValueError("Model parameters have the same length.")
 
     # Check lengths of chemical space arguments match
     if (
@@ -193,12 +184,16 @@ def generate(
             for success_threshold in success_thresholds
         )
         model_weights = ModelWeights(
-            base_model_weights=base_model_weights, immutable=False
+            base_model_weights=base_model_weights,
+            immutable=False,
+            model_names=model_names,
         )
     else:
         success_comparators = None
         model_weights = ModelWeights(
-            base_model_weights=base_model_weights, immutable=True
+            base_model_weights=base_model_weights,
+            immutable=True,
+            model_names=model_names,
         )
 
     # Create save directory
@@ -433,7 +428,6 @@ def generate(
     # Define model scoring function
     print("Loading models and creating model scorer...")
     scorer = MoleculeScorer(
-        model_names=model_names,
         model_paths=model_paths,
         model_types=model_types,
         fingerprint_types=fingerprint_types,
@@ -521,7 +515,7 @@ def generate(
         save_generated_molecules(
             nodes=nodes,
             chemical_space_to_building_block_id_to_smiles=chemical_space_to_building_block_id_to_smiles,
-            model_names=model_names,
+            model_names=model_weights.model_names,
             save_path=molecules_save_path,
         )
 

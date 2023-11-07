@@ -189,7 +189,6 @@ def create_model_scorer(
 class MoleculeScorer:
     def __init__(
         self,
-        model_names: list[str],
         model_types: list[MODEL_TYPES],
         model_paths: list[Path],
         fingerprint_types: list[FINGERPRINT_TYPES],
@@ -199,7 +198,6 @@ class MoleculeScorer:
     ) -> None:
         """Initialize the MoleculeScorer, which contains a collection of one or more individual scorers.
 
-        :param model_names: List of names of models provided by model_paths.
         :param model_types: List of types of models provided by model_paths.
         :param model_paths: List of paths with each path pointing to a directory of model checkpoints (ensemble)
                             or to a specific PKL or PT file containing a trained model.
@@ -210,7 +208,6 @@ class MoleculeScorer:
         :param smiles_to_scores: An optional dictionary mapping SMILES to precomputed scores.
         """
         # Save parameters
-        self.model_names = model_names
         self.model_weights = model_weights
         self.smiles_to_individual_scores = smiles_to_scores
 

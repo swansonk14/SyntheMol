@@ -3,15 +3,35 @@ from typing import Iterable
 
 
 class ModelWeights:
-    def __init__(self, base_model_weights: Iterable[float], immutable: bool) -> None:
+    def __init__(
+        self,
+        base_model_weights: Iterable[float],
+        immutable: bool,
+        model_names: Iterable[str] | None = None,
+    ) -> None:
         """Initialize the model weights object.
 
         :param base_model_weights: The initial model weights.
         :param immutable: Whether the model weights are immutable.
+        :param model_names: The names of the models. If None, defaults to "Model 1", "Model 2", etc.
         """
         self._base_model_weights = tuple(base_model_weights)
         self._immutable = immutable
         self._model_weights = self._base_model_weights
+
+        # Extract model names or set default model names
+        if model_names is not None:
+            self._model_names = tuple(model_names)
+
+            if len(self._model_names) != len(self._base_model_weights):
+                raise ValueError(
+                    f"Number of model names ({len(self._model_names):,}) must match "
+                    f"number of model weights ({len(self._base_model_weights):,})."
+                )
+        else:
+            self._model_names = tuple(
+                f"Model {i + 1}" for i in range(len(self._base_model_weights))
+            )
 
     @property
     def immutable(self) -> bool:
@@ -38,3 +58,8 @@ class ModelWeights:
     def num_weights(self) -> int:
         """Returns the number of model weights."""
         return len(self.weights)
+
+    @property
+    def model_names(self) -> tuple[str, ...]:
+        """Returns the model names."""
+        return self._model_names

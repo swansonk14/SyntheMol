@@ -747,7 +747,7 @@ class Generator:
                 if new_success_rates is not None:
                     # Add success rates to rollout stats
                     for model_name, success_rate in zip(
-                        self.scorer.model_names, new_success_rates
+                        self.model_weights.model_names, new_success_rates
                     ):
                         rollout_stats[f"{model_name} Success Rate"] = success_rate
 
@@ -763,7 +763,7 @@ class Generator:
 
             # Add model weights to rollout stats
             for model_name, model_weight in zip(
-                self.scorer.model_names, self.model_weights.weights
+                self.model_weights.model_names, self.model_weights.weights
             ):
                 rollout_stats[f"{model_name} Weight"] = model_weight
 

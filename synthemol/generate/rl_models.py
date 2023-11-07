@@ -218,7 +218,7 @@ class RLModel(ABC):
                 batch_rewards = batch_rewards.to(self.device)
 
                 # Loop over models and train each one on the batch
-                for property_index, (model, optimizer) in enumerate(
+                for model_index, (model, optimizer) in enumerate(
                     zip(self.models, self.optimizers)
                 ):
                     # Make predictions
@@ -227,14 +227,13 @@ class RLModel(ABC):
                     ).squeeze(dim=-1)
 
                     # Compute loss
-                    loss = self.loss_fn(predictions, batch_rewards[property_index])
+                    loss = self.loss_fn(predictions, batch_rewards[model_index])
 
                     # Backpropagate
                     model.zero_grad()
                     loss.backward()
                     optimizer.step()
 
-    # TODO: should the evaluation be on individual properties instead of the weighted average?
     def evaluate(self, split: Literal["train", "test"]) -> dict[str, float]:
         """Evaluates the model on the train or test set.
 
@@ -253,14 +252,16 @@ class RLModel(ABC):
 
         # Get molecule tuples and rewards (here, rewards are weighted average scores)
         molecule_tuples = [node.molecules for node in source_nodes]
-        rewards = [node.property_score for node in target_nodes]
+        rewards = [node.individual_scores for node in target_nodes]
 
         # Make predictions
-        predictions = self.predict(molecule_tuples)
+        predictions = self.run_models(
+            molecule_tuples
+        )  # (num_molecules, num_properties)
 
         # Convert to numpy
-        predictions = np.array(predictions)
-        rewards = np.array(rewards)
+        predictions = predictions.numpy()  # (num_molecules, num_properties)
+        rewards = np.array(rewards)  # (num_molecules, num_properties)
 
         # Determine source/target number of building blocks
         source_num_building_blocks = np.array(
@@ -290,76 +291,85 @@ class RLModel(ABC):
         results = {}
         split_name = split.title()
 
-        # Get statistics for each unique source/target number of building blocks and reactions
-        for source_num_bb in unique_source_num_building_blocks:
-            for target_num_bb in unique_target_num_building_blocks:
-                for source_num_react in unique_source_num_reactions:
-                    for target_num_react in unique_target_num_reactions:
-                        # Get mask for source/target number of building blocks and reactions
-                        mask = np.ones(len(source_num_building_blocks), dtype=bool)
-                        bb_string = ""
-                        react_string = ""
+        # Get statistics for each property
+        for model_index in range(self.model_weights.num_weights):
+            # Get predictions and rewards for this property
+            model_name = self.model_weights.model_names[model_index]
+            model_predictions = predictions[:, model_index]
+            model_rewards = rewards[:, model_index]
 
-                        if source_num_bb is not None:
-                            bb_string += f" {source_num_bb} Source BBs"
-                            mask &= source_num_building_blocks == source_num_bb
+            # Get statistics for each unique source/target number of building blocks and reactions
+            for source_num_bb in unique_source_num_building_blocks:
+                for target_num_bb in unique_target_num_building_blocks:
+                    for source_num_react in unique_source_num_reactions:
+                        for target_num_react in unique_target_num_reactions:
+                            # Get mask for source/target number of building blocks and reactions
+                            mask = np.ones(len(source_num_building_blocks), dtype=bool)
+                            bb_string = ""
+                            react_string = ""
 
-                        if target_num_bb is not None:
-                            bb_string += f" {target_num_bb} Target BBs"
-                            mask &= target_num_building_blocks == target_num_bb
+                            if source_num_bb is not None:
+                                bb_string += f" {source_num_bb} Source BBs"
+                                mask &= source_num_building_blocks == source_num_bb
 
-                        if source_num_react is not None:
-                            react_string += f" {source_num_react} Source Reactions"
-                            mask &= source_num_reactions == source_num_react
+                            if target_num_bb is not None:
+                                bb_string += f" {target_num_bb} Target BBs"
+                                mask &= target_num_building_blocks == target_num_bb
 
-                        if target_num_react is not None:
-                            react_string += f" {target_num_react} Target Reactions"
-                            mask &= target_num_reactions == target_num_react
+                            if source_num_react is not None:
+                                react_string += f" {source_num_react} Source Reactions"
+                                mask &= source_num_reactions == source_num_react
 
-                        # Skip if no examples
-                        if not np.any(mask):
-                            continue
+                            if target_num_react is not None:
+                                react_string += f" {target_num_react} Target Reactions"
+                                mask &= target_num_reactions == target_num_react
 
-                        # Get predictions and rewards for source/target number of building blocks
-                        predictions_masked = predictions[mask]
-                        rewards_masked = rewards[mask]
+                            # Skip if no examples
+                            if not np.any(mask):
+                                continue
 
-                        # Create description of this subset
-                        description = f"{split_name}{bb_string}{react_string}"
+                            # Get predictions and rewards for source/target number of building blocks
+                            predictions_masked = model_predictions[mask]
+                            rewards_masked = model_rewards[mask]
 
-                        # Evaluate predictions
-                        results |= {
-                            f"RL {description} Loss": self.eval_loss_fn(
-                                torch.from_numpy(predictions_masked),
-                                torch.from_numpy(rewards_masked),
-                            ).item(),
-                            f"RL {description} Mean Squared Error": mean_squared_error(
-                                rewards_masked, predictions_masked
-                            ),
-                        }
+                            # Create description of this subset
+                            description = (
+                                f"{model_name} {split_name}{bb_string}{react_string}"
+                            )
 
-                        if (len(np.unique(predictions_masked)) > 2) & (
-                            len(np.unique(rewards_masked)) > 2
-                        ):
+                            # Evaluate predictions
                             results |= {
-                                f"RL {description} R^2": r2_score(
+                                f"RL {description} Loss": self.eval_loss_fn(
+                                    torch.from_numpy(predictions_masked),
+                                    torch.from_numpy(rewards_masked),
+                                ).item(),
+                                f"RL {description} Mean Squared Error": mean_squared_error(
                                     rewards_masked, predictions_masked
                                 ),
-                                f"RL {description} PearsonR": pearsonr(
-                                    predictions_masked, rewards_masked
-                                )[0],
-                                f"RL {description} SpearmanR": spearmanr(
-                                    predictions_masked, rewards_masked
-                                )[0],
                             }
+
+                            if (len(np.unique(predictions_masked)) > 2) & (
+                                len(np.unique(rewards_masked)) > 2
+                            ):
+                                results |= {
+                                    f"RL {description} R^2": r2_score(
+                                        rewards_masked, predictions_masked
+                                    ),
+                                    f"RL {description} PearsonR": pearsonr(
+                                        predictions_masked, rewards_masked
+                                    )[0],
+                                    f"RL {description} SpearmanR": spearmanr(
+                                        predictions_masked, rewards_masked
+                                    )[0],
+                                }
 
         return results
 
     def predict(self, molecule_tuples: list[tuple[str]]) -> list[float]:
-        """Predicts the reward for each tuple of molecules.
+        """Predicts the weighted average reward for each tuple of molecules.
 
         :param molecule_tuples: A list of tuples of SMILES strings representing one or more molecules.
-        :return: A list of predicted rewards for each tuple of molecules.
+        :return: A list of predicted weighted average rewards for each tuple of molecules.
         """
         # Set models to eval mode
         self.eval_mode()
@@ -367,20 +377,32 @@ class RLModel(ABC):
         # Get dataloader
         dataloader = self.get_dataloader(molecule_tuples=molecule_tuples, shuffle=False)
 
+        # Get weights tensor
+        weights = torch.tensor(self.model_weights.weights, device=self.device).view(
+            1, -1
+        )  # (1, num_properties)
+
         # Loop over batches of molecules and make reward predictions
-        rewards = []
+        predictions = []
 
         with torch.no_grad():
             for batch_data, _ in tqdm(
                 dataloader, desc="Predicting RL model", leave=False
             ):
                 # Predict rewards
-                batch_rewards = self.run_models(batch_data)
+                batch_preds = self.run_models(
+                    batch_data
+                )  # (num_molecules, num_properties)
 
-                # Add rewards to list
-                rewards.extend(batch_rewards.cpu().flatten().tolist())
+                # Compute weighted average
+                batch_preds = torch.sum(
+                    weights * batch_preds, dim=1
+                )  # (num_molecules,)
 
-        return rewards
+                # Add predictions to list
+                predictions.extend(batch_preds.cpu().flatten().tolist())
+
+        return predictions
 
     def save(self, path: Path) -> None:
         """Saves the model to the given path.
@@ -440,30 +462,23 @@ class RLModel(ABC):
 
         :param model: A model.
         :param batch_data: A Tensor containing the data for the batch.
-        :return: A tensor containing the model's prediction (batch_size, output_dim).
+        :return: A 1D tensor containing the model's predictions.
         """
         pass
 
     def run_models(self, batch_data: Any) -> torch.Tensor:
-        """Makes predictions by computing the weighted average of model predictions.
+        """Makes predictions by computing the models' predictions.
 
         :param batch_data: Data for the batch.
-        :return: A tensor containing the weighted averaged of the models' predictions (batch_size, output_dim).
+        :return: A 2D tensor containing the models' predictions (batch_size, num_properties).
         """
-        # Get model weights as torch Tensor
-        weights = torch.tensor(self.model_weights.weights).view(
-            -1, 1, 1
-        )  # (num_models, 1, 1)
-
         # Compute individual model predictions
         predictions = torch.stack(
             [self.run_model(model, batch_data) for model in self.models]
-        )  # (num_models, batch_size, output_dim)
+        )  # (num_properties, batch_size)
 
-        # Compute weighted average of model predictions
-        predictions = torch.sum(
-            weights * predictions, dim=0
-        )  # (batch_size, output_dim)
+        # Transpose to (batch_size, num_properties)
+        predictions = predictions.transpose(0, 1)
 
         return predictions
 
@@ -600,9 +615,9 @@ class RLModelMLP(RLModel):
 
         :param model: A model.
         :param batch_data: A Tensor containing the data for the batch.
-        :return: A tensor containing the model's prediction (batch_size, output_dim).
+        :return: A 1D tensor containing the model's prediction.
         """
-        return model(batch_data)
+        return model(batch_data).squeeze(dim=-1)
 
     def get_dataloader(
         self,
@@ -827,13 +842,15 @@ class RLModelChemprop(RLModel):
 
         :param model: A model.
         :param batch_data: A tuple containing a list of BatchMolGraphs and features for the batch.
-        :return: A tensor containing the model's prediction (batch_size, output_dim).
+        :return: A 1D tensor containing the model's prediction.
         """
         # Unpack batch data
         batch_mol_graphs, features = batch_data
 
         # Get predictions
-        predictions = model(batch=batch_mol_graphs, features_batch=features)
+        predictions = model(batch=batch_mol_graphs, features_batch=features).squeeze(
+            dim=-1
+        )
 
         # Return predictions
         return predictions

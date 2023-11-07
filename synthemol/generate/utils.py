@@ -24,7 +24,7 @@ OPERATORS = {
 def save_generated_molecules(
     nodes: list[Node],
     chemical_space_to_building_block_id_to_smiles: dict[str, dict[str, str]],
-    model_names: list[str],
+    model_names: tuple[str, ...],
     save_path: Path,
 ) -> None:
     """Save generated molecules to a CSV file.
