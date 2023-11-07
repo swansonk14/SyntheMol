@@ -58,9 +58,9 @@ class Generator:
         :param explore_weight: The hyperparameter that encourages exploration.
         :param num_expand_nodes: The number of tree nodes to expand when extending the child nodes in the search tree.
                                   If None, then all nodes are expanded.
-        :param rl_base_temperature: The temperature parameter for the softmax function used to select building blocks.
-                               Higher temperature means more exploration. If rl_temperature_similarity_target is provided,
-                               the temperature is adjusted based on generated molecule diversity.
+        :param rl_base_temperature: The initial temperature parameter for the softmax function used to select building blocks.
+                                    Higher temperature means more exploration. If rl_temperature_similarity_target is provided,
+                                    the temperature is adjusted based on generated molecule diversity.
         :param rl_temperature_similarity_target: If provided, adjusts the temperature to obtain the maximally scoring molecules
                                                  that are at most this similar to previously generated molecules. Starts with
                                                  the temperature provided by rl_base_temperature.

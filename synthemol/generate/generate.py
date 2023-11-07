@@ -38,7 +38,9 @@ def generate(
         model_types: list[MODEL_TYPES],
         model_paths: list[Path],
         fingerprint_types: list[FINGERPRINT_TYPES],
-        model_weights: tuple[float, ...] = (1.0,),
+        base_model_weights: tuple[float, ...] = (1.0,),
+        success_thresholds: tuple[float, ...] | None = None,
+        success_comparators: tuple[str, ...] | None = None,
         chemical_spaces: tuple[str, ...] = ('real',),
         building_blocks_paths: tuple[Path, ...] = (BUILDING_BLOCKS_PATH,),
         reaction_to_building_blocks_paths: tuple[Path, ...] = (REACTION_TO_BUILDING_BLOCKS_PATH,),
@@ -77,7 +79,12 @@ def generate(
                         or to a specific PKL or PT file containing a trained model.
                         Note: All models must have a single output.
     :param fingerprint_types: List of types of fingerprints to use as input features for the model_paths.
-    :param model_weights: List of weights for each model/ensemble in model_paths for defining the reward function.
+    :param base_model_weights: Initial weights for each model/ensemble in model_paths for defining the reward function.
+    :param success_thresholds: The threshold for each model/ensemble in model_paths for defining success.
+                               If provided, the model weights will be dynamically set to maximize joint success
+                               across all models/ensembles.
+    :param success_comparators: The comparator for each model/ensemble in model_paths for defining success.
+                                Must be '<', '<=', '>', '>=', or '='.
     :param chemical_spaces: A tuple of names of reaction sets to use. 'real' = Enamine REAL Space reactions.
                             'wuxi' = WuXi GalaXi reactions. 'custom' = Custom reactions (in synthemol/reactions/custom.py).
     :param building_blocks_paths: Paths to CSV files containing molecular building blocks.
@@ -93,9 +100,9 @@ def generate(
                           'chemprop' = Chemprop model. 'chemprop_rdkit' = Chemprop RDKit model.
     :param rl_prediction_type: The type of prediction made by the RL model, which determines the loss function.
                                'classification' = binary classification. 'regression' = regression.
-    :param rl_base_temperature: The temperature parameter for the softmax function used to select building blocks.
-                           Higher temperature means more exploration. If rl_temperature_similarity_target is provided,
-                           the temperature is adjusted based on generated molecule diversity.
+    :param rl_base_temperature: The initial temperature parameter for the softmax function used to select building blocks.
+                                Higher temperature means more exploration. If rl_temperature_similarity_target is provided,
+                                the temperature is adjusted based on generated molecule diversity.
     :param rl_temperature_similarity_target: Adjusts the temperature to obtain the maximally scoring molecules
                                              that are at most this similar to previously generated molecules. Starts with
                                              the temperature provided by rl_base_temperature.
@@ -119,7 +126,7 @@ def generate(
     :param wandb_run_name: The name of the Weights & Biases run to log results to.
     """
     # Check lengths of model arguments match
-    if len({len(arg) for arg in [model_types, model_paths, fingerprint_types, model_weights, building_blocks_score_columns]}) != 1:
+    if len({len(arg) for arg in [model_types, model_paths, fingerprint_types, base_model_weights, building_blocks_score_columns]}) != 1:
         raise ValueError('model_types, model_paths, fingerprint_types, model_weights, '
                          'and building_blocks_score_columns must have the same length.')
 
@@ -217,13 +224,13 @@ def generate(
         for chemical_space, building_block_data in chemical_space_to_building_block_data.items()
     }
 
-    # Map building block SMILES to (weighted average) score
-    building_block_smiles_to_score: dict[str, float] = {
-        smiles: sum(model_weight * score for model_weight, score in zip(model_weights, scores))
+    # Map building block SMILES to scores
+    building_block_smiles_to_scores: dict[str, list[float]] = {
+        smiles: list(scores)
         for building_block_data in chemical_space_to_building_block_data.values()
         for smiles, scores in zip(
             building_block_data[building_blocks_smiles_column],
-            building_block_data[building_blocks_score_columns].itertuples(index=False)
+            building_block_data[list(building_blocks_score_columns)].itertuples(index=False)
         )
     }
 
@@ -236,7 +243,7 @@ def generate(
             for model_type, fingerprint_type, model_weight in zip(
                     model_types,
                     fingerprint_types,
-                    model_weights
+                    base_model_weights
             ):
                 wandb_run_name += (f'_{model_weight}_{model_type}' +
                                    (f'_{fingerprint_type}' if fingerprint_type != 'none' else ''))
@@ -253,7 +260,7 @@ def generate(
                 'model_paths': model_paths,
                 'model_types': model_types,
                 'fingerprint_types': fingerprint_types,
-                'model_weights': model_weights,
+                'model_weights': base_model_weights,
                 'chemical_spaces': chemical_spaces,
                 'building_blocks_paths': building_blocks_paths,
                 'reaction_to_building_blocks_paths': reaction_to_building_blocks_paths,
@@ -321,9 +328,9 @@ def generate(
         model_paths=model_paths,
         model_types=model_types,
         fingerprint_types=fingerprint_types,
-        model_weights=model_weights,
+        model_weights=base_model_weights,
         device=device,
-        smiles_to_score=building_block_smiles_to_score
+        smiles_to_scores=building_block_smiles_to_scores
     )
 
     # Set up RL model if applicable

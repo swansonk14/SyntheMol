@@ -107,7 +107,7 @@ def create_model_scoring_fn(
         fingerprint_types: list[FINGERPRINT_TYPES],
         model_weights: tuple[float, ...] = (1.0,),
         device: torch.device = torch.device('cpu'),
-        smiles_to_score: dict[str, float] | None = None
+        smiles_to_scores: dict[str, list[float]] | None = None
 ) -> Callable[[str], float]:
     """Creates a function that scores a molecule using a weight combination of models or ensembles of models.
 
@@ -116,9 +116,9 @@ def create_model_scoring_fn(
                         or to a specific PKL or PT file containing a trained model.
                         Note: All models must have a single output.
     :param fingerprint_types: List of types of fingerprints to use as input features for the model_paths.
-    :param model_weights: List of weights for each model/ensemble in model_paths for defining the reward function.
+    :param model_weights: Weights for each model/ensemble in model_paths for defining the reward function.
     :param device: The device on which to run the model.
-    :param smiles_to_score: An optional dictionary mapping SMILES to precomputed scores.
+    :param smiles_to_scores: An optional dictionary mapping SMILES to precomputed scores.
     :return: A function that scores a molecule using a weight combination of models or ensembles of models.
     """
     # Set up model scorer functions
@@ -135,9 +135,12 @@ def create_model_scoring_fn(
     # Build model scoring function including precomputed building block scores
     @cache
     def model_scoring_fn(smiles: str) -> float:
-        # If SMILES is in precomputed scores, return the score
-        if smiles_to_score is not None and smiles in smiles_to_score:
-            return smiles_to_score[smiles]
+        # If SMILES is in precomputed scores, return the weight combination score
+        if smiles_to_scores is not None and smiles in smiles_to_scores:
+            return sum(
+                model_weight * score
+                for model_weight, score in zip(model_weights, smiles_to_scores[smiles])
+            )
 
         # Otherwise, compute the score using a weighted combination of the model scorers
         return sum(

@@ -544,7 +544,7 @@ def rl_collate_fn(
     if features[0] is None:
         features = None
     else:
-        features = [torch.stack(features).numpy()]
+        features = [feats.numpy() for feats in features]
 
     # Set up rewards
     if rewards[0] is None:
