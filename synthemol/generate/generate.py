@@ -332,7 +332,7 @@ def generate(
             )
         elif rl_model_type.startswith('chemprop'):
             rl_model = RLModelChemprop(
-                use_rdkit_fingerprints=rl_model_type == 'chemprop_rdkit',
+                use_rdkit_features=rl_model_type == 'chemprop_rdkit',
                 prediction_type=rl_prediction_type,
                 num_workers=num_workers,
                 num_epochs=rl_train_epochs,

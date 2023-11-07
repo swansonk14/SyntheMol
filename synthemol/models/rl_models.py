@@ -389,7 +389,7 @@ class RLModelMLP(RLModel):
         """
         # Build MLP model
         self._model = MLP(
-            input_dim=self.total_features_size,
+            input_dim=max_num_molecules * features_size,
             hidden_dim=hidden_dim,
             output_dim=1,
             num_layers=num_layers,
@@ -469,11 +469,18 @@ class RLMoleculeDataset(torch.utils.data.Dataset):
                          (num_tuples, total_features_size).
         :param rewards: A list of rewards for each tuple of molecules.
         """
+        # Store molecule tuples
         self.molecule_tuples = molecule_tuples
-        self.features = features
 
+        # Handle features
+        if features is None:
+            self.features = [None] * len(molecule_tuples)
+        else:
+            self.features = features
+
+        # Handle rewards
         if rewards is None:
-            self.rewards = torch.zeros(len(molecule_tuples)) * torch.nan
+            self.rewards = [None] * len(molecule_tuples)
         else:
             self.rewards = rewards
 
@@ -493,13 +500,13 @@ class RLMoleculeDataset(torch.utils.data.Dataset):
         """Returns the number of tuples of molecules."""
         return len(self.molecule_tuples)
 
-    def __getitem__(self, index: int) -> tuple[tuple[MolGraph, ...], torch.Tensor | None, float]:
-        """Returns a MolGraph tuple and the corresponding features (or None) and reward (or NaN)."""
+    def __getitem__(self, index: int) -> tuple[tuple[MolGraph, ...], torch.Tensor | None, float | None]:
+        """Returns a MolGraph tuple and the corresponding features (or None) and reward (or None)."""
         return self.mol_graphs_tuples[index], self.features[index], self.rewards[index]
 
 
 def rl_collate_fn(
-        data: list[tuple[tuple[MolGraph, ...], torch.Tensor | None, float]]
+        data: list[tuple[tuple[MolGraph, ...], torch.Tensor | None, float | None]]
 ) -> tuple[tuple[list[BatchMolGraph], list[np.ndarray] | None], torch.Tensor]:
     """Collates data into a batch.
 
@@ -534,12 +541,19 @@ def rl_collate_fn(
     batch_mol_graph.b_scope = b_scope
 
     # Set up features
-    if features is not None:
-        features = [features.numpy()]
+    if features[0] is None:
+        features = None
+    else:
+        features = [torch.stack(features).numpy()]
+
+    # Set up rewards
+    if rewards[0] is None:
+        rewards = torch.zeros(len(data)) * torch.nan
+    else:
+        rewards = torch.tensor(rewards)
 
     # Set up batch data for Chemprop
     batch_data = ([batch_mol_graph], features)
-    rewards = torch.tensor(rewards)
 
     return batch_data, rewards
 
@@ -547,7 +561,7 @@ def rl_collate_fn(
 class RLModelChemprop(RLModel):
     def __init__(
             self,
-            use_rdkit_fingerprints: bool,
+            use_rdkit_features: bool,
             prediction_type: RL_PREDICTION_TYPES,
             max_num_molecules: int = 3,
             features_size: int = 200,
@@ -559,7 +573,7 @@ class RLModelChemprop(RLModel):
     ) -> None:
         """Initializes the RL Chemprop model.
 
-        :param use_rdkit_fingerprints: Whether to use RDKit fingerprints as features.
+        :param use_rdkit_features: Whether to use RDKit fingerprints as features.
         :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
                                 'classification' = binary classification. 'regression' = regression.
         :param max_num_molecules: The maximum number of molecules to process at a time.
@@ -573,10 +587,13 @@ class RLModelChemprop(RLModel):
         # Build Chemprop model
         self._model = chemprop_build_model(
             dataset_type=prediction_type,
-            use_rdkit_fingerprints=use_rdkit_fingerprints,
-            rdkit_fingerprint_size=features_size,
+            use_rdkit_features=use_rdkit_features,
+            rdkit_features_size=features_size,
             property_name="rl_objective"
         ).to(device)
+
+        # Store whether to use RDKit features
+        self.use_rdkit_features = use_rdkit_features
 
         super().__init__(
             prediction_type=prediction_type,
