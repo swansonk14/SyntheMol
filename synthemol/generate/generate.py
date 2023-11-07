@@ -21,7 +21,7 @@ from synthemol.constants import (
     SCORE_COL,
     SMILES_COL
 )
-from synthemol.models import RLModelChemprop, RLModelMLP
+from synthemol.generate.rl_models import RLModelChemprop, RLModelMLP
 from synthemol.reactions import (
     CHEMICAL_SPACE_TO_REACTIONS,
     load_and_set_allowed_reaction_building_blocks,

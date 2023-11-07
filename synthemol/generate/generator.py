@@ -17,7 +17,7 @@ from synthemol.constants import OPTIMIZATION_TYPES
 from synthemol.generate.logs import ConstructionLog, ReactionLog
 from synthemol.generate.node import Node
 from synthemol.generate.scorer import MoleculeScorer
-from synthemol.models import RLModel
+from synthemol.generate.rl_models import RLModel
 from synthemol.reactions import Reaction
 from synthemol.utils import random_choice
 
