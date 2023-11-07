@@ -1,9 +1,10 @@
 """Utility functions for generating molecules."""
-from functools import cache
+import operator
+import re
+from functools import cache, partial
 from pathlib import Path
 from typing import Callable
 
-import numpy as np
 import pandas as pd
 import torch
 from chemfunc import compute_fingerprint
@@ -25,6 +26,16 @@ from synthemol.models import (
     sklearn_load,
     sklearn_predict_on_molecule_ensemble
 )
+
+
+OPERATORS = {
+    '<': operator.lt,
+    '<=': operator.le,
+    '==': operator.eq,
+    '!=': operator.ne,
+    '>': operator.gt,
+    '>=': operator.ge
+}
 
 
 def create_model_scorer(
@@ -101,13 +112,42 @@ def create_model_scorer(
     return model_scorer
 
 
+def model_scoring_fn(
+        smiles: str,
+        model_weights: tuple[float, ...] | list[float, ...],
+        smiles_to_scores: dict[str, list[float]],
+        model_scorers: list[Callable[[str], float]]
+) -> float:
+    """Scores a molecule using a weight combination of models or ensembles of models.
+
+    :param smiles: A SMILES string.
+    :param model_weights: Weights for each model/ensemble in model_paths for defining the reward function.
+    :param smiles_to_scores: An optional dictionary mapping SMILES to precomputed scores.
+    :param model_scorers: A list of functions that score a molecule using a model or ensemble of models.
+    :return: The score of the molecule.
+    """
+    # If SMILES is in precomputed scores, return the weight combination score
+    if smiles_to_scores is not None and smiles in smiles_to_scores:
+        return sum(
+            model_weight * score
+            for model_weight, score in zip(model_weights, smiles_to_scores[smiles])
+        )
+
+    # Otherwise, compute the score using a weighted combination of the model scorers
+    return sum(
+        model_weight * model_scorer(smiles=smiles)
+        for model_weight, model_scorer in zip(model_weights, model_scorers)
+    )
+
+
 def create_model_scoring_fn(
         model_types: list[MODEL_TYPES],
         model_paths: list[Path],
         fingerprint_types: list[FINGERPRINT_TYPES],
-        model_weights: tuple[float, ...] = (1.0,),
+        model_weights: tuple[float, ...] | list[float, ...] = (1.0,),
         device: torch.device = torch.device('cpu'),
-        smiles_to_scores: dict[str, list[float]] | None = None
+        smiles_to_scores: dict[str, list[float]] | None = None,
+        cache_scores: bool = True
 ) -> Callable[[str], float]:
     """Creates a function that scores a molecule using a weight combination of models or ensembles of models.
 
@@ -117,8 +157,12 @@ def create_model_scoring_fn(
                         Note: All models must have a single output.
     :param fingerprint_types: List of types of fingerprints to use as input features for the model_paths.
     :param model_weights: Weights for each model/ensemble in model_paths for defining the reward function.
+                          Note: If using dynamic weights, then model_weights should be a list that can be
+                          modified in place by other functions and cache_scores should be False.
     :param device: The device on which to run the model.
     :param smiles_to_scores: An optional dictionary mapping SMILES to precomputed scores.
+    :param cache_scores: Whether to cache scores for faster computation. Assumes that the scoring function
+                         and model weights do not change.
     :return: A function that scores a molecule using a weight combination of models or ensembles of models.
     """
     # Set up model scorer functions
@@ -133,22 +177,18 @@ def create_model_scoring_fn(
     ]
 
     # Build model scoring function including precomputed building block scores
-    @cache
-    def model_scoring_fn(smiles: str) -> float:
-        # If SMILES is in precomputed scores, return the weight combination score
-        if smiles_to_scores is not None and smiles in smiles_to_scores:
-            return sum(
-                model_weight * score
-                for model_weight, score in zip(model_weights, smiles_to_scores[smiles])
-            )
+    model_scoring_func = partial(
+        model_scoring_fn,
+        model_weights=model_weights,
+        smiles_to_scores=smiles_to_scores,
+        model_scorers=model_scorers
+    )
 
-        # Otherwise, compute the score using a weighted combination of the model scorers
-        return sum(
-            model_weight * model_scorer(smiles=smiles)
-            for model_weight, model_scorer in zip(model_weights, model_scorers)
-        )
+    # Optionally, cache scores for faster computation (only of not using dynamic weights)
+    if cache_scores:
+        model_scoring_func = cache(model_scoring_func)
 
-    return model_scoring_fn
+    return model_scoring_func
 
 
 def save_generated_molecules(
@@ -217,3 +257,46 @@ def save_generated_molecules(
         columns=columns
     )
     data.to_csv(save_path, index=False)
+
+
+def compare_to_threshold(
+        score: float,
+        comparator: str,
+        threshold: float,
+) -> bool:
+    """Compares a score to a threshold using a comparator.
+
+    :param score: A score.
+    :param comparator: A comparator (e.g., >, >=, ==, !=, <, <=).
+    :param threshold: A threshold.
+    :return: Whether the score satisfies the comparator and threshold.
+    """
+    return OPERATORS[comparator](score, threshold)
+
+
+def parse_success_threshold(success_threshold: str) -> Callable[[float], bool]:
+    """Parses a success threshold string into a function that determines whether a molecule is successful.
+
+    :param success_threshold: A string of the form "> 0.5" with a comparator and a threshold value.
+    :return: A function that determines whether a molecule is successful according to the threshold.
+    """
+    # Create regex to match the success threshold pattern
+    success_threshold_pattern = r'^(?P<comparator>[<>!=]{1,2})\s*(?P<threshold>\d+(?:\.\d+)?)$'
+
+    # Parse success threshold
+    match = re.match(success_threshold_pattern, success_threshold)
+
+    if match is None:
+        raise ValueError(f'Invalid success threshold: {success_threshold}')
+
+    comparator = match.group('comparator')
+    threshold = float(match.group('threshold'))
+
+    # Create function that determines whether a molecule is successful according to the threshold
+    compare_to_threshold_fn = partial(
+        compare_to_threshold,
+        comparator=comparator,
+        threshold=threshold
+    )
+
+    return compare_to_threshold_fn

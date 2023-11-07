@@ -1,7 +1,7 @@
 """Generate molecules combinatorially using a Monte Carlo tree search guided by a molecular property predictor."""
 from datetime import datetime
 from pathlib import Path
-from typing import Literal
+from typing import Callable, Literal
 
 import numpy as np
 import pandas as pd
@@ -28,7 +28,7 @@ from synthemol.reactions import (
     set_all_building_blocks
 )
 from synthemol.generate.generator import Generator
-from synthemol.generate.utils import create_model_scoring_fn, save_generated_molecules
+from synthemol.generate.utils import create_model_scoring_fn, parse_success_threshold, save_generated_molecules
 
 
 # TODO: once tuple[Literal] fix is done in tap, add ('none',) default to fingerprint_types and add literal to reaction_sets
@@ -39,8 +39,7 @@ def generate(
         model_paths: list[Path],
         fingerprint_types: list[FINGERPRINT_TYPES],
         base_model_weights: tuple[float, ...] = (1.0,),
-        success_thresholds: tuple[float, ...] | None = None,
-        success_comparators: tuple[str, ...] | None = None,
+        success_thresholds: tuple[str, ...] | None = None,
         chemical_spaces: tuple[str, ...] = ('real',),
         building_blocks_paths: tuple[Path, ...] = (BUILDING_BLOCKS_PATH,),
         reaction_to_building_blocks_paths: tuple[Path, ...] = (REACTION_TO_BUILDING_BLOCKS_PATH,),
@@ -80,11 +79,9 @@ def generate(
                         Note: All models must have a single output.
     :param fingerprint_types: List of types of fingerprints to use as input features for the model_paths.
     :param base_model_weights: Initial weights for each model/ensemble in model_paths for defining the reward function.
-    :param success_thresholds: The threshold for each model/ensemble in model_paths for defining success.
+    :param success_thresholds: The threshold for each model/ensemble in model_paths for defining success of the form "> 0.5".
                                If provided, the model weights will be dynamically set to maximize joint success
                                across all models/ensembles.
-    :param success_comparators: The comparator for each model/ensemble in model_paths for defining success.
-                                Must be '<', '<=', '>', '>=', or '='.
     :param chemical_spaces: A tuple of names of reaction sets to use. 'real' = Enamine REAL Space reactions.
                             'wuxi' = WuXi GalaXi reactions. 'custom' = Custom reactions (in synthemol/reactions/custom.py).
     :param building_blocks_paths: Paths to CSV files containing molecular building blocks.
@@ -130,6 +127,10 @@ def generate(
         raise ValueError('model_types, model_paths, fingerprint_types, model_weights, '
                          'and building_blocks_score_columns must have the same length.')
 
+    # Check length of success_thresholds
+    if success_thresholds is not None and len(success_thresholds) != len(base_model_weights):
+        raise ValueError('success_thresholds must have the same length as model_weights.')
+
     # Check lengths of chemical space arguments match
     if len({len(arg) for arg in [chemical_spaces, building_blocks_paths, reaction_to_building_blocks_paths]}) != 1:
         raise ValueError('chemical_spaces, building_blocks_paths, and reaction_to_building_blocks_paths '
@@ -138,6 +139,18 @@ def generate(
     # Set RL temperature similarity target to None if not desired
     if rl_temperature_similarity_target == -1:
         rl_temperature_similarity_target = None
+
+    # Set up dynamic model weights if success thresholds are provided
+    if success_thresholds is not None:
+        success_comparators: tuple[Callable[[float], bool], ...] = tuple(
+            parse_success_threshold(success_threshold)
+            for success_threshold in success_thresholds
+        )
+        dynamic_model_weights = True
+        model_weights = list(base_model_weights)
+    else:
+        dynamic_model_weights = False
+        model_weights = base_model_weights
 
     # Create save directory
     save_dir.mkdir(parents=True, exist_ok=True)
@@ -240,12 +253,8 @@ def generate(
         if wandb_run_name is None:
             wandb_run_name = f'{search_type}' + (f'_{rl_model_type}' if search_type == 'rl' else '')
 
-            for model_type, fingerprint_type, model_weight in zip(
-                    model_types,
-                    fingerprint_types,
-                    base_model_weights
-            ):
-                wandb_run_name += (f'_{model_weight}_{model_type}' +
+            for model_type, fingerprint_type in zip(model_types, fingerprint_types):
+                wandb_run_name += (f'_{model_type}' +
                                    (f'_{fingerprint_type}' if fingerprint_type != 'none' else ''))
 
             wandb_run_name += f'_{"_".join(chemical_spaces)}'
@@ -260,7 +269,8 @@ def generate(
                 'model_paths': model_paths,
                 'model_types': model_types,
                 'fingerprint_types': fingerprint_types,
-                'model_weights': base_model_weights,
+                'base_model_weights': base_model_weights,
+                'success_thresholds': success_thresholds,
                 'chemical_spaces': chemical_spaces,
                 'building_blocks_paths': building_blocks_paths,
                 'reaction_to_building_blocks_paths': reaction_to_building_blocks_paths,
@@ -328,9 +338,10 @@ def generate(
         model_paths=model_paths,
         model_types=model_types,
         fingerprint_types=fingerprint_types,
-        model_weights=base_model_weights,
+        model_weights=model_weights,
         device=device,
-        smiles_to_scores=building_block_smiles_to_scores
+        smiles_to_scores=building_block_smiles_to_scores,
+        cache_scores=not dynamic_model_weights
     )
 
     # Set up RL model if applicable
@@ -435,8 +446,7 @@ def generate(
         table = wandb.Table(data=node_scores, columns=['Score'])
         wandb.log({'generation_scores': wandb.plot.histogram(table, 'Score', title='Generated Molecule Scores')})
 
-    # Save RL model if applicable
-    # TODO: fix RL model saving
+    # Save RL model
     if rl_model is not None:
         rl_model.save(save_dir / 'rl_model.pt')
 
