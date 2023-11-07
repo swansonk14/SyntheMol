@@ -1,7 +1,7 @@
 """Contains the Node class, which represents a step in the combinatorial molecule construction process."""
 import math
 from functools import cached_property
-from typing import Any, Callable
+from typing import Any
 
 from synthemol.generate.logs import ConstructionLog
 from synthemol.generate.scorer import MoleculeScorer
