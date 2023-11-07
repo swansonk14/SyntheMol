@@ -58,7 +58,7 @@ def analyze_score_vs_similarity(
     novelty_threshold: float = 0.5,
     similarity_threshold: float = 0.5,
     score_thresholds: tuple[float, ...] = (0.9, 0.95, 0.98, 0.99),
-    max_rollout: int | None = None
+    max_rollout: int | None = None,
 ) -> None:
     """Analyzes the score and similarity of a set of generated molecules.
 

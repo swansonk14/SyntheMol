@@ -22,34 +22,34 @@ from synthemol.reactions import Reaction
 from synthemol.utils import random_choice
 
 
-morgan_fingerprint_generator = get_fingerprint_generator('morgan')
+morgan_fingerprint_generator = get_fingerprint_generator("morgan")
 
 
 class Generator:
     """A class that generates molecules."""
 
     def __init__(
-            self,
-            search_type: Literal['mcts', 'rl'],
-            chemical_space_to_building_block_smiles_to_id: dict[str, dict[str, str]],
-            max_reactions: int,
-            scorer: MoleculeScorer,
-            model_weights: list[float, ...],
-            success_comparators: tuple[Callable[[float], bool], ...] | None,
-            explore_weight: float,
-            num_expand_nodes: int | None,
-            rl_base_temperature: float,
-            rl_temperature_similarity_target: float | None,
-            rl_train_frequency: int,
-            optimization: OPTIMIZATION_TYPES,
-            reactions: tuple[Reaction],
-            rng_seed: int,
-            no_building_block_diversity: bool,
-            store_nodes: bool,
-            verbose: bool,
-            rl_model: RLModel | None = None,
-            replicate: bool = False,
-            wandb_log: bool = False
+        self,
+        search_type: Literal["mcts", "rl"],
+        chemical_space_to_building_block_smiles_to_id: dict[str, dict[str, str]],
+        max_reactions: int,
+        scorer: MoleculeScorer,
+        model_weights: list[float, ...],
+        success_comparators: tuple[Callable[[float], bool], ...] | None,
+        explore_weight: float,
+        num_expand_nodes: int | None,
+        rl_base_temperature: float,
+        rl_temperature_similarity_target: float | None,
+        rl_train_frequency: int,
+        optimization: OPTIMIZATION_TYPES,
+        reactions: tuple[Reaction],
+        rng_seed: int,
+        no_building_block_diversity: bool,
+        store_nodes: bool,
+        verbose: bool,
+        rl_model: RLModel | None = None,
+        replicate: bool = False,
+        wandb_log: bool = False,
     ) -> None:
         """Creates the Generator.
 
@@ -86,7 +86,9 @@ class Generator:
         :param wandb_log: Whether to log results to Weights & Biases.
         """
         self.search_type = search_type
-        self.chemical_space_to_building_block_smiles_to_id = chemical_space_to_building_block_smiles_to_id
+        self.chemical_space_to_building_block_smiles_to_id = (
+            chemical_space_to_building_block_smiles_to_id
+        )
         self.max_reactions = max_reactions
         self.scorer = scorer
         self.model_weights = model_weights
@@ -107,40 +109,52 @@ class Generator:
         self.wandb_log = wandb_log
 
         # Check that the search type is valid
-        if (self.search_type == 'rl') != (self.rl_model is not None):
-            raise ValueError('RL model must be provided if and only if search_type is "rl"')
+        if (self.search_type == "rl") != (self.rl_model is not None):
+            raise ValueError(
+                'RL model must be provided if and only if search_type is "rl"'
+            )
 
         # Check that model weights is a list if success comparators is provided
-        if self.success_comparators is not None and not isinstance(self.model_weights, list):
-            raise ValueError('Model weights must be a list if success comparators are provided')
+        if self.success_comparators is not None and not isinstance(
+            self.model_weights, list
+        ):
+            raise ValueError(
+                "Model weights must be a list if success comparators are provided"
+            )
 
         # Get all building blocks that are used in at least one reaction
         if self.replicate:
-            self.all_building_blocks = list(dict.fromkeys(
-                building_block
-                for reaction in self.reactions
-                for reactant in reaction.reactants
-                for building_block in reactant.allowed_building_blocks
-            ))
+            self.all_building_blocks = list(
+                dict.fromkeys(
+                    building_block
+                    for reaction in self.reactions
+                    for reactant in reaction.reactants
+                    for building_block in reactant.allowed_building_blocks
+                )
+            )
         else:
             self.all_building_blocks = sorted(
                 building_block
                 for building_block_smiles_to_id in self.chemical_space_to_building_block_smiles_to_id.values()
                 for building_block in building_block_smiles_to_id
-                if any(reactant.has_match(building_block) for reaction in reactions for reactant in reaction.reactants)
+                if any(
+                    reactant.has_match(building_block)
+                    for reaction in reactions
+                    for reactant in reaction.reactants
+                )
             )
 
         # Get the function to use for optimization
-        if self.optimization == 'maximize':
+        if self.optimization == "maximize":
             self.optimization_fn = max
             self.optimization_sign = 1
             self.ascending_scores = False
-        elif self.optimization == 'minimize':
+        elif self.optimization == "minimize":
             self.optimization_fn = min
             self.optimization_sign = -1
             self.ascending_scores = True
         else:
-            raise ValueError(f'Invalid optimization type: {self.optimization}')
+            raise ValueError(f"Invalid optimization type: {self.optimization}")
 
         # Initialize the root node
         self.rollout_num = 0
@@ -148,7 +162,7 @@ class Generator:
             explore_weight=explore_weight,
             scorer=scorer,
             node_id=0,
-            rollout_num=self.rollout_num
+            rollout_num=self.rollout_num,
         )
 
         # Initialize the rollout num, node map, building block counts, and node to children
@@ -195,26 +209,31 @@ class Generator:
 
             # For each molecule, get a list of indices of reactants it matches
             reactant_matches_per_molecule = [
-                reaction.get_reactant_matches(smiles=molecule)
-                for molecule in molecules
+                reaction.get_reactant_matches(smiles=molecule) for molecule in molecules
             ]
 
             # Loop through products of reactant indices that the molecules match to
             # and for each product, if it matches to all separate reactants,
             # then include the missing reactants in the set of unfilled reactants
-            for matched_reactant_indices in itertools.product(*reactant_matches_per_molecule):
+            for matched_reactant_indices in itertools.product(
+                *reactant_matches_per_molecule
+            ):
                 matched_reactant_indices = set(matched_reactant_indices)
 
                 if len(matched_reactant_indices) == len(molecules):
                     for index in sorted(reactant_indices - matched_reactant_indices):
-                        available_building_blocks += reaction.reactants[index].allowed_building_blocks
+                        available_building_blocks += reaction.reactants[
+                            index
+                        ].allowed_building_blocks
 
         # Remove duplicates but maintain order for reproducibility
         available_building_blocks = list(dict.fromkeys(available_building_blocks))
 
         return available_building_blocks
 
-    def get_reactions_for_molecules(self, molecules: tuple[str]) -> list[tuple[Reaction, dict[str, int]]]:
+    def get_reactions_for_molecules(
+        self, molecules: tuple[str]
+    ) -> list[tuple[Reaction, dict[str, int]]]:
         """Get all reactions that can be run on the given molecules.
 
         :param molecules: A tuple of SMILES strings representing the molecules to run reactions on.
@@ -231,14 +250,17 @@ class Generator:
 
             # For each molecule, get a list of indices of reactants it matches
             reactant_matches_per_molecule = [
-                reaction.get_reactant_matches(smiles=molecule)
-                for molecule in molecules
+                reaction.get_reactant_matches(smiles=molecule) for molecule in molecules
             ]
 
             # Include every assignment of molecules to reactants that fills all the reactants
-            for matched_reactant_indices in itertools.product(*reactant_matches_per_molecule):
+            for matched_reactant_indices in itertools.product(
+                *reactant_matches_per_molecule
+            ):
                 if len(set(matched_reactant_indices)) == reaction.num_reactants:
-                    molecule_to_reactant_index = dict(zip(molecules, matched_reactant_indices))
+                    molecule_to_reactant_index = dict(
+                        zip(molecules, matched_reactant_indices)
+                    )
                     matching_reactions.append((reaction, molecule_to_reactant_index))
 
         return matching_reactions
@@ -257,21 +279,29 @@ class Generator:
         product_set = set()
         for reaction, molecule_to_reactant_index in matching_reactions:
             # Put molecules in the right order for the reaction
-            molecules = sorted(node.molecules, key=lambda frag: molecule_to_reactant_index[frag])
+            molecules = sorted(
+                node.molecules, key=lambda frag: molecule_to_reactant_index[frag]
+            )
 
             # Run reaction
             products = reaction.run_reactants(molecules)
 
             if len(products) == 0:
-                raise ValueError('Reaction failed to produce products.')
+                raise ValueError("Reaction failed to produce products.")
 
             assert all(len(product) == 1 for product in products)
 
             # Convert product mols to SMILES (and remove Hs)
-            products = [Chem.MolToSmiles(Chem.RemoveHs(product[0])) for product in products]
+            products = [
+                Chem.MolToSmiles(Chem.RemoveHs(product[0])) for product in products
+            ]
 
             # Filter out products that have already been created and deduplicate
-            products = list(dict.fromkeys(product for product in products if product not in product_set))
+            products = list(
+                dict.fromkeys(
+                    product for product in products if product not in product_set
+                )
+            )
             product_set |= set(products)
 
             # Create reaction log
@@ -279,9 +309,11 @@ class Generator:
                 chemical_space=reaction.chemical_space,
                 reaction_id=reaction.id,
                 reactant_ids=tuple(
-                    self.chemical_space_to_building_block_smiles_to_id[reaction.chemical_space].get(molecule, '-1')
+                    self.chemical_space_to_building_block_smiles_to_id[
+                        reaction.chemical_space
+                    ].get(molecule, "-1")
                     for molecule in molecules
-                )
+                ),
             )
 
             product_nodes += [
@@ -290,8 +322,10 @@ class Generator:
                     scorer=self.scorer,
                     molecules=(product,),
                     unique_building_block_ids=node.unique_building_block_ids,
-                    construction_log=ConstructionLog(node.construction_log.reaction_logs + (reaction_log,)),
-                    rollout_num=self.rollout_num
+                    construction_log=ConstructionLog(
+                        node.construction_log.reaction_logs + (reaction_log,)
+                    ),
+                    rollout_num=self.rollout_num,
                 )
                 for product in products
             ]
@@ -315,15 +349,20 @@ class Generator:
         if node.num_molecules == 0:
             next_building_blocks = self.all_building_blocks
         else:
-            next_building_blocks = self.get_next_building_blocks(molecules=node.molecules)
+            next_building_blocks = self.get_next_building_blocks(
+                molecules=node.molecules
+            )
 
         # Optionally, limit the number of next nodes
-        if self.num_expand_nodes is not None and len(next_building_blocks) > self.num_expand_nodes:
+        if (
+            self.num_expand_nodes is not None
+            and len(next_building_blocks) > self.num_expand_nodes
+        ):
             next_building_blocks = random_choice(
                 rng=self.rng,
                 array=next_building_blocks,
                 size=self.num_expand_nodes,
-                replace=False
+                replace=False,
             )
 
         # Convert next node molecule tuples into Node objects
@@ -332,9 +371,10 @@ class Generator:
                 explore_weight=self.explore_weight,
                 scorer=self.scorer,
                 molecules=node.molecules + (next_building_block,),
-                unique_building_block_ids=node.unique_building_block_ids | {next_building_block},
+                unique_building_block_ids=node.unique_building_block_ids
+                | {next_building_block},
                 construction_log=node.construction_log,
-                rollout_num=self.rollout_num
+                rollout_num=self.rollout_num,
             )
             for next_building_block in next_building_blocks
         ]
@@ -375,12 +415,12 @@ class Generator:
         :return: A Node containing a molecule with the maximum reward on the rollout.
         """
         if self.verbose:
-            print(f'Node {node.node_id} (rollout {self.rollout_num})')
-            print(f'Molecules = {node.molecules}')
-            print(f'Num molecules = {node.num_molecules}')
-            print(f'Num unique building blocks = {len(node.unique_building_block_ids)}')
-            print(f'Num reactions = {node.num_reactions}')
-            print(f'Score = {node.P}')
+            print(f"Node {node.node_id} (rollout {self.rollout_num})")
+            print(f"Molecules = {node.molecules}")
+            print(f"Num molecules = {node.num_molecules}")
+            print(f"Num unique building blocks = {len(node.unique_building_block_ids)}")
+            print(f"Num reactions = {node.num_reactions}")
+            print(f"Score = {node.P}")
             print()
 
         # Stop the search if we've reached the maximum number of reactions
@@ -397,14 +437,18 @@ class Generator:
             child_nodes = self.get_child_nodes(node=node)
 
             # Check the node map and merge with an existing node if available
-            child_nodes = [self.node_map.get(new_node, new_node) for new_node in child_nodes]
+            child_nodes = [
+                self.node_map.get(new_node, new_node) for new_node in child_nodes
+            ]
 
             # Add nodes with complete molecules to the node map
             for child_node in child_nodes:
                 if child_node.num_molecules == 1 and child_node not in self.node_map:
                     child_node.node_id = len(self.node_map)
                     self.node_map[child_node] = child_node
-                    self.building_block_counts.update(child_node.unique_building_block_ids)
+                    self.building_block_counts.update(
+                        child_node.unique_building_block_ids
+                    )
 
             # Save the number of children in order to maintain a total node count
             node.num_children = len(child_nodes)
@@ -418,40 +462,50 @@ class Generator:
             if node.num_molecules == 1:
                 return node
             else:
-                raise ValueError('Failed to expand a partially expanded node.')
+                raise ValueError("Failed to expand a partially expanded node.")
 
         # Select a node based on the search type
-        if self.search_type == 'mcts':
+        if self.search_type == "mcts":
             # Select node with the highest MCTS score
             total_visit_count = sum(child_node.N for child_node in child_nodes)
             selected_node = self.optimization_fn(
                 child_nodes,
-                key=partial(self.compute_mcts_score, total_visit_count=total_visit_count)
+                key=partial(
+                    self.compute_mcts_score, total_visit_count=total_visit_count
+                ),
             )
-        elif self.search_type == 'rl':
+        elif self.search_type == "rl":
             # Compute RL scores for any nodes missing RL scores
-            child_node_molecules = [
-                child_node.molecules for child_node in child_nodes
-            ]
+            child_node_molecules = [child_node.molecules for child_node in child_nodes]
             child_node_molecules_missing_scores = [
-                molecules for molecules in child_node_molecules
+                molecules
+                for molecules in child_node_molecules
                 if molecules not in self.molecules_to_rl_score
             ]
 
             if len(child_node_molecules_missing_scores) > 0:
                 rl_scores = self.rl_model.predict(child_node_molecules_missing_scores)
 
-                for molecules, rl_score in zip(child_node_molecules_missing_scores, rl_scores):
+                for molecules, rl_score in zip(
+                    child_node_molecules_missing_scores, rl_scores
+                ):
                     self.molecules_to_rl_score[molecules] = rl_score
 
             # Convert RL scores to temperature-scaled probabilities
-            child_node_scores = np.array([self.molecules_to_rl_score[molecules] for molecules in child_node_molecules])
-            child_node_probs = softmax(self.optimization_sign * child_node_scores / self.rl_temperature)
+            child_node_scores = np.array(
+                [
+                    self.molecules_to_rl_score[molecules]
+                    for molecules in child_node_molecules
+                ]
+            )
+            child_node_probs = softmax(
+                self.optimization_sign * child_node_scores / self.rl_temperature
+            )
 
             # Select node proportional to the temperature-scaled RL score
             selected_node = self.rng.choice(child_nodes, p=child_node_probs)
         else:
-            raise ValueError(f'Invalid search type: {self.search_type}')
+            raise ValueError(f"Invalid search type: {self.search_type}")
 
         # Check the node map and merge with an existing node if available
         if selected_node in self.node_map:
@@ -474,10 +528,7 @@ class Generator:
 
         # Add RL training example
         if self.rl_model is not None:
-            self.rl_model.buffer(
-                source_node=selected_node,
-                target_node=best_node
-            )
+            self.rl_model.buffer(source_node=selected_node, target_node=best_node)
 
         return best_node
 
@@ -498,27 +549,30 @@ class Generator:
 
         # Get full molecule SMILES from this generation
         new_full_molecule_smiles = [
-            node.molecules[0]
-            for node in new_full_molecule_nodes
+            node.molecules[0] for node in new_full_molecule_nodes
         ]
 
         # Compute the Morgan fingerprints of the new nodes
-        new_full_molecule_morgan_fingerprints = np.array([
-            morgan_fingerprint_generator(smiles)
-            for smiles in new_full_molecule_smiles
-        ])
+        new_full_molecule_morgan_fingerprints = np.array(
+            [
+                morgan_fingerprint_generator(smiles)
+                for smiles in new_full_molecule_smiles
+            ]
+        )
 
         # If this is the first generation, save the fingerprints and return
         if self.full_molecule_morgan_fingerprints is None:
-            self.full_molecule_morgan_fingerprints = new_full_molecule_morgan_fingerprints
+            self.full_molecule_morgan_fingerprints = (
+                new_full_molecule_morgan_fingerprints
+            )
             return 0.0
 
         # Compute the Tanimoto similarity between the new molecules and the previous molecules
         tanimoto_distances = pairwise_distances(
             new_full_molecule_morgan_fingerprints,
             self.full_molecule_morgan_fingerprints,
-            metric='jaccard',
-            n_jobs=-1
+            metric="jaccard",
+            n_jobs=-1,
         )
         tanimoto_similarities = 1 - tanimoto_distances
 
@@ -527,16 +581,17 @@ class Generator:
 
         # Update the full molecule fingerprints
         self.full_molecule_morgan_fingerprints = np.concatenate(
-            [self.full_molecule_morgan_fingerprints, new_full_molecule_morgan_fingerprints],
-            axis=0
+            [
+                self.full_molecule_morgan_fingerprints,
+                new_full_molecule_morgan_fingerprints,
+            ],
+            axis=0,
         )
 
         return avg_max_similarity
 
     def get_full_molecule_nodes(
-            self,
-            rollout_start: int | None = None,
-            rollout_end: int | None = None
+        self, rollout_start: int | None = None, rollout_end: int | None = None
     ) -> list[Node]:
         """Returns a list of all nodes with complete molecules.
 
@@ -560,16 +615,17 @@ class Generator:
 
         # Get all the Nodes within the provided rollouts
         nodes = [
-            node
-            for node in nodes
-            if rollout_start <= node.rollout_num <= rollout_end
+            node for node in nodes if rollout_start <= node.rollout_num <= rollout_end
         ]
 
         # Sort Nodes by score and break ties by using Node ID
         nodes = sorted(
             nodes,
-            key=lambda node: (node.P, (1 if self.ascending_scores else -1) * node.node_id),
-            reverse=not self.ascending_scores
+            key=lambda node: (
+                node.P,
+                (1 if self.ascending_scores else -1) * node.node_id,
+            ),
+            reverse=not self.ascending_scores,
         )
 
         return nodes
@@ -580,20 +636,23 @@ class Generator:
         :param new_similarity: The similarity of the new molecules compared to previous molecules.
         """
         # Update rolling average similarity with weighted combination of new and old similarity
-        self.rolling_average_similarity = self.rolling_average_weight * self.rolling_average_similarity + \
-                                          (1 - self.rolling_average_weight) * new_similarity
+        self.rolling_average_similarity = (
+            self.rolling_average_weight * self.rolling_average_similarity
+            + (1 - self.rolling_average_weight) * new_similarity
+        )
 
         # Determine percent difference between rolling average similarity and max similarity
         percent_similarity_difference = (
-                (self.rolling_average_similarity - self.rl_temperature_similarity_target) /
-                self.rl_temperature_similarity_target
-        )
+            self.rolling_average_similarity - self.rl_temperature_similarity_target
+        ) / self.rl_temperature_similarity_target
 
         # Update temperature based on percent similarity difference
         self.rl_temperature += percent_similarity_difference * self.rl_temperature
 
         # Clip temperature within min/max bounds
-        self.rl_temperature = max(self.min_temperature, min(self.rl_temperature, self.max_temperature))
+        self.rl_temperature = max(
+            self.min_temperature, min(self.rl_temperature, self.max_temperature)
+        )
 
     def compute_success_rates(self) -> np.ndarray | None:
         """Compute the success rates of the generated molecules with respect to success thresholds.
@@ -630,8 +689,10 @@ class Generator:
         :param new_success_rates: The success rates of the new molecules.
         """
         # Update rolling average successes with weighted combination of new and old successes
-        self.rolling_average_success_rate = self.rolling_average_weight * self.rolling_average_success_rate + \
-                                            (1 - self.rolling_average_weight) * new_success_rates
+        self.rolling_average_success_rate = (
+            self.rolling_average_weight * self.rolling_average_success_rate
+            + (1 - self.rolling_average_weight) * new_success_rates
+        )
 
         # Update model weights as proportional to failure rate (i.e., higher failure rate means higher weight)
         self.model_weights = 1 - self.rolling_average_success_rate
@@ -660,26 +721,23 @@ class Generator:
             self.rollout_num = rollout_num
 
             # Set up rollout stats
-            rollout_stats = {'Rollout Number': rollout_num}
+            rollout_stats = {"Rollout Number": rollout_num}
 
             # Run rollout
             start_time = time.time()
             best_node = self.rollout(node=self.root)
-            rollout_stats['Rollout Score'] = best_node.P
-            rollout_stats['Rollout Time'] = time.time() - start_time
+            rollout_stats["Rollout Score"] = best_node.P
+            rollout_stats["Rollout Time"] = time.time() - start_time
 
             # Compute similarity of new molecules compared to previous molecules
             start_time = time.time()
             new_similarity = self.update_similarity()
-            rollout_stats['Rollout Similarity'] = new_similarity
-            rollout_stats['Similarity Time'] = time.time() - start_time
+            rollout_stats["Rollout Similarity"] = new_similarity
+            rollout_stats["Similarity Time"] = time.time() - start_time
 
             # Optionally, update temperature based on similarity of new molecules to previous molecules
             if self.rl_temperature_similarity_target is not None:
                 self.update_temperature(new_similarity=new_similarity)
-
-            # Add RL temperature to rollout stats
-            rollout_stats['RL Temperature'] = self.rl_temperature
 
             # Optionally, update model weights based on success rate
             if self.success_comparators is not None:
@@ -690,19 +748,24 @@ class Generator:
                 if new_success_rates is not None:
                     # Add success rates to rollout stats
                     for i, success_rate in enumerate(new_success_rates):
-                        rollout_stats[f'Success Rate {i + 1}'] = success_rate
+                        rollout_stats[f"Success Rate {i + 1}"] = success_rate
 
-                    rollout_stats[f'Joint Success Rate'] = int(np.all(new_success_rates))
+                    rollout_stats[f"Joint Success Rate"] = int(
+                        np.all(new_success_rates)
+                    )
 
                     # Update model weights
                     self.update_model_weights(new_success_rates=new_success_rates)
 
+            # Add RL temperature to rollout stats
+            rollout_stats["RL Temperature"] = self.rl_temperature
+
             # Add model weights to rollout stats
             for i, model_weight in enumerate(self.model_weights):
-                rollout_stats[f'Model Weight {i + 1}'] = model_weight
+                rollout_stats[f"Model Weight {i + 1}"] = model_weight
 
             # Determine number of unique full molecules found
-            rollout_stats['Unique Molecules'] = sum(
+            rollout_stats["Unique Molecules"] = sum(
                 node.num_molecules == 1 and node.num_reactions > 0
                 for node in self.node_map
             )
@@ -715,9 +778,9 @@ class Generator:
                 # Evaluate model on test set
                 if self.wandb_log:
                     start_time = time.time()
-                    rollout_stats |= self.rl_model.evaluate(split='test')
-                    rollout_stats['RL Test Eval Time'] = time.time() - start_time
-                    rollout_stats['RL Test Examples'] = self.rl_model.test_size
+                    rollout_stats |= self.rl_model.evaluate(split="test")
+                    rollout_stats["RL Test Eval Time"] = time.time() - start_time
+                    rollout_stats["RL Test Examples"] = self.rl_model.test_size
 
                 # Move test set to train
                 self.rl_model.test_to_train()
@@ -725,14 +788,14 @@ class Generator:
                 # Train model
                 start_time = time.time()
                 self.rl_model.train()
-                rollout_stats['RL Train Time'] = time.time() - start_time
+                rollout_stats["RL Train Time"] = time.time() - start_time
 
                 # Evaluate model on train set
                 if self.wandb_log:
                     start_time = time.time()
-                    rollout_stats |= self.rl_model.evaluate(split='train')
-                    rollout_stats['RL Train Eval Time'] = time.time() - start_time
-                    rollout_stats['RL Train Examples'] = self.rl_model.train_size
+                    rollout_stats |= self.rl_model.evaluate(split="train")
+                    rollout_stats["RL Train Eval Time"] = time.time() - start_time
+                    rollout_stats["RL Train Examples"] = self.rl_model.train_size
 
             # Log rollout stats
             if self.wandb_log:
@@ -740,8 +803,7 @@ class Generator:
 
         # Get all the Nodes representing fully constructed molecules within these rollouts sorted by score
         nodes = self.get_full_molecule_nodes(
-            rollout_start=rollout_start,
-            rollout_end=rollout_end
+            rollout_start=rollout_start, rollout_end=rollout_end
         )
 
         return nodes
@@ -758,8 +820,10 @@ class Generator:
     def num_nodes_searched(self) -> int:
         """Gets the precise number of nodes seen during the search. Only possible if store_nodes is True."""
         if not self.store_nodes:
-            raise ValueError('Cannot get the precise number of nodes searched if store_nodes is False.'
-                             'Use approx_num_nodes_searched instead.')
+            raise ValueError(
+                "Cannot get the precise number of nodes searched if store_nodes is False."
+                "Use approx_num_nodes_searched instead."
+            )
 
         # Get a set of all nodes and child nodes that have been visited
         visited_nodes = set()

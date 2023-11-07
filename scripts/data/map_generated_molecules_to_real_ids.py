@@ -8,10 +8,7 @@ from rdkit.Chem.PandasTools import WriteSDF
 from synthemol.constants import SMILES_COL
 
 
-def map_generated_molecules_to_real_ids(
-        data_path: Path,
-        save_dir: Path
-) -> None:
+def map_generated_molecules_to_real_ids(data_path: Path, save_dir: Path) -> None:
     """Maps generated molecules to REAL IDs in the format expected by Enamine.
 
     Note: Currently only works with one-reaction molecules.
@@ -21,15 +18,17 @@ def map_generated_molecules_to_real_ids(
     """
     # Load data
     data = pd.read_csv(data_path)
-    print(f'Data size = {len(data):,}')
+    print(f"Data size = {len(data):,}")
 
     # Get only one-reaction molecules
-    data = data[data['num_reactions'] == 1]
-    print(f'Number of one-reaction molecules = {len(data):,}')
+    data = data[data["num_reactions"] == 1]
+    print(f"Number of one-reaction molecules = {len(data):,}")
 
     # Get building block columns
     building_block_columns = sorted(
-        column for column in data.columns if column.startswith('building_block_1_') and column.endswith('_id')
+        column
+        for column in data.columns
+        if column.startswith("building_block_1_") and column.endswith("_id")
     )
 
     # Compute REAL IDs without prefixes
@@ -45,24 +44,26 @@ def map_generated_molecules_to_real_ids(
     save_dir.mkdir(parents=True, exist_ok=True)
 
     # Loop through prefixes
-    for prefix in ['m', 's']:
+    for prefix in ["m", "s"]:
         # Create new DataFrame with molecules and REAL IDs
-        real_data = pd.DataFrame(data={
-            'real_id': [f'{prefix}_{real_id}' for real_id in real_ids],
-            SMILES_COL: data[SMILES_COL],
-            'mol': mols
-        })
+        real_data = pd.DataFrame(
+            data={
+                "real_id": [f"{prefix}_{real_id}" for real_id in real_ids],
+                SMILES_COL: data[SMILES_COL],
+                "mol": mols,
+            }
+        )
 
         # Save data as SDF
-        with open(save_dir / f'type_{prefix}.sdf', 'w') as f:
-            WriteSDF(real_data, f, molColName='mol', idName='real_id')
+        with open(save_dir / f"type_{prefix}.sdf", "w") as f:
+            WriteSDF(real_data, f, molColName="mol", idName="real_id")
 
         # Save data as CSV
-        del real_data['mol']
-        real_data.to_csv(save_dir / f'type_{prefix}.csv', index=False)
+        del real_data["mol"]
+        real_data.to_csv(save_dir / f"type_{prefix}.csv", index=False)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from tap import tapify
 
     tapify(map_generated_molecules_to_real_ids)

@@ -5,11 +5,11 @@ import pandas as pd
 
 
 def average_scores(
-        data_path: Path,
-        score_columns: list[str],
-        score_weights: list[float],
-        average_column: str = 'average_score',
-        save_path: Path | None = None
+    data_path: Path,
+    score_columns: list[str],
+    score_weights: list[float],
+    average_column: str = "average_score",
+    save_path: Path | None = None,
 ) -> None:
     """Computes a weighted average of the scores of multiple models in a CSV file.
 
@@ -36,7 +36,7 @@ def average_scores(
     data.to_csv(save_path, index=False)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from tap import tapify
 
     tapify(average_scores)

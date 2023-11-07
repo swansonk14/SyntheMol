@@ -7,28 +7,24 @@ from typing import Callable
 
 import pandas as pd
 
-from synthemol.constants import (
-    ROLLOUT_COL,
-    SCORE_COL,
-    SMILES_COL
-)
+from synthemol.constants import ROLLOUT_COL, SCORE_COL, SMILES_COL
 from synthemol.generate.node import Node
 
 
 OPERATORS = {
-    '<': operator.lt,
-    '<=': operator.le,
-    '==': operator.eq,
-    '!=': operator.ne,
-    '>': operator.gt,
-    '>=': operator.ge
+    "<": operator.lt,
+    "<=": operator.le,
+    "==": operator.eq,
+    "!=": operator.ne,
+    ">": operator.gt,
+    ">=": operator.ge,
 }
 
 
 def save_generated_molecules(
-        nodes: list[Node],
-        chemical_space_to_building_block_id_to_smiles: dict[str, dict[str, str]],
-        save_path: Path
+    nodes: list[Node],
+    chemical_space_to_building_block_id_to_smiles: dict[str, dict[str, str]],
+    save_path: Path,
 ) -> None:
     """Save generated molecules to a CSV file.
 
@@ -42,62 +38,78 @@ def save_generated_molecules(
     reaction_num_to_max_reactant_num = {}
 
     for node in nodes:
-        construction_dict = {'num_reactions': len(node.construction_log)}
+        construction_dict = {"num_reactions": len(node.construction_log)}
         max_reaction_num = max(max_reaction_num, len(node.construction_log))
 
         for reaction_index, reaction_log in enumerate(node.construction_log):
             reaction_num = reaction_index + 1
-            construction_dict[f'reaction_{reaction_num}_chemical_space'] = reaction_log.chemical_space
-            construction_dict[f'reaction_{reaction_num}_id'] = reaction_log.reaction_id
+            construction_dict[
+                f"reaction_{reaction_num}_chemical_space"
+            ] = reaction_log.chemical_space
+            construction_dict[f"reaction_{reaction_num}_id"] = reaction_log.reaction_id
 
             reaction_num_to_max_reactant_num[reaction_num] = max(
                 reaction_num_to_max_reactant_num.get(reaction_num, 0),
-                len(reaction_log.reactant_ids)
+                len(reaction_log.reactant_ids),
             )
 
             for reactant_index, reactant_id in enumerate(reaction_log.reactant_ids):
                 reactant_num = reactant_index + 1
-                construction_dict[f'building_block_{reaction_num}_{reactant_num}_id'] = reactant_id
-                construction_dict[f'building_block_{reaction_num}_{reactant_num}_smiles'] = chemical_space_to_building_block_id_to_smiles[reaction_log.chemical_space].get(reactant_id, '')
+                construction_dict[
+                    f"building_block_{reaction_num}_{reactant_num}_id"
+                ] = reactant_id
+                construction_dict[
+                    f"building_block_{reaction_num}_{reactant_num}_smiles"
+                ] = chemical_space_to_building_block_id_to_smiles[
+                    reaction_log.chemical_space
+                ].get(
+                    reactant_id, ""
+                )
 
         construction_dicts.append(construction_dict)
 
     # Specify column order for CSV file
-    columns = [SMILES_COL, 'node_id', 'num_expansions', ROLLOUT_COL, SCORE_COL, 'Q_value', 'num_reactions']
+    columns = [
+        SMILES_COL,
+        "node_id",
+        "num_expansions",
+        ROLLOUT_COL,
+        SCORE_COL,
+        "Q_value",
+        "num_reactions",
+    ]
 
     for reaction_num in range(1, max_reaction_num + 1):
-        columns.append(f'reaction_{reaction_num}_chemical_space')
-        columns.append(f'reaction_{reaction_num}_id')
+        columns.append(f"reaction_{reaction_num}_chemical_space")
+        columns.append(f"reaction_{reaction_num}_id")
 
-        for reactant_num in range(1, reaction_num_to_max_reactant_num[reaction_num] + 1):
-            columns.append(f'building_block_{reaction_num}_{reactant_num}_id')
-            columns.append(f'building_block_{reaction_num}_{reactant_num}_smiles')
+        for reactant_num in range(
+            1, reaction_num_to_max_reactant_num[reaction_num] + 1
+        ):
+            columns.append(f"building_block_{reaction_num}_{reactant_num}_id")
+            columns.append(f"building_block_{reaction_num}_{reactant_num}_smiles")
 
     # Save data
     save_path.parent.mkdir(parents=True, exist_ok=True)
     data = pd.DataFrame(
         data=[
             {
-                SMILES_COL: '.'.join(node.molecules),
-                'node_id': node.node_id,
-                'num_expansions': node.N,
+                SMILES_COL: ".".join(node.molecules),
+                "node_id": node.node_id,
+                "num_expansions": node.N,
                 ROLLOUT_COL: node.rollout_num,
                 SCORE_COL: node.P,
-                'Q_value': node.Q(),
-                **construction_dict
+                "Q_value": node.Q(),
+                **construction_dict,
             }
             for node, construction_dict in zip(nodes, construction_dicts)
         ],
-        columns=columns
+        columns=columns,
     )
     data.to_csv(save_path, index=False)
 
 
-def compare_to_threshold(
-        score: float,
-        comparator: str,
-        threshold: float,
-) -> bool:
+def compare_to_threshold(score: float, comparator: str, threshold: float,) -> bool:
     """Compares a score to a threshold using a comparator.
 
     :param score: A score.
@@ -115,22 +127,22 @@ def parse_success_threshold(success_threshold: str) -> Callable[[float], bool]:
     :return: A function that determines whether a molecule is successful according to the threshold.
     """
     # Create regex to match the success threshold pattern
-    success_threshold_pattern = r'^(?P<comparator>[<>!=]{1,2})\s*(?P<threshold>-*\d+(?:\.\d+)?)$'
+    success_threshold_pattern = (
+        r"^(?P<comparator>[<>!=]{1,2})\s*(?P<threshold>-*\d+(?:\.\d+)?)$"
+    )
 
     # Parse success threshold
     match = re.match(success_threshold_pattern, success_threshold)
 
     if match is None:
-        raise ValueError(f'Invalid success threshold: {success_threshold}')
+        raise ValueError(f"Invalid success threshold: {success_threshold}")
 
-    comparator = match.group('comparator')
-    threshold = float(match.group('threshold'))
+    comparator = match.group("comparator")
+    threshold = float(match.group("threshold"))
 
     # Create function that determines whether a molecule is successful according to the threshold
     compare_to_threshold_fn = partial(
-        compare_to_threshold,
-        comparator=comparator,
-        threshold=threshold
+        compare_to_threshold, comparator=comparator, threshold=threshold
     )
 
     return compare_to_threshold_fn

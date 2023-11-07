@@ -7,9 +7,7 @@ import pandas as pd
 
 
 def plot_score_vs_similarity(
-    data_dir: Path,
-    save_dir: Path,
-    data_name: str = "score_vs_similarity.csv",
+    data_dir: Path, save_dir: Path, data_name: str = "score_vs_similarity.csv",
 ) -> None:
     """Plot score vs similarity for generated molecules.
 
@@ -20,8 +18,12 @@ def plot_score_vs_similarity(
     # Load results
     mcts_paths = list(data_dir.glob(f"mcts_*/{data_name}"))
     rl_rdkit_paths = list(data_dir.glob(f"rl_rdkit_*/{data_name}"))
-    rl_chemprop_pretrained_paths = list(data_dir.glob(f"rl_chemprop_pretrained_*/{data_name}"))
-    rl_chemprop_scratch_paths = list(data_dir.glob(f"rl_chemprop_scratch_*/{data_name}"))
+    rl_chemprop_pretrained_paths = list(
+        data_dir.glob(f"rl_chemprop_pretrained_*/{data_name}")
+    )
+    rl_chemprop_scratch_paths = list(
+        data_dir.glob(f"rl_chemprop_scratch_*/{data_name}")
+    )
 
     # Get score thresholds
     data = pd.read_csv(mcts_paths[0])
@@ -87,7 +89,7 @@ def plot_score_vs_similarity(
         )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from tap import tapify
 
     tapify(plot_score_vs_similarity)

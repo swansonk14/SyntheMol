@@ -10,10 +10,10 @@ from sklearn.preprocessing import StandardScaler
 
 
 def chemprop_build_model(
-        dataset_type: str,
-        use_rdkit_features: bool = False,
-        rdkit_features_size: int = 200,
-        property_name: str = "task"
+    dataset_type: str,
+    use_rdkit_features: bool = False,
+    rdkit_features_size: int = 200,
+    property_name: str = "task",
 ) -> MoleculeModel:
     """Builds a Chemprop model.
 
@@ -24,14 +24,21 @@ def chemprop_build_model(
     :return: A Chemprop model.
     """
     arg_list = [
-       '--data_path', 'foo.csv',
-       '--dataset_type', dataset_type,
-       '--save_dir', 'foo',
-       '--quiet'
-   ]
+        "--data_path",
+        "foo.csv",
+        "--dataset_type",
+        dataset_type,
+        "--save_dir",
+        "foo",
+        "--quiet",
+    ]
 
     if use_rdkit_features:
-        arg_list += ['--features_generator', 'rdkit_2d_normalized', '--no_features_scaling']
+        arg_list += [
+            "--features_generator",
+            "rdkit_2d_normalized",
+            "--no_features_scaling",
+        ]
 
     args = TrainArgs().parse_args(arg_list)
     args.task_names = [property_name]
@@ -49,8 +56,7 @@ def chemprop_build_model(
 
 
 def chemprop_load(
-        model_path: Path,
-        device: torch.device = torch.device('cpu')
+    model_path: Path, device: torch.device = torch.device("cpu")
 ) -> MoleculeModel:
     """Loads a Chemprop model.
 
@@ -58,15 +64,10 @@ def chemprop_load(
     :param device: The device on which to load the model.
     :return: A Chemprop model.
     """
-    return load_checkpoint(
-        path=str(model_path),
-        device=device
-    ).eval()
+    return load_checkpoint(path=str(model_path), device=device).eval()
 
 
-def chemprop_load_scaler(
-        model_path: Path
-) -> StandardScaler:
+def chemprop_load_scaler(model_path: Path) -> StandardScaler:
     """Loads a Chemprop model's data scaler.
 
     :param model_path: A path to a Chemprop model.
@@ -76,10 +77,10 @@ def chemprop_load_scaler(
 
 
 def chemprop_predict_on_molecule(
-        model: MoleculeModel,
-        smiles: str,
-        fingerprint: np.ndarray | None = None,
-        scaler: StandardScaler | None = None
+    model: MoleculeModel,
+    smiles: str,
+    fingerprint: np.ndarray | None = None,
+    scaler: StandardScaler | None = None,
 ) -> float:
     """Predicts the property of a molecule using a Chemprop model.
 
@@ -92,7 +93,7 @@ def chemprop_predict_on_molecule(
     # Make prediction
     pred = model(
         batch=[[smiles]],
-        features_batch=[fingerprint] if fingerprint is not None else None
+        features_batch=[fingerprint] if fingerprint is not None else None,
     ).item()
 
     # Scale prediction if applicable
@@ -103,10 +104,10 @@ def chemprop_predict_on_molecule(
 
 
 def chemprop_predict_on_molecule_ensemble(
-        models: list[MoleculeModel],
-        smiles: str,
-        fingerprint: np.ndarray | None = None,
-        scalers: list[StandardScaler] | None = None
+    models: list[MoleculeModel],
+    smiles: str,
+    fingerprint: np.ndarray | None = None,
+    scalers: list[StandardScaler] | None = None,
 ) -> float:
     """Predicts the property of a molecule using an ensemble of Chemprop models.
 
@@ -116,11 +117,13 @@ def chemprop_predict_on_molecule_ensemble(
     :param scalers: An ensemble of data scalers (if applicable).
     :return: The ensemble prediction on the molecule.
     """
-    return float(np.mean([
-        chemprop_predict_on_molecule(
-            model=model,
-            smiles=smiles,
-            fingerprint=fingerprint,
-            scaler=scaler
-        ) for model, scaler in zip(models, scalers)
-    ]))
+    return float(
+        np.mean(
+            [
+                chemprop_predict_on_molecule(
+                    model=model, smiles=smiles, fingerprint=fingerprint, scaler=scaler
+                )
+                for model, scaler in zip(models, scalers)
+            ]
+        )
+    )

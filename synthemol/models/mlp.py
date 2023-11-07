@@ -13,7 +13,7 @@ class MLP(nn.Module):
         output_dim: int,
         num_layers: int,
         sigmoid: bool,
-        device: torch.device = torch.device('cpu'),
+        device: torch.device = torch.device("cpu"),
     ) -> None:
         """Initialize the model.
 

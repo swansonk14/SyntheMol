@@ -5,7 +5,9 @@ from typing import Iterator
 class ReactionLog:
     """A ReactionLog contains information about a reaction and the building blocks combined by that reaction."""
 
-    def __init__(self, chemical_space: str, reaction_id: int, reactant_ids: tuple[int, ...]) -> None:
+    def __init__(
+        self, chemical_space: str, reaction_id: int, reactant_ids: tuple[int, ...]
+    ) -> None:
         """Initializes the ReactionLog.
 
         :param chemical_space: The chemical space the reaction belongs to.
@@ -50,7 +52,9 @@ class ConstructionLog:
     @property
     def num_building_blocks(self) -> int:
         """Gets the number of building blocks used to construct the molecule."""
-        return sum(reaction_log.num_building_blocks for reaction_log in self.reaction_logs)
+        return sum(
+            reaction_log.num_building_blocks for reaction_log in self.reaction_logs
+        )
 
     def __len__(self) -> int:
         """Gets the number of reactions used to construct the molecule."""

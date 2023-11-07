@@ -13,7 +13,7 @@ from synthemol.models import (
     chemprop_load_scaler,
     chemprop_predict_on_molecule_ensemble,
     sklearn_load,
-    sklearn_predict_on_molecule_ensemble
+    sklearn_predict_on_molecule_ensemble,
 )
 
 
@@ -45,11 +45,7 @@ class QEDScorer(Scorer):
 class SKLearnScorer(Scorer):
     """Scores molecules using a scikit-learn model or ensemble of models."""
 
-    def __init__(
-            self,
-            model_path: Path,
-            fingerprint_type: FINGERPRINT_TYPES
-    ) -> None:
+    def __init__(self, model_path: Path, fingerprint_type: FINGERPRINT_TYPES) -> None:
         """Initialize the scorer.
 
         :param model_path: Path to a directory of model checkpoints (ensemble) or to a specific PT file.
@@ -57,10 +53,12 @@ class SKLearnScorer(Scorer):
         """
         # Get model paths
         if model_path.is_dir():
-            model_paths = list(model_path.glob('**/*.pkl'))
+            model_paths = list(model_path.glob("**/*.pkl"))
 
             if len(model_paths) == 0:
-                raise ValueError(f'Could not find any models in directory {model_path}.')
+                raise ValueError(
+                    f"Could not find any models in directory {model_path}."
+                )
         else:
             model_paths = [model_path]
 
@@ -68,7 +66,9 @@ class SKLearnScorer(Scorer):
         self.fingerprint_type = fingerprint_type
 
         # Load scikit-learn models
-        self.models = [sklearn_load(model_path=model_path) for model_path in model_paths]
+        self.models = [
+            sklearn_load(model_path=model_path) for model_path in model_paths
+        ]
 
     def __call__(self, smiles: str) -> float:
         """Scores a molecule using a scikit-learn model or ensemble of models.
@@ -77,12 +77,13 @@ class SKLearnScorer(Scorer):
         :return: The score of the molecule.
         """
         # Compute fingerprint
-        fingerprint = compute_fingerprint(smiles, fingerprint_type=self.fingerprint_type)
+        fingerprint = compute_fingerprint(
+            smiles, fingerprint_type=self.fingerprint_type
+        )
 
         # Make prediction
         return sklearn_predict_on_molecule_ensemble(
-            models=self.models,
-            fingerprint=fingerprint
+            models=self.models, fingerprint=fingerprint
         )
 
 
@@ -90,10 +91,10 @@ class ChempropScorer(Scorer):
     """Scores molecules using a Chemprop model or ensemble of models."""
 
     def __init__(
-            self,
-            model_path: Path,
-            fingerprint_type: FINGERPRINT_TYPES,
-            device: torch.device = torch.device('cpu')
+        self,
+        model_path: Path,
+        fingerprint_type: FINGERPRINT_TYPES,
+        device: torch.device = torch.device("cpu"),
     ) -> None:
         """Initialize the scorer.
 
@@ -103,10 +104,12 @@ class ChempropScorer(Scorer):
         """
         # Get model paths
         if model_path.is_dir():
-            model_paths = list(model_path.glob('**/*.pt'))
+            model_paths = list(model_path.glob("**/*.pt"))
 
             if len(model_paths) == 0:
-                raise ValueError(f'Could not find any models in directory {model_path}.')
+                raise ValueError(
+                    f"Could not find any models in directory {model_path}."
+                )
         else:
             model_paths = [model_path]
 
@@ -116,12 +119,17 @@ class ChempropScorer(Scorer):
         # Ensure reproducibility
         torch.manual_seed(0)
 
-        if device.type == 'cpu':
+        if device.type == "cpu":
             torch.use_deterministic_algorithms(True)
 
         # Load models
-        self.models = [chemprop_load(model_path=model_path, device=device) for model_path in model_paths]
-        self.scalers = [chemprop_load_scaler(model_path=model_path) for model_path in model_paths]
+        self.models = [
+            chemprop_load(model_path=model_path, device=device)
+            for model_path in model_paths
+        ]
+        self.scalers = [
+            chemprop_load_scaler(model_path=model_path) for model_path in model_paths
+        ]
 
     def __call__(self, smiles: str) -> float:
         """Scores a molecule using a Chemprop model or ensemble of models.
@@ -130,8 +138,10 @@ class ChempropScorer(Scorer):
         :return: The score of the molecule.
         """
         # Compute fingerprint
-        if self.fingerprint_type != 'none':
-            fingerprint = compute_fingerprint(smiles, fingerprint_type=self.fingerprint_type)
+        if self.fingerprint_type != "none":
+            fingerprint = compute_fingerprint(
+                smiles, fingerprint_type=self.fingerprint_type
+            )
         else:
             fingerprint = None
 
@@ -140,16 +150,16 @@ class ChempropScorer(Scorer):
             models=self.models,
             smiles=smiles,
             fingerprint=fingerprint,
-            scalers=self.scalers
+            scalers=self.scalers,
         )
 
 
 # TODO: no model_path or fingerprint_type needed for qed
 def create_model_scorer(
-        model_type: MODEL_TYPES,
-        model_path: Path,
-        fingerprint_type: FINGERPRINT_TYPES,
-        device: torch.device = torch.device('cpu')
+    model_type: MODEL_TYPES,
+    model_path: Path,
+    fingerprint_type: FINGERPRINT_TYPES,
+    device: torch.device = torch.device("cpu"),
 ) -> Scorer:
     """Creates a scorer object that scores a molecule.
 
@@ -159,36 +169,31 @@ def create_model_scorer(
     :param device: The device on which to run the model.
     """
     # Check compatibility of model and fingerprint type
-    if model_type in {'random_forest', 'mlp'} and fingerprint_type == 'none':
-        raise ValueError('Must define fingerprint_type if using a scikit-learn model.')
+    if model_type in {"random_forest", "mlp"} and fingerprint_type == "none":
+        raise ValueError("Must define fingerprint_type if using a scikit-learn model.")
 
     # Load models and set up scoring function
-    if model_type == 'qed':
+    if model_type == "qed":
         scorer = QEDScorer()
-    elif model_type == 'chemprop':
+    elif model_type == "chemprop":
         scorer = ChempropScorer(
-            model_path=model_path,
-            fingerprint_type=fingerprint_type,
-            device=device
+            model_path=model_path, fingerprint_type=fingerprint_type, device=device
         )
     else:
-        scorer = SKLearnScorer(
-            model_path=model_path,
-            fingerprint_type=fingerprint_type
-        )
+        scorer = SKLearnScorer(model_path=model_path, fingerprint_type=fingerprint_type)
 
     return scorer
 
 
 class MoleculeScorer:
     def __init__(
-            self,
-            model_types: list[MODEL_TYPES],
-            model_paths: list[Path],
-            fingerprint_types: list[FINGERPRINT_TYPES],
-            model_weights: tuple[float, ...] = (1.0,),
-            device: torch.device = torch.device('cpu'),
-            smiles_to_scores: dict[str, list[float]] | None = None
+        self,
+        model_types: list[MODEL_TYPES],
+        model_paths: list[Path],
+        fingerprint_types: list[FINGERPRINT_TYPES],
+        model_weights: tuple[float, ...] = (1.0,),
+        device: torch.device = torch.device("cpu"),
+        smiles_to_scores: dict[str, list[float]] | None = None,
     ) -> None:
         """Initialize the MoleculeScorer, which contains a collection of one or more individual scorers.
 
@@ -207,9 +212,11 @@ class MoleculeScorer:
                 model_type=model_type,
                 model_path=model_path,
                 fingerprint_type=fingerprint_type,
-                device=device
+                device=device,
             )
-            for model_type, model_path, fingerprint_type in zip(model_types, model_paths, fingerprint_types)
+            for model_type, model_path, fingerprint_type in zip(
+                model_types, model_paths, fingerprint_types
+            )
         ]
 
         # Save model weights and smiles to scores

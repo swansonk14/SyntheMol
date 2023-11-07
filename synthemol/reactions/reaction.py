@@ -10,11 +10,11 @@ class Reaction:
     """A chemical reaction including SMARTS for the reactants, product, and reaction along with helper functions."""
 
     def __init__(
-            self,
-            reactants: list[QueryMol],
-            product: QueryMol,
-            reaction_id: int,
-            chemical_space: str
+        self,
+        reactants: list[QueryMol],
+        product: QueryMol,
+        reaction_id: int,
+        chemical_space: str,
     ) -> None:
         """Initializes the Reaction.
 
@@ -28,8 +28,10 @@ class Reaction:
         self.id = reaction_id
         self.chemical_space = chemical_space
 
-        self.reaction_smarts = f'{".".join(f"({reactant.smarts_with_atom_mapping})" for reactant in self.reactants)}' \
-                               f'>>({self.product.smarts_with_atom_mapping})'
+        self.reaction_smarts = (
+            f'{".".join(f"({reactant.smarts_with_atom_mapping})" for reactant in self.reactants)}'
+            f">>({self.product.smarts_with_atom_mapping})"
+        )
         self.reaction = AllChem.ReactionFromSmarts(self.reaction_smarts)
 
     def get_reactant_matches(self, smiles: str) -> list[int]:
@@ -49,14 +51,20 @@ class Reaction:
         """Gets the number of reactants in the reaction."""
         return len(self.reactants)
 
-    def run_reactants(self, reactants: list[MOLECULE_TYPE]) -> tuple[tuple[Chem.Mol, ...], ...]:
+    def run_reactants(
+        self, reactants: list[MOLECULE_TYPE]
+    ) -> tuple[tuple[Chem.Mol, ...], ...]:
         """Runs the reaction on the provided reactants.
 
         :param reactants: A list of reactants.
         :return: A tuple of tuples of RDKit Mol objects representing the products of the reaction.
         """
-        return self.reaction.RunReactants([convert_to_mol(reactant, add_hs=True) for reactant in reactants])
+        return self.reaction.RunReactants(
+            [convert_to_mol(reactant, add_hs=True) for reactant in reactants]
+        )
 
     def __repr__(self) -> str:
         """Gets the string representation of the Reaction."""
-        return f'{self.__class__.__name__}(id={self.id}, reaction={self.reaction_smarts})'
+        return (
+            f"{self.__class__.__name__}(id={self.id}, reaction={self.reaction_smarts})"
+        )

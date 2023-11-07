@@ -19,13 +19,13 @@ from synthemol.constants import (
     RL_MODEL_TYPES,
     RL_PREDICTION_TYPES,
     SCORE_COL,
-    SMILES_COL
+    SMILES_COL,
 )
 from synthemol.generate.rl_models import RLModelChemprop, RLModelMLP
 from synthemol.reactions import (
     CHEMICAL_SPACE_TO_REACTIONS,
     load_and_set_allowed_reaction_building_blocks,
-    set_all_building_blocks
+    set_all_building_blocks,
 )
 from synthemol.generate.generator import Generator
 from synthemol.generate.scorer import MoleculeScorer
@@ -34,41 +34,43 @@ from synthemol.generate.utils import parse_success_threshold, save_generated_mol
 
 # TODO: once tuple[Literal] fix is done in tap, add ('none',) default to fingerprint_types and add literal to reaction_sets
 def generate(
-        search_type: Literal['mcts', 'rl'],
-        save_dir: Path,
-        model_types: list[MODEL_TYPES],
-        model_paths: list[Path],
-        fingerprint_types: list[FINGERPRINT_TYPES],
-        base_model_weights: tuple[float, ...] = (1.0,),
-        success_thresholds: tuple[str, ...] | None = None,
-        chemical_spaces: tuple[str, ...] = ('real',),
-        building_blocks_paths: tuple[Path, ...] = (BUILDING_BLOCKS_PATH,),
-        reaction_to_building_blocks_paths: tuple[Path, ...] = (REACTION_TO_BUILDING_BLOCKS_PATH,),
-        building_blocks_id_column: str = ID_COL,
-        building_blocks_score_columns: tuple[str, ...] = (SCORE_COL,),
-        building_blocks_smiles_column: str = SMILES_COL,
-        max_reactions: int = 1,
-        n_rollout: int = 10,
-        explore_weight: float = 10.0,
-        num_expand_nodes: int | None = None,
-        rl_model_type: RL_MODEL_TYPES = 'mlp_rdkit',
-        rl_prediction_type: RL_PREDICTION_TYPES = 'classification',
-        rl_base_temperature: float = 0.1,
-        rl_temperature_similarity_target: float = 0.5,
-        rl_train_frequency: int = 10,
-        rl_train_epochs: int = 5,
-        num_workers: int = 0,
-        use_gpu: bool = False,
-        optimization: OPTIMIZATION_TYPES = 'maximize',
-        rng_seed: int = 0,
-        no_building_block_diversity: bool = False,
-        store_nodes: bool = False,
-        save_frequency: int = 1000,
-        verbose: bool = False,
-        replicate: bool = False,
-        wandb_log: bool = False,
-        wandb_project_name: str = 'synthemol',
-        wandb_run_name: str | None = None,
+    search_type: Literal["mcts", "rl"],
+    save_dir: Path,
+    model_types: list[MODEL_TYPES],
+    model_paths: list[Path],
+    fingerprint_types: list[FINGERPRINT_TYPES],
+    base_model_weights: tuple[float, ...] = (1.0,),
+    success_thresholds: tuple[str, ...] | None = None,
+    chemical_spaces: tuple[str, ...] = ("real",),
+    building_blocks_paths: tuple[Path, ...] = (BUILDING_BLOCKS_PATH,),
+    reaction_to_building_blocks_paths: tuple[Path, ...] = (
+        REACTION_TO_BUILDING_BLOCKS_PATH,
+    ),
+    building_blocks_id_column: str = ID_COL,
+    building_blocks_score_columns: tuple[str, ...] = (SCORE_COL,),
+    building_blocks_smiles_column: str = SMILES_COL,
+    max_reactions: int = 1,
+    n_rollout: int = 10,
+    explore_weight: float = 10.0,
+    num_expand_nodes: int | None = None,
+    rl_model_type: RL_MODEL_TYPES = "mlp_rdkit",
+    rl_prediction_type: RL_PREDICTION_TYPES = "classification",
+    rl_base_temperature: float = 0.1,
+    rl_temperature_similarity_target: float = 0.5,
+    rl_train_frequency: int = 10,
+    rl_train_epochs: int = 5,
+    num_workers: int = 0,
+    use_gpu: bool = False,
+    optimization: OPTIMIZATION_TYPES = "maximize",
+    rng_seed: int = 0,
+    no_building_block_diversity: bool = False,
+    store_nodes: bool = False,
+    save_frequency: int = 1000,
+    verbose: bool = False,
+    replicate: bool = False,
+    wandb_log: bool = False,
+    wandb_project_name: str = "synthemol",
+    wandb_run_name: str | None = None,
 ) -> None:
     """Generate molecules combinatorially using a Monte Carlo tree search guided by a molecular property predictor.
 
@@ -124,18 +126,52 @@ def generate(
     :param wandb_run_name: The name of the Weights & Biases run to log results to.
     """
     # Check lengths of model arguments match
-    if len({len(arg) for arg in [model_types, model_paths, fingerprint_types, base_model_weights, building_blocks_score_columns]}) != 1:
-        raise ValueError('model_types, model_paths, fingerprint_types, model_weights, '
-                         'and building_blocks_score_columns must have the same length.')
+    if (
+        len(
+            {
+                len(arg)
+                for arg in [
+                    model_types,
+                    model_paths,
+                    fingerprint_types,
+                    base_model_weights,
+                    building_blocks_score_columns,
+                ]
+            }
+        )
+        != 1
+    ):
+        raise ValueError(
+            "model_types, model_paths, fingerprint_types, model_weights, "
+            "and building_blocks_score_columns must have the same length."
+        )
 
     # Check length of success_thresholds
-    if success_thresholds is not None and len(success_thresholds) != len(base_model_weights):
-        raise ValueError('success_thresholds must have the same length as model_weights.')
+    if success_thresholds is not None and len(success_thresholds) != len(
+        base_model_weights
+    ):
+        raise ValueError(
+            "success_thresholds must have the same length as model_weights."
+        )
 
     # Check lengths of chemical space arguments match
-    if len({len(arg) for arg in [chemical_spaces, building_blocks_paths, reaction_to_building_blocks_paths]}) != 1:
-        raise ValueError('chemical_spaces, building_blocks_paths, and reaction_to_building_blocks_paths '
-                         'must have the same length.')
+    if (
+        len(
+            {
+                len(arg)
+                for arg in [
+                    chemical_spaces,
+                    building_blocks_paths,
+                    reaction_to_building_blocks_paths,
+                ]
+            }
+        )
+        != 1
+    ):
+        raise ValueError(
+            "chemical_spaces, building_blocks_paths, and reaction_to_building_blocks_paths "
+            "must have the same length."
+        )
 
     # Set RL temperature similarity target to None if not desired
     if rl_temperature_similarity_target == -1:
@@ -164,15 +200,15 @@ def generate(
         for reaction in CHEMICAL_SPACE_TO_REACTIONS[chemical_space]
     )
 
-    print(f'Using {len(reactions):,} reactions')
+    print(f"Using {len(reactions):,} reactions")
 
     # Load building blocks
-    print('Loading building blocks...')
+    print("Loading building blocks...")
 
     # Optionally alter building blocks loading to precisely replicate previous experiments
     if replicate:
         # Ensure only REAL space
-        assert chemical_spaces == ('real',)
+        assert chemical_spaces == ("real",)
 
         # Ensure only one building blocks score column
         assert len(building_blocks_score_columns) == 1
@@ -181,19 +217,38 @@ def generate(
         # Change score loading dtype to ensure numerical precision
         real_building_block_data = pd.read_csv(
             building_blocks_paths[0],
-            dtype={
-                building_blocks_id_column: str,
-                building_blocks_score_column: str
-            }
+            dtype={building_blocks_id_column: str, building_blocks_score_column: str},
         )
-        real_building_block_data[building_blocks_score_column] = real_building_block_data[building_blocks_score_column].astype(float)
+        real_building_block_data[
+            building_blocks_score_column
+        ] = real_building_block_data[building_blocks_score_column].astype(float)
 
         # Reorder reactions
-        old_reactions_order = [275592, 22, 11, 527, 2430, 2708, 240690, 2230, 2718, 40, 1458, 271948, 27]
-        reactions = tuple(sorted(reactions, key=lambda reaction: old_reactions_order.index(reaction.id)))
+        old_reactions_order = [
+            275592,
+            22,
+            11,
+            527,
+            2430,
+            2708,
+            240690,
+            2230,
+            2718,
+            40,
+            1458,
+            271948,
+            27,
+        ]
+        reactions = tuple(
+            sorted(
+                reactions, key=lambda reaction: old_reactions_order.index(reaction.id)
+            )
+        )
 
         # Deduplicate building blocks by SMILES
-        real_building_block_data.drop_duplicates(subset=building_blocks_smiles_column, inplace=True)
+        real_building_block_data.drop_duplicates(
+            subset=building_blocks_smiles_column, inplace=True
+        )
 
         # Put building block data in a dictionary
         chemical_space_to_building_block_data = {
@@ -202,40 +257,57 @@ def generate(
     # Otherwise, load the building blocks normally
     else:
         chemical_space_to_building_block_data = {
-            chemical_space: pd.read_csv(building_blocks_path, dtype={building_blocks_id_column: str})
-            for chemical_space, building_blocks_path in zip(chemical_spaces, building_blocks_paths)
+            chemical_space: pd.read_csv(
+                building_blocks_path, dtype={building_blocks_id_column: str}
+            )
+            for chemical_space, building_blocks_path in zip(
+                chemical_spaces, building_blocks_paths
+            )
         }
 
     # Print building block stats and check that building block IDs are unique
-    for chemical_space, building_block_data in chemical_space_to_building_block_data.items():
-        print(f'Loaded {len(building_block_data):,} {chemical_space} building blocks')
+    for (
+        chemical_space,
+        building_block_data,
+    ) in chemical_space_to_building_block_data.items():
+        print(f"Loaded {len(building_block_data):,} {chemical_space} building blocks")
 
-        if building_block_data[building_blocks_id_column].nunique() != len(building_block_data):
-            raise ValueError(f'Building block IDs are not unique in {chemical_space} chemical space.')
+        if building_block_data[building_blocks_id_column].nunique() != len(
+            building_block_data
+        ):
+            raise ValueError(
+                f"Building block IDs are not unique in {chemical_space} chemical space."
+            )
 
     # Unique set of building block SMILES
-    building_block_smiles: set[str] = set.union(*[
-        set(building_block_data[building_blocks_smiles_column])
-        for building_block_data in chemical_space_to_building_block_data.values()
-    ])
+    building_block_smiles: set[str] = set.union(
+        *[
+            set(building_block_data[building_blocks_smiles_column])
+            for building_block_data in chemical_space_to_building_block_data.values()
+        ]
+    )
 
-    print(f'Found {len(building_block_smiles):,} unique building blocks')
+    print(f"Found {len(building_block_smiles):,} unique building blocks")
 
     # Map chemical space to building block SMILES to IDs
     chemical_space_to_building_block_smiles_to_id: dict[str, dict[str, str]] = {
-        chemical_space: dict(zip(
-            building_block_data[building_blocks_smiles_column],
-            building_block_data[building_blocks_id_column]
-        ))
+        chemical_space: dict(
+            zip(
+                building_block_data[building_blocks_smiles_column],
+                building_block_data[building_blocks_id_column],
+            )
+        )
         for chemical_space, building_block_data in chemical_space_to_building_block_data.items()
     }
 
     # Map chemical space to building block ID to SMILES
     chemical_space_to_building_block_id_to_smiles: dict[str, dict[str, str]] = {
-        chemical_space: dict(zip(
-            building_block_data[building_blocks_id_column],
-            building_block_data[building_blocks_smiles_column]
-        ))
+        chemical_space: dict(
+            zip(
+                building_block_data[building_blocks_id_column],
+                building_block_data[building_blocks_smiles_column],
+            )
+        )
         for chemical_space, building_block_data in chemical_space_to_building_block_data.items()
     }
 
@@ -245,7 +317,9 @@ def generate(
         for building_block_data in chemical_space_to_building_block_data.values()
         for smiles, scores in zip(
             building_block_data[building_blocks_smiles_column],
-            building_block_data[list(building_blocks_score_columns)].itertuples(index=False)
+            building_block_data[list(building_blocks_score_columns)].itertuples(
+                index=False
+            ),
         )
     }
 
@@ -253,11 +327,14 @@ def generate(
     if wandb_log:
         # Set up Weights & Biases run name
         if wandb_run_name is None:
-            wandb_run_name = f'{search_type}' + (f'_{rl_model_type}' if search_type == 'rl' else '')
+            wandb_run_name = f"{search_type}" + (
+                f"_{rl_model_type}" if search_type == "rl" else ""
+            )
 
             for model_type, fingerprint_type in zip(model_types, fingerprint_types):
-                wandb_run_name += (f'_{model_type}' +
-                                   (f'_{fingerprint_type}' if fingerprint_type != 'none' else ''))
+                wandb_run_name += f"_{model_type}" + (
+                    f"_{fingerprint_type}" if fingerprint_type != "none" else ""
+                )
 
             wandb_run_name += f'_{"_".join(chemical_spaces)}'
 
@@ -266,113 +343,119 @@ def generate(
             project=wandb_project_name,
             name=wandb_run_name,
             config={
-                'search_type': search_type,
-                'save_dir': save_dir,
-                'model_paths': model_paths,
-                'model_types': model_types,
-                'fingerprint_types': fingerprint_types,
-                'base_model_weights': base_model_weights,
-                'success_thresholds': success_thresholds,
-                'chemical_spaces': chemical_spaces,
-                'building_blocks_paths': building_blocks_paths,
-                'reaction_to_building_blocks_paths': reaction_to_building_blocks_paths,
-                'building_blocks_id_column': building_blocks_id_column,
-                'building_blocks_score_columns': building_blocks_score_columns,
-                'building_blocks_smiles_column': building_blocks_smiles_column,
-                'max_reactions': max_reactions,
-                'n_rollout': n_rollout,
-                'explore_weight': explore_weight,
-                'num_expand_nodes': num_expand_nodes,
-                'rl_model_type': rl_model_type,
-                'rl_prediction_type': rl_prediction_type,
-                'rl_base_temperature': rl_base_temperature,
-                'rl_temperature_similarity_target': rl_temperature_similarity_target,
-                'rl_train_frequency': rl_train_frequency,
-                'rl_train_epochs': rl_train_epochs,
-                'optimization': optimization,
-                'rng_seed': rng_seed,
-                'no_building_block_diversity': no_building_block_diversity,
-                'store_nodes': store_nodes,
-                'verbose': verbose,
-                'replicate': replicate
-            }
+                "search_type": search_type,
+                "save_dir": save_dir,
+                "model_paths": model_paths,
+                "model_types": model_types,
+                "fingerprint_types": fingerprint_types,
+                "base_model_weights": base_model_weights,
+                "success_thresholds": success_thresholds,
+                "chemical_spaces": chemical_spaces,
+                "building_blocks_paths": building_blocks_paths,
+                "reaction_to_building_blocks_paths": reaction_to_building_blocks_paths,
+                "building_blocks_id_column": building_blocks_id_column,
+                "building_blocks_score_columns": building_blocks_score_columns,
+                "building_blocks_smiles_column": building_blocks_smiles_column,
+                "max_reactions": max_reactions,
+                "n_rollout": n_rollout,
+                "explore_weight": explore_weight,
+                "num_expand_nodes": num_expand_nodes,
+                "rl_model_type": rl_model_type,
+                "rl_prediction_type": rl_prediction_type,
+                "rl_base_temperature": rl_base_temperature,
+                "rl_temperature_similarity_target": rl_temperature_similarity_target,
+                "rl_train_frequency": rl_train_frequency,
+                "rl_train_epochs": rl_train_epochs,
+                "optimization": optimization,
+                "rng_seed": rng_seed,
+                "no_building_block_diversity": no_building_block_diversity,
+                "store_nodes": store_nodes,
+                "verbose": verbose,
+                "replicate": replicate,
+            },
         )
 
         # For each chemical space, log number of building blocks and score histogram
-        for chemical_space, building_block_data in chemical_space_to_building_block_data.items():
-            wandb.log({
-                f'{chemical_space} Building Block Count': len(building_block_data)})
+        for (
+            chemical_space,
+            building_block_data,
+        ) in chemical_space_to_building_block_data.items():
+            wandb.log(
+                {f"{chemical_space} Building Block Count": len(building_block_data)}
+            )
 
             for building_blocks_score_column in building_blocks_score_columns:
-                wandb.log({
-                    f'{chemical_space} Building Block Scores': wandb.plot.histogram(
-                        wandb.Table(
-                            data=building_block_data[building_blocks_score_column].values[:, np.newaxis],
-                            columns=[building_blocks_score_column]
-                        ),
-                        building_blocks_score_column,
-                        title=f'{chemical_space} Building Block Scores')
-                })
+                wandb.log(
+                    {
+                        f"{chemical_space} Building Block Scores": wandb.plot.histogram(
+                            wandb.Table(
+                                data=building_block_data[
+                                    building_blocks_score_column
+                                ].values[:, np.newaxis],
+                                columns=[building_blocks_score_column],
+                            ),
+                            building_blocks_score_column,
+                            title=f"{chemical_space} Building Block Scores",
+                        )
+                    }
+                )
 
     # Set all building blocks for each reaction
-    set_all_building_blocks(
-        reactions=reactions,
-        building_blocks=building_block_smiles
-    )
+    set_all_building_blocks(reactions=reactions, building_blocks=building_block_smiles)
 
     # Set allowed building blocks for each reaction
-    print('Loading and setting allowed building blocks for each reaction...')
+    print("Loading and setting allowed building blocks for each reaction...")
     load_and_set_allowed_reaction_building_blocks(
         reactions=reactions,
         chemical_spaces=chemical_spaces,
-        reaction_to_building_blocks_paths=reaction_to_building_blocks_paths
+        reaction_to_building_blocks_paths=reaction_to_building_blocks_paths,
     )
 
     # Set up device for model
     if use_gpu:
-        device = torch.device('cuda')
+        device = torch.device("cuda")
     else:
-        device = torch.device('cpu')
+        device = torch.device("cpu")
 
     # Define model scoring function
-    print('Loading models and creating model scorer...')
+    print("Loading models and creating model scorer...")
     scorer = MoleculeScorer(
         model_paths=model_paths,
         model_types=model_types,
         fingerprint_types=fingerprint_types,
         model_weights=model_weights,
         device=device,
-        smiles_to_scores=building_block_smiles_to_scores
+        smiles_to_scores=building_block_smiles_to_scores,
     )
 
     # Set up RL model if applicable
-    if search_type == 'rl':
+    if search_type == "rl":
         torch.manual_seed(rng_seed)
 
-        if rl_model_type == 'mlp_rdkit':
+        if rl_model_type == "mlp_rdkit":
             rl_model = RLModelMLP(
                 prediction_type=rl_prediction_type,
                 num_workers=num_workers,
                 num_epochs=rl_train_epochs,
-                device=device
+                device=device,
             )
-        elif rl_model_type.startswith('chemprop'):
+        elif rl_model_type.startswith("chemprop"):
             rl_model = RLModelChemprop(
-                use_rdkit_features=rl_model_type == 'chemprop_rdkit',
+                use_rdkit_features=rl_model_type == "chemprop_rdkit",
                 prediction_type=rl_prediction_type,
                 num_workers=num_workers,
                 num_epochs=rl_train_epochs,
-                device=device
+                device=device,
             )
         else:
-            raise ValueError(f'Invalid RL model type: {rl_model_type}')
+            raise ValueError(f"Invalid RL model type: {rl_model_type}")
 
         print(f"RL model architecture: {rl_model.model}")
     else:
         rl_model = None
 
     # Set up Generator
-    print('Setting up generator...')
+    print("Setting up generator...")
     generator = Generator(
         search_type=search_type,
         chemical_space_to_building_block_smiles_to_id=chemical_space_to_building_block_smiles_to_id,
@@ -393,61 +476,82 @@ def generate(
         verbose=verbose,
         rl_model=rl_model,
         replicate=replicate,
-        wandb_log=wandb_log
+        wandb_log=wandb_log,
     )
 
     # Search for molecules
-    print(f'Generating molecules for {n_rollout:,} rollouts...')
+    print(f"Generating molecules for {n_rollout:,} rollouts...")
     start_time = datetime.now()
-    molecules_save_path = save_dir / 'molecules.csv'
+    molecules_save_path = save_dir / "molecules.csv"
 
     for rollout_start in range(0, n_rollout, save_frequency):
         # Set rollout end
         rollout_end = min(rollout_start + save_frequency, n_rollout)
 
         # Generate molecules
-        print(f'Running rollouts {rollout_start:,} through {rollout_end - 1:,}...')
+        print(f"Running rollouts {rollout_start:,} through {rollout_end - 1:,}...")
         generator.generate(n_rollout=rollout_end - rollout_start)
 
         # Get full molecule nodes
         nodes = generator.get_full_molecule_nodes()
 
         # Save molecules
-        print('Saving molecules...')
+        print("Saving molecules...")
         save_generated_molecules(
             nodes=nodes,
             chemical_space_to_building_block_id_to_smiles=chemical_space_to_building_block_id_to_smiles,
-            save_path=molecules_save_path
+            save_path=molecules_save_path,
         )
 
     # Compute, print, and save stats
     stats = {
-        'generation_time': datetime.now() - start_time,
-        'num_nonzero_reaction_molecules': len(nodes),
-        'approx_num_nodes_searched': generator.approx_num_nodes_searched
+        "generation_time": datetime.now() - start_time,
+        "num_nonzero_reaction_molecules": len(nodes),
+        "approx_num_nodes_searched": generator.approx_num_nodes_searched,
     }
 
     print(f'Generation time = {stats["generation_time"]}')
-    print(f'Number of full molecule, nonzero reaction nodes = {stats["num_nonzero_reaction_molecules"]:,}')
-    print(f'Approximate total number of nodes searched = {stats["approx_num_nodes_searched"]:,}')
+    print(
+        f'Number of full molecule, nonzero reaction nodes = {stats["num_nonzero_reaction_molecules"]:,}'
+    )
+    print(
+        f'Approximate total number of nodes searched = {stats["approx_num_nodes_searched"]:,}'
+    )
 
     if store_nodes:
-        stats['num_nodes_searched'] = generator.num_nodes_searched
+        stats["num_nodes_searched"] = generator.num_nodes_searched
         print(f'Total number of nodes searched = {stats["num_nodes_searched"]:,}')
 
-    pd.DataFrame(data=[stats]).to_csv(save_dir / 'generation_stats.csv', index=False)
+    pd.DataFrame(data=[stats]).to_csv(save_dir / "generation_stats.csv", index=False)
 
     # Log rollout stats
     if wandb_log:
-        wandb.log({
-            'Generation Time': stats['generation_time'].total_seconds(),
-            'Number of Generated Molecules': stats['num_nonzero_reaction_molecules'],
-            'Approximate Number of Nodes Searched': stats['approx_num_nodes_searched']
-        } | ({'Exact Number of Nodes Searched': stats['num_nodes_searched']} if store_nodes else {}))
+        wandb.log(
+            {
+                "Generation Time": stats["generation_time"].total_seconds(),
+                "Number of Generated Molecules": stats[
+                    "num_nonzero_reaction_molecules"
+                ],
+                "Approximate Number of Nodes Searched": stats[
+                    "approx_num_nodes_searched"
+                ],
+            }
+            | (
+                {"Exact Number of Nodes Searched": stats["num_nodes_searched"]}
+                if store_nodes
+                else {}
+            )
+        )
 
         node_scores = [[node.P] for node in nodes]
-        table = wandb.Table(data=node_scores, columns=['Score'])
-        wandb.log({'generation_scores': wandb.plot.histogram(table, 'Score', title='Generated Molecule Scores')})
+        table = wandb.Table(data=node_scores, columns=["Score"])
+        wandb.log(
+            {
+                "generation_scores": wandb.plot.histogram(
+                    table, "Score", title="Generated Molecule Scores"
+                )
+            }
+        )
 
     # Save RL model
     # TODO: resolve pickling errors

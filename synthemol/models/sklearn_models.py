@@ -9,24 +9,19 @@ from sklearn.neural_network import MLPClassifier, MLPRegressor
 from synthemol.constants import SKLEARN_MODEL_TYPES
 
 
-def sklearn_load(
-        model_path: Path
-) -> SKLEARN_MODEL_TYPES:
+def sklearn_load(model_path: Path) -> SKLEARN_MODEL_TYPES:
     """Loads a scikit-learn model.
 
     :param model_path: Path to a scikit-learn model.
     :return: A scikit-learn model.
     """
-    with open(model_path, 'rb') as f:
+    with open(model_path, "rb") as f:
         model = pickle.load(f)
 
     return model
 
 
-def sklearn_predict(
-        model: SKLEARN_MODEL_TYPES,
-        fingerprints: np.ndarray
-) -> np.ndarray:
+def sklearn_predict(model: SKLEARN_MODEL_TYPES, fingerprints: np.ndarray) -> np.ndarray:
     """Predicts molecular properties using a scikit-learn model.
 
     :param model: A scikit-learn model.
@@ -38,14 +33,13 @@ def sklearn_predict(
     elif isinstance(model, RandomForestRegressor) or isinstance(model, MLPRegressor):
         preds = model.predict(fingerprints)
     else:
-        raise ValueError(f'Model type {type(model)} is not supported.')
+        raise ValueError(f"Model type {type(model)} is not supported.")
 
     return preds
 
 
 def sklearn_predict_on_molecule(
-        model: SKLEARN_MODEL_TYPES,
-        fingerprint: np.ndarray | None = None
+    model: SKLEARN_MODEL_TYPES, fingerprint: np.ndarray | None = None
 ) -> float:
     """Predicts the property of a molecule using a scikit-learn model.
 
@@ -57,8 +51,7 @@ def sklearn_predict_on_molecule(
 
 
 def sklearn_predict_on_molecule_ensemble(
-        models: list[SKLEARN_MODEL_TYPES],
-        fingerprint: np.ndarray | None = None
+    models: list[SKLEARN_MODEL_TYPES], fingerprint: np.ndarray | None = None
 ) -> float:
     """Predicts the property of a molecule using an ensemble of scikit-learn models.
 
@@ -66,7 +59,11 @@ def sklearn_predict_on_molecule_ensemble(
     :param fingerprint: A 1D array of molecular fingerprints (if applicable).
     :return: The ensemble prediction on the molecule.
     """
-    return float(np.mean([
-        sklearn_predict_on_molecule(model=model, fingerprint=fingerprint)
-        for model in models
-    ]))
+    return float(
+        np.mean(
+            [
+                sklearn_predict_on_molecule(model=model, fingerprint=fingerprint)
+                for model in models
+            ]
+        )
+    )
