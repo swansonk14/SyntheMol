@@ -654,14 +654,10 @@ class Generator:
                 self.model_weights = 1 - self.rolling_average_success_rate
 
                 # Normalize model weights
-                total_weight = sum(self.model_weights)
-                self.model_weights = [
-                    weight / total_weight
-                    for weight in self.model_weights
-                ]
+                self.model_weights = self.model_weights / np.sum(self.model_weights)
 
                 # Update model weights in scorer
-                self.scorer.model_weights = self.model_weights
+                self.scorer.model_weights = self.model_weights.tolist()
 
             # Add model weights to rollout stats
             for i, model_weight in enumerate(self.model_weights):
