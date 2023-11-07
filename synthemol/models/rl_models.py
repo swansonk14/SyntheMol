@@ -1,13 +1,15 @@
 """Contains reinforcement learning models for use in generating molecules."""
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import numpy as np
 import torch
 import torch.nn as nn
 from chemfunc.molecular_fingerprints import compute_fingerprints
+from chemprop.models import MoleculeModel
 from chemprop.features import BatchMolGraph, MolGraph
+from chemprop.utils import load_args
 from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import mean_squared_error, r2_score
 from tqdm import tqdm, trange
@@ -94,6 +96,8 @@ class RLModel(ABC):
     def __init__(
             self,
             prediction_type: RL_PREDICTION_TYPES,
+            max_num_molecules: int = 3,
+            features_size: int = 200,
             num_workers: int = 0,
             num_epochs: int = 5,
             batch_size: int = 50,
@@ -104,6 +108,8 @@ class RLModel(ABC):
 
         :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
                                 'classification' = binary classification. 'regression' = regression.
+        :param max_num_molecules: The maximum number of molecules to process at a time.
+        :param features_size: The size of the features for each molecule.
         :param num_workers: The number of workers to use for data loading.
         :param num_epochs: The number of epochs to train for.
         :param batch_size: The batch size.
@@ -111,6 +117,9 @@ class RLModel(ABC):
         :param device: The device to use for the model.
         """
         self.prediction_type = prediction_type
+        self.max_num_molecules = max_num_molecules
+        self.features_size = features_size
+        self.total_features_size = max_num_molecules * features_size
         self.num_workers = num_workers
         self.num_epochs = num_epochs
         self.batch_size = batch_size
@@ -121,6 +130,8 @@ class RLModel(ABC):
         self.train_target_nodes: list[Node] = []
         self.test_source_nodes: list[Node] = []
         self.test_target_nodes: list[Node] = []
+
+        self.smiles_to_features: dict[str, torch.Tensor] = {}
 
         # Set optimizer
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
@@ -133,6 +144,54 @@ class RLModel(ABC):
             self.loss_fn = self.eval_loss_fn = nn.MSELoss()
         else:
             raise ValueError(f'Prediction type {self.prediction_type} is not supported.')
+
+    def compute_rdkit_features(self, molecule_tuples: list[tuple[str]], average_across_tuple: bool = False) -> torch.Tensor:
+        """Computes the RDKit features for molecules in each tuple of molecules.
+
+        :param molecule_tuples: A list of tuples of SMILES strings representing one or more molecules.
+        :param average_across_tuple: Whether to average the features across the molecules in each tuple.
+        :return: A tensor containing the features for molecules in each tuple of molecules.
+                 If average_across_tuple is True, then the tensor will have shape (num_tuples, features_size).
+                 If average_across_tuple is False, then the tensor will have shape (num_tuples, total_features_size)
+                 where total_features_size = max_num_molecules * features_size.
+        """
+        # Get all molecules
+        molecule_nums = [len(molecules) for molecules in molecule_tuples]
+        all_molecules = [molecule for molecules in molecule_tuples for molecule in molecules]
+
+        # Determine unknown molecules
+        unknown_molecules = [molecule for molecule in all_molecules if molecule not in self.smiles_to_features]
+
+        # Compute features for unknown molecules and add to dictionary
+        if unknown_molecules:
+            unknown_features = compute_fingerprints(mols=unknown_molecules, fingerprint_type='rdkit')
+            unknown_features = torch.from_numpy(unknown_features)
+
+            for i, molecule in enumerate(unknown_molecules):
+                self.smiles_to_features[molecule] = unknown_features[i]
+
+        # Get all molecules and their features
+        all_features = torch.stack([self.smiles_to_features[molecule] for molecule in all_molecules])
+
+        # Set up feature vectors for each combination of molecules
+        features_dim = self.features_size if average_across_tuple else self.total_features_size
+        features = torch.zeros((len(molecule_tuples), features_dim))
+        index = 0
+        for i, molecule_num in enumerate(molecule_nums):
+            # Get features for all molecules in the tuple
+            molecules_features = all_features[index:index + molecule_num]  # (molecule_num, features_size)
+
+            # Average features across molecules in the tuple if desired
+            if average_across_tuple:
+                molecules_features = torch.mean(molecules_features, dim=0)  # (features_size,)
+            else:
+                molecules_features = molecules_features.flatten()  # (total_features_size,)
+
+            # Set features for tuple
+            features[i, :len(molecules_features)] = molecules_features
+            index += molecule_num
+
+        return features
 
     def buffer(self, source_node: Node, target_node: Node) -> None:
         """Adds a new source/target node pair to the buffer (test set).
@@ -168,7 +227,7 @@ class RLModel(ABC):
             # Loop over batches of molecule features and rewards
             for batch_data, batch_rewards in dataloader:
                 # Make predictions
-                predictions = self.model(batch_data).squeeze(dim=-1)
+                predictions = self.model_predict(batch_data).squeeze(dim=-1)
 
                 # Compute loss
                 loss = self.loss_fn(predictions, batch_rewards.to(self.device))
@@ -302,9 +361,9 @@ class RLModel(ABC):
         rewards = []
 
         with torch.no_grad():
-            for (batch_data,) in tqdm(dataloader, desc='Predicting RL model', leave=False):
+            for batch_data, _ in tqdm(dataloader, desc='Predicting RL model', leave=False):
                 # Predict rewards
-                batch_rewards = self.model(batch_data)
+                batch_rewards = self.model_predict(batch_data)
 
                 # Add rewards to list
                 rewards.extend(batch_rewards.cpu().flatten().tolist())
@@ -343,6 +402,15 @@ class RLModel(ABC):
         pass
 
     @abstractmethod
+    def model_predict(self, batch_data: Any) -> torch.Tensor:
+        """Makes predictions using the model.
+
+        :param batch_data: Data for the batch.
+        :return: A tensor containing the model's prediction (batch_size, output_dim).
+        """
+        pass
+
+    @abstractmethod
     def get_dataloader(
             self,
             molecule_tuples: list[tuple[str]],
@@ -359,6 +427,7 @@ class RLModel(ABC):
         pass
 
 
+# TODO: Change to load weights from pretrained model
 class RLModelRDKit(RLModel):
     def __init__(
             self,
@@ -387,12 +456,7 @@ class RLModelRDKit(RLModel):
         :param learning_rate: The learning rate.
         :param device: The device to use for the model.
         """
-        self.max_num_molecules = max_num_molecules
-        self.features_size = features_size
-        self.total_features_size = max_num_molecules * features_size
-
-        self.smiles_to_features: dict[str, torch.Tensor] = {}
-
+        # Create MLP model
         self._model = MLP(
             input_dim=self.total_features_size,
             hidden_dim=hidden_dim,
@@ -404,6 +468,8 @@ class RLModelRDKit(RLModel):
 
         super().__init__(
             prediction_type=prediction_type,
+            max_num_molecules=max_num_molecules,
+            features_size=features_size,
             num_workers=num_workers,
             num_epochs=num_epochs,
             batch_size=batch_size,
@@ -411,44 +477,18 @@ class RLModelRDKit(RLModel):
             device=device
         )
 
-    def compute_rdkit_features(self, molecule_tuples: list[tuple[str]]) -> torch.Tensor:
-        """Computes the RDKit features for each molecule in each tuple of molecules.
-
-        :param molecule_tuples: A list of tuples of SMILES strings representing one or more molecules.
-        :return: A tensor containing the features for each molecule in each tuple of molecules (num_tuples, total_features_size).
-        """
-        # Get all molecules
-        molecule_nums = [len(molecules) for molecules in molecule_tuples]
-        all_molecules = [molecule for molecules in molecule_tuples for molecule in molecules]
-
-        # Determine unknown molecules
-        unknown_molecules = [molecule for molecule in all_molecules if molecule not in self.smiles_to_features]
-
-        # Compute features for unknown molecules and add to dictionary
-        if unknown_molecules:
-            unknown_features = compute_fingerprints(mols=unknown_molecules, fingerprint_type='rdkit')
-            unknown_features = torch.from_numpy(unknown_features)
-
-            for i, molecule in enumerate(unknown_molecules):
-                self.smiles_to_features[molecule] = unknown_features[i]
-
-        # Get all molecules and their features
-        all_features = torch.stack([self.smiles_to_features[molecule] for molecule in all_molecules])
-
-        # Set up feature vectors for each combination of molecules
-        features = torch.zeros((len(molecule_tuples), self.total_features_size))
-        index = 0
-        for i, molecule_num in enumerate(molecule_nums):
-            molecules_features = all_features[index:index + molecule_num].flatten()
-            features[i, :len(molecules_features)] = molecules_features
-            index += molecule_num
-
-        return features
-
     @property
-    def model(self) -> nn.Module:
+    def model(self) -> MLP:
         """Returns the model."""
         return self._model
+
+    def model_predict(self, batch_data: torch.Tensor) -> torch.Tensor:
+        """Makes predictions using the model.
+
+        :param batch_data: A Tensor containing the data for the batch.
+        :return: A tensor containing the model's prediction (batch_size, output_dim).
+        """
+        return self.model(batch_data)
 
     def get_dataloader(
             self,
@@ -464,13 +504,14 @@ class RLModelRDKit(RLModel):
         :return: A dataloader.
         """
         # Compute features in bulk across all molecules
-        features = self.compute_rdkit_features(molecule_tuples)
+        features = self.compute_rdkit_features(molecule_tuples=molecule_tuples, average_across_tuple=False)
 
-        # Create dataset input
-        dataset_input = (features,) if rewards is None else (features, torch.tensor(rewards))
+        # Set up empty rewards if None
+        if rewards is None:
+            rewards = torch.zeros(len(molecule_tuples)) * torch.nan
 
         # Create dataset
-        dataset = torch.utils.data.TensorDataset(*dataset_input)
+        dataset = torch.utils.data.TensorDataset(features, rewards)
 
         # Create dataloader
         dataloader = torch.utils.data.DataLoader(
@@ -487,17 +528,21 @@ class RLMoleculeDataset(torch.utils.data.Dataset):
     def __init__(
             self,
             molecule_tuples: list[tuple[str, ...]],
+            features: torch.Tensor | None = None,
             rewards: list[float] | None = None
     ) -> None:
         """Initializes the dataset.
 
         :param molecule_tuples: A list of tuples of SMILES strings representing one or more molecules.
+        :param features: A tensor containing the features for each molecule in each tuple of molecules
+                         (num_tuples, total_features_size).
         :param rewards: A list of rewards for each tuple of molecules.
         """
         self.molecule_tuples = molecule_tuples
+        self.features = features
 
         if rewards is None:
-            self.rewards = [None] * len(molecule_tuples)
+            self.rewards = torch.zeros(len(molecule_tuples)) * torch.nan
         else:
             self.rewards = rewards
 
@@ -517,21 +562,21 @@ class RLMoleculeDataset(torch.utils.data.Dataset):
         """Returns the number of tuples of molecules."""
         return len(self.molecule_tuples)
 
-    def __getitem__(self, index: int) -> tuple[tuple[MolGraph, ...], float | None]:
-        """Returns a MolGraph tuple and the corresponding reward (or None)."""
-        return self.mol_graphs_tuples[index], self.rewards[index]
+    def __getitem__(self, index: int) -> tuple[tuple[MolGraph, ...], torch.Tensor | None, float]:
+        """Returns a MolGraph tuple and the corresponding features (or None) and reward (or NaN)."""
+        return self.mol_graphs_tuples[index], self.features[index], self.rewards[index]
 
 
 def rl_collate_fn(
-        data: list[tuple[tuple[MolGraph, ...], float | None]]
-) -> tuple[list[BatchMolGraph], torch.Tensor] | tuple[list[BatchMolGraph]]:
+        data: list[tuple[tuple[MolGraph, ...], torch.Tensor | None, float]]
+) -> tuple[tuple[list[BatchMolGraph], list[np.ndarray] | None], torch.Tensor]:
     """Collates data into a batch.
 
-    :param data: A list of tuples of MolGraph tuples and rewards.
-    :return: A tuple containing a list of BatchMolGraph and optionally a tensor of rewards.
+    :param data: A list of tuples of MolGraph tuples, features, and rewards.
+    :return: A tuple with a tuple containing a list of BatchMolGraph and features, and a tensor of rewards.
     """
     # Get molecules and rewards
-    mol_graph_tuples, rewards = zip(*data)
+    mol_graph_tuples, features, rewards = zip(*data)
 
     # Create BatchMolGraph from MolGraphs
     batch_mol_graph = BatchMolGraph([
@@ -557,10 +602,15 @@ def rl_collate_fn(
     batch_mol_graph.a_scope = a_scope
     batch_mol_graph.b_scope = b_scope
 
-    if rewards[0] is None:
-        return ([batch_mol_graph],)
+    # Set up features
+    if features is not None:
+        features = [features.numpy()]
 
-    return [batch_mol_graph], torch.tensor(rewards)
+    # Set up batch data for Chemprop
+    batch_data = ([batch_mol_graph], features)
+    rewards = torch.tensor(rewards)
+
+    return batch_data, rewards
 
 
 class RLModelChemprop(RLModel):
@@ -568,6 +618,8 @@ class RLModelChemprop(RLModel):
             self,
             prediction_type: RL_PREDICTION_TYPES,
             model_path: Path,
+            max_num_molecules: int = 3,
+            features_size: int = 200,
             num_workers: int = 0,
             num_epochs: int = 5,
             batch_size: int = 50,
@@ -579,6 +631,8 @@ class RLModelChemprop(RLModel):
         :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
                                 'classification' = binary classification. 'regression' = regression.
         :param model_path: The path to pretrained Chemprop checkpoint file.
+        :param max_num_molecules: The maximum number of molecules to process at a time.
+        :param features_size: The size of the features for each molecule.
         :param num_workers: The number of workers to use for data loading.
         :param num_epochs: The number of epochs to train for.
         :param batch_size: The batch size.
@@ -591,13 +645,20 @@ class RLModelChemprop(RLModel):
         else:
             self.model_path = model_path
 
+        # Load pretrained model
         self._model = chemprop_load(
             model_path=self.model_path,
             device=device
         )
 
+        # Determine whether RDKit features were used (note: assumes features are RDKit features)
+        args = load_args(path=str(self.model_path))
+        self.use_rdkit_features = args.use_input_features
+
         super().__init__(
             prediction_type=prediction_type,
+            max_num_molecules=max_num_molecules,
+            features_size=features_size,
             num_workers=num_workers,
             num_epochs=num_epochs,
             batch_size=batch_size,
@@ -606,9 +667,24 @@ class RLModelChemprop(RLModel):
         )
 
     @property
-    def model(self) -> nn.Module:
+    def model(self) -> MoleculeModel:
         """Returns the model."""
         return self._model
+
+    def model_predict(self, batch_data: tuple[list[BatchMolGraph], list[np.ndarray] | None]) -> torch.Tensor:
+        """Makes predictions using the model.
+
+        :param batch_data: A tuple containing a list of BatchMolGraphs and features for the batch.
+        :return: A tensor containing the model's prediction (batch_size, output_dim).
+        """
+        # Unpack batch data
+        batch_mol_graphs, features = batch_data
+
+        # Get predictions
+        predictions = self.model(batch=batch_mol_graphs, features_batch=features)
+
+        # Return predictions
+        return predictions
 
     def get_dataloader(
             self,
@@ -623,9 +699,17 @@ class RLModelChemprop(RLModel):
         :param shuffle: Whether to shuffle the data.
         :return: A dataloader.
         """
+        # Compute RDKit features if needed
+        if self.use_rdkit_features:
+            # Compute features and average across molecules in a tuple for a tensor of shape (num_tuples, features_size)
+            features = self.compute_rdkit_features(molecule_tuples=molecule_tuples, average_across_tuple=True)
+        else:
+            features = None
+
         # Create dataset
         dataset = RLMoleculeDataset(
             molecule_tuples=molecule_tuples,
+            features=features,
             rewards=rewards
         )
 
