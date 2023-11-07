@@ -54,9 +54,8 @@ class Node:
         """
         return sum(scorer(molecule) for molecule in molecules) / len(molecules) if len(molecules) > 0 else 0.0
 
-    @cached_property
     def P(self) -> float:
-        """The property score of this Node. (Note: The value is cached, so it assumes the Node is immutable.)"""
+        """The property score of this Node."""
         return self.compute_score(molecules=self.molecules, scorer=self.scorer)
 
     def Q(self) -> float:

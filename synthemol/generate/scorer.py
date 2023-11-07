@@ -232,6 +232,20 @@ class MoleculeScorer:
         # Clear cache
         self.smiles_to_score = {}
 
+    def compute_individual_scores(self, smiles: str) -> list[float]:
+        """Computes the individual scores of a molecule (with caching).
+
+        :param smiles: A SMILES string.
+        :return: A list of individual scores.
+        """
+        if smiles in self.smiles_to_individual_scores:
+            individual_scores = self.smiles_to_individual_scores[smiles]
+        else:
+            individual_scores = [scorer(smiles) for scorer in self.scorers]
+            self.smiles_to_individual_scores[smiles] = individual_scores
+
+        return individual_scores
+
     def __call__(self, smiles: str) -> float:
         """Scores a molecule using a collection of scorers.
 
@@ -242,11 +256,8 @@ class MoleculeScorer:
         if smiles in self.smiles_to_score:
             return self.smiles_to_score[smiles]
 
-        # Look up individual scores
-        if smiles in self.smiles_to_individual_scores:
-            individual_scores = self.smiles_to_individual_scores[smiles]
-        else:
-            individual_scores = [scorer(smiles) for scorer in self.scorers]
+        # Look up individual scores or compute the scores and cache them
+        individual_scores = self.compute_individual_scores(smiles=smiles)
 
         # Compute weighted average score
         score = sum(

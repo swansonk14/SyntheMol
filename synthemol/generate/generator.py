@@ -93,7 +93,7 @@ class Generator:
         self.success_comparators = success_comparators
         self.explore_weight = explore_weight
         self.num_expand_nodes = num_expand_nodes
-        self.rl_base_temperature = rl_base_temperature
+        self.rl_temperature = rl_base_temperature
         self.rl_temperature_similarity_target = rl_temperature_similarity_target
         self.rl_train_frequency = rl_train_frequency
         self.optimization = optimization
@@ -171,6 +171,9 @@ class Generator:
         self.rolling_average_weight = 0.9
         self.min_temperature = 0.001
         self.max_temperature = 10.0
+
+        # Set up rolling average successes for model weight adjustment
+        self.rolling_average_success_rate = np.zeros(len(model_weights))
 
     def get_next_building_blocks(self, molecules: tuple[str]) -> list[str]:
         """Get the next building blocks that can be added to the given molecules.
@@ -443,7 +446,7 @@ class Generator:
 
             # Convert RL scores to temperature-scaled probabilities
             child_node_scores = np.array([self.molecules_to_rl_score[molecules] for molecules in child_node_molecules])
-            child_node_probs = softmax(self.optimization_sign * child_node_scores / self.rl_base_temperature)
+            child_node_probs = softmax(self.optimization_sign * child_node_scores / self.rl_temperature)
 
             # Select node proportional to the temperature-scaled RL score
             selected_node = self.rng.choice(child_nodes, p=child_node_probs)
@@ -481,7 +484,8 @@ class Generator:
     def update_similarity(self) -> float:
         """Computes the Tanimoto similarity of the current generation and updates for future comparisons.
 
-        :return: The Tanimoto similarity of the current generation compared to previous generations.
+        :return: The Tanimoto similarity of the current generation (average across molecules)
+                 compared to previous generations.
         """
         # Get full molecule nodes from this generation
         new_full_molecule_nodes = self.get_full_molecule_nodes(
@@ -615,13 +619,53 @@ class Generator:
                 )
 
                 # Update temperature based on percent similarity difference
-                self.rl_base_temperature += percent_similarity_difference * self.rl_base_temperature
+                self.rl_temperature += percent_similarity_difference * self.rl_temperature
 
                 # Clip temperature within min/max bounds
-                self.rl_base_temperature = max(self.min_temperature, min(self.rl_base_temperature, self.max_temperature))
+                self.rl_temperature = max(self.min_temperature, min(self.rl_temperature, self.max_temperature))
 
             # Add RL temperature to rollout stats
-            rollout_stats['RL Temperature'] = self.rl_base_temperature
+            rollout_stats['RL Temperature'] = self.rl_temperature
+
+            # Optionally, update model weights based on success rate
+            if self.success_comparators is not None:
+                # Get new generated molecules
+                new_full_molecule_nodes = self.get_full_molecule_nodes(
+                    rollout_start=self.rollout_num
+                )
+
+                # Compute scores of generated molecules and determine average success rate
+                all_successes = []
+                for node in new_full_molecule_nodes:
+                    scores = self.scorer.compute_individual_scores(smiles=node.molecules[0])
+                    successes = [
+                        success_comparator(score)
+                        for success_comparator, score in zip(self.success_comparators, scores)
+                    ]
+                    all_successes.append(successes)
+
+                new_success_rate = np.mean(np.array(all_successes), axis=0)
+
+                # Update rolling average successes with weighted combination of new and old successes
+                self.rolling_average_success_rate = self.rolling_average_weight * self.rolling_average_success_rate + \
+                                                    (1 - self.rolling_average_weight) * new_success_rate
+
+                # Update model weights as proportional to failure rate (i.e., higher failure rate means higher weight)
+                self.model_weights = 1 - self.rolling_average_success_rate
+
+                # Normalize model weights
+                total_weight = sum(self.model_weights)
+                self.model_weights = [
+                    weight / total_weight
+                    for weight in self.model_weights
+                ]
+
+                # Update model weights in scorer
+                self.scorer.model_weights = self.model_weights
+
+            # Add model weights to rollout stats
+            for i, model_weight in self.model_weights:
+                rollout_stats[f'Model Weight {i + 1}'] = model_weight
 
             # Determine number of unique full molecules found
             rollout_stats['Unique Molecules'] = sum(
