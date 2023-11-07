@@ -440,6 +440,8 @@ class RLModelMLP(RLModel):
         # Set up empty rewards if None
         if rewards is None:
             rewards = torch.zeros(len(molecule_tuples)) * torch.nan
+        else:
+            rewards = torch.tensor(rewards)
 
         # Create dataset
         dataset = torch.utils.data.TensorDataset(features, rewards)
