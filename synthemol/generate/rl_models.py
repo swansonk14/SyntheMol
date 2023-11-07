@@ -234,6 +234,7 @@ class RLModel(ABC):
                     loss.backward()
                     optimizer.step()
 
+    # TODO: also evaluate on weighted average property prediction?
     def evaluate(self, split: Literal["train", "test"]) -> dict[str, float]:
         """Evaluates the model on the train or test set.
 
@@ -255,8 +256,8 @@ class RLModel(ABC):
         rewards = [node.individual_scores for node in target_nodes]
 
         # Make predictions
-        predictions = self.run_models(
-            molecule_tuples
+        predictions = self.predict_individual_scores(
+            molecule_tuples=molecule_tuples
         )  # (num_molecules, num_properties)
 
         # Convert to numpy
@@ -365,22 +366,20 @@ class RLModel(ABC):
 
         return results
 
-    def predict(self, molecule_tuples: list[tuple[str]]) -> list[float]:
-        """Predicts the weighted average reward for each tuple of molecules.
+    def predict_individual_scores(
+        self, molecule_tuples: list[tuple[str]]
+    ) -> torch.Tensor:
+        """Predicts the individual scores for each tuple of molecules.
 
         :param molecule_tuples: A list of tuples of SMILES strings representing one or more molecules.
-        :return: A list of predicted weighted average rewards for each tuple of molecules.
+        :return: A 2D tensor containing the predicted individual scores for
+                 each tuple of molecules (num_molecules, num_properties).
         """
         # Set models to eval mode
         self.eval_mode()
 
         # Get dataloader
         dataloader = self.get_dataloader(molecule_tuples=molecule_tuples, shuffle=False)
-
-        # Get weights tensor
-        weights = torch.tensor(self.model_weights.weights, device=self.device).view(
-            1, -1
-        )  # (1, num_properties)
 
         # Loop over batches of molecules and make reward predictions
         predictions = []
@@ -394,13 +393,32 @@ class RLModel(ABC):
                     batch_data
                 )  # (num_molecules, num_properties)
 
-                # Compute weighted average
-                batch_preds = torch.sum(
-                    weights * batch_preds, dim=1
-                )  # (num_molecules,)
-
                 # Add predictions to list
-                predictions.extend(batch_preds.cpu().flatten().tolist())
+                predictions.extend(batch_preds.cpu())
+
+        # Concatenate predictions
+        predictions = torch.cat(predictions, dim=0)  # (num_molecules, num_properties)
+
+        return predictions
+
+    def predict(self, molecule_tuples: list[tuple[str]]) -> torch.Tensor:
+        """Predicts the weighted average reward for each tuple of molecules.
+
+        :param molecule_tuples: A list of tuples of SMILES strings representing one or more molecules.
+        :return: A 1D tensor of predicted weighted average rewards for each tuple of molecules.
+        """
+        # Predict individual scores
+        individual_preds = self.predict_individual_scores(
+            molecule_tuples=molecule_tuples
+        )  # (num_molecules, num_properties)
+
+        # Move weights to tensor
+        weights = torch.tensor(self.model_weights.weights).view(
+            -1, 1
+        )  # (1, num_properties)
+
+        # Compute weighted average
+        predictions = torch.sum(weights * individual_preds, dim=1)  # (num_molecules,)
 
         return predictions
 

@@ -483,7 +483,9 @@ class Generator:
             ]
 
             if len(child_node_molecules_missing_scores) > 0:
-                rl_scores = self.rl_model.predict(child_node_molecules_missing_scores)
+                rl_scores = self.rl_model.predict(
+                    molecule_tuples=child_node_molecules_missing_scores
+                ).tolist()
 
                 for molecules, rl_score in zip(
                     child_node_molecules_missing_scores, rl_scores

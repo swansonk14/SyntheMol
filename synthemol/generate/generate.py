@@ -383,27 +383,29 @@ def generate(
             },
         )
 
-        # For each chemical space, log number of building blocks and score histogram
+        # For each chemical space, log number of building blocks and score histograms
         for (
             chemical_space,
             building_block_data,
         ) in chemical_space_to_building_block_data.items():
+            # Log number of building blocks
             wandb.log(
                 {f"{chemical_space} Building Block Count": len(building_block_data)}
             )
 
-            for building_blocks_score_column in building_blocks_score_columns:
+            # Build table of building block scores
+            wandb_bb_table = wandb.Table(
+                data=building_block_data[building_blocks_score_columns].values,
+                columns=model_weights.model_names,
+            )
+
+            # Log building block score histograms
+            for model_name in model_weights.model_names:
+                histogram_name = f"{chemical_space} Building Block {model_name} Scores"
                 wandb.log(
                     {
-                        f"{chemical_space} Building Block Scores": wandb.plot.histogram(
-                            wandb.Table(
-                                data=building_block_data[
-                                    building_blocks_score_column
-                                ].values[:, np.newaxis],
-                                columns=[building_blocks_score_column],
-                            ),
-                            building_blocks_score_column,
-                            title=f"{chemical_space} Building Block Scores",
+                        histogram_name: wandb.plot.histogram(
+                            wandb_bb_table, model_name, title=histogram_name,
                         )
                     }
                 )
@@ -559,15 +561,22 @@ def generate(
             )
         )
 
-        node_scores = [[node.property_score] for node in nodes]
-        table = wandb.Table(data=node_scores, columns=["Score"])
-        wandb.log(
-            {
-                "generation_scores": wandb.plot.histogram(
-                    table, "Score", title="Generated Molecule Scores"
-                )
-            }
+        # Build table of scores of generated molecules
+        node_scores = [node.individual_scores for node in nodes]
+        wandb_gen_table = wandb.Table(
+            data=node_scores, columns=model_weights.model_names
         )
+
+        # Log histograms of scores of generated molecules
+        for model_name in model_weights.model_names:
+            histogram_name = f"Generated Molecule {model_name} Scores"
+            wandb.log(
+                {
+                    histogram_name: wandb.plot.histogram(
+                        wandb_gen_table, model_name, title=histogram_name,
+                    )
+                }
+            )
 
     # Save RL model
     # TODO: resolve pickling errors
