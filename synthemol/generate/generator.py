@@ -538,16 +538,41 @@ class Generator:
 
         return best_node
 
-    def update_similarity(self, new_nodes: list[Node]) -> float:
-        """Computes the Tanimoto similarity of the current generation and updates fingerprints for future comparisons.
+    def compute_similarity(self, node: Node) -> float:
+        """Computes the maximum Tanimoto similarity of the node to previously generated nodes.
 
-        :param new_nodes: A list of Nodes representing the new molecules generated in the current generation.
-        :return: The Tanimoto similarity of the current generation (average across molecules)
-                 compared to previous generations.
+        :param node: A Node with a single molecule.
+        :return: The maximum Tanimoto similarity of the node to previously generated nodes.
         """
-        # If there is no new full molecule, then a duplicate was found
-        if len(new_nodes) == 0:
-            return 1.0
+        # If there are no previously generated nodes, then the similarity is 0
+        if self.full_molecule_morgan_fingerprints is None:
+            return 0.0
+
+        # Compute the Morgan fingerprint of the node
+        node_morgan_fingerprint = morgan_fingerprint_generator(node.molecules[0])
+
+        # Compute the Tanimoto similarity between the node and the previous molecules
+        tanimoto_distances = pairwise_distances(
+            node_morgan_fingerprint.reshape(1, -1),
+            self.full_molecule_morgan_fingerprints,
+            metric="jaccard",
+            n_jobs=-1,
+        )
+        tanimoto_similarities = 1 - tanimoto_distances
+
+        # Compute maximum similarity
+        max_similarity = float(np.max(tanimoto_similarities))
+
+        return max_similarity
+
+    def update_full_molecule_fingerprints(self) -> None:
+        """Updates the fingerprints of the full molecules with the new molecules from this generation."""
+        # Get new full molecule nodes from this generation
+        new_nodes = self.get_full_molecule_nodes(rollout_start=self.rollout_num)
+
+        # If no new full molecules, then a duplicate was found
+        if len(new_nodes):
+            return
 
         # Get full molecule SMILES from this generation
         new_full_molecule_smiles = [node.molecules[0] for node in new_nodes]
@@ -560,25 +585,6 @@ class Generator:
             ]
         )
 
-        # If this is the first generation, save the fingerprints and return
-        if self.full_molecule_morgan_fingerprints is None:
-            self.full_molecule_morgan_fingerprints = (
-                new_full_molecule_morgan_fingerprints
-            )
-            return 0.0
-
-        # Compute the Tanimoto similarity between the new molecules and the previous molecules
-        tanimoto_distances = pairwise_distances(
-            new_full_molecule_morgan_fingerprints,
-            self.full_molecule_morgan_fingerprints,
-            metric="jaccard",
-            n_jobs=-1,
-        )
-        tanimoto_similarities = 1 - tanimoto_distances
-
-        # Compute average maximum similarity across new molecules
-        avg_max_similarity = float(np.mean(np.max(tanimoto_similarities, axis=1)))
-
         # Update the full molecule fingerprints
         self.full_molecule_morgan_fingerprints = np.concatenate(
             [
@@ -587,8 +593,6 @@ class Generator:
             ],
             axis=0,
         )
-
-        return avg_max_similarity
 
     def get_full_molecule_nodes(
         self, rollout_start: int | None = None, rollout_end: int | None = None
@@ -654,40 +658,33 @@ class Generator:
             self.min_temperature, min(self.rl_temperature, self.max_temperature)
         )
 
-    def compute_success_rates(self, new_nodes: list[Node]) -> np.ndarray | None:
-        """Compute the success rate of the generated molecules with respect to success thresholds.
+    def compute_successes(self, node: Node) -> list[int]:
+        """Compute the successes of a generated molecule with respect to property success thresholds.
 
-        :param new_nodes: A list of Nodes representing the new molecules generated in the current generation.
-        :return: A 1D NumPy array of success rates for each success threshold or None if there are no new molecules.
+        :param node: A Node with the new generated molecule.
+        :return: A list of successes (1/0) for each property success threshold.
         """
-        # If there are no new molecules, then a duplicate was found
-        if len(new_nodes) == 0:
-            return None
+        # Compute scores of generated molecule and determine success rates
+        scores = self.scorer.compute_individual_scores(smiles=node.molecules[0])
+        successes = [
+            int(success_comparator(score))
+            for success_comparator, score in zip(self.success_comparators, scores)
+        ]
 
-        # Compute scores of generated molecules and determine success rates
-        all_successes = []
-        for node in new_nodes:
-            scores = self.scorer.compute_individual_scores(smiles=node.molecules[0])
-            successes = [
-                success_comparator(score)
-                for success_comparator, score in zip(self.success_comparators, scores)
-            ]
-            all_successes.append(successes)
+        return successes
 
-        # Compute average success rate across new molecules
-        success_rates = np.mean(np.array(all_successes), axis=0)
-
-        return success_rates
-
-    def update_model_weights(self, new_success_rates: np.ndarray) -> None:
+    def update_model_weights(self, successes: list[int]) -> None:
         """Update the model weights based on the rolling average success rate.
 
-        :param new_success_rates: The success rates of the new molecules.
+        :param successes: The successes (1/0) of the new molecule with respect to property success thresholds.
         """
+        # Convert successes to NumPy
+        successes = np.array(successes)
+
         # Update rolling average successes with weighted combination of new and old successes
         self.rolling_average_success_rate = (
             self.rolling_average_weight * self.rolling_average_success_rate
-            + (1 - self.rolling_average_weight) * new_success_rates
+            + (1 - self.rolling_average_weight) * successes
         )  # (num_properties,)
 
         # Compute average success
@@ -730,28 +727,16 @@ class Generator:
             rollout_stats["Rollout Score"] = best_node.property_score
             rollout_stats["Rollout Time"] = time.time() - start_time
 
-            # Get new full molecule nodes from this generation
-            new_full_molecule_nodes = self.get_full_molecule_nodes(
-                rollout_start=self.rollout_num
-            )
-
-            # Compute average individual scores across new molecules
-            individual_scores = np.array(
-                [node.individual_scores for node in new_full_molecule_nodes]
-            )  # (num_molecules, num_properties)
-            average_individual_scores = np.mean(
-                individual_scores, axis=0
-            ).tolist()  # (num_properties,)
-
-            # Log individual scores of new molecules
+            # Log individual scores of new molecule
             for model_name, average_score in zip(
-                self.model_weights.model_names, average_individual_scores
+                self.model_weights.model_names, best_node.individual_scores
             ):
                 rollout_stats[f"{model_name} Score"] = average_score
 
-            # Compute similarity of new molecules compared to previous molecules
+            # Compute similarity of new molecule compared to previous molecules
             start_time = time.time()
-            new_similarity = self.update_similarity(new_nodes=new_full_molecule_nodes)
+            new_similarity = self.compute_similarity(node=best_node)
+            self.update_full_molecule_fingerprints()
             rollout_stats["Rollout Similarity"] = new_similarity
             rollout_stats["Similarity Time"] = time.time() - start_time
 
@@ -761,25 +746,19 @@ class Generator:
 
             # Optionally, update model weights based on success rate
             if self.success_comparators is not None:
-                # Compute success rates
-                new_success_rates = self.compute_success_rates(
-                    new_nodes=new_full_molecule_nodes
-                )
+                # Compute successes for new node
+                successes = self.compute_successes(node=best_node)
 
-                # If there are new molecules, log success rates and update model weights
-                if new_success_rates is not None:
-                    # Add success rates to rollout stats
-                    for model_name, success_rate in zip(
-                        self.model_weights.model_names, new_success_rates
-                    ):
-                        rollout_stats[f"{model_name} Success Rate"] = success_rate
+                # Add successes to rollout stats
+                for model_name, success in zip(
+                    self.model_weights.model_names, successes
+                ):
+                    rollout_stats[f"{model_name} Success"] = success
 
-                    rollout_stats[f"Joint Success Rate"] = int(
-                        np.all(new_success_rates)
-                    )
+                rollout_stats[f"Joint Success"] = int(int(all(successes)))
 
-                    # Update model weights
-                    self.update_model_weights(new_success_rates=new_success_rates)
+                # Update model weights
+                self.update_model_weights(successes=successes)
 
             # Add RL temperature to rollout stats
             rollout_stats["RL Temperature"] = self.rl_temperature
