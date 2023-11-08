@@ -62,6 +62,7 @@ def generate(
     rl_temperature_similarity_target: float = 0.5,
     rl_train_frequency: int = 10,
     rl_train_epochs: int = 5,
+    rl_extended_evaluation: bool = False,
     num_workers: int = 0,
     use_gpu: bool = False,
     optimization: OPTIMIZATION_TYPES = "maximize",
@@ -118,6 +119,7 @@ def generate(
                                              If -1, the temperature is not adjusted.
     :param rl_train_frequency: The number of rollouts between each training step of the RL model.
     :param rl_train_epochs: The number of epochs to train the RL model for each training step.
+    :param rl_extended_evaluation: Whether to perform extended evaluation of the RL model after each training step.
     :param num_workers: The number of workers for RL model data loading.
     :param use_gpu: Whether to use GPU for model training/prediction. Only affects PyTorch-based models (not sklearn).
     :param optimization: Whether to maximize or minimize the score.
@@ -326,9 +328,7 @@ def generate(
         for building_block_data in chemical_space_to_building_block_data.values()
         for smiles, scores in zip(
             building_block_data[building_blocks_smiles_column],
-            building_block_data[building_blocks_score_columns].itertuples(
-                index=False
-            ),
+            building_block_data[building_blocks_score_columns].itertuples(index=False),
         )
     }
 
@@ -377,6 +377,7 @@ def generate(
                 "rl_temperature_similarity_target": rl_temperature_similarity_target,
                 "rl_train_frequency": rl_train_frequency,
                 "rl_train_epochs": rl_train_epochs,
+                "rl_extended_evaluation": rl_extended_evaluation,
                 "optimization": optimization,
                 "rng_seed": rng_seed,
                 "no_building_block_diversity": no_building_block_diversity,
@@ -443,33 +444,33 @@ def generate(
 
     # Set up RL model if applicable
     if search_type == "rl":
+        # Seed PyTorch for reproducibility
         torch.manual_seed(rng_seed)
 
-        # Get model paths if using pretrained RL
-        rl_model_paths = model_paths if rl_pretrained else None
+        # Set up RL model args
+        rl_model_args = {
+            "prediction_type": rl_prediction_type,
+            "model_weights": model_weights,
+            "model_paths": model_paths if rl_pretrained else None,
+            "num_workers": num_workers,
+            "num_epochs": rl_train_epochs,
+            "device": device,
+            "extended_evaluation": rl_extended_evaluation,
+        }
 
+        # Select RL model class and update RL model args
         if rl_model_type == "mlp_rdkit":
-            rl_model = RLModelMLP(
-                prediction_type=rl_prediction_type,
-                model_weights=model_weights,
-                model_paths=rl_model_paths,
-                num_workers=num_workers,
-                num_epochs=rl_train_epochs,
-                device=device,
-            )
+            rl_model_class = RLModelMLP
         elif rl_model_type.startswith("chemprop"):
-            rl_model = RLModelChemprop(
-                use_rdkit_features=rl_model_type == "chemprop_rdkit",
-                prediction_type=rl_prediction_type,
-                model_weights=model_weights,
-                model_paths=rl_model_paths,
-                num_workers=num_workers,
-                num_epochs=rl_train_epochs,
-                device=device,
-            )
+            rl_model_class = RLModelChemprop
+            rl_model_args["use_rdkit_features"] = rl_model_type == "chemprop_rdkit"
         else:
             raise ValueError(f"Invalid RL model type: {rl_model_type}")
 
+        # Create RL model
+        rl_model = rl_model_class(**rl_model_args)
+
+        # Print RL model architecture
         print(f"RL model architecture: {rl_model.models}")
     else:
         rl_model = None

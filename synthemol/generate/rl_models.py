@@ -38,6 +38,7 @@ class RLModel(ABC):
         batch_size: int = 50,
         learning_rate: float = 1e-3,
         device: torch.device = torch.device("cpu"),
+        extended_evaluation: bool = False,
     ) -> None:
         """Initializes the model.
 
@@ -54,6 +55,8 @@ class RLModel(ABC):
         :param batch_size: The batch size.
         :param learning_rate: The learning rate.
         :param device: The device to use for the model.
+        :param extended_evaluation: Whether to perform extended evaluation of the RL models using all combinations
+                                    of numbers of source/target building blocks.
         """
         if model_paths is not None and len(model_paths) != model_weights.num_weights:
             raise ValueError(
@@ -72,6 +75,7 @@ class RLModel(ABC):
         self.batch_size = batch_size
         self.learning_rate = learning_rate
         self.device = device
+        self.extended_evaluation = extended_evaluation
 
         self.train_source_nodes: list[Node] = []
         self.train_target_nodes: list[Node] = []
@@ -276,17 +280,20 @@ class RLModel(ABC):
         source_num_reactions = np.array([node.num_reactions for node in source_nodes])
         target_num_reactions = np.array([node.num_reactions for node in target_nodes])
 
-        # Get unique source/target number of building blocks (including None option for all)
-        unique_source_num_building_blocks = [None] + sorted(
-            set(source_num_building_blocks)
-        )
-        unique_target_num_building_blocks = [None] + sorted(
-            set(target_num_building_blocks)
-        )
+        # Get unique source/target number of building blocks (None option for all)
+        unique_source_num_building_blocks = [None]
+        unique_target_num_building_blocks = [None]
 
-        # Get unique source/target number of reactions (including None option for all)
-        unique_source_num_reactions = [None] + sorted(set(source_num_reactions))
-        unique_target_num_reactions = [None] + sorted(set(target_num_reactions))
+        # Get unique source/target number of reactions (None option for all)
+        unique_source_num_reactions = [None]
+        unique_target_num_reactions = [None]
+
+        # For extended evaluation, include all combinations of source/target number of building blocks and reactions
+        if self.extended_evaluation:
+            unique_source_num_building_blocks += sorted(set(source_num_building_blocks))
+            unique_target_num_building_blocks += sorted(set(target_num_building_blocks))
+            unique_source_num_reactions += sorted(set(source_num_reactions))
+            unique_target_num_reactions += sorted(set(target_num_reactions))
 
         # Set up results dictionary
         results = {}
@@ -559,6 +566,7 @@ class RLModelMLP(RLModel):
         batch_size: int = 50,
         learning_rate: float = 1e-3,
         device: torch.device = torch.device("cpu"),
+        extended_evaluation: bool = False,
     ) -> None:
         """Initializes the RL MLP model.
 
@@ -577,6 +585,8 @@ class RLModelMLP(RLModel):
         :param batch_size: The batch size.
         :param learning_rate: The learning rate.
         :param device: The device to use for the model.
+        :param extended_evaluation: Whether to perform extended evaluation of the RL models using all combinations
+                                    of numbers of source/target building blocks.
         """
         # Store MLP-specific parameters
         self.hidden_dim = hidden_dim
@@ -602,6 +612,7 @@ class RLModelMLP(RLModel):
             batch_size=batch_size,
             learning_rate=learning_rate,
             device=device,
+            extended_evaluation=extended_evaluation,
         )
 
     def build_model(self) -> MLP:
@@ -797,6 +808,7 @@ class RLModelChemprop(RLModel):
         batch_size: int = 50,
         learning_rate: float = 1e-3,
         device: torch.device = torch.device("cpu"),
+        extended_evaluation: bool = False,
     ) -> None:
         """Initializes the RL Chemprop model.
 
@@ -814,6 +826,8 @@ class RLModelChemprop(RLModel):
         :param batch_size: The batch size.
         :param learning_rate: The learning rate.
         :param device: The device to use for the model.
+        :param extended_evaluation: Whether to perform extended evaluation of the RL models using all combinations
+                                    of numbers of source/target building blocks.
         """
         # Store whether to use RDKit features
         self.use_rdkit_features = use_rdkit_features
@@ -829,6 +843,7 @@ class RLModelChemprop(RLModel):
             batch_size=batch_size,
             learning_rate=learning_rate,
             device=device,
+            extended_evaluation=extended_evaluation,
         )
 
     def build_model(self) -> MoleculeModel:

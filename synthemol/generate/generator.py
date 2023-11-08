@@ -741,7 +741,7 @@ class Generator:
             )  # (num_molecules, num_properties)
             average_individual_scores = np.mean(
                 individual_scores, axis=0
-            )  # (num_properties,)
+            ).tolist()  # (num_properties,)
 
             # Log individual scores of new molecules
             for model_name, average_score in zip(
