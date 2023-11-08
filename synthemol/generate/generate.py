@@ -568,7 +568,7 @@ def generate(
         # Build table of scores of generated molecules
         node_scores = [node.individual_scores for node in nodes]
         wandb_gen_table = wandb.Table(
-            data=node_scores, columns=model_weights.model_names
+            data=node_scores, columns=list(model_weights.model_names)
         )
 
         # Log histograms of scores of generated molecules
