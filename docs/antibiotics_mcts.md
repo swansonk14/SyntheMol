@@ -1,13 +1,15 @@
-# Generating Novel Antibiotics with SyntheMol
+# Generating Novel Antibiotics with SyntheMol-MCTS
 
-Instructions for generating antibiotic candidates for _Acinetobacter baumannii_. Includes instructions for processing antibiotics data, training antibacterial activity prediction models, generating molecules with SyntheMol, and selecting candidates. Assumes relevant data has already been downloaded (see [docs/README.md](README.md)).
+Instructions for generating antibiotic candidates for _Acinetobacter baumannii_ using SyntheMol-MCTS from the paper [TODO](TODO).
+
+This includes instructions for processing antibiotics data, training antibacterial activity prediction models, generating molecules with SyntheMol, and selecting candidates. Assumes relevant data has already been downloaded (see [docs/README.md](README.md)).
 
 - [Process antibiotics training data](#process-antibiotics-training-data)
 - [Process ChEMBL antibacterials](#process-chembl-antibacterials)
 - [Build bioactivity prediction models](#build-bioactivity-prediction-models)
   * [Train models](#train-models)
   * [Compute model scores for building blocks](#compute-model-scores-for-building-blocks)
-- [Generate molecules with SyntheMol](#generate-molecules-with-synthemol)
+- [Generate molecules with SyntheMol-mcts](#generate-molecules-with-synthemol-mcts)
 - [Filter generated molecules](#filter-generated-molecules)
   * [Novelty](#novelty)
   * [Bioactivity](#bioactivity)
@@ -184,7 +186,7 @@ python scripts/models/predict.py \
 ```
 
 
-## Generate molecules with SyntheMol
+## Generate molecules with SyntheMol-MCTS
 
 Here, we apply SyntheMol to generate molecules using a Monte Carlo tree search (MCTS). We limit the search space to molecules that can be formed using a single reaction (as opposed to multi-step reactions) to ensure easy, quick, and cheap chemical synthesis. We run SyntheMol three times, each time using a different property prediction model to score molecules and guide the search.
 
