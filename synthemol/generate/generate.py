@@ -134,6 +134,9 @@ def generate(
     :param wandb_project_name: The name of the Weights & Biases project to log results to.
     :param wandb_run_name: The name of the Weights & Biases run to log results to.
     """
+    # Change type of building blocks score columns for compatibility with Pandas
+    building_blocks_score_columns = list(building_blocks_score_columns)
+
     # Get number of models
     num_models = len(model_types)
 
@@ -323,7 +326,7 @@ def generate(
         for building_block_data in chemical_space_to_building_block_data.values()
         for smiles, scores in zip(
             building_block_data[building_blocks_smiles_column],
-            building_block_data[list(building_blocks_score_columns)].itertuples(
+            building_block_data[building_blocks_score_columns].itertuples(
                 index=False
             ),
         )
@@ -395,8 +398,8 @@ def generate(
 
             # Build table of building block scores
             wandb_bb_table = wandb.Table(
-                data=building_block_data[list(building_blocks_score_columns)].values,
-                columns=model_weights.model_names,
+                data=building_block_data[building_blocks_score_columns].values,
+                columns=list(model_weights.model_names),
             )
 
             # Log building block score histograms
