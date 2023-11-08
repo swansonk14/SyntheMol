@@ -49,6 +49,10 @@ class Generator:
         store_nodes: bool,
         verbose: bool,
         rl_model: RLModel | None = None,
+        rolling_average_weight: float = 0.9,
+        min_temperature: float = 0.001,
+        max_temperature: float = 10.0,
+        min_model_weight: float = 0.001,
         replicate: bool = False,
         wandb_log: bool = False,
     ) -> None:
@@ -82,6 +86,11 @@ class Generator:
                             the memory usage (e.g., 450GB for 20,000 rollouts instead of 600 MB).
         :param verbose: Whether to print out additional statements during generation.
         :param rl_model: The RL model to use for the RL search. Must be provided if and only if search_type is 'rl'.
+        :param rolling_average_weight: The weight to use for the rolling average of similarity (dynamic temperature)
+                                       and success (dynamic model weights).
+        :param min_temperature: The minimum temperature when using dynamic temperature.
+        :param max_temperature: The maximum temperature when using dynamic temperature.
+        :param min_model_weight: The minimum model weight (pre-normalization) when using dynamic model weights.
         :param replicate: This is necessary to replicate the results from the paper, but otherwise should not be used
                           since it limits the potential choices of building blocks.
         :param wandb_log: Whether to log results to Weights & Biases.
@@ -107,6 +116,10 @@ class Generator:
         self.verbose = verbose
         self.replicate = replicate
         self.rl_model = rl_model
+        self.rolling_average_weight = rolling_average_weight
+        self.min_temperature = min_temperature
+        self.max_temperature = max_temperature
+        self.min_model_weight = min_model_weight
         self.wandb_log = wandb_log
 
         # Check that the search type is valid
@@ -180,10 +193,6 @@ class Generator:
             self.rolling_average_similarity = self.rl_temperature_similarity_target
         else:
             self.rolling_average_similarity = 0.0
-
-        self.rolling_average_weight = 0.9
-        self.min_temperature = 0.001
-        self.max_temperature = 10.0
 
         # Set up rolling average successes for model weight adjustment
         self.rolling_average_success_rate = np.zeros(self.model_weights.num_weights)
@@ -711,7 +720,10 @@ class Generator:
         weights = np.array(self.model_weights.weights)
 
         # Compute new model weights based on percent deviation from average success
-        weights = weights - weights * percent_deviation_from_average
+        weights -= weights * percent_deviation_from_average
+
+        # Ensure model weights exceed min bound
+        weights = np.maximum(weights, self.min_model_weight)
 
         # Normalize weights
         weights /= np.sum(weights)
