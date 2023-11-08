@@ -538,25 +538,19 @@ class Generator:
 
         return best_node
 
-    def update_similarity(self) -> float:
+    def update_similarity(self, new_nodes: list[Node]) -> float:
         """Computes the Tanimoto similarity of the current generation and updates fingerprints for future comparisons.
 
+        :param new_nodes: A list of Nodes representing the new molecules generated in the current generation.
         :return: The Tanimoto similarity of the current generation (average across molecules)
                  compared to previous generations.
         """
-        # Get full molecule nodes from this generation
-        new_full_molecule_nodes = self.get_full_molecule_nodes(
-            rollout_start=self.rollout_num
-        )
-
         # If there is no new full molecule, then a duplicate was found
-        if len(new_full_molecule_nodes) == 0:
+        if len(new_nodes) == 0:
             return 1.0
 
         # Get full molecule SMILES from this generation
-        new_full_molecule_smiles = [
-            node.molecules[0] for node in new_full_molecule_nodes
-        ]
+        new_full_molecule_smiles = [node.molecules[0] for node in new_nodes]
 
         # Compute the Morgan fingerprints of the new nodes
         new_full_molecule_morgan_fingerprints = np.array(
@@ -660,23 +654,19 @@ class Generator:
             self.min_temperature, min(self.rl_temperature, self.max_temperature)
         )
 
-    def compute_success_rates(self) -> np.ndarray | None:
-        """Compute the success rates of the generated molecules with respect to success thresholds.
+    def compute_success_rates(self, new_nodes: list[Node]) -> np.ndarray | None:
+        """Compute the success rate of the generated molecules with respect to success thresholds.
 
+        :param new_nodes: A list of Nodes representing the new molecules generated in the current generation.
         :return: A 1D NumPy array of success rates for each success threshold or None if there are no new molecules.
         """
-        # Get new generated molecules
-        new_full_molecule_nodes = self.get_full_molecule_nodes(
-            rollout_start=self.rollout_num
-        )
-
         # If there are no new molecules, then a duplicate was found
-        if len(new_full_molecule_nodes) != 0:
+        if len(new_nodes) != 0:
             return None
 
         # Compute scores of generated molecules and determine success rates
         all_successes = []
-        for node in new_full_molecule_nodes:
+        for node in new_nodes:
             scores = self.scorer.compute_individual_scores(smiles=node.molecules[0])
             successes = [
                 success_comparator(score)
@@ -735,9 +725,22 @@ class Generator:
             rollout_stats["Rollout Score"] = best_node.property_score
             rollout_stats["Rollout Time"] = time.time() - start_time
 
+            # Get new full molecule nodes from this generation
+            new_full_molecule_nodes = self.get_full_molecule_nodes(
+                rollout_start=self.rollout_num
+            )
+
+            # Compute average individual scores across new molecules
+            individual_scores = np.array([node.individual_scores for node in new_full_molecule_nodes])  # (num_molecules, num_properties)
+            average_individual_scores = np.mean(individual_scores, axis=1)  # (num_properties,)
+
+            # Log individual scores of new molecules
+            for model_name, average_score in zip(self.model_weights.model_names, average_individual_scores):
+                rollout_stats[f"{model_name} Score"] = average_score
+
             # Compute similarity of new molecules compared to previous molecules
             start_time = time.time()
-            new_similarity = self.update_similarity()
+            new_similarity = self.update_similarity(new_nodes=new_full_molecule_nodes)
             rollout_stats["Rollout Similarity"] = new_similarity
             rollout_stats["Similarity Time"] = time.time() - start_time
 
@@ -748,7 +751,7 @@ class Generator:
             # Optionally, update model weights based on success rate
             if self.success_comparators is not None:
                 # Compute success rates
-                new_success_rates = self.compute_success_rates()
+                new_success_rates = self.compute_success_rates(new_nodes=new_full_molecule_nodes)
 
                 # If there are new molecules, log success rates and update model weights
                 if new_success_rates is not None:

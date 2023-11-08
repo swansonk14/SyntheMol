@@ -227,7 +227,7 @@ class RLModel(ABC):
                     ).squeeze(dim=-1)
 
                     # Compute loss
-                    loss = self.loss_fn(predictions, batch_rewards[model_index])
+                    loss = self.loss_fn(predictions, batch_rewards[:, model_index])
 
                     # Backpropagate
                     model.zero_grad()
