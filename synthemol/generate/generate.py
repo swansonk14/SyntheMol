@@ -395,7 +395,7 @@ def generate(
 
             # Build table of building block scores
             wandb_bb_table = wandb.Table(
-                data=building_block_data[building_blocks_score_columns].values,
+                data=building_block_data[list(building_blocks_score_columns)].values,
                 columns=model_weights.model_names,
             )
 
