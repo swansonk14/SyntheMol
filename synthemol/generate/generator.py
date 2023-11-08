@@ -585,6 +585,13 @@ class Generator:
             ]
         )
 
+        # Set full molecule fingerprints the first time
+        if self.full_molecule_morgan_fingerprints is None:
+            self.full_molecule_morgan_fingerprints = (
+                new_full_molecule_morgan_fingerprints
+            )
+            return
+
         # Update the full molecule fingerprints
         self.full_molecule_morgan_fingerprints = np.concatenate(
             [
