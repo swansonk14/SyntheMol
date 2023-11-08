@@ -722,10 +722,13 @@ class Generator:
         # Compute new model weights based on percent deviation from average success
         weights -= weights * percent_deviation_from_average
 
+        # Normalize weights
+        weights /= np.sum(weights)
+
         # Ensure model weights exceed min bound
         weights = np.maximum(weights, self.min_model_weight)
 
-        # Normalize weights
+        # Renormalize weights
         weights /= np.sum(weights)
 
         # Update model weights
