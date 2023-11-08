@@ -571,7 +571,7 @@ class Generator:
         new_nodes = self.get_full_molecule_nodes(rollout_start=self.rollout_num)
 
         # If no new full molecules, then a duplicate was found
-        if len(new_nodes):
+        if len(new_nodes) == 0:
             return
 
         # Get full molecule SMILES from this generation
