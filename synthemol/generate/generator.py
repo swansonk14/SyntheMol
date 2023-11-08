@@ -474,7 +474,7 @@ class Generator:
                 ),
             )
         elif self.search_type == "rl":
-            # Compute RL scores for any nodes missing RL scores
+            # Determine child nodes that are missing RL scores
             child_node_molecules = [child_node.molecules for child_node in child_nodes]
             child_node_molecules_missing_scores = [
                 molecules
@@ -482,23 +482,28 @@ class Generator:
                 if molecules not in self.molecules_to_rl_score
             ]
 
+            # Compute RL scores for nodes that are missing RL scores
             if len(child_node_molecules_missing_scores) > 0:
+                # Compute RL scores
                 rl_scores = self.rl_model.predict(
                     molecule_tuples=child_node_molecules_missing_scores
                 ).tolist()
 
+                # Cache RL scores
                 for molecules, rl_score in zip(
                     child_node_molecules_missing_scores, rl_scores
                 ):
                     self.molecules_to_rl_score[molecules] = rl_score
 
-            # Convert RL scores to temperature-scaled probabilities
+            # Look up child node scores
             child_node_scores = np.array(
                 [
                     self.molecules_to_rl_score[molecules]
                     for molecules in child_node_molecules
                 ]
             )
+
+            # Convert RL scores to temperature-scaled probabilities
             child_node_probs = softmax(
                 self.optimization_sign * child_node_scores / self.rl_temperature
             )

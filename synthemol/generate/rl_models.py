@@ -390,11 +390,11 @@ class RLModel(ABC):
             ):
                 # Predict rewards
                 batch_preds = self.run_models(
-                    batch_data
+                    batch_data=batch_data
                 )  # (num_molecules, num_properties)
 
                 # Add predictions to list
-                predictions.extend(batch_preds.cpu())
+                predictions.append(batch_preds.cpu())
 
         # Concatenate predictions
         predictions = torch.cat(predictions, dim=0)  # (num_molecules, num_properties)
@@ -414,7 +414,7 @@ class RLModel(ABC):
 
         # Move weights to tensor
         weights = torch.tensor(self.model_weights.weights).view(
-            -1, 1
+            1, -1
         )  # (1, num_properties)
 
         # Compute weighted average
