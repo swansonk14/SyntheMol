@@ -51,10 +51,19 @@ pip install -e .
 ```
 
 If there are version issues with the required packages, create a conda environment with specific working versions of the packages as follows.
+
+SyntheMol-MCTS
 ```bash
-pip install -r requirements.txt
+pip install -r requirements_mcts.txt
 pip install -e .
 ```
+
+SyntheMol-RL
+```bash
+pip install -r requirements_rl.txt
+pip install -e .
+```
+
 
 Download the necessary data files to `SyntheMol/synthemol/files`.
 ```bash

@@ -26,6 +26,7 @@ Merge the three libraries into a single file and determine which molecules are h
 ```bash
 python scripts/data/process_data.py \
     --data_paths data/Data/1_training_data/library_1.csv data/Data/1_training_data/library_2.csv data/Data/1_training_data/library_3.csv \
+    --value_column mean \
     --save_path data/Data/1_training_data/antibiotics.csv \
     --save_hits_path data/Data/1_training_data/antibiotics_hits.csv \
     --activity_column antibiotic_activity

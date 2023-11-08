@@ -11,20 +11,20 @@ from synthemol.constants import ACTIVITY_COL, SMILES_COL
 
 def process_data(
     data_paths: list[Path],
+    value_column: str,
     save_path: Path,
     save_hits_path: Path | None = None,
     smiles_column: str = SMILES_COL,
-    mean_column: str = "mean",
     activity_column: str = ACTIVITY_COL,
     num_std: int = 2,
 ) -> None:
     """Process regression data from potentially multiple files, including binarization and deduplication.
 
     :param data_paths: A list of paths to CSV files containing data.
+    :param value_column: The name of the column containing the raw activity values.
     :param save_path: A path to a CSV file where the processed data will be saved.
     :param save_hits_path: A path to a CSV file where only the hits (actives) will be saved.
     :param smiles_column: The name of the column containing the SMILES.
-    :param mean_column: The name of the column containing the mean activity.
     :param activity_column: The name of the column where the binary activity will be stored.
     :param num_std: The number of standard deviations to use when binarizing the data.
     """
@@ -44,7 +44,7 @@ def process_data(
         ]
 
         # Binarize data using mean - k * std
-        activities = data[mean_column]
+        activities = data[value_column]
         mean_activity = np.mean(activities)
         std_activity = np.std(activities)
         threshold = mean_activity - num_std * std_activity
