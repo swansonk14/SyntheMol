@@ -661,7 +661,7 @@ class Generator:
         :return: A 1D NumPy array of success rates for each success threshold or None if there are no new molecules.
         """
         # If there are no new molecules, then a duplicate was found
-        if len(new_nodes) != 0:
+        if len(new_nodes) == 0:
             return None
 
         # Compute scores of generated molecules and determine success rates
@@ -688,16 +688,21 @@ class Generator:
         self.rolling_average_success_rate = (
             self.rolling_average_weight * self.rolling_average_success_rate
             + (1 - self.rolling_average_weight) * new_success_rates
-        )
+        )  # (num_properties,)
 
-        # Update model weights as proportional to failure rate (i.e., higher failure rate means higher weight)
-        weights = 1 - self.rolling_average_success_rate
+        # Compute average success
+        average_success_rate = np.mean(self.rolling_average_success_rate)
 
-        # Normalize model weights
-        weights = weights / np.sum(weights)
+        # Compute percent deviation from average success
+        percent_deviation_from_average = (
+            self.rolling_average_success_rate - average_success_rate
+        ) / average_success_rate
 
-        # Update model weights object with new weights
-        self.model_weights.weights = weights
+        # Get current model weights
+        weights = np.array(self.model_weights.weights)
+
+        # Update model weights based on percent deviation from average success
+        self.model_weights.weights = weights - weights * percent_deviation_from_average
 
     def generate(self, n_rollout: int) -> list[Node]:
         """Generate molecules for the specified number of rollouts.
@@ -731,11 +736,17 @@ class Generator:
             )
 
             # Compute average individual scores across new molecules
-            individual_scores = np.array([node.individual_scores for node in new_full_molecule_nodes])  # (num_molecules, num_properties)
-            average_individual_scores = np.mean(individual_scores, axis=1)  # (num_properties,)
+            individual_scores = np.array(
+                [node.individual_scores for node in new_full_molecule_nodes]
+            )  # (num_molecules, num_properties)
+            average_individual_scores = np.mean(
+                individual_scores, axis=0
+            )  # (num_properties,)
 
             # Log individual scores of new molecules
-            for model_name, average_score in zip(self.model_weights.model_names, average_individual_scores):
+            for model_name, average_score in zip(
+                self.model_weights.model_names, average_individual_scores
+            ):
                 rollout_stats[f"{model_name} Score"] = average_score
 
             # Compute similarity of new molecules compared to previous molecules
@@ -751,7 +762,9 @@ class Generator:
             # Optionally, update model weights based on success rate
             if self.success_comparators is not None:
                 # Compute success rates
-                new_success_rates = self.compute_success_rates(new_nodes=new_full_molecule_nodes)
+                new_success_rates = self.compute_success_rates(
+                    new_nodes=new_full_molecule_nodes
+                )
 
                 # If there are new molecules, log success rates and update model weights
                 if new_success_rates is not None:
