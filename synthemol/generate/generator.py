@@ -666,8 +666,16 @@ class Generator:
             self.rolling_average_similarity - self.rl_temperature_similarity_target
         ) / self.rl_temperature_similarity_target
 
-        # Update temperature based on percent similarity difference
-        self.rl_temperature += percent_similarity_difference * self.rl_temperature
+        # Compute new temperature based on percent similarity difference
+        new_temperature = (
+            self.rl_temperature + percent_similarity_difference * self.rl_temperature
+        )
+
+        # Update temperature based on rolling average of new and old temperatures
+        self.rl_temperature = (
+            self.rolling_average_weight * self.rl_temperature
+            + (1 - self.rolling_average_weight) * new_temperature
+        )
 
         # Clip temperature within min/max bounds
         self.rl_temperature = max(
@@ -720,7 +728,13 @@ class Generator:
         weights = np.array(self.model_weights.weights)
 
         # Compute new model weights based on percent deviation from average success
-        weights -= weights * percent_deviation_from_average
+        new_weights = weights - percent_deviation_from_average * weights
+
+        # Compute model weights as weighted average of new and old weights
+        weights = (
+            self.rolling_average_weight * weights
+            + (1 - self.rolling_average_weight) * new_weights
+        )
 
         # Normalize weights
         weights /= np.sum(weights)
