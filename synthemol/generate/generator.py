@@ -698,8 +698,14 @@ class Generator:
         # Get current model weights
         weights = np.array(self.model_weights.weights)
 
-        # Update model weights based on percent deviation from average success
-        self.model_weights.weights = weights - weights * percent_deviation_from_average
+        # Compute new model weights based on percent deviation from average success
+        weights = weights - weights * percent_deviation_from_average
+
+        # Normalize weights
+        weights /= np.sum(weights)
+
+        # Update model weights
+        self.model_weights.weights = weights
 
     def generate(self, n_rollout: int) -> list[Node]:
         """Generate molecules for the specified number of rollouts.
