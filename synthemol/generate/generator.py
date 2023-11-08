@@ -694,13 +694,18 @@ class Generator:
             + (1 - self.rolling_average_weight) * successes
         )  # (num_properties,)
 
-        # Compute average success
+        # Compute average success across properties
         average_success_rate = np.mean(self.rolling_average_success_rate)
 
         # Compute percent deviation from average success
-        percent_deviation_from_average = (
-            self.rolling_average_success_rate - average_success_rate
-        ) / average_success_rate
+        if average_success_rate > 0:
+            percent_deviation_from_average = (
+                self.rolling_average_success_rate - average_success_rate
+            ) / average_success_rate
+        else:
+            percent_deviation_from_average = np.zeros(
+                self.rolling_average_success_rate.shape
+            )
 
         # Get current model weights
         weights = np.array(self.model_weights.weights)
