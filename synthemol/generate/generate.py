@@ -55,6 +55,7 @@ def generate(
     n_rollout: int = 10,
     explore_weight: float = 10.0,
     num_expand_nodes: int | None = None,
+    rolling_average_weight: float = 0.98,
     rl_model_type: RL_MODEL_TYPES = "mlp_rdkit",
     rl_pretrained: bool = False,
     rl_prediction_type: RL_PREDICTION_TYPES = "classification",
@@ -103,6 +104,8 @@ def generate(
     :param n_rollout: The number of times to run the generation process.
     :param explore_weight: The hyperparameter that encourages exploration.
     :param num_expand_nodes: The number of child nodes to include when expanding a given node. If None, all child nodes will be included.
+    :param rolling_average_weight: The weight to use for the rolling average of similarity (dynamic temperature)
+                                    and success (dynamic model weights).
     :param rl_model_type: The type of RL model to use. 'mlp_rdkit' = MLP RDKit model.
                           'chemprop' = Chemprop model. 'chemprop_rdkit' = Chemprop RDKit model.
     :param rl_pretrained: Whether to use pretrained model checkpoints from model_paths to initialize the RL models.
@@ -370,6 +373,7 @@ def generate(
                 "n_rollout": n_rollout,
                 "explore_weight": explore_weight,
                 "num_expand_nodes": num_expand_nodes,
+                "rolling_average_weight": rolling_average_weight,
                 "rl_model_type": rl_model_type,
                 "rl_pretrained": rl_pretrained,
                 "rl_prediction_type": rl_prediction_type,
@@ -496,6 +500,7 @@ def generate(
         store_nodes=store_nodes,
         verbose=verbose,
         rl_model=rl_model,
+        rolling_average_weight=rolling_average_weight,
         replicate=replicate,
         wandb_log=wandb_log,
     )

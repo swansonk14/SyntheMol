@@ -87,6 +87,8 @@ Here, we build three binary classification bioactivity prediction models to pred
 
 ### Compute RDKit features
 
+TODO: add timing for each step.
+
 Pre-compute the 200 RDKit features for the training data and the building blocks.
 
 Training data
@@ -157,11 +159,11 @@ chemprop_train \
     --quiet
 ```
 
-| Model                 | ROC-AUC | PRC-AUC |
-|-----------------------|---------|---------|
-| Chemprop              | TODO    | TODO    |
-| Chemprop-RDKit        | TODO    | TODO    |
-| Multilayer perceptron | TODO    | TODO    |
+| Model                 | ROC-AUC | PRC-AUC | Time |
+|-----------------------|---------|---------|------|
+| Chemprop              | TODO    | TODO    | TODO |
+| Chemprop-RDKit        | TODO    | TODO    | TODO |
+| Multilayer perceptron | TODO    | TODO    | TODO |
 
 
 ### Compute model scores for building blocks
