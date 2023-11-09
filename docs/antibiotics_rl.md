@@ -87,8 +87,6 @@ Here, we build three binary classification bioactivity prediction models to pred
 
 ### Compute RDKit features
 
-TODO: add timing for each step.
-
 Pre-compute the 200 RDKit features for the training data and the building blocks.
 
 Training data
@@ -99,6 +97,8 @@ chemfunc save_fingerprints \
     --save_path rl/data/s_aureus/s_aureus.npz
 ```
 
+Time: 1 minute, 28 seconds with an 8-core machine.
+
 Building blocks
 ```bash
 chemfunc save_fingerprints \
@@ -106,6 +106,8 @@ chemfunc save_fingerprints \
     --fingerprint_type rdkit \
     --save_path rl/data/real/building_blocks.npz
 ```
+
+Time: 10 minutes, 7 seconds with an 8-core machine.
 
 
 ### Train models
@@ -126,6 +128,8 @@ chemprop_train \
     --quiet
 ```
 
+Time: TODO with an 8-core, 1-GPU machine.
+
 Chemprop-RDKit
 ```bash
 chemprop_train \
@@ -141,6 +145,8 @@ chemprop_train \
     --save_dir rl/models/s_aureus_chemprop_rdkit \
     --quiet
 ```
+
+Time: TODO with an 8-core, 1-GPU machine.
 
 MLP
 ```bash
@@ -158,6 +164,8 @@ chemprop_train \
     --save_dir rl/models/s_aureus_mlp \
     --quiet
 ```
+
+Time: TODO with an 8-core, 1-GPU machine.
 
 | Model                 | ROC-AUC | PRC-AUC | Time |
 |-----------------------|---------|---------|------|
@@ -178,6 +186,8 @@ chemprop_predict \
     --preds_path rl/models/s_aureus_chemprop/building_blocks.csv
 ```
 
+Time: TODO with an 8-core, 1-GPU machine.
+
 Chemprop-RDKit
 ```bash
 chemprop_predict \
@@ -188,6 +198,8 @@ chemprop_predict \
     --no_features_scaling
 ```
 
+Time: TODO with an 8-core, 1-GPU machine.
+
 MLP
 ```bash
 chemprop_predict \
@@ -197,6 +209,8 @@ chemprop_predict \
     --features_path rl/data/real/building_blocks.npz \
     --no_features_scaling
 ```
+
+Time: TODO with an 8-core, 1-GPU machine.
 
 
 ## Generate molecules with SyntheMol-RL
