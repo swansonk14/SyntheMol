@@ -128,7 +128,7 @@ chemprop_train \
     --quiet
 ```
 
-Time: TODO with an 8-core, 1-GPU machine.
+Time: 52 minutes, 19 seconds with an 8-core, 1-GPU machine.
 
 Chemprop-RDKit
 ```bash
@@ -146,7 +146,7 @@ chemprop_train \
     --quiet
 ```
 
-Time: TODO with an 8-core, 1-GPU machine.
+Time: 51 minutes, 46 seconds with an 8-core, 1-GPU machine.
 
 MLP
 ```bash
@@ -165,13 +165,13 @@ chemprop_train \
     --quiet
 ```
 
-Time: TODO with an 8-core, 1-GPU machine.
+Time: 42 minutes, 34 seconds with an 8-core, 1-GPU machine.
 
-| Model                 | ROC-AUC | PRC-AUC | Time |
-|-----------------------|---------|---------|------|
-| Chemprop              | TODO    | TODO    | TODO |
-| Chemprop-RDKit        | TODO    | TODO    | TODO |
-| Multilayer perceptron | TODO    | TODO    | TODO |
+| Model                 | ROC-AUC         | PRC-AUC         | Time     |
+|-----------------------|-----------------|-----------------|----------|
+| Chemprop              | 0.861 +/- 0.013 | 0.531 +/- 0.042 | 52m, 19s |
+| Chemprop-RDKit        | 0.874 +/- 0.017 | 0.575 +/- 0.046 | 51m, 46s |
+| Multilayer perceptron | 0.873 +/- 0.019 | 0.554 +/- 0.043 | 42m, 34s |
 
 
 ### Compute model scores for building blocks
@@ -186,7 +186,7 @@ chemprop_predict \
     --preds_path rl/models/s_aureus_chemprop/building_blocks.csv
 ```
 
-Time: TODO with an 8-core, 1-GPU machine.
+Time: 12 minutes, 21 seconds with an 8-core, 1-GPU machine.
 
 Chemprop-RDKit
 ```bash
@@ -198,7 +198,7 @@ chemprop_predict \
     --no_features_scaling
 ```
 
-Time: TODO with an 8-core, 1-GPU machine.
+Time: 12 minutes, 28 seconds with an 8-core, 1-GPU machine.
 
 MLP
 ```bash
@@ -210,7 +210,7 @@ chemprop_predict \
     --no_features_scaling
 ```
 
-Time: TODO with an 8-core, 1-GPU machine.
+Time: 12 minutes, 27 seconds with an 8-core, 1-GPU machine.
 
 
 ## Generate molecules with SyntheMol-RL
