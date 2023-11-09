@@ -49,7 +49,7 @@ class Generator:
         store_nodes: bool,
         verbose: bool,
         rl_model: RLModel | None = None,
-        rolling_average_weight: float = 0.99,
+        rolling_average_weight: float = 0.95,
         min_temperature: float = 0.001,
         max_temperature: float = 10.0,
         min_model_weight: float = 0.001,

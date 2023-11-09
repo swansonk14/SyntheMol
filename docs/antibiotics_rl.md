@@ -115,7 +115,7 @@ Chemprop
 chemprop_train \
     --data_path rl/data/s_aureus/s_aureus.csv \
     --dataset_type classification \
-    --target_column antibiotic_activity \
+    --target_column s_aureus_activity \
     --num_folds 10 \
     --split_type cv \
     --save_dir rl/models/s_aureus_chemprop \
@@ -127,7 +127,7 @@ Chemprop-RDKit
 chemprop_train \
     --data_path rl/data/s_aureus/s_aureus.csv \
     --dataset_type classification \
-    --target_column antibiotic_activity \
+    --target_column s_aureus_activity \
     --features_path rl/data/s_aureus/s_aureus.npz \
     --no_features_scaling \
     --num_folds 10 \
@@ -141,7 +141,7 @@ Multilayer perceptron
 chemprop_train \
     --data_path rl/data/s_aureus/s_aureus.csv \
     --dataset_type classification \
-    --target_column antibiotic_activity \
+    --target_column s_aureus_activity \
     --features_path rl/data/s_aureus/s_aureus.npz \
     --no_features_scaling \
     --features_only \
