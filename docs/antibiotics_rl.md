@@ -118,6 +118,8 @@ chemprop_train \
     --target_column s_aureus_activity \
     --num_folds 10 \
     --split_type cv \
+    --metric prc-auc \
+    --extra_metrics auc \
     --save_dir rl/models/s_aureus_chemprop \
     --quiet
 ```
@@ -132,11 +134,13 @@ chemprop_train \
     --no_features_scaling \
     --num_folds 10 \
     --split_type cv \
+    --metric prc-auc \
+    --extra_metrics auc \
     --save_dir rl/models/s_aureus_chemprop_rdkit \
     --quiet
 ```
 
-Multilayer perceptron
+MLP
 ```bash
 chemprop_train \
     --data_path rl/data/s_aureus/s_aureus.csv \
@@ -147,7 +151,9 @@ chemprop_train \
     --features_only \
     --num_folds 10 \
     --split_type cv \
-    --save_dir rl/models/s_aureus_chemprop_rdkit \
+    --metric prc-auc \
+    --extra_metrics auc \
+    --save_dir rl/models/s_aureus_mlp \
     --quiet
 ```
 
@@ -176,16 +182,18 @@ chemprop_predict \
     --test_path rl/data/real/building_blocks.csv \
     --checkpoint_dir rl/models/s_aureus_chemprop_rdkit \
     --preds_path rl/models/s_aureus_chemprop_rdkit/building_blocks.csv \
-    --features_path rl/data/real/building_blocks.npz
+    --features_path rl/data/real/building_blocks.npz \
+    --no_features_scaling
 ```
 
-Chemprop-RDKit
+MLP
 ```bash
 chemprop_predict \
     --test_path rl/data/real/building_blocks.csv \
     --checkpoint_dir rl/models/s_aureus_mlp \
     --preds_path rl/models/s_aureus_mlp/building_blocks.csv \
-    --features_path rl/data/real/building_blocks.npz
+    --features_path rl/data/real/building_blocks.npz \
+    --no_features_scaling
 ```
 
 
