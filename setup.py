@@ -43,6 +43,7 @@ setup(
         "rdkit",
         "scikit-learn",
         "scipy",
+        "seaborn",
         "tqdm",
         "typed-argument-parser>=1.8.0",
         "wandb",
