@@ -1,4 +1,4 @@
-"""Filter out REAL building blocks that do not match the REAL reaction templates."""
+"""Filter out REAL building blocks that do not match the REAL reaction templates and map BB IDs to SMILES."""
 import pickle
 from pathlib import Path
 
@@ -21,7 +21,7 @@ def filter_real_reactions_to_building_blocks(
     building_blocks_id_column: str = REAL_BUILDING_BLOCK_ID_COL,
     building_blocks_smiles_column: str = SMILES_COL,
 ) -> None:
-    """Filter out REAL building blocks that do not match the REAL reaction templates.
+    """Filter out REAL building blocks that do not match the REAL reaction templates and map BB IDs to SMILES.
 
     :param reaction_to_building_blocks_path: Path to a PKL file mapping from reaction ID
                                              to reactant index to a set of allowed building block IDs.

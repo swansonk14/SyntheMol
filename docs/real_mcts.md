@@ -1,6 +1,6 @@
-# Enamine REAL Space Data Processing (2022)
+# Enamine REAL Space Data Processing (SyntheMol-MCTS paper)
 
-Instructions for processing Enamine REAL reactions, building blocks, and molecules using the 2022 REAL release (with 2021 building blocks). This is the version of REAL used for the development of SyntheMol-MCTS. These instructions assume that relevant data has already been downloaded (see [docs/README.md](README.md)).
+Instructions for processing the Enamine REAL space reactions, building blocks, and molecules using the 2022 REAL release with the 2021 building blocks (SyntheMol-MCTS paper). These instructions assume that relevant data has already been downloaded (see [docs/README.md](README.md)).
 
 
 - [Reactions](#reactions)
@@ -62,12 +62,12 @@ This removes 25 molecules whose salts cannot be stripped, leaving 138,060 molecu
 
 Below, we describe the steps for processing the REAL Space molecules.
 
-Note: The enumerated REAL space requires over 1T of storage and a similar amount of RAM in order to process it. However, the following steps are a one-time operation, and only minimal storage and RAM are required to store the processed data and run SyntheMol.
+Note: The enumerated REAL space requires over 1T of storage and a similar amount of RAM in order to process it. However, the following steps are a one-time operation, and only minimal storage and RAM are required to store the processed data and run SyntheMol. Each of the following commands run in <= TODO hours using 16 cores and <= TODO GB of RAM.
 
 
 ### Download REAL Space
 
-Download the building block and reaction IDs used for the full REAL Space of 31 billion compounds (we used the 2022 q1-2 version downloaded on August 30, 2022).
+Download the building block and reaction IDs used for the full REAL Space of 31,507,987,117 billion compounds (we used the 2022 q1-2 version downloaded on August 30, 2022).
 ```bash
 lftp -c "open -p 21 -u username,password ftp-rdb-fr.chem-space.com; mirror -c --parallel=16 . data/Data/4_real_space/full_real"
 ```
@@ -86,10 +86,11 @@ python scripts/data/map_real_reactions_to_building_blocks.py \
 
 Total number of molecules = 31,507,987,117
 
-Filter out building blocks that do not match the reaction templates.
+Filter out building blocks that do not match the reaction templates and map building block IDs to SMILES.
 ```bash
 python scripts/data/filter_real_reactions_to_building_blocks.py \
     --reaction_to_building_blocks_path data/Data/4_real_space/reaction_to_building_blocks.pkl \
+    --building_blocks_path data/Data/4_real_space/building_blocks.csv \
     --save_path data/Data/4_real_space/reaction_to_building_blocks_filtered.pkl
 ```
 
@@ -103,25 +104,6 @@ Determine which reactions and building blocks are most common in REAL space.
 python scripts/data/count_real_space.py \
     --data_dir data/Data/4_real_space/full_real \
     --save_dir data/Data/4_real_space
-```
-
-
-### Sample REAL molecules
-
-Randomly sample 25,000 REAL Space molecules. This is used for analysis of a representative sample of REAL Space molecules.
-```bash
-python scripts/data/sample_real_space.py \
-    --data_dir data/Data/4_real_space/full_real \
-    --save_path data/Data/4_real_space/random_real.csv \
-    --num_molecules 25000
-```
-
-Randomly sample 10 million REAL Space molecules. This is used for a time-based comparison of Chemprop versus SyntheMol.
-```bash
-python scripts/data/sample_real_space.py \
-    --data_dir data/Data/4_real_space/full_real \
-    --save_path data/Data/4_real_space/random_real_10m.csv \
-    --num_molecules 10000000
 ```
 
 
@@ -141,3 +123,22 @@ Number of building blocks = 138,060 (132,479 unique molecules)
 Number of selected reactions = 13
 Total number of molecules = 31,507,987,117
 Total number of molecules with selected building blocks/reactions = 29,575,293,692
+
+
+### Sample REAL molecules
+
+Randomly sample 25,000 REAL Space molecules. This is used for analysis of a representative sample of REAL Space molecules.
+```bash
+python scripts/data/sample_real_space.py \
+    --data_dir data/Data/4_real_space/full_real \
+    --save_path data/Data/4_real_space/random_real.csv \
+    --num_molecules 25000
+```
+
+Randomly sample 10 million REAL Space molecules. This is used for a time-based comparison of Chemprop versus SyntheMol.
+```bash
+python scripts/data/sample_real_space.py \
+    --data_dir data/Data/4_real_space/full_real \
+    --save_path data/Data/4_real_space/random_real_10m.csv \
+    --num_molecules 10000000
+```

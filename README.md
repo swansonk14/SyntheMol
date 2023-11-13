@@ -34,7 +34,7 @@ SyntheMol can be installed in < 3 minutes on any operating system using pip (opt
 
 Optionally, create a conda environment.
 ```bash
-conda create -y -n synthemol python=3.10
+conda create -y -n synthemol python=3.11
 conda activate synthemol
 ```
 

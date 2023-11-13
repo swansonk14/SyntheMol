@@ -7,11 +7,12 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 
 
+CHEMICAL_SPACES = Literal["real", "wuxi", "custom"]
 CHEMBL_SMILES_COL = "Smiles"
 REAL_SPACE_SIZE = 31507987117  # As of August 30, 2022, in the 2022 q1-2 REAL space
 REAL_REACTION_COL = "reaction"
 REAL_BUILDING_BLOCK_COLS = ["reagent1", "reagent2", "reagent3", "reagent4"]
-REAL_BUILDING_BLOCK_ID_COL = "ID"
+REAL_BUILDING_BLOCK_ID_COL = "reagent_id"
 REAL_TYPE_COL = "Type"
 REAL_SMILES_COL = "smiles"
 REAL_ID_COL = "id"

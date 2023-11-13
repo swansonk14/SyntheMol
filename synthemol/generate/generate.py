@@ -11,6 +11,7 @@ from tap import tapify
 
 from synthemol.constants import (
     BUILDING_BLOCKS_PATH,
+    CHEMICAL_SPACES,
     FINGERPRINT_TYPES,
     ID_COL,
     MODEL_TYPES,
@@ -33,17 +34,16 @@ from synthemol.generate.scorer import MoleculeScorer
 from synthemol.generate.utils import parse_success_threshold, save_generated_molecules
 
 
-# TODO: once tuple[Literal] fix is done in tap, add ('none',) default to fingerprint_types and add literal to reaction_sets
 def generate(
     search_type: Literal["mcts", "rl"],
     save_dir: Path,
     model_types: list[MODEL_TYPES],
     model_paths: list[Path],
-    fingerprint_types: list[FINGERPRINT_TYPES],
+    fingerprint_types: tuple[FINGERPRINT_TYPES, ...] = ("none",),
     model_names: list[str] = None,
     base_model_weights: list[float] | None = None,
     success_thresholds: list[str] | None = None,
-    chemical_spaces: tuple[str, ...] = ("real",),
+    chemical_spaces: tuple[CHEMICAL_SPACES, ...] = ("real",),
     building_blocks_paths: tuple[Path, ...] = (BUILDING_BLOCKS_PATH,),
     reaction_to_building_blocks_paths: tuple[Path, ...] = (
         REACTION_TO_BUILDING_BLOCKS_PATH,

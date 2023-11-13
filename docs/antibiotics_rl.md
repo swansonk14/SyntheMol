@@ -112,7 +112,7 @@ Time: 10 minutes, 7 seconds with an 8-core machine.
 
 ### Train models
 
-For each model type, train 10 models using 10-fold cross-validation. TODO: timing.
+For each model type, train 10 models using 10-fold cross-validation.
 
 Chemprop
 ```bash
