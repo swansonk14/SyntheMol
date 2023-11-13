@@ -2,14 +2,16 @@
 
 Instructions for processing WuXi GalaXi REAL reactions and building blocks. Assumes relevant data has already been downloaded (see [docs/README.md](README.md)).
 
+
 ## Download
 
 Download the WuXi GalaXi data with the following command.
 ```bash
-gdown "https://drive.google.com/drive/folders/1BCM5P-tDjLFLkyiEJX9p4-6fw0w5-qRg?usp=drive_link" -O $(python -c "import synthemol; from pathlib import Path; print(Path(synthemol.__path__[0]).parent)")/data/wuxi --folder
+gdown "https://drive.google.com/drive/folders/1BCM5P-tDjLFLkyiEJX9p4-6fw0w5-qRg?usp=drive_link" -O $(python -c "import synthemol; from pathlib import Path; print(Path(synthemol.__path__[0]).parent)")/rl/data/wuxi --folder
 ```
 
 TODO: convert to zip file on google drive
+
 
 ## Reactions
 
@@ -20,32 +22,34 @@ The WuXi GalaXi consists of three phases of reactions. Phase 1 contains reaction
 
 Below, we describe the steps for processing the building blocks.
 
+
 ### SDF to SMILES
 
-The `data/wuxi/building_blocks_sdf` directory contains SDF files with WuXi GalaXi building blocks.
+The `rl/data/wuxi/building_blocks_sdf` directory contains SDF files with WuXi GalaXi building blocks.
 
 Convert the building blocks from SDF to SMILES.
 ```bash
-for sdf_path in data/wuxi/building_blocks_sdf/*.sdf; do
+for sdf_path in rl/data/wuxi/building_blocks_sdf/*.sdf; do
     sdf_file=$(basename "$sdf_path")
     csv_file=${sdf_file%.*}.csv
     echo "Converting ${csv_file}"
     chemfunc sdf_to_smiles \
-        --data_path data/wuxi/building_blocks_sdf/${sdf_file} \
-        --save_path data/wuxi/building_blocks_csv/${csv_file} \
+        --data_path rl/data/wuxi/building_blocks_sdf/${sdf_file} \
+        --save_path rl/data/wuxi/building_blocks_csv/${csv_file} \
         --properties wxid
 done
 ```
+
 
 ### Merge building blocks files
 
 Merge the WuXi building blocks files into a single file.
 ```bash
 python scripts/data/merge_wuxi_building_blocks.py \
-    --building_blocks_dir data/wuxi/building_blocks_csv \
-    --phase_2_cores_path data/wuxi/phase2_cores.xlsx \
-    --phase_3_cores_path data/wuxi/phase3_cores.xlsx \
-    --save_path data/wuxi/building_blocks_raw.csv
+    --building_blocks_dir rl/data/wuxi/building_blocks_csv \
+    --phase_2_cores_path rl/data/wuxi/phase2_cores.xlsx \
+    --phase_3_cores_path rl/data/wuxi/phase3_cores.xlsx \
+    --save_path rl/data/wuxi/building_blocks_raw.csv
 ```
 
 This command prints the following dataset statistics.
@@ -57,16 +61,17 @@ Data size after removing rows with invalid SMILES = 15,484
 Number of unique building block IDs = 15,484
 Number of unique building block WuXi IDs = 15,399
 Number of unique building block subsets = 25
-Number of unique building block SMILES = 14,975
+Number of unique building block SMILES = 14,977
 ```
+
 
 ### Remove salts
 
 Remove the salts from the building blocks. This will also canonicalize the SMILES using RDKit's canonicalization method.
 ```bash
 chemfunc canonicalize_smiles \
-    --data_path data/wuxi/building_blocks_raw.csv \
-    --save_path data/wuxi/building_blocks.csv \
+    --data_path rl/data/wuxi/building_blocks_raw.csv \
+    --save_path rl/data/wuxi/building_blocks.csv \
     --remove_salts \
     --delete_disconnected_mols
 ```
@@ -79,6 +84,6 @@ chemfunc canonicalize_smiles \
 Determine which building blocks are valid in which WuXi reactions.
 ```bash
 python scripts/data/map_wuxi_reactions_to_building_blocks.py \
-    --building_blocks_path data/wuxi/building_blocks.csv \
-    --save_path data/wuxi/reaction_to_building_blocks.pkl
+    --building_blocks_path rl/data/wuxi/building_blocks.csv \
+    --save_path rl/data/wuxi/reaction_to_building_blocks.pkl
 ```
