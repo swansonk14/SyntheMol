@@ -101,13 +101,16 @@ Time: 1 minute, 28 seconds with an 8-core machine.
 
 Building blocks
 ```bash
+for CHEMICAL_SPACE in real wuxi
+do
 chemfunc save_fingerprints \
-    --data_path rl/data/real/building_blocks.csv \
+    --data_path rl/data/${CHEMICAL_SPACE}/building_blocks.csv \
     --fingerprint_type rdkit \
-    --save_path rl/data/real/building_blocks.npz
+    --save_path rl/data/${CHEMICAL_SPACE}/building_blocks.npz
+done
 ```
 
-Time: 10 minutes, 7 seconds with an 8-core machine.
+Time: TODO (REAL = 10 minutes, 7 seconds with an 8-core machine).
 
 
 ### Train models
@@ -180,37 +183,46 @@ After training, use the model to pre-compute scores of building blocks.
 
 Chemprop
 ```bash
+for CHEMICAL_SPACE in real wuxi
+do
 chemprop_predict \
-    --test_path rl/data/real/building_blocks.csv \
+    --test_path rl/data/${CHEMICAL_SPACE}/building_blocks.csv \
     --checkpoint_dir rl/models/s_aureus_chemprop \
-    --preds_path rl/models/s_aureus_chemprop/building_blocks.csv
+    --preds_path rl/models/s_aureus_chemprop/${CHEMICAL_SPACE}_building_blocks.csv
+done
 ```
 
-Time: 12 minutes, 21 seconds with an 8-core, 1-GPU machine.
+Time: TODO (REAL = 12 minutes, 21 seconds with an 8-core, 1-GPU machine).
 
 Chemprop-RDKit
 ```bash
+for CHEMICAL_SPACE in real wuxi
+do
 chemprop_predict \
-    --test_path rl/data/real/building_blocks.csv \
+    --test_path rl/data/${CHEMICAL_SPACE}/building_blocks.csv \
     --checkpoint_dir rl/models/s_aureus_chemprop_rdkit \
-    --preds_path rl/models/s_aureus_chemprop_rdkit/building_blocks.csv \
-    --features_path rl/data/real/building_blocks.npz \
+    --preds_path rl/models/s_aureus_chemprop_rdkit/${CHEMICAL_SPACE}_building_blocks.csv \
+    --features_path rl/data/${CHEMICAL_SPACE}/building_blocks.npz \
     --no_features_scaling
+done
 ```
 
-Time: 12 minutes, 28 seconds with an 8-core, 1-GPU machine.
+Time: TODO (REAL = 12 minutes, 28 seconds with an 8-core, 1-GPU machine).
 
 MLP
 ```bash
+for CHEMICAL_SPACE in real wuxi
+do
 chemprop_predict \
-    --test_path rl/data/real/building_blocks.csv \
+    --test_path rl/data/${CHEMICAL_SPACE}/building_blocks.csv \
     --checkpoint_dir rl/models/s_aureus_mlp \
-    --preds_path rl/models/s_aureus_mlp/building_blocks.csv \
-    --features_path rl/data/real/building_blocks.npz \
+    --preds_path rl/models/s_aureus_mlp/${CHEMICAL_SPACE}_building_blocks.csv \
+    --features_path rl/data/${CHEMICAL_SPACE}/building_blocks.npz \
     --no_features_scaling
+done
 ```
 
-Time: 12 minutes, 27 seconds with an 8-core, 1-GPU machine.
+Time: TODO (REAL = 12 minutes, 27 seconds with an 8-core, 1-GPU machine).
 
 
 ## Generate molecules with SyntheMol-RL

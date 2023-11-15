@@ -93,7 +93,7 @@ python scripts/data/map_real_reactions_to_building_blocks.py \
     --save_path rl/data/real/reaction_to_building_blocks_raw.pkl
 ```
 
-Total number of molecules = TODO
+Total number of molecules = 31,507,987,117
 
 Filter out building blocks that do not match the reaction templates and map building block IDs to SMILES.
 ```bash
