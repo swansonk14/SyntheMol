@@ -60,7 +60,7 @@ This removes 24 molecules whose salts cannot be stripped, leaving 139,493 molecu
 
 Below, we describe the steps for processing the REAL Space molecules.
 
-Note: The enumerated REAL space requires over 1T of storage and a similar amount of RAM in order to process it. However, the following steps are a one-time operation, and only minimal storage and RAM are required to store the processed data and run SyntheMol. Each of the following commands run in <= TODO hours using 16 cores and <= TODO GB of RAM.
+Note: The enumerated REAL space requires over 1T of storage and a similar amount of RAM in order to process it. However, the following steps are a one-time operation, and only minimal storage and RAM are required to store the processed data and run SyntheMol. Each of the following commands run in <= 24 hours using 8 cores and <= 900 GB of RAM. (TODO: Check these numbers.)
 
 
 ### Download REAL Space
@@ -113,6 +113,10 @@ python scripts/data/count_real_space.py \
     --save_dir rl/data/real
 ```
 
+Number of files = 2,993
+Total number of molecules = 31,507,987,117
+Total number of molecules with selected building blocks/reactions = 31,507,987,117
+
 
 ### Count feasible REAL molecules
 
@@ -125,11 +129,11 @@ python scripts/data/count_real_space.py \
     --only_selected_reactions
 ```
 
-Number of files = TODO
-Number of building blocks = TODO (TODO unique molecules)
-Number of selected reactions = TODO
-Total number of molecules = TODO
-Total number of molecules with selected building blocks/reactions = TODO
+Number of files = 2,993
+Number of building blocks = 139,493
+Number of selected reactions = 13
+Total number of molecules = 31,507,987,117
+Total number of molecules with selected building blocks/reactions = 30,330,025,259
 
 
 ### Sample REAL molecules
@@ -149,3 +153,5 @@ python scripts/data/sample_real_space.py \
     --save_path rl/data/real/random_real_25m.csv \
     --num_molecules 25000000
 ```
+
+TODO: Finish this experiment

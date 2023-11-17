@@ -20,7 +20,7 @@ This includes instructions for processing antibiotics data, training antibacteri
 
 ## Process S. aureus training data
 
-The training data consists of TODO molecules tested against _Staphylococcus aureus_. The following command processes the data to compute binary activity labels based on the inhibition values based on the mean (of two replicates) normalized 16-hour optical density (OD) values.
+The training data consists of molecules tested for inhibitory activity against _Staphylococcus aureus_. The following command processes the data to compute binary activity labels based on the inhibition values based on the mean (of two replicates) normalized 16-hour optical density (OD) values.
 
 ```bash
 python scripts/data/process_data.py \
@@ -82,7 +82,7 @@ Here, we build three binary classification bioactivity prediction models to pred
 
 1. Chemprop: a graph neural network model
 2. Chemprop-RDKit: a graph neural network model augmented with 200 RDKit features
-3. MLP: a multilayer perceptron using 200 RDKit features
+3. MLP-RDKit: a multilayer perceptron using 200 RDKit features
 
 
 ### Compute RDKit features
@@ -151,7 +151,7 @@ chemprop_train \
 
 Time: 51 minutes, 46 seconds with an 8-core, 1-GPU machine.
 
-MLP
+MLP-RDKit
 ```bash
 chemprop_train \
     --data_path rl/data/s_aureus/s_aureus.csv \
@@ -164,17 +164,17 @@ chemprop_train \
     --split_type cv \
     --metric prc-auc \
     --extra_metrics auc \
-    --save_dir rl/models/s_aureus_mlp \
+    --save_dir rl/models/s_aureus_mlp_rdkit \
     --quiet
 ```
 
 Time: 42 minutes, 34 seconds with an 8-core, 1-GPU machine.
 
-| Model                 | ROC-AUC         | PRC-AUC         | Time     |
-|-----------------------|-----------------|-----------------|----------|
-| Chemprop              | 0.861 +/- 0.013 | 0.531 +/- 0.042 | 52m, 19s |
-| Chemprop-RDKit        | 0.874 +/- 0.017 | 0.575 +/- 0.046 | 51m, 46s |
-| Multilayer perceptron | 0.873 +/- 0.019 | 0.554 +/- 0.043 | 42m, 34s |
+| Model          | ROC-AUC         | PRC-AUC         | Time     |
+|----------------|-----------------|-----------------|----------|
+| Chemprop       | 0.861 +/- 0.013 | 0.531 +/- 0.042 | 52m, 19s |
+| Chemprop-RDKit | 0.874 +/- 0.017 | 0.575 +/- 0.046 | 51m, 46s |
+| MLP-RDKit      | 0.873 +/- 0.019 | 0.554 +/- 0.043 | 42m, 34s |
 
 
 ### Compute model scores for building blocks
@@ -209,14 +209,14 @@ done
 
 Time: TODO (REAL = 12 minutes, 28 seconds with an 8-core, 1-GPU machine).
 
-MLP
+MLP-RDKit
 ```bash
 for CHEMICAL_SPACE in real wuxi
 do
 chemprop_predict \
     --test_path rl/data/${CHEMICAL_SPACE}/building_blocks.csv \
-    --checkpoint_dir rl/models/s_aureus_mlp \
-    --preds_path rl/models/s_aureus_mlp/${CHEMICAL_SPACE}_building_blocks.csv \
+    --checkpoint_dir rl/models/s_aureus_mlp_rdkit \
+    --preds_path rl/models/s_aureus_mlp_rdkit/${CHEMICAL_SPACE}_building_blocks.csv \
     --features_path rl/data/${CHEMICAL_SPACE}/building_blocks.npz \
     --no_features_scaling
 done
@@ -225,7 +225,44 @@ done
 Time: TODO (REAL = 12 minutes, 27 seconds with an 8-core, 1-GPU machine).
 
 
+TODO: solubility predictions (or just all ADMET with ADMET-AI)
+
+
 ## Generate molecules with SyntheMol-RL
+
+Generate molecules with SyntheMol-RL.
+
+
+### Final generations
+
+RL models for _S. aureus_ and solubility dynamic multiparameter REAL & WuXi
+
+TODO: Use ADMET-AI solubility model?
+TODO: implement weight loading for MLP
+TODO: mixed MLP and chemprop-rdkit for solubility?
+
+```bash
+for MODEL_TYPE in mlp chemprop
+do
+synthemol \
+    --model_paths rl/models/s_aureus_${MODEL_TYPE}_rdkit TODO:solubility \
+    --model_types ${MODEL_TYPE} TODO:solublity_model \
+    --fingerprint_types rdkit rdkit \
+    --model_names 'S. aureus' 'Solubility' \
+    --success_thresholds '>=0.5' '>=-4' \
+    --chemical_spaces real wuxi \
+    --building_blocks_paths rl/models/s_aureus_${MODEL_TYPE}_rdkit/real_building_blocks.csv rl/models/s_aureus_${MODEL_TYPE}_rdkit/wuxi_building_blocks.csv \
+    --building_blocks_score_columns activity TODO:solubility \
+    --save_dir rl/generations/rl_${MODEL_TYPE}_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi \
+    --n_rollout TODO:rollouts \
+    --search_type rl \
+    --rl_model_type ${MODEL_TYPE}_rdkit \
+    --rl_prediction_type regression \
+    --wandb_project_name synthemol_rl \
+    --wandb_run_name rl_${MODEL_TYPE}_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi \
+    --wandb_log
+done
+```
 
 
 ## Filter generated molecules
