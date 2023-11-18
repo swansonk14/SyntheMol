@@ -110,7 +110,7 @@ chemfunc save_fingerprints \
 done
 ```
 
-Time: TODO (REAL = 10 minutes, 7 seconds with an 8-core machine).
+Time: REAL = 10 minutes, 7 seconds; WuXi = 2 minutes, 3 seconds with an 8-core machine.
 
 
 ### Train models
@@ -192,7 +192,7 @@ chemprop_predict \
 done
 ```
 
-Time: TODO (REAL = 12 minutes, 21 seconds with an 8-core, 1-GPU machine).
+Time: REAL = 12 minutes, 21 seconds; WuXi = 6 minutes, 29 seconds with an 8-core, 1-GPU machine.
 
 Chemprop-RDKit
 ```bash
@@ -207,7 +207,7 @@ chemprop_predict \
 done
 ```
 
-Time: TODO (REAL = 12 minutes, 28 seconds with an 8-core, 1-GPU machine).
+Time: REAL = 12 minutes, 28 seconds; WuXi = 1 minute, 58 seconds with an 8-core, 1-GPU machine.
 
 MLP-RDKit
 ```bash
@@ -222,7 +222,7 @@ chemprop_predict \
 done
 ```
 
-Time: TODO (REAL = 12 minutes, 27 seconds with an 8-core, 1-GPU machine).
+Time: REAL = 12 minutes, 27 seconds; WuXi = 2 minutes, 29 seconds with an 8-core, 1-GPU machine.
 
 
 TODO: solubility predictions (or just all ADMET with ADMET-AI)
