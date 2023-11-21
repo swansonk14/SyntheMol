@@ -18,7 +18,10 @@ This includes instructions for processing antibiotics data, training antibacteri
 - [Predict toxicity](#predict-toxicity)
 
 
-## Process S. aureus training data
+## Data
+
+
+### Process S. aureus training data
 
 The training data consists of molecules tested for inhibitory activity against _Staphylococcus aureus_. The following command processes the data to compute binary activity labels based on the inhibition values based on the mean (of two replicates) normalized 16-hour optical density (OD) values.
 
@@ -50,7 +53,7 @@ Number of non-hits = 9,521
 ```
 
 
-## Process ChEMBL antibacterials
+### Process ChEMBL antibacterials
 
 Download lists of known antibiotic-related compounds from ChEMBL using the following search terms. For each, click the CSV download button, unzip the downloaded file, and rename the CSV file appropriately.
 
@@ -75,10 +78,16 @@ python scripts/data/merge_chembl_downloads.py \
 The file `chembl.csv` contains 1,007 molecules.
 
 
+
+### Solubility data
+
+Aqueous solubility data was obtained from [ADMET-AI](TODO), which preprocessed data from the [Therapeutics Data Commons](https://tdcommons.ai/). This dataset contains 9,982 molecules with aqueous solubility measurements in units of log mol/L. The data is saved to `data/solubility/solubility.csv`.
+
+
 ## Build bioactivity prediction models
 
 
-Here, we build three binary classification bioactivity prediction models to predict antibiotic activity against _S. aureus_. The three models are:
+Here, we build three binary classification bioactivity prediction models to predict antibiotic activity against _S. aureus_ and to predict aqueous solubility. The three models are:
 
 1. Chemprop: a graph neural network model
 2. Chemprop-RDKit: a graph neural network model augmented with 200 RDKit features
@@ -99,6 +108,16 @@ chemfunc save_fingerprints \
 
 Time: 1 minute, 28 seconds with an 8-core machine.
 
+Solubility data
+```bash
+chemfunc save_fingerprints \
+    --data_path rl/data/solubility/solubility.csv \
+    --fingerprint_type rdkit \
+    --save_path rl/data/solubility/solubility.npz
+```
+
+Time: TODO
+
 Building blocks
 ```bash
 for CHEMICAL_SPACE in real wuxi
@@ -117,7 +136,7 @@ Time: REAL = 10 minutes, 7 seconds; WuXi = 2 minutes, 3 seconds with an 8-core m
 
 For each model type, train 10 models using 10-fold cross-validation.
 
-Chemprop
+Chemprop for _S. aureus_
 ```bash
 chemprop_train \
     --data_path rl/data/s_aureus/s_aureus.csv \
@@ -131,9 +150,21 @@ chemprop_train \
     --quiet
 ```
 
-Time: 52 minutes, 19 seconds with an 8-core, 1-GPU machine.
+Chemprop for solubility
+```bash
+chemprop_train \
+    --data_path rl/data/solubility/solubility \
+    --dataset_type classification \
+    --target_column solubility \
+    --num_folds 10 \
+    --split_type cv \
+    --metric mae \
+    --extra_metrics r2 \
+    --save_dir rl/models/solubility_chemprop \
+    --quiet
+```
 
-Chemprop-RDKit
+Chemprop-RDKit for _S. aureus_
 ```bash
 chemprop_train \
     --data_path rl/data/s_aureus/s_aureus.csv \
@@ -149,9 +180,23 @@ chemprop_train \
     --quiet
 ```
 
-Time: 51 minutes, 46 seconds with an 8-core, 1-GPU machine.
+Chemprop-RDKit for solubility
+```bash
+chemprop_train \
+    --data_path rl/data/solubility/solubility.csv \
+    --dataset_type classification \
+    --target_column solubility \
+    --features_path rl/data/solubility/solubility.npz \
+    --no_features_scaling \
+    --num_folds 10 \
+    --split_type cv \
+    --metric mae \
+    --extra_metrics r2 \
+    --save_dir rl/models/solubility_chemprop_rdkit \
+    --quiet
+```
 
-MLP-RDKit
+MLP-RDKit for _S. aureus_
 ```bash
 chemprop_train \
     --data_path rl/data/s_aureus/s_aureus.csv \
@@ -168,7 +213,24 @@ chemprop_train \
     --quiet
 ```
 
-Time: 42 minutes, 34 seconds with an 8-core, 1-GPU machine.
+MLP-RDKit for solubility
+```bash
+chemprop_train \
+    --data_path rl/data/solubility/solubility.csv \
+    --dataset_type classification \
+    --target_column solubility \
+    --features_path rl/data/solubility/solubility.npz \
+    --no_features_scaling \
+    --features_only \
+    --num_folds 10 \
+    --split_type cv \
+    --metric mae \
+    --extra_metrics r2 \
+    --save_dir rl/models/solubility_mlp_rdkit \
+    --quiet
+```
+
+Results for _S. aureus_ (10-fold cross-validation, 8-core, 1-GPU machine):
 
 | Model          | ROC-AUC         | PRC-AUC         | Time     |
 |----------------|-----------------|-----------------|----------|
@@ -176,6 +238,13 @@ Time: 42 minutes, 34 seconds with an 8-core, 1-GPU machine.
 | Chemprop-RDKit | 0.874 +/- 0.017 | 0.575 +/- 0.046 | 51m, 46s |
 | MLP-RDKit      | 0.873 +/- 0.019 | 0.554 +/- 0.043 | 42m, 34s |
 
+Results for solubility (TODO-fold cross-validation, 8-core, 1-GPU machine):
+
+| Model          | MAE           | R^2           | Time |
+|----------------|---------------|---------------|------|
+| Chemprop       | TODO +/- TODO | TODO +/- TODO | TODO |
+| Chemprop-RDKit | TODO +/- TODO | TODO +/- TODO | TODO |
+| MLP-RDKit      | TODO +/- TODO | TODO +/- TODO | TODO |
 
 ### Compute model scores for building blocks
 
@@ -185,47 +254,74 @@ Chemprop
 ```bash
 for CHEMICAL_SPACE in real wuxi
 do
+for MODEL in s_aureus solubility
+do
 chemprop_predict \
     --test_path rl/data/${CHEMICAL_SPACE}/building_blocks.csv \
-    --checkpoint_dir rl/models/s_aureus_chemprop \
-    --preds_path rl/models/s_aureus_chemprop/${CHEMICAL_SPACE}_building_blocks.csv
+    --checkpoint_dir rl/models/${MODEL}_chemprop \
+    --preds_path rl/models/${MODEL}_chemprop/${CHEMICAL_SPACE}_building_blocks.csv
+done
 done
 ```
 
-Time: REAL = 12 minutes, 21 seconds; WuXi = 6 minutes, 29 seconds with an 8-core, 1-GPU machine.
+Time with an 8-core, 1-GPU machine:
+
+| Model      | Chemical Space | Time     |
+|------------|----------------|----------|
+| S. aureus  | REAL           | 12m, 21s |
+| S. aureus  | WuXi           | 6m, 29s  |
+| Solubility | REAL           | TODO     |
+| Solubility | WuXi           | TODO     |
 
 Chemprop-RDKit
 ```bash
 for CHEMICAL_SPACE in real wuxi
 do
+for MODEL in s_aureus solubility
+do
 chemprop_predict \
     --test_path rl/data/${CHEMICAL_SPACE}/building_blocks.csv \
-    --checkpoint_dir rl/models/s_aureus_chemprop_rdkit \
-    --preds_path rl/models/s_aureus_chemprop_rdkit/${CHEMICAL_SPACE}_building_blocks.csv \
+    --checkpoint_dir rl/models/${MODEL}_chemprop_rdkit \
+    --preds_path rl/models/${MODEL}_chemprop_rdkit/${CHEMICAL_SPACE}_building_blocks.csv \
     --features_path rl/data/${CHEMICAL_SPACE}/building_blocks.npz \
     --no_features_scaling
 done
+done
 ```
 
-Time: REAL = 12 minutes, 28 seconds; WuXi = 1 minute, 58 seconds with an 8-core, 1-GPU machine.
+Time with an 8-core, 1-GPU machine:
+
+| Model      | Chemical Space | Time     |
+|------------|----------------|----------|
+| S. aureus  | REAL           | 12m, 28s |
+| S. aureus  | WuXi           | 1m, 58s  |
+| Solubility | REAL           | TODO     |
+| Solubility | WuXi           | TODO     |
 
 MLP-RDKit
 ```bash
 for CHEMICAL_SPACE in real wuxi
 do
+for MODEL in s_aureus solubility
+do
 chemprop_predict \
     --test_path rl/data/${CHEMICAL_SPACE}/building_blocks.csv \
-    --checkpoint_dir rl/models/s_aureus_mlp_rdkit \
-    --preds_path rl/models/s_aureus_mlp_rdkit/${CHEMICAL_SPACE}_building_blocks.csv \
+    --checkpoint_dir rl/models/${MODEL}_mlp_rdkit \
+    --preds_path rl/models/${MODEL}_mlp_rdkit/${CHEMICAL_SPACE}_building_blocks.csv \
     --features_path rl/data/${CHEMICAL_SPACE}/building_blocks.npz \
     --no_features_scaling
 done
+done
 ```
 
-Time: REAL = 12 minutes, 27 seconds; WuXi = 2 minutes, 29 seconds with an 8-core, 1-GPU machine.
+Time with an 8-core, 1-GPU machine:
 
-
-TODO: solubility predictions (or just all ADMET with ADMET-AI)
+| Model      | Chemical Space | Time     |
+|------------|----------------|----------|
+| S. aureus  | REAL           | 12m, 27s |
+| S. aureus  | WuXi           | 2m, 29s  |
+| Solubility | REAL           | TODO     |
+| Solubility | WuXi           | TODO     |
 
 
 ## Generate molecules with SyntheMol-RL
@@ -251,7 +347,7 @@ synthemol \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
     --building_blocks_paths rl/models/s_aureus_chemprop_rdkit/real_building_blocks.csv rl/models/s_aureus_chemprop_rdkit/wuxi_building_blocks.csv \
-    --building_blocks_score_columns activity TODO:solubility \
+    --building_blocks_score_columns s_aureus_activity TODO:solubility \
     --save_dir rl/generations/rl_${RL_MODEL_TYPE}_s_aureus_solubility_dynamic_weights_real_wuxi \
     --n_rollout TODO:rollouts \
     --search_type rl \
@@ -277,8 +373,8 @@ done
 ### Diversity
 
 
+### ADMET
+
+
 ## Map molecules to REAL IDs
-
-
-## Predict toxicity
 
