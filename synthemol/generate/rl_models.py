@@ -45,8 +45,8 @@ class RLModel(ABC):
         :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
                                 'classification' = binary classification. 'regression' = regression.
         :param model_weights: The weights of the models for each property.
-        :param model_paths: A list of paths to PT files or directories of PT files
-                            containing models to load if using pretrained models.
+        :param model_paths: A list of paths to PT files or directories of PT files containing models to load if using
+                            pretrained models. For directories, the first PT file in the directory will be used.
                             If None, models are initialized randomly.
         :param max_num_molecules: The maximum number of molecules to process at a time.
         :param features_size: The size of the features for each molecule.
@@ -573,9 +573,9 @@ class RLModelMLP(RLModel):
         :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
                                 'classification' = binary classification. 'regression' = regression.
         :param model_weights: The weights of the models for each property.
-        :param model_paths: A list of paths to PT files or directories of PT files
-                    containing models to load if using pretrained models.
-                    If None, models are initialized randomly.
+        :param model_paths: A list of paths to PT files or directories of PT files containing models to load if using
+                            pretrained models. For directories, the first PT file in the directory will be used.
+                            If None, models are initialized randomly.
         :param max_num_molecules: The maximum number of molecules to process at a time.
         :param features_size: The size of the features for each molecule.
         :param hidden_dim: The dimensionality of the hidden layers.
@@ -816,9 +816,9 @@ class RLModelChemprop(RLModel):
         :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
                                 'classification' = binary classification. 'regression' = regression.
         :param model_weights: The weights of the models for each property.
-        :param model_paths: A list of paths to PT files or directories of PT files
-                    containing models to load if using pretrained models.
-                    If None, models are initialized randomly.
+        :param model_paths: A list of paths to PT files or directories of PT files containing models to load if using
+                            pretrained models. For directories, the first PT file in the directory will be used.
+                            If None, models are initialized randomly.
         :param max_num_molecules: The maximum number of molecules to process at a time.
         :param features_size: The size of the features for each molecule.
         :param num_workers: The number of workers to use for data loading.

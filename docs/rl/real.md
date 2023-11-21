@@ -153,5 +153,3 @@ python scripts/data/sample_real_space.py \
     --save_path rl/data/real/random_real_25m.csv \
     --num_molecules 25000000
 ```
-
-TODO: Finish this experiment

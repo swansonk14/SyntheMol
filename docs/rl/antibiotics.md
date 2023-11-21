@@ -239,27 +239,27 @@ RL models for _S. aureus_ and solubility dynamic multiparameter REAL & WuXi
 
 TODO: Use ADMET-AI solubility model?
 TODO: implement weight loading for MLP
-TODO: mixed MLP and chemprop-rdkit for solubility?
 
 ```bash
-for MODEL_TYPE in mlp chemprop
+for RL_MODEL_TYPE in mlp_rdkit chemprop_rdkit
 do
 synthemol \
-    --model_paths rl/models/s_aureus_${MODEL_TYPE}_rdkit TODO:solubility \
-    --model_types ${MODEL_TYPE} TODO:solublity_model \
+    --model_paths rl/models/s_aureus_chemprop_rdkit TODO:solubility \
+    --model_types chemprop TODO:solublity_model \
     --fingerprint_types rdkit rdkit \
     --model_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
-    --building_blocks_paths rl/models/s_aureus_${MODEL_TYPE}_rdkit/real_building_blocks.csv rl/models/s_aureus_${MODEL_TYPE}_rdkit/wuxi_building_blocks.csv \
+    --building_blocks_paths rl/models/s_aureus_chemprop_rdkit/real_building_blocks.csv rl/models/s_aureus_chemprop_rdkit/wuxi_building_blocks.csv \
     --building_blocks_score_columns activity TODO:solubility \
-    --save_dir rl/generations/rl_${MODEL_TYPE}_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi \
+    --save_dir rl/generations/rl_${RL_MODEL_TYPE}_s_aureus_solubility_dynamic_weights_real_wuxi \
     --n_rollout TODO:rollouts \
     --search_type rl \
-    --rl_model_type ${MODEL_TYPE}_rdkit \
+    --rl_model_type ${RL_MODEL_TYPE} \
+    --rl_model_paths rl/models/s_aureus_${RL_MODEL_TYPE}/fold_0/model_0/model.pt TODO:solubility \
     --rl_prediction_type regression \
     --wandb_project_name synthemol_rl \
-    --wandb_run_name rl_${MODEL_TYPE}_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi \
+    --wandb_run_name rl_${RL_MODEL_TYPE}_s_aureus_solubility_dynamic_weights_real_wuxi \
     --wandb_log
 done
 ```

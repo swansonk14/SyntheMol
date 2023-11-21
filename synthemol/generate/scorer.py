@@ -191,7 +191,7 @@ class MoleculeScorer:
         self,
         model_types: list[MODEL_TYPES],
         model_paths: list[Path],
-        fingerprint_types: list[FINGERPRINT_TYPES],
+        fingerprint_types: tuple[FINGERPRINT_TYPES, ...],
         model_weights: ModelWeights,
         device: torch.device = torch.device("cpu"),
         smiles_to_scores: dict[str, list[float]] | None = None,

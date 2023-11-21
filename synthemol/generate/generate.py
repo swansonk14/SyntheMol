@@ -56,7 +56,7 @@ def generate(
     num_expand_nodes: int | None = None,
     rolling_average_weight: float = 0.98,
     rl_model_type: RL_MODEL_TYPES = "mlp_rdkit",
-    rl_pretrained: bool = False,
+    rl_model_paths: list[Path] | None = None,
     rl_prediction_type: RL_PREDICTION_TYPES = "classification",
     rl_base_temperature: float = 0.1,
     rl_temperature_similarity_target: float = 0.5,
@@ -107,9 +107,9 @@ def generate(
                                     and success (dynamic model weights).
     :param rl_model_type: The type of RL model to use. 'mlp_rdkit' = MLP RDKit model.
                           'chemprop' = Chemprop model. 'chemprop_rdkit' = Chemprop RDKit model.
-    :param rl_pretrained: Whether to use pretrained model checkpoints from model_paths to initialize the RL models.
-                          If True, the first model in each ensemble in model_paths will be used as the initialization.
-                          If False, RL models are randomly initialized.
+    :param rl_model_paths: List of paths with each path pointing to a PT file containing a trained model that will be
+                           used as the initial weights for the RL models.
+                           If None, RL models are trained from scratch.
     :param rl_prediction_type: The type of prediction made by the RL model, which determines the loss function.
                                'classification' = binary classification. 'regression' = regression.
     :param rl_base_temperature: The initial temperature parameter for the softmax function used to select building blocks.
@@ -152,6 +152,7 @@ def generate(
     for arg in [
         model_types,
         model_paths,
+        rl_model_paths,
         fingerprint_types,
         model_names,
         base_model_weights,
@@ -374,7 +375,7 @@ def generate(
                 "num_expand_nodes": num_expand_nodes,
                 "rolling_average_weight": rolling_average_weight,
                 "rl_model_type": rl_model_type,
-                "rl_pretrained": rl_pretrained,
+                "rl_model_paths": rl_model_paths,
                 "rl_prediction_type": rl_prediction_type,
                 "rl_base_temperature": rl_base_temperature,
                 "rl_temperature_similarity_target": rl_temperature_similarity_target,
@@ -454,7 +455,7 @@ def generate(
         rl_model_args = {
             "prediction_type": rl_prediction_type,
             "model_weights": model_weights,
-            "model_paths": model_paths if rl_pretrained else None,
+            "model_paths": rl_model_paths,
             "num_workers": num_workers,
             "num_epochs": rl_train_epochs,
             "device": device,
