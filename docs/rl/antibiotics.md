@@ -260,19 +260,21 @@ do
 chemprop_predict \
     --test_path rl/data/${CHEMICAL_SPACE}/building_blocks.csv \
     --preds_path rl/data/${CHEMICAL_SPACE}/building_blocks.csv \
-    --checkpoint_dir rl/models/${MODEL}_chemprop_rdkit
+    --checkpoint_dir rl/models/${MODEL}_chemprop_rdkit \
+    --features_path rl/data/${CHEMICAL_SPACE}/building_blocks.npz \
+    --no_features_scaling
 done
 done
 ```
 
 Time with an 8-core, 1-GPU machine:
 
-| Model      | Chemical Space | Time |
-|------------|----------------|------|
-| S. aureus  | REAL           | TODO |
-| S. aureus  | WuXi           | TODO |
-| Solubility | REAL           | TODO |
-| Solubility | WuXi           | TODO |
+| Model      | Chemical Space | Time     |
+|------------|----------------|----------|
+| S. aureus  | REAL           | 18m, 47s |
+| S. aureus  | WuXi           | 2m, 49s  |
+| Solubility | REAL           | 18m, 52s |
+| Solubility | WuXi           | 2m, 45s  |
 
 
 ## Generate molecules with SyntheMol-RL
@@ -284,12 +286,10 @@ Generate molecules with SyntheMol-RL.
 
 RL models for _S. aureus_ and solubility dynamic multiparameter REAL & WuXi
 
-TODO: implement weight loading for MLP
-
 RL Chemprop-RDKit
 ```bash
 synthemol \
-    --model_paths rl/models/s_aureus_chemprop_rdkit rl/model/solubility_chemprop_rdkit \
+    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --model_types chemprop chemprop \
     --fingerprint_types rdkit rdkit \
     --model_names 'S. aureus' 'Solubility' \
@@ -302,7 +302,7 @@ synthemol \
     --n_rollout 100000 \
     --search_type rl \
     --rl_model_type chemprop_rdkit \
-    --rl_model_paths rl/models/s_aureus_chemprop_rdkit/fold_0/model_0/model.pt rl/models/solubility_chemprop_rdkit/folds_0/model_0/model.pt \
+    --rl_model_paths rl/models/s_aureus_chemprop_rdkit/fold_0/model_0/model.pt rl/models/solubility_chemprop_rdkit/fold_0/model_0/model.pt \
     --rl_prediction_type regression \
     --use_gpu \
     --num_workers 8 \

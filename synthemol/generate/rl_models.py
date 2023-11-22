@@ -559,7 +559,7 @@ class RLModelMLP(RLModel):
         model_paths: list[Path] | None = None,
         max_num_molecules: int = 3,
         features_size: int = 200,
-        hidden_dim: int = 100,
+        hidden_dim: int = 300,
         num_layers: int = 2,
         num_workers: int = 0,
         num_epochs: int = 5,
@@ -631,7 +631,7 @@ class RLModelMLP(RLModel):
         model = self.build_model()
         model_state_dict = model.state_dict()
 
-        # Get layer names in model
+        # Get layer names in model (layer names are <name>.<num>.<weight/bias>)
         model_weight_names = sorted(
             [name for name in model_state_dict if name.endswith("weight")],
             key=lambda name: int(name.split(".")[1]),
@@ -699,6 +699,12 @@ class RLModelMLP(RLModel):
             loaded_state_dict[model_bias_names[layer_num]] = loaded_state_dict.pop(
                 loaded_bias_names[layer_num]
             )
+
+        # Repeat first layer loaded weights to match size of first layer model weights due to multiple molecule input
+        first_layer_weight_name = model_weight_names[0]
+        loaded_state_dict[first_layer_weight_name] = loaded_state_dict[
+            first_layer_weight_name
+        ].repeat(1, self.max_num_molecules)
 
         # Load weights into model
         model.load_state_dict(loaded_state_dict)
