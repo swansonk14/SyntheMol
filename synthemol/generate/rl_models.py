@@ -592,14 +592,6 @@ class RLModelMLP(RLModel):
         self.hidden_dim = hidden_dim
         self.output_dim = 1
         self.num_layers = num_layers
-        self._model = MLP(
-            input_dim=max_num_molecules * features_size,
-            hidden_dim=hidden_dim,
-            output_dim=1,
-            num_layers=num_layers,
-            sigmoid=prediction_type == "classification",
-            device=device,
-        ).to(device)
 
         super().__init__(
             prediction_type=prediction_type,
@@ -635,9 +627,83 @@ class RLModelMLP(RLModel):
         :param model_path: The path to a PT file containing a model to load.
         :return: A model with pretrained weights.
         """
-        # TODO: implement this
-        # Need to load Chemprop feed-forward model and then match layers in state dicts
-        raise NotImplementedError
+        # Build model
+        model = self.build_model()
+        model_state_dict = model.state_dict()
+
+        # Get layer names in model
+        model_weight_names = sorted(
+            [name for name in model_state_dict if name.endswith("weight")],
+            key=lambda name: int(name.split(".")[1]),
+        )
+        model_bias_names = sorted(
+            [name for name in model_state_dict if name.endswith("bias")],
+            key=lambda name: int(name.split(".")[1]),
+        )
+
+        # Check that all layers in model are captured
+        if len(model_weight_names) + len(model_bias_names) != len(model_state_dict):
+            raise ValueError(
+                "Number of weights and biases in model does not match total number of layers."
+            )
+
+        # Check equal number of weights and biases in model
+        if len(model_weight_names) != len(model_bias_names):
+            raise ValueError(
+                "Number of weights and biases in model does not match. "
+                f"Number of weights: {len(model_weight_names):,}. "
+                f"Number of biases: {len(model_bias_names):,}."
+            )
+
+        # Load model weights
+        loaded_state = torch.load(model_path, map_location=lambda storage, loc: storage)
+        loaded_state_dict = loaded_state["state_dict"]
+
+        # Get layer names in loaded model (layer names are <name>.<num>.<weight/bias>)
+        loaded_weight_names = sorted(
+            [name for name in loaded_state_dict if name.endswith("weight")],
+            key=lambda name: int(name.split(".")[1]),
+        )
+        loaded_bias_names = sorted(
+            [name for name in loaded_state_dict if name.endswith("bias")],
+            key=lambda name: int(name.split(".")[1]),
+        )
+
+        # Check that all layers of loaded model are captured
+        if len(loaded_weight_names) + len(loaded_bias_names) != len(loaded_state_dict):
+            raise ValueError(
+                "Number of weights and biases in loaded model does not match total number of layers."
+            )
+
+        # Check equal number of weights and biases in loaded model
+        if len(loaded_weight_names) != len(loaded_bias_names):
+            raise ValueError(
+                "Number of weights and biases in loaded model does not match. "
+                f"Number of weights: {len(loaded_weight_names):,}. "
+                f"Number of biases: {len(loaded_bias_names):,}."
+            )
+
+        # Check equal number of layers in model and loaded model
+        if len(model_weight_names) != len(loaded_weight_names):
+            raise ValueError(
+                "Number of layers in model does not match number of layers in loaded model. "
+                f"Number of layers in model: {len(model_weight_names):,}. "
+                f"Number of layers in loaded model: {len(loaded_weight_names):,}."
+            )
+
+        # Rename loaded weights and biases to match model weights and biases
+        for layer_num in range(len(model_weight_names)):
+            loaded_state_dict[model_weight_names[layer_num]] = loaded_state_dict.pop(
+                loaded_weight_names[layer_num]
+            )
+            loaded_state_dict[model_bias_names[layer_num]] = loaded_state_dict.pop(
+                loaded_bias_names[layer_num]
+            )
+
+        # Load weights into model
+        model.load_state_dict(loaded_state_dict)
+
+        return model
 
     def run_model(self, model: MLP, batch_data: torch.Tensor) -> torch.Tensor:
         """Makes predictions using a model.
