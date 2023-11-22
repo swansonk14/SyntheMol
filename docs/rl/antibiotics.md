@@ -116,7 +116,7 @@ chemfunc save_fingerprints \
     --save_path rl/data/solubility/solubility.npz
 ```
 
-Time: TODO
+Time: 2 minutes, 0 seconds with an 8-core machine.
 
 Building blocks
 ```bash
@@ -153,8 +153,8 @@ chemprop_train \
 Chemprop for solubility
 ```bash
 chemprop_train \
-    --data_path rl/data/solubility/solubility \
-    --dataset_type classification \
+    --data_path rl/data/solubility/solubility.csv \
+    --dataset_type regression \
     --target_column solubility \
     --num_folds 10 \
     --split_type cv \
@@ -184,7 +184,7 @@ Chemprop-RDKit for solubility
 ```bash
 chemprop_train \
     --data_path rl/data/solubility/solubility.csv \
-    --dataset_type classification \
+    --dataset_type regression \
     --target_column solubility \
     --features_path rl/data/solubility/solubility.npz \
     --no_features_scaling \
@@ -217,7 +217,7 @@ MLP-RDKit for solubility
 ```bash
 chemprop_train \
     --data_path rl/data/solubility/solubility.csv \
-    --dataset_type classification \
+    --dataset_type regression \
     --target_column solubility \
     --features_path rl/data/solubility/solubility.npz \
     --no_features_scaling \
@@ -238,13 +238,13 @@ Results for _S. aureus_ (10-fold cross-validation, 8-core, 1-GPU machine):
 | Chemprop-RDKit | 0.874 +/- 0.017 | 0.575 +/- 0.046 | 51m, 46s |
 | MLP-RDKit      | 0.873 +/- 0.019 | 0.554 +/- 0.043 | 42m, 34s |
 
-Results for solubility (TODO-fold cross-validation, 8-core, 1-GPU machine):
+Results for solubility (10-fold cross-validation, 8-core, 1-GPU machine):
 
-| Model          | MAE           | R^2           | Time |
-|----------------|---------------|---------------|------|
-| Chemprop       | TODO +/- TODO | TODO +/- TODO | TODO |
-| Chemprop-RDKit | TODO +/- TODO | TODO +/- TODO | TODO |
-| MLP-RDKit      | TODO +/- TODO | TODO +/- TODO | TODO |
+| Model          | MAE             | R^2             | Time     |
+|----------------|-----------------|-----------------|----------|
+| Chemprop       | 0.693 +/- 0.027 | 0.806 +/- 0.021 | 36m, 11s |
+| Chemprop-RDKit | 0.659 +/- 0.022 | 0.821 +/- 0.022 | 40m, 55s |
+| MLP-RDKit      | 0.688 +/- 0.020 | 0.817 +/- 0.013 | 24m, 28s |
 
 ### Compute model scores for building blocks
 
@@ -270,8 +270,8 @@ Time with an 8-core, 1-GPU machine:
 |------------|----------------|----------|
 | S. aureus  | REAL           | 12m, 21s |
 | S. aureus  | WuXi           | 6m, 29s  |
-| Solubility | REAL           | TODO     |
-| Solubility | WuXi           | TODO     |
+| Solubility | REAL           | 18m, 17s |
+| Solubility | WuXi           | 2m, 22s  |
 
 Chemprop-RDKit
 ```bash
@@ -295,8 +295,8 @@ Time with an 8-core, 1-GPU machine:
 |------------|----------------|----------|
 | S. aureus  | REAL           | 12m, 28s |
 | S. aureus  | WuXi           | 1m, 58s  |
-| Solubility | REAL           | TODO     |
-| Solubility | WuXi           | TODO     |
+| Solubility | REAL           | 20m, 46s |
+| Solubility | WuXi           | 2m, 44s  |
 
 MLP-RDKit
 ```bash
@@ -320,8 +320,8 @@ Time with an 8-core, 1-GPU machine:
 |------------|----------------|----------|
 | S. aureus  | REAL           | 12m, 27s |
 | S. aureus  | WuXi           | 2m, 29s  |
-| Solubility | REAL           | TODO     |
-| Solubility | WuXi           | TODO     |
+| Solubility | REAL           | 21m, 1s  |
+| Solubility | WuXi           | 1m, 56s  |
 
 
 ## Generate molecules with SyntheMol-RL
