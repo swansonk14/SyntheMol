@@ -132,6 +132,7 @@ SyntheMol uses the bioactivity prediction model within a Monte Carlo tree search
 
 ```bash
 synthemol \
+    --search_type mcts \
     --model_path models/chemprop \
     --model_type chemprop \
     --save_dir generations/chemprop \
