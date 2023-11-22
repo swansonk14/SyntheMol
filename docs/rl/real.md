@@ -39,6 +39,8 @@ chemfunc sdf_to_smiles \
 
 All 139,517 molecules were successfully converted from SDF to SMILES, and among those 139,444 are unique molecules.
 
+Then, manually rename the `reagent_id` column to `ID`.
+
 
 ### Remove salts
 

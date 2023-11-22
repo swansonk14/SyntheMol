@@ -346,6 +346,7 @@ synthemol \
     --chemical_spaces real wuxi \
     --building_blocks_paths rl/models/s_aureus_chemprop_rdkit/real_building_blocks.csv rl/models/s_aureus_chemprop_rdkit/wuxi_building_blocks.csv \
     --building_blocks_score_columns s_aureus_activity solubility \
+    --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
     --save_dir rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi \
     --n_rollout 100000 \
     --search_type rl \
@@ -370,6 +371,7 @@ synthemol \
     --chemical_spaces real wuxi \
     --building_blocks_paths rl/models/s_aureus_chemprop_rdkit/real_building_blocks.csv rl/models/s_aureus_chemprop_rdkit/wuxi_building_blocks.csv \
     --building_blocks_score_columns s_aureus_activity solubility \
+    --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
     --save_dir rl/generations/rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi \
     --n_rollout 100000 \
     --search_type rl \
