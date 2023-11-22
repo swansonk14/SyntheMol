@@ -246,11 +246,12 @@ Results for solubility (10-fold cross-validation, 8-core, 1-GPU machine):
 | Chemprop-RDKit | 0.659 +/- 0.022 | 0.821 +/- 0.022 | 40m, 55s |
 | MLP-RDKit      | 0.688 +/- 0.020 | 0.817 +/- 0.013 | 24m, 28s |
 
+The Chemprop-RDKit models are the best for both _S. aureus_ and solubility. Therefore, those models are used to evaluate building blocks and molecules.
+
 ### Compute model scores for building blocks
 
-After training, use the model to pre-compute scores of building blocks.
+After training, use the Chemprop-RDKit models to pre-compute scores of building blocks.
 
-Chemprop
 ```bash
 for CHEMICAL_SPACE in real wuxi
 do
@@ -258,70 +259,20 @@ for MODEL in s_aureus solubility
 do
 chemprop_predict \
     --test_path rl/data/${CHEMICAL_SPACE}/building_blocks.csv \
-    --checkpoint_dir rl/models/${MODEL}_chemprop \
-    --preds_path rl/models/${MODEL}_chemprop/${CHEMICAL_SPACE}_building_blocks.csv
+    --preds_path rl/data/${CHEMICAL_SPACE}/building_blocks.csv \
+    --checkpoint_dir rl/models/${MODEL}_chemprop_rdkit
 done
 done
 ```
 
 Time with an 8-core, 1-GPU machine:
 
-| Model      | Chemical Space | Time     |
-|------------|----------------|----------|
-| S. aureus  | REAL           | 12m, 21s |
-| S. aureus  | WuXi           | 6m, 29s  |
-| Solubility | REAL           | 18m, 17s |
-| Solubility | WuXi           | 2m, 22s  |
-
-Chemprop-RDKit
-```bash
-for CHEMICAL_SPACE in real wuxi
-do
-for MODEL in s_aureus solubility
-do
-chemprop_predict \
-    --test_path rl/data/${CHEMICAL_SPACE}/building_blocks.csv \
-    --checkpoint_dir rl/models/${MODEL}_chemprop_rdkit \
-    --preds_path rl/models/${MODEL}_chemprop_rdkit/${CHEMICAL_SPACE}_building_blocks.csv \
-    --features_path rl/data/${CHEMICAL_SPACE}/building_blocks.npz \
-    --no_features_scaling
-done
-done
-```
-
-Time with an 8-core, 1-GPU machine:
-
-| Model      | Chemical Space | Time     |
-|------------|----------------|----------|
-| S. aureus  | REAL           | 12m, 28s |
-| S. aureus  | WuXi           | 1m, 58s  |
-| Solubility | REAL           | 20m, 46s |
-| Solubility | WuXi           | 2m, 44s  |
-
-MLP-RDKit
-```bash
-for CHEMICAL_SPACE in real wuxi
-do
-for MODEL in s_aureus solubility
-do
-chemprop_predict \
-    --test_path rl/data/${CHEMICAL_SPACE}/building_blocks.csv \
-    --checkpoint_dir rl/models/${MODEL}_mlp_rdkit \
-    --preds_path rl/models/${MODEL}_mlp_rdkit/${CHEMICAL_SPACE}_building_blocks.csv \
-    --features_path rl/data/${CHEMICAL_SPACE}/building_blocks.npz \
-    --no_features_scaling
-done
-done
-```
-
-Time with an 8-core, 1-GPU machine:
-
-| Model      | Chemical Space | Time     |
-|------------|----------------|----------|
-| S. aureus  | REAL           | 12m, 27s |
-| S. aureus  | WuXi           | 2m, 29s  |
-| Solubility | REAL           | 21m, 1s  |
-| Solubility | WuXi           | 1m, 56s  |
+| Model      | Chemical Space | Time |
+|------------|----------------|------|
+| S. aureus  | REAL           | TODO |
+| S. aureus  | WuXi           | TODO |
+| Solubility | REAL           | TODO |
+| Solubility | WuXi           | TODO |
 
 
 ## Generate molecules with SyntheMol-RL
@@ -344,7 +295,7 @@ synthemol \
     --model_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
-    --building_blocks_paths rl/models/s_aureus_chemprop_rdkit/real_building_blocks.csv rl/models/s_aureus_chemprop_rdkit/wuxi_building_blocks.csv \
+    --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
     --building_blocks_score_columns s_aureus_activity solubility \
     --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
     --save_dir rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi \
@@ -369,7 +320,7 @@ synthemol \
     --model_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
-    --building_blocks_paths rl/models/s_aureus_chemprop_rdkit/real_building_blocks.csv rl/models/s_aureus_chemprop_rdkit/wuxi_building_blocks.csv \
+    --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
     --building_blocks_score_columns s_aureus_activity solubility \
     --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
     --save_dir rl/generations/rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi \
