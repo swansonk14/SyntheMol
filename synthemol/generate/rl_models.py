@@ -45,8 +45,8 @@ class RLModel(ABC):
         :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
                                 'classification' = binary classification. 'regression' = regression.
         :param model_weights: The weights of the models for each property.
-        :param model_paths: A list of paths to PT files or directories of PT files
-                            containing models to load if using pretrained models.
+        :param model_paths: A list of paths to PT files or directories of PT files containing models to load if using
+                            pretrained models. For directories, the first PT file in the directory will be used.
                             If None, models are initialized randomly.
         :param max_num_molecules: The maximum number of molecules to process at a time.
         :param features_size: The size of the features for each molecule.
@@ -220,7 +220,7 @@ class RLModel(ABC):
             for batch_data, batch_rewards in dataloader:
                 # Move batch rewards to device
                 batch_rewards = batch_rewards.to(self.device)
-                
+
                 # Loop over models and train each one on the batch
                 for model_index, (model, optimizer) in enumerate(
                     zip(self.models, self.optimizers)
@@ -229,8 +229,7 @@ class RLModel(ABC):
                     predictions = self.run_model(
                         model=model, batch_data=batch_data
                     ).squeeze(dim=-1)
-                    if predictions.dim() == 0:
-                        predictions = predictions.unsqueeze(0)
+
                     # Compute loss
                     loss = self.loss_fn(predictions, batch_rewards[:, model_index])
 
@@ -340,8 +339,7 @@ class RLModel(ABC):
                             # Get predictions and rewards for source/target number of building blocks
                             predictions_masked = model_predictions[mask]
                             rewards_masked = model_rewards[mask]
-                            rewards_masked = rewards_masked.astype(np.float32, copy=False)
-                            
+
                             # Create description of this subset
                             description = (
                                 f"{model_name} {split_name}{bb_string}{react_string}"
@@ -561,7 +559,7 @@ class RLModelMLP(RLModel):
         model_paths: list[Path] | None = None,
         max_num_molecules: int = 3,
         features_size: int = 200,
-        hidden_dim: int = 100,
+        hidden_dim: int = 300,
         num_layers: int = 2,
         num_workers: int = 0,
         num_epochs: int = 5,
@@ -575,9 +573,9 @@ class RLModelMLP(RLModel):
         :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
                                 'classification' = binary classification. 'regression' = regression.
         :param model_weights: The weights of the models for each property.
-        :param model_paths: A list of paths to PT files or directories of PT files
-                    containing models to load if using pretrained models.
-                    If None, models are initialized randomly.
+        :param model_paths: A list of paths to PT files or directories of PT files containing models to load if using
+                            pretrained models. For directories, the first PT file in the directory will be used.
+                            If None, models are initialized randomly.
         :param max_num_molecules: The maximum number of molecules to process at a time.
         :param features_size: The size of the features for each molecule.
         :param hidden_dim: The dimensionality of the hidden layers.
@@ -594,14 +592,6 @@ class RLModelMLP(RLModel):
         self.hidden_dim = hidden_dim
         self.output_dim = 1
         self.num_layers = num_layers
-        self._model = MLP(
-            input_dim=max_num_molecules * features_size,
-            hidden_dim=hidden_dim,
-            output_dim=1,
-            num_layers=num_layers,
-            sigmoid=prediction_type == "classification",
-            device=device,
-        ).to(device)
 
         super().__init__(
             prediction_type=prediction_type,
@@ -637,9 +627,89 @@ class RLModelMLP(RLModel):
         :param model_path: The path to a PT file containing a model to load.
         :return: A model with pretrained weights.
         """
-        # TODO: implement this
-        # Need to load Chemprop feed-forward model and then match layers in state dicts
-        raise NotImplementedError
+        # Build model
+        model = self.build_model()
+        model_state_dict = model.state_dict()
+
+        # Get layer names in model (layer names are <name>.<num>.<weight/bias>)
+        model_weight_names = sorted(
+            [name for name in model_state_dict if name.endswith("weight")],
+            key=lambda name: int(name.split(".")[1]),
+        )
+        model_bias_names = sorted(
+            [name for name in model_state_dict if name.endswith("bias")],
+            key=lambda name: int(name.split(".")[1]),
+        )
+
+        # Check that all layers in model are captured
+        if len(model_weight_names) + len(model_bias_names) != len(model_state_dict):
+            raise ValueError(
+                "Number of weights and biases in model does not match total number of layers."
+            )
+
+        # Check equal number of weights and biases in model
+        if len(model_weight_names) != len(model_bias_names):
+            raise ValueError(
+                "Number of weights and biases in model does not match. "
+                f"Number of weights: {len(model_weight_names):,}. "
+                f"Number of biases: {len(model_bias_names):,}."
+            )
+
+        # Load model weights
+        loaded_state = torch.load(model_path, map_location=lambda storage, loc: storage)
+        loaded_state_dict = loaded_state["state_dict"]
+
+        # Get layer names in loaded model (layer names are <name>.<num>.<weight/bias>)
+        loaded_weight_names = sorted(
+            [name for name in loaded_state_dict if name.endswith("weight")],
+            key=lambda name: int(name.split(".")[1]),
+        )
+        loaded_bias_names = sorted(
+            [name for name in loaded_state_dict if name.endswith("bias")],
+            key=lambda name: int(name.split(".")[1]),
+        )
+
+        # Check that all layers of loaded model are captured
+        if len(loaded_weight_names) + len(loaded_bias_names) != len(loaded_state_dict):
+            raise ValueError(
+                "Number of weights and biases in loaded model does not match total number of layers."
+            )
+
+        # Check equal number of weights and biases in loaded model
+        if len(loaded_weight_names) != len(loaded_bias_names):
+            raise ValueError(
+                "Number of weights and biases in loaded model does not match. "
+                f"Number of weights: {len(loaded_weight_names):,}. "
+                f"Number of biases: {len(loaded_bias_names):,}."
+            )
+
+        # Check equal number of layers in model and loaded model
+        if len(model_weight_names) != len(loaded_weight_names):
+            raise ValueError(
+                "Number of layers in model does not match number of layers in loaded model. "
+                f"Number of layers in model: {len(model_weight_names):,}. "
+                f"Number of layers in loaded model: {len(loaded_weight_names):,}."
+            )
+
+        # Rename loaded weights and biases to match model weights and biases
+        for layer_num in range(len(model_weight_names)):
+            loaded_state_dict[model_weight_names[layer_num]] = loaded_state_dict.pop(
+                loaded_weight_names[layer_num]
+            )
+            loaded_state_dict[model_bias_names[layer_num]] = loaded_state_dict.pop(
+                loaded_bias_names[layer_num]
+            )
+
+        # Repeat first layer loaded weights to match size of first layer model weights due to multiple molecule input
+        first_layer_weight_name = model_weight_names[0]
+        loaded_state_dict[first_layer_weight_name] = loaded_state_dict[
+            first_layer_weight_name
+        ].repeat(1, self.max_num_molecules)
+
+        # Load weights into model
+        model.load_state_dict(loaded_state_dict)
+
+        return model
 
     def run_model(self, model: MLP, batch_data: torch.Tensor) -> torch.Tensor:
         """Makes predictions using a model.
@@ -790,7 +860,6 @@ def rl_chemprop_collate_fn(
     else:
         rewards = torch.tensor(rewards)
 
-
     # Set up batch data for Chemprop
     batch_data = ([batch_mol_graph], features)
 
@@ -819,9 +888,9 @@ class RLModelChemprop(RLModel):
         :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
                                 'classification' = binary classification. 'regression' = regression.
         :param model_weights: The weights of the models for each property.
-        :param model_paths: A list of paths to PT files or directories of PT files
-                    containing models to load if using pretrained models.
-                    If None, models are initialized randomly.
+        :param model_paths: A list of paths to PT files or directories of PT files containing models to load if using
+                            pretrained models. For directories, the first PT file in the directory will be used.
+                            If None, models are initialized randomly.
         :param max_num_molecules: The maximum number of molecules to process at a time.
         :param features_size: The size of the features for each molecule.
         :param num_workers: The number of workers to use for data loading.
