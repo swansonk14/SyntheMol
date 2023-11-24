@@ -83,11 +83,6 @@ class Node:
 
         :return: The average property score of the Node's molecules (weighted average of individual property scores).
         """
-        # If no molecules, return 0
-        if self.num_molecules == 0:
-            return 0.0
-
-        # Compute weighted sum of individual scores
         return sum(
             weight * score
             for weight, score in zip(
