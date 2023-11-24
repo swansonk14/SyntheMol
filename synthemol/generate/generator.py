@@ -40,7 +40,7 @@ class Generator:
         explore_weight: float,
         num_expand_nodes: int | None,
         rl_base_temperature: float,
-        rl_temperature_similarity_target: float | None,
+        rl_temperature_similarity_target: float,
         rl_train_frequency: int,
         optimization: OPTIMIZATION_TYPES,
         reactions: tuple[Reaction],
@@ -76,6 +76,7 @@ class Generator:
         :param rl_temperature_similarity_target: If provided, adjusts the temperature to obtain the maximally scoring molecules
                                                  that are at most this similar to previously generated molecules. Starts with
                                                  the temperature provided by rl_base_temperature.
+                                                 If -1, the temperature is not adjusted.
         :param rl_train_frequency: The number of rollouts between each training step of the RL model.
         :param optimization: Whether to maximize or minimize the score.
         :param reactions: A tuple of reactions that combine molecular building blocks.
@@ -792,9 +793,11 @@ class Generator:
             rollout_stats["Rollout Similarity"] = new_similarity
             rollout_stats["Similarity Time"] = time.time() - start_time
 
-            # Optionally, update temperature based on similarity of new molecules to previous molecules
-            if self.rl_temperature_similarity_target is not None:
-                self.update_temperature(new_similarity=new_similarity)
+            # Determine number of unique full molecules found
+            rollout_stats["Unique Molecules"] = sum(
+                node.num_molecules == 1 and node.num_reactions > 0
+                for node in self.node_map
+            )
 
             # Optionally, update model weights based on success rate
             if self.success_comparators is not None:
@@ -812,47 +815,47 @@ class Generator:
                 # Update model weights
                 self.update_model_weights(successes=successes)
 
-            # Add RL temperature to rollout stats
-            rollout_stats["RL Temperature"] = self.rl_temperature
-
             # Add model weights to rollout stats
             for model_name, model_weight in zip(
                 self.model_weights.model_names, self.model_weights.weights
             ):
                 rollout_stats[f"{model_name} Weight"] = model_weight
 
-            # Determine number of unique full molecules found
-            rollout_stats["Unique Molecules"] = sum(
-                node.num_molecules == 1 and node.num_reactions > 0
-                for node in self.node_map
-            )
+            # RL-specific updates and training
+            if self.search_type == "rl":
+                # Optionally, update temperature based on similarity of new molecules to previous molecules
+                if self.rl_temperature_similarity_target != -1:
+                    self.update_temperature(new_similarity=new_similarity)
 
-            # Train and evaluate RL model
-            if self.rl_model is not None and rollout_num % self.rl_train_frequency == 0:
-                # Reset RL scores since RL model is being updated
-                self.molecules_to_rl_score = {}
+                # Add RL temperature to rollout stats
+                rollout_stats["RL Temperature"] = self.rl_temperature
 
-                # Evaluate model on test set
-                if self.wandb_log:
+                # Train and evaluate RL model
+                if rollout_num % self.rl_train_frequency == 0:
+                    # Reset RL scores since RL model is being updated
+                    self.molecules_to_rl_score = {}
+
+                    # Evaluate model on test set
+                    if self.wandb_log:
+                        start_time = time.time()
+                        rollout_stats |= self.rl_model.evaluate(split="test")
+                        rollout_stats["RL Test Eval Time"] = time.time() - start_time
+                        rollout_stats["RL Test Examples"] = self.rl_model.test_size
+
+                    # Move test set to train
+                    self.rl_model.test_to_train()
+
+                    # Train model
                     start_time = time.time()
-                    rollout_stats |= self.rl_model.evaluate(split="test")
-                    rollout_stats["RL Test Eval Time"] = time.time() - start_time
-                    rollout_stats["RL Test Examples"] = self.rl_model.test_size
+                    self.rl_model.train()
+                    rollout_stats["RL Train Time"] = time.time() - start_time
 
-                # Move test set to train
-                self.rl_model.test_to_train()
-
-                # Train model
-                start_time = time.time()
-                self.rl_model.train()
-                rollout_stats["RL Train Time"] = time.time() - start_time
-
-                # Evaluate model on train set
-                if self.wandb_log:
-                    start_time = time.time()
-                    rollout_stats |= self.rl_model.evaluate(split="train")
-                    rollout_stats["RL Train Eval Time"] = time.time() - start_time
-                    rollout_stats["RL Train Examples"] = self.rl_model.train_size
+                    # Evaluate model on train set
+                    if self.wandb_log:
+                        start_time = time.time()
+                        rollout_stats |= self.rl_model.evaluate(split="train")
+                        rollout_stats["RL Train Eval Time"] = time.time() - start_time
+                        rollout_stats["RL Train Examples"] = self.rl_model.train_size
 
             # Log rollout stats
             if self.wandb_log:

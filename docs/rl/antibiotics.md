@@ -324,7 +324,7 @@ synthemol \
 RL MLP-RDKit
 ```bash
 synthemol \
-    --model_paths rl/models/s_aureus_chemprop_rdkit rl/model/solubility_chemprop_rdkit \
+    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --model_types chemprop chemprop \
     --fingerprint_types rdkit rdkit \
     --model_names 'S. aureus' 'Solubility' \
@@ -348,7 +348,7 @@ MCTS
 TODO: Check that this works with dynamic multiparameter (need to make sure building block scores can be updated)
 ```bash
 synthemol \
-    --model_paths rl/models/s_aureus_chemprop_rdkit rl/model/solubility_chemprop_rdkit \
+    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --model_types chemprop chemprop \
     --fingerprint_types rdkit rdkit \
     --model_names 'S. aureus' 'Solubility' \
@@ -448,7 +448,7 @@ for S_AUREUS_WEIGHT in 0.00 0.86 0.90 0.94 0.98 1.00
 do
 SOLUBILITY_WEIGHT="0$(echo "1.0 - S_AUREUS_WEIGHT" | bc)"
 synthemol \
-    --model_paths rl/models/s_aureus_chemprop_rdkit rl/model/solubility_chemprop_rdkit \
+    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --model_types chemprop chemprop \
     --fingerprint_types rdkit rdkit \
     --model_names 'S. aureus' 'Solubility' \
@@ -507,7 +507,7 @@ RL MLP-RDKit
 for SIMILARITY_TARGET in 0.3 0.4 0.6 0.7
 do
 synthemol \
-    --model_paths rl/models/s_aureus_chemprop_rdkit rl/model/solubility_chemprop_rdkit \
+    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --model_types chemprop chemprop \
     --fingerprint_types rdkit rdkit \
     --model_names 'S. aureus' 'Solubility' \
@@ -568,7 +568,7 @@ RL MLP-RDKit
 for TEMPERATURE in 0.01 0.05 0.1 0.5 1.0
 do
 synthemol \
-    --model_paths rl/models/s_aureus_chemprop_rdkit rl/model/solubility_chemprop_rdkit \
+    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --model_types chemprop chemprop \
     --fingerprint_types rdkit rdkit \
     --model_names 'S. aureus' 'Solubility' \
@@ -597,7 +597,7 @@ TODO: Check that this works with dynamic multiparameter (need to make sure build
 for EXPLORE_WEIGHT in 0.5 1.0 5.0 50.0
 do
 synthemol \
-    --model_paths rl/models/s_aureus_chemprop_rdkit rl/model/solubility_chemprop_rdkit \
+    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --model_types chemprop chemprop \
     --fingerprint_types rdkit rdkit \
     --model_names 'S. aureus' 'Solubility' \

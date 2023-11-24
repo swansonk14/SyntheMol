@@ -1,5 +1,6 @@
 """Contains the Node class, which represents a step in the combinatorial molecule construction process."""
 import math
+from functools import cached_property
 from typing import Any
 
 import numpy as np
@@ -50,9 +51,11 @@ class Node:
         self.rollout_num = rollout_num
         self.num_children = 0
 
-    @property
+    @cached_property
     def individual_scores(self) -> list[float]:
         """Computes the average individual scores of the Node's molecules.
+
+        Note: Individual scores are assumed to be immutable.
 
         :return: The average individual scores of the Node's molecules.
         """
@@ -80,12 +83,16 @@ class Node:
 
         :return: The average property score of the Node's molecules (weighted average of individual property scores).
         """
+        # If no molecules, return 0
         if self.num_molecules == 0:
             return 0.0
 
-        return (
-            sum(self.scorer(molecule) for molecule in self.molecules)
-            / self.num_molecules
+        # Compute weighted sum of individual scores
+        return sum(
+            weight * score
+            for weight, score in zip(
+                self.scorer.model_weights.weights, self.individual_scores
+            )
         )
 
     @property
