@@ -228,7 +228,7 @@ class RLModel(ABC):
                     # Make predictions
                     predictions = self.run_model(
                         model=model, batch_data=batch_data
-                    ).squeeze(dim=-1)
+                    )
 
                     # Compute loss
                     loss = self.loss_fn(predictions, batch_rewards[:, model_index])
@@ -348,8 +348,8 @@ class RLModel(ABC):
                             # Evaluate predictions
                             results |= {
                                 f"RL {description} Loss": self.eval_loss_fn(
-                                    torch.from_numpy(predictions_masked),
-                                    torch.from_numpy(rewards_masked),
+                                    torch.from_numpy(predictions_masked).float(),
+                                    torch.from_numpy(rewards_masked).float(),
                                 ).item(),
                                 f"RL {description} Mean Squared Error": mean_squared_error(
                                     rewards_masked, predictions_masked
