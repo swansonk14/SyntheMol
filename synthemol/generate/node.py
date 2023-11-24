@@ -88,10 +88,13 @@ class Node:
             / self.num_molecules
         )
 
+    # TODO: refactor to keep track of each property separately and dynamically compute explore score using
+    # TODO: model weights from the model_scorer
     def exploit_score(self) -> float:
         """Value that encourages exploitation of Nodes with high reward."""
         return self.W / self.N if self.N > 0 else 0.0
 
+    # TODO: rename since in the paper, explore_score is just the explore part
     def explore_score(self, n: int) -> float:
         """Value that encourages exploration of Nodes with few visits."""
         return (

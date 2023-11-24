@@ -148,6 +148,7 @@ chemprop_train \
     --metric prc-auc \
     --extra_metrics auc \
     --save_dir rl/models/s_aureus_chemprop \
+    --save_preds \
     --quiet
 ```
 
@@ -162,6 +163,7 @@ chemprop_train \
     --metric mae \
     --extra_metrics r2 \
     --save_dir rl/models/solubility_chemprop \
+    --save_preds \
     --quiet
 ```
 
@@ -178,6 +180,7 @@ chemprop_train \
     --metric prc-auc \
     --extra_metrics auc \
     --save_dir rl/models/s_aureus_chemprop_rdkit \
+    --save_preds \
     --quiet
 ```
 
@@ -194,6 +197,7 @@ chemprop_train \
     --metric mae \
     --extra_metrics r2 \
     --save_dir rl/models/solubility_chemprop_rdkit \
+    --save_preds \
     --quiet
 ```
 
@@ -211,6 +215,7 @@ chemprop_train \
     --metric prc-auc \
     --extra_metrics auc \
     --save_dir rl/models/s_aureus_mlp_rdkit \
+    --save_preds \
     --quiet
 ```
 
@@ -228,8 +233,11 @@ chemprop_train \
     --metric mae \
     --extra_metrics r2 \
     --save_dir rl/models/solubility_mlp_rdkit \
+    --save_preds \
     --quiet
 ```
+
+TODO: redo everything below with save_preds version of the models
 
 Results for _S. aureus_ (10-fold cross-validation, 8-core, 1-GPU machine):
 
