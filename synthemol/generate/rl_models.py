@@ -226,9 +226,7 @@ class RLModel(ABC):
                     zip(self.models, self.optimizers)
                 ):
                     # Make predictions
-                    predictions = self.run_model(
-                        model=model, batch_data=batch_data
-                    )
+                    predictions = self.run_model(model=model, batch_data=batch_data)
 
                     # Compute loss
                     loss = self.loss_fn(predictions, batch_rewards[:, model_index])
@@ -420,12 +418,10 @@ class RLModel(ABC):
         )  # (num_molecules, num_properties)
 
         # Move weights to tensor
-        weights = torch.tensor(self.model_weights.weights).view(
-            1, -1
-        )  # (1, num_properties)
+        weights = torch.tensor(self.model_weights.weights)  # (num_properties,)
 
         # Compute weighted average
-        predictions = torch.sum(weights * individual_preds, dim=1)  # (num_molecules,)
+        predictions = torch.matmul(individual_preds, weights)  # (num_molecules,)
 
         return predictions
 

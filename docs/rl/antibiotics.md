@@ -237,23 +237,21 @@ chemprop_train \
     --quiet
 ```
 
-TODO: redo everything below with save_preds version of the models
-
 Results for _S. aureus_ (10-fold cross-validation, 8-core, 1-GPU machine):
 
 | Model          | ROC-AUC         | PRC-AUC         | Time     |
 |----------------|-----------------|-----------------|----------|
-| Chemprop       | 0.861 +/- 0.013 | 0.531 +/- 0.042 | 52m, 19s |
-| Chemprop-RDKit | 0.874 +/- 0.017 | 0.575 +/- 0.046 | 51m, 46s |
-| MLP-RDKit      | 0.873 +/- 0.019 | 0.554 +/- 0.043 | 42m, 34s |
+| Chemprop       | 0.862 +/- 0.013 | 0.527 +/- 0.034 | 68m, 34s |
+| Chemprop-RDKit | 0.875 +/- 0.013 | 0.570 +/- 0.050 | 79m, 38s |
+| MLP-RDKit      | 0.873 +/- 0.018 | 0.553 +/- 0.040 | 60m, 09s |
 
 Results for solubility (10-fold cross-validation, 8-core, 1-GPU machine):
 
 | Model          | MAE             | R^2             | Time     |
 |----------------|-----------------|-----------------|----------|
-| Chemprop       | 0.693 +/- 0.027 | 0.806 +/- 0.021 | 36m, 11s |
-| Chemprop-RDKit | 0.659 +/- 0.022 | 0.821 +/- 0.022 | 40m, 55s |
-| MLP-RDKit      | 0.688 +/- 0.020 | 0.817 +/- 0.013 | 24m, 28s |
+| Chemprop       | 0.693 +/- 0.027 | 0.806 +/- 0.021 | 35m, 59s |
+| Chemprop-RDKit | 0.656 +/- 0.023 | 0.822 +/- 0.021 | 36m, 59s |
+| MLP-RDKit      | 0.688 +/- 0.020 | 0.817 +/- 0.013 | 24m, 22s |
 
 The Chemprop-RDKit models are the best for both _S. aureus_ and solubility. Therefore, those models are used to evaluate building blocks and molecules.
 
@@ -280,10 +278,11 @@ Time with an 8-core, 1-GPU machine:
 
 | Model      | Chemical Space | Time     |
 |------------|----------------|----------|
-| S. aureus  | REAL           | 18m, 47s |
-| S. aureus  | WuXi           | 2m, 49s  |
-| Solubility | REAL           | 18m, 52s |
-| Solubility | WuXi           | 2m, 45s  |
+| S. aureus  | REAL           | 20m, 11s |
+| S. aureus  | WuXi           | 2m, 28s  |
+| Solubility | REAL           | 20m, 06s |
+| Solubility | WuXi           | 2m, 19s  |
+
 
 
 ## Generate molecules with SyntheMol-RL

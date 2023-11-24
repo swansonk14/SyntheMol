@@ -400,7 +400,12 @@ class Generator:
         :return: The MCTS score of the Node.
         """
         # Compute initial MCTS score
-        mcts_score = node.exploit_score() + node.explore_score(n=total_visit_count)
+        mcts_score = (
+            node.exploit_score
+            + self.explore_weight
+            * node.property_score
+            * node.explore_score(n=total_visit_count)
+        )
 
         # Optionally encourage building block diversity by reducing MCTS score based on building block usage
         if self.building_block_diversity and node.num_molecules > 0:
@@ -475,7 +480,7 @@ class Generator:
         # Select a node based on the search type
         if self.search_type == "mcts":
             # Select node with the highest MCTS score
-            total_visit_count = sum(child_node.N for child_node in child_nodes)
+            total_visit_count = sum(child_node.num_visits for child_node in child_nodes)
             selected_node = self.optimization_fn(
                 child_nodes,
                 key=partial(
@@ -538,8 +543,8 @@ class Generator:
             best_node = max(best_node, selected_node, key=lambda n: n.property_score)
 
         # Update exploit score and visit count
-        selected_node.W += best_node.property_score
-        selected_node.N += 1
+        selected_node.total_best_molecule_scores += best_node.property_score
+        selected_node.num_visits += 1
 
         # Add RL training example
         if self.rl_model is not None:

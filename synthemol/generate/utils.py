@@ -109,10 +109,10 @@ def save_generated_molecules(
             {
                 SMILES_COL: ".".join(node.molecules),
                 "node_id": node.node_id,
-                "num_expansions": node.N,
+                "num_expansions": node.num_visits,
                 ROLLOUT_COL: node.rollout_num,
                 SCORE_COL: node.property_score,
-                "Q_value": node.exploit_score(),
+                "Q_value": node.exploit_score,
                 **construction_dict,
                 **individual_score_dict,
             }

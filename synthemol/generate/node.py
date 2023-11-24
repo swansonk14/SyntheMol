@@ -45,8 +45,8 @@ class Node:
         self.construction_log = (
             construction_log if construction_log is not None else ConstructionLog()
         )
-        self.W = 0.0  # The sum of the leaf Node values for leaf Nodes that descend from this Node.
-        self.N = 0  # The number of times this Node has been expanded.
+        self.total_best_molecule_scores = np.zeros(self.scorer.num_scores)
+        self.num_visits = 0
         self.rollout_num = rollout_num
         self.num_children = 0
 
@@ -88,18 +88,31 @@ class Node:
             / self.num_molecules
         )
 
-    # TODO: refactor to keep track of each property separately and dynamically compute explore score using
-    # TODO: model weights from the model_scorer
+    @property
     def exploit_score(self) -> float:
         """Value that encourages exploitation of Nodes with high reward."""
-        return self.W / self.N if self.N > 0 else 0.0
+        # Return 0 if no visits
+        if self.num_visits == 0:
+            return 0.0
 
-    # TODO: rename since in the paper, explore_score is just the explore part
+        # Compute average best molecule scores
+        average_best_molecule_scores = (
+            self.total_best_molecule_scores / self.num_visits
+        )  # (num_scores,)
+
+        # Get model weights
+        model_weights = np.array(self.scorer.model_weights.weights)  # (num_scores,)
+
+        # Compute weighted average of model scores
+        weighted_average_best_molecule_scores = np.dot(
+            average_best_molecule_scores, model_weights
+        )
+
+        return weighted_average_best_molecule_scores
+
     def explore_score(self, n: int) -> float:
         """Value that encourages exploration of Nodes with few visits."""
-        return (
-            self.explore_weight * self.property_score * math.sqrt(1 + n) / (1 + self.N)
-        )
+        return math.sqrt(1 + n) / (1 + self.num_visits)
 
     @property
     def num_molecules(self) -> int:
