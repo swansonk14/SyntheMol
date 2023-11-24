@@ -4,6 +4,7 @@ Instructions for generating antibiotic candidates for _Acinetobacter baumannii_ 
 
 This includes instructions for processing antibiotics data, training antibacterial activity prediction models, generating molecules with SyntheMol, and selecting candidates. Assumes relevant data has already been downloaded (see [docs/README.md](README.md)).
 
+TODO: update table of contents
 - [Process antibiotics training data](#process-antibiotics-training-data)
 - [Process ChEMBL antibacterials](#process-chembl-antibacterials)
 - [Build bioactivity prediction models](#build-bioactivity-prediction-models)
@@ -286,6 +287,8 @@ Generate molecules with SyntheMol-RL.
 
 RL models for _S. aureus_ and solubility dynamic multiparameter REAL & WuXi
 
+TODO: set rollout numbers
+
 RL Chemprop-RDKit
 ```bash
 synthemol \
@@ -334,6 +337,46 @@ synthemol \
     --wandb_log
 ```
 
+MCTS
+TODO: Check that this works with dynamic multiparameter (need to make sure building block scores can be updated)
+```bash
+synthemol \
+    --model_paths rl/models/s_aureus_chemprop_rdkit rl/model/solubility_chemprop_rdkit \
+    --model_types chemprop chemprop \
+    --fingerprint_types rdkit rdkit \
+    --model_names 'S. aureus' 'Solubility' \
+    --success_thresholds '>=0.5' '>=-4' \
+    --chemical_spaces real wuxi \
+    --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
+    --building_blocks_score_columns s_aureus_activity solubility \
+    --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
+    --save_dir rl/generations/mcts_s_aureus_solubility_dynamic_weights_real_wuxi \
+    --n_rollout 100000 \
+    --search_type mcts \
+    --wandb_project_name synthemol_rl \
+    --wandb_run_name mcts_s_aureus_solubility_dynamic_weights_real_wuxi \
+    --wandb_log
+```
+
+Chemprop-RDKit on REAL + WuXi
+TODO: how to sample WuXi randomly?
+```bash
+chemfunc save_fingerprints \
+    --data_path rl/data/real/random_real_25m.csv \
+    --fingerprint_type rdkit \
+    --save_path rl/data/real/random_real_25m.npz
+
+chemprop_predict \
+    --test_path rl/data/real/random_real_25m.csv \
+    --preds_path rl/generations/chemprop_rdkit_s_aureus_solubility_dynamic_weights_real.csv \
+    --checkpoint_dir rl/models/s_aureus_chemprop_rdkit \
+    --features_path rl/data/real/random_real_25m.npz \
+    --no_features_scaling
+```
+
+Random
+TODO: how to sample WuXi randomly?
+
 
 ## Filter generated molecules
 
@@ -352,3 +395,216 @@ synthemol \
 
 ## Map molecules to REAL IDs
 
+
+## Ablation experiments
+
+### Chemical space
+
+Simply analyze REAL versus WuXi from final generations.
+
+### Multiparameter
+
+Final (dynamic weights) versus the fixed weights below.
+
+RL Chemprop-RDKit
+```bash
+for S_AUREUS_WEIGHT in 0.00 0.86 0.90 0.92 0.94 0.96 1.00
+do
+SOLUBILITY_WEIGHT="0$(echo "1.0 - S_AUREUS_WEIGHT" | bc)"
+synthemol \
+    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --model_types chemprop chemprop \
+    --fingerprint_types rdkit rdkit \
+    --model_names 'S. aureus' 'Solubility' \
+    --base_model_weights ${S_AUREUS_WEIGHT} ${SOLUBILITY_WEIGHT} \
+    --chemical_spaces real wuxi \
+    --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
+    --building_blocks_score_columns s_aureus_activity solubility \
+    --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
+    --save_dir rl/generations/rl_chemprop_rdkit_s_aureus_${S_AUREUS_WEIGHT}_solubility_${SOLUBILITY_WEIGHT}_real_wuxi \
+    --n_rollout 100000 \
+    --search_type rl \
+    --rl_model_type chemprop_rdkit \
+    --rl_model_paths rl/models/s_aureus_chemprop_rdkit/fold_0/model_0/model.pt rl/models/solubility_chemprop_rdkit/fold_0/model_0/model.pt \
+    --rl_prediction_type regression \
+    --use_gpu \
+    --num_workers 8 \
+    --wandb_project_name synthemol_rl \
+    --wandb_run_name rl_chemprop_rdkit_s_aureus_${S_AUREUS_WEIGHT}_solubility_${SOLUBILITY_WEIGHT}_real_wuxi \
+    --wandb_log
+done
+```
+
+RL MLP-RDKit
+```bash
+for S_AUREUS_WEIGHT in 0.00 0.86 0.90 0.94 0.98 1.00
+do
+SOLUBILITY_WEIGHT="0$(echo "1.0 - S_AUREUS_WEIGHT" | bc)"
+synthemol \
+    --model_paths rl/models/s_aureus_chemprop_rdkit rl/model/solubility_chemprop_rdkit \
+    --model_types chemprop chemprop \
+    --fingerprint_types rdkit rdkit \
+    --model_names 'S. aureus' 'Solubility' \
+    --base_model_weights ${S_AUREUS_WEIGHT} ${SOLUBILITY_WEIGHT} \
+    --chemical_spaces real wuxi \
+    --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
+    --building_blocks_score_columns s_aureus_activity solubility \
+    --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
+    --save_dir rl/generations/rl_mlp_rdkit_s_aureus_${S_AUREUS_WEIGHT}_solubility_${SOLUBILITY_WEIGHT}_real_wuxi \
+    --n_rollout 100000 \
+    --search_type rl \
+    --rl_model_type mlp_rdkit \
+    --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/folds_0/model_0/model.pt \
+    --rl_prediction_type regression \
+    --wandb_project_name synthemol_rl \
+    --wandb_run_name rl_mlp_rdkit_s_aureus_${S_AUREUS_WEIGHT}_solubility_${SOLUBILITY_WEIGHT}_real_wuxi \
+    --wandb_log
+done
+```
+
+### Dynamic temperature
+
+Final (target similarity of 0.5) versus target similarities of 0.3, 0.4, 0.6, 0.7.
+
+RL Chemprop-RDKit
+```bash
+for SIMILARITY_TARGET in 0.3 0.4 0.6 0.7
+do
+synthemol \
+    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --model_types chemprop chemprop \
+    --fingerprint_types rdkit rdkit \
+    --model_names 'S. aureus' 'Solubility' \
+    --success_thresholds '>=0.5' '>=-4' \
+    --chemical_spaces real wuxi \
+    --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
+    --building_blocks_score_columns s_aureus_activity solubility \
+    --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
+    --save_dir rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_similarity_target_${SIMILARITY_TARGET} \
+    --n_rollout 100000 \
+    --search_type rl \
+    --rl_model_type chemprop_rdkit \
+    --rl_model_paths rl/models/s_aureus_chemprop_rdkit/fold_0/model_0/model.pt rl/models/solubility_chemprop_rdkit/fold_0/model_0/model.pt \
+    --rl_prediction_type regression \
+    --rl_temperature_similarity_target ${SIMILARITY_TARGET} \
+    --use_gpu \
+    --num_workers 8 \
+    --wandb_project_name synthemol_rl \
+    --wandb_run_name rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_similarity_target_${SIMILARITY_TARGET} \
+    --wandb_log
+done
+```
+
+RL MLP-RDKit
+```bash
+for SIMILARITY_TARGET in 0.3 0.4 0.6 0.7
+do
+synthemol \
+    --model_paths rl/models/s_aureus_chemprop_rdkit rl/model/solubility_chemprop_rdkit \
+    --model_types chemprop chemprop \
+    --fingerprint_types rdkit rdkit \
+    --model_names 'S. aureus' 'Solubility' \
+    --success_thresholds '>=0.5' '>=-4' \
+    --chemical_spaces real wuxi \
+    --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
+    --building_blocks_score_columns s_aureus_activity solubility \
+    --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
+    --save_dir rl/generations/rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_similarity_target_${SIMILARITY_TARGET} \
+    --n_rollout 100000 \
+    --search_type rl \
+    --rl_model_type mlp_rdkit \
+    --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/folds_0/model_0/model.pt \
+    --rl_prediction_type regression \
+    --rl_temperature_similarity_target ${SIMILARITY_TARGET} \
+    --wandb_project_name synthemol_rl \
+    --wandb_run_name rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_similarity_target_${SIMILARITY_TARGET} \
+    --wandb_log
+done
+```
+
+### Exploration parameters (RL temperature vs MCTS explore weight)
+
+RL with fixed temperatures of 0.01, 0.05, 0.1, 0.5, 1.0 versus MCTS with fixed explore weights of 0.5, 1.0, 5.0, 10.0, 50.0 (note: 10.0 is covered by the final model).
+
+RL Chemprop-RDKit
+```bash
+for TEMPERATURE in 0.01 0.05 0.1 0.5 1.0
+do
+synthemol \
+    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --model_types chemprop chemprop \
+    --fingerprint_types rdkit rdkit \
+    --model_names 'S. aureus' 'Solubility' \
+    --success_thresholds '>=0.5' '>=-4' \
+    --chemical_spaces real wuxi \
+    --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
+    --building_blocks_score_columns s_aureus_activity solubility \
+    --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
+    --save_dir rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_temperature_${TEMPERATURE} \
+    --n_rollout 100000 \
+    --search_type rl \
+    --rl_model_type chemprop_rdkit \
+    --rl_model_paths rl/models/s_aureus_chemprop_rdkit/fold_0/model_0/model.pt rl/models/solubility_chemprop_rdkit/fold_0/model_0/model.pt \
+    --rl_prediction_type regression \
+    --rl_temperature_similarity_target -1 \
+    --rl_base_temperature ${TEMPERATURE} \
+    --use_gpu \
+    --num_workers 8 \
+    --wandb_project_name synthemol_rl \
+    --wandb_run_name rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_temperature_${TEMPERATURE} \
+    --wandb_log
+done
+```
+
+RL MLP-RDKit
+```bash
+for TEMPERATURE in 0.01 0.05 0.1 0.5 1.0
+do
+synthemol \
+    --model_paths rl/models/s_aureus_chemprop_rdkit rl/model/solubility_chemprop_rdkit \
+    --model_types chemprop chemprop \
+    --fingerprint_types rdkit rdkit \
+    --model_names 'S. aureus' 'Solubility' \
+    --success_thresholds '>=0.5' '>=-4' \
+    --chemical_spaces real wuxi \
+    --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
+    --building_blocks_score_columns s_aureus_activity solubility \
+    --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
+    --save_dir rl/generations/rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_temperature_${TEMPERATURE} \
+    --n_rollout 100000 \
+    --search_type rl \
+    --rl_model_type mlp_rdkit \
+    --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/folds_0/model_0/model.pt \
+    --rl_prediction_type regression \
+    --rl_temperature_similarity_target -1 \
+    --rl_base_temperature ${TEMPERATURE} \
+    --wandb_project_name synthemol_rl \
+    --wandb_run_name rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_temperature_${TEMPERATURE} \
+    --wandb_log
+done
+```
+
+MCTS
+TODO: Check that this works with dynamic multiparameter (need to make sure building block scores can be updated)
+```bash
+for EXPLORE_WEIGHT in 0.5 1.0 5.0 50.0
+do
+synthemol \
+    --model_paths rl/models/s_aureus_chemprop_rdkit rl/model/solubility_chemprop_rdkit \
+    --model_types chemprop chemprop \
+    --fingerprint_types rdkit rdkit \
+    --model_names 'S. aureus' 'Solubility' \
+    --success_thresholds '>=0.5' '>=-4' \
+    --chemical_spaces real wuxi \
+    --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
+    --building_blocks_score_columns s_aureus_activity solubility \
+    --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
+    --save_dir rl/generations/mcts_s_aureus_solubility_dynamic_weights_real_wuxi_explore_weight_${EXPLORE_WEIGHT} \
+    --n_rollout 100000 \
+    --search_type mcts \
+    --explore_weight ${EXPLORE_WEIGHT} \
+    --wandb_project_name synthemol_rl \
+    --wandb_run_name mcts_s_aureus_solubility_dynamic_weights_real_wuxi_explore_weight_${EXPLORE_WEIGHT} \
+    --wandb_log
+done
+```
