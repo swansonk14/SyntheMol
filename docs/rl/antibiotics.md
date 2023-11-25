@@ -294,8 +294,6 @@ Generate molecules with SyntheMol-RL.
 
 RL models for _S. aureus_ and solubility dynamic multiparameter REAL & WuXi
 
-TODO: set rollout numbers
-
 RL Chemprop-RDKit
 ```bash
 synthemol \
@@ -309,7 +307,7 @@ synthemol \
     --building_blocks_score_columns s_aureus_activity solubility \
     --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
     --save_dir rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi \
-    --n_rollout 100000 \
+    --n_rollout 10000 \
     --search_type rl \
     --rl_model_type chemprop_rdkit \
     --rl_model_paths rl/models/s_aureus_chemprop_rdkit/fold_0/model_0/model.pt rl/models/solubility_chemprop_rdkit/fold_0/model_0/model.pt \
@@ -334,7 +332,7 @@ synthemol \
     --building_blocks_score_columns s_aureus_activity solubility \
     --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
     --save_dir rl/generations/rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi \
-    --n_rollout 100000 \
+    --n_rollout 50000 \
     --search_type rl \
     --rl_model_type mlp_rdkit \
     --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/folds_0/model_0/model.pt \
@@ -345,7 +343,8 @@ synthemol \
 ```
 
 MCTS
-TODO: Check that this works with dynamic multiparameter (need to make sure building block scores can be updated)
+TODO: Handle negative rewards with solubility
+TODO: Determine number of rollouts
 ```bash
 synthemol \
     --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
@@ -429,7 +428,7 @@ synthemol \
     --building_blocks_score_columns s_aureus_activity solubility \
     --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
     --save_dir rl/generations/rl_chemprop_rdkit_s_aureus_${S_AUREUS_WEIGHT}_solubility_${SOLUBILITY_WEIGHT}_real_wuxi \
-    --n_rollout 100000 \
+    --n_rollout 10000 \
     --search_type rl \
     --rl_model_type chemprop_rdkit \
     --rl_model_paths rl/models/s_aureus_chemprop_rdkit/fold_0/model_0/model.pt rl/models/solubility_chemprop_rdkit/fold_0/model_0/model.pt \
@@ -444,7 +443,7 @@ done
 
 RL MLP-RDKit
 ```bash
-for S_AUREUS_WEIGHT in 0.00 0.86 0.90 0.94 0.98 1.00
+for S_AUREUS_WEIGHT in 0.00 0.86 0.90 0.92 0.94 0.98 1.00
 do
 SOLUBILITY_WEIGHT="0$(echo "1.0 - S_AUREUS_WEIGHT" | bc)"
 synthemol \
@@ -458,7 +457,7 @@ synthemol \
     --building_blocks_score_columns s_aureus_activity solubility \
     --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
     --save_dir rl/generations/rl_mlp_rdkit_s_aureus_${S_AUREUS_WEIGHT}_solubility_${SOLUBILITY_WEIGHT}_real_wuxi \
-    --n_rollout 100000 \
+    --n_rollout 50000 \
     --search_type rl \
     --rl_model_type mlp_rdkit \
     --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/folds_0/model_0/model.pt \
@@ -488,7 +487,7 @@ synthemol \
     --building_blocks_score_columns s_aureus_activity solubility \
     --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
     --save_dir rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_similarity_target_${SIMILARITY_TARGET} \
-    --n_rollout 100000 \
+    --n_rollout 10000 \
     --search_type rl \
     --rl_model_type chemprop_rdkit \
     --rl_model_paths rl/models/s_aureus_chemprop_rdkit/fold_0/model_0/model.pt rl/models/solubility_chemprop_rdkit/fold_0/model_0/model.pt \
@@ -517,7 +516,7 @@ synthemol \
     --building_blocks_score_columns s_aureus_activity solubility \
     --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
     --save_dir rl/generations/rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_similarity_target_${SIMILARITY_TARGET} \
-    --n_rollout 100000 \
+    --n_rollout 50000 \
     --search_type rl \
     --rl_model_type mlp_rdkit \
     --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/folds_0/model_0/model.pt \
@@ -548,7 +547,7 @@ synthemol \
     --building_blocks_score_columns s_aureus_activity solubility \
     --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
     --save_dir rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_temperature_${TEMPERATURE} \
-    --n_rollout 100000 \
+    --n_rollout 10000 \
     --search_type rl \
     --rl_model_type chemprop_rdkit \
     --rl_model_paths rl/models/s_aureus_chemprop_rdkit/fold_0/model_0/model.pt rl/models/solubility_chemprop_rdkit/fold_0/model_0/model.pt \
@@ -578,7 +577,7 @@ synthemol \
     --building_blocks_score_columns s_aureus_activity solubility \
     --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
     --save_dir rl/generations/rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_temperature_${TEMPERATURE} \
-    --n_rollout 100000 \
+    --n_rollout 50000 \
     --search_type rl \
     --rl_model_type mlp_rdkit \
     --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/folds_0/model_0/model.pt \
@@ -592,7 +591,8 @@ done
 ```
 
 MCTS
-TODO: Check that this works with dynamic multiparameter (need to make sure building block scores can be updated)
+TODO: Handle negative rewards with solubility
+TODO: Determine number of rollouts
 ```bash
 for EXPLORE_WEIGHT in 0.5 1.0 5.0 50.0
 do
