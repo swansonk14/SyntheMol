@@ -418,7 +418,7 @@ class RLModel(ABC):
         )  # (num_molecules, num_properties)
 
         # Move weights to tensor
-        weights = torch.tensor(self.model_weights.weights)  # (num_properties,)
+        weights = torch.tensor(self.model_weights.weights, dtype=torch.float32)  # (num_properties,)
 
         # Compute weighted average
         predictions = torch.matmul(individual_preds, weights)  # (num_molecules,)
