@@ -401,11 +401,8 @@ class Generator:
         :return: The MCTS score of the Node.
         """
         # Compute initial MCTS score
-        mcts_score = (
-            node.exploit_score
-            + self.explore_weight
-            * node.property_score
-            * node.explore_score(n=total_visit_count)
+        mcts_score = node.exploit_score + node.property_score * node.explore_score(
+            n=total_visit_count
         )
 
         # Optionally encourage building block diversity by reducing MCTS score based on building block usage

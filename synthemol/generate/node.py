@@ -114,7 +114,7 @@ class Node:
 
     def explore_score(self, n: int) -> float:
         """Value that encourages exploration of Nodes with few visits."""
-        return math.sqrt(1 + n) / (1 + self.num_visits)
+        return self.explore_weight * math.sqrt(1 + n) / (1 + self.num_visits)
 
     @property
     def num_molecules(self) -> int:
