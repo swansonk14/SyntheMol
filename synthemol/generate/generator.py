@@ -40,7 +40,7 @@ class Generator:
         explore_weight: float,
         num_expand_nodes: int | None,
         rl_base_temperature: float,
-        rl_temperature_similarity_target: float,
+        rl_temperature_similarity_target: float | None,
         rl_train_frequency: int,
         optimization: OPTIMIZATION_TYPES,
         reactions: tuple[Reaction],
@@ -76,7 +76,7 @@ class Generator:
         :param rl_temperature_similarity_target: If provided, adjusts the temperature to obtain the maximally scoring molecules
                                                  that are at most this similar to previously generated molecules. Starts with
                                                  the temperature provided by rl_base_temperature.
-                                                 If -1, the temperature is not adjusted.
+                                                 If None, the temperature is not adjusted.
         :param rl_train_frequency: The number of rollouts between each training step of the RL model.
         :param optimization: Whether to maximize or minimize the score.
         :param reactions: A tuple of reactions that combine molecular building blocks.
@@ -824,7 +824,7 @@ class Generator:
             # RL-specific updates and training
             if self.search_type == "rl":
                 # Optionally, update temperature based on similarity of new molecules to previous molecules
-                if self.rl_temperature_similarity_target != -1:
+                if self.rl_temperature_similarity_target is not None:
                     self.update_temperature(new_similarity=new_similarity)
 
                 # Add RL temperature to rollout stats

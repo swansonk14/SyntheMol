@@ -335,7 +335,7 @@ synthemol \
     --n_rollout 50000 \
     --search_type rl \
     --rl_model_type mlp_rdkit \
-    --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/folds_0/model_0/model.pt \
+    --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/fold_0/model_0/model.pt \
     --rl_prediction_type regression \
     --wandb_project_name synthemol_rl \
     --wandb_run_name rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi \
@@ -460,7 +460,7 @@ synthemol \
     --n_rollout 50000 \
     --search_type rl \
     --rl_model_type mlp_rdkit \
-    --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/folds_0/model_0/model.pt \
+    --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/fold_0/model_0/model.pt \
     --rl_prediction_type regression \
     --wandb_project_name synthemol_rl \
     --wandb_run_name rl_mlp_rdkit_s_aureus_${S_AUREUS_WEIGHT}_solubility_${SOLUBILITY_WEIGHT}_real_wuxi \
@@ -519,7 +519,7 @@ synthemol \
     --n_rollout 50000 \
     --search_type rl \
     --rl_model_type mlp_rdkit \
-    --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/folds_0/model_0/model.pt \
+    --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/fold_0/model_0/model.pt \
     --rl_prediction_type regression \
     --rl_temperature_similarity_target ${SIMILARITY_TARGET} \
     --wandb_project_name synthemol_rl \
@@ -580,7 +580,7 @@ synthemol \
     --n_rollout 50000 \
     --search_type rl \
     --rl_model_type mlp_rdkit \
-    --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/folds_0/model_0/model.pt \
+    --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/fold_0/model_0/model.pt \
     --rl_prediction_type regression \
     --rl_temperature_similarity_target -1 \
     --rl_base_temperature ${TEMPERATURE} \
