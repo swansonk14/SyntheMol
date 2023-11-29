@@ -615,3 +615,101 @@ synthemol \
     --wandb_log
 done
 ```
+
+### RL Training
+
+RL Chemprop-RDKit (pretrained models, no RL training)
+```bash
+synthemol \
+    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --model_types chemprop chemprop \
+    --fingerprint_types rdkit rdkit \
+    --model_names 'S. aureus' 'Solubility' \
+    --success_thresholds '>=0.5' '>=-4' \
+    --chemical_spaces real wuxi \
+    --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
+    --building_blocks_score_columns s_aureus_activity solubility \
+    --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
+    --save_dir rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_no_rl_training \
+    --n_rollout 10000 \
+    --search_type rl \
+    --rl_model_type chemprop_rdkit \
+    --rl_model_paths rl/models/s_aureus_chemprop_rdkit/fold_0/model_0/model.pt rl/models/solubility_chemprop_rdkit/fold_0/model_0/model.pt \
+    --rl_prediction_type regression \
+    --rl_train_epochs 0 \
+    --use_gpu \
+    --num_workers 8 \
+    --wandb_project_name synthemol_rl \
+    --wandb_run_name rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_no_rl_training \
+    --wandb_log
+```
+
+RL Chemprop-RDKit (from scratch models, with RL training)
+```bash
+synthemol \
+    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --model_types chemprop chemprop \
+    --fingerprint_types rdkit rdkit \
+    --model_names 'S. aureus' 'Solubility' \
+    --success_thresholds '>=0.5' '>=-4' \
+    --chemical_spaces real wuxi \
+    --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
+    --building_blocks_score_columns s_aureus_activity solubility \
+    --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
+    --save_dir rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_no_pretraining \
+    --n_rollout 10000 \
+    --search_type rl \
+    --rl_model_type chemprop_rdkit \
+    --rl_prediction_type regression \
+    --use_gpu \
+    --num_workers 8 \
+    --wandb_project_name synthemol_rl \
+    --wandb_run_name rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_no_pretraining \
+    --wandb_log
+```
+
+RL MLP-RDKit (pretrained models, no RL training)
+```bash
+synthemol \
+    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --model_types chemprop chemprop \
+    --fingerprint_types rdkit rdkit \
+    --model_names 'S. aureus' 'Solubility' \
+    --success_thresholds '>=0.5' '>=-4' \
+    --chemical_spaces real wuxi \
+    --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
+    --building_blocks_score_columns s_aureus_activity solubility \
+    --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
+    --save_dir rl/generations/rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_no_rl_training \
+    --n_rollout 50000 \
+    --search_type rl \
+    --rl_model_type mlp_rdkit \
+    --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/fold_0/model_0/model.pt \
+    --rl_prediction_type regression \
+    --rl_train_epochs 0 \
+    --wandb_project_name synthemol_rl \
+    --wandb_run_name rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_no_rl_training \
+    --wandb_log
+```
+
+RL MLP-RDKit (from scratch models, with RL training)
+```bash
+synthemol \
+    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --model_types chemprop chemprop \
+    --fingerprint_types rdkit rdkit \
+    --model_names 'S. aureus' 'Solubility' \
+    --success_thresholds '>=0.5' '>=-4' \
+    --chemical_spaces real wuxi \
+    --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
+    --building_blocks_score_columns s_aureus_activity solubility \
+    --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
+    --save_dir rl/generations/rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_no_pretraining \
+    --n_rollout 50000 \
+    --search_type rl \
+    --rl_model_type mlp_rdkit \
+    --rl_prediction_type regression \
+    --wandb_project_name synthemol_rl \
+    --wandb_run_name rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_no_pretraining \
+    --wandb_log
+```
