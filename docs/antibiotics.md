@@ -74,7 +74,7 @@ Download lists of known antibiotic-related compounds from ChEMBL using the follo
 - [antibacterial](https://www.ebi.ac.uk/chembl/g/#search_results/compounds/query=antibacterial)
 - [antibiotic](https://www.ebi.ac.uk/chembl/g/#search_results/compounds/query=antibiotic)
 
-The results of the queries on August 8, 2022, are available in the Google Drive folder in the `Data/2. ChEMBL` subfolder.
+The results of the queries on August 8, 2022, are available in the Google Drive folder in the `data/Data/2_chembl` subfolder.
 
 The files are:
 

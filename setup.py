@@ -24,7 +24,7 @@ setup(
     download_url=f'https://github.com/swansonk14/SyntheMol/archive/refs/tags/v_{__version__}.tar.gz',
     license='MIT',
     packages=find_packages(),
-    package_data={'synthemol': ['py.typed']},
+    package_data={'synthemol': ['py.typed', 'resources/**/*']},
     entry_points={
         'console_scripts': [
             'synthemol=synthemol.generate.generate:generate_command_line'
@@ -34,7 +34,6 @@ setup(
         'chemfunc',
         'chemprop',
         'descriptastorus',
-        'gdown',
         'matplotlib',
         'numpy',
         'pandas',
@@ -50,6 +49,7 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         'Typing :: Typed'

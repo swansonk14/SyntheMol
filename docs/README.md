@@ -2,12 +2,7 @@
 
 This directory contains instructions for reproducing the results in our antibiotic generation paper: [TODO](TODO).
 
-The relevant data should be downloaded from [this Google Drive file](https://drive.google.com/uc?id=1ziZJqk1PhDtc-kRFxNA3CDM728zjUfHH) to `SyntheMol/data`. This can be done as follows:
-
-```bash
-gdown "https://drive.google.com/uc?id=1ziZJqk1PhDtc-kRFxNA3CDM728zjUfHH" -O $(python -c "import synthemol; from pathlib import Path; print(Path(synthemol.__path__[0]).parent)")/data.zip
-unzip data.zip && rm data.zip
-```
+The relevant data should be downloaded from [this Google Drive file](https://drive.google.com/drive/folders/1VLPPUbY_FTKMjlXgRm09bPSSms206Dce?usp=sharing) and moved to `SyntheMol/data`.
 
 Note that here, we use the 2021 q3-4 version of the building blocks and the 2022 q1-2 version of the enumerated REAL Space molecules. However, by default, SyntheMol now downloads a newer version of the building blocks during installation.
 

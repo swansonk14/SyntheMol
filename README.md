@@ -4,13 +4,7 @@ SyntheMol is a generative AI method for designing structurally novel and diverse
 
 SyntheMol consists of a Monte Carlo tree search (MCTS) that explores a combinatorial chemical space consisting of molecular building blocks and chemical reactions. The MCTS is guided by a bioactivity prediction AI model, such as a graph neural network or a random forest. Currently, SyntheMol is designed to use 137,656 building blocks and 13 chemical reactions from the [Enamine REAL Space](https://enamine.net/compound-collections/real-compounds/real-space-navigator), which can produce over 30 billion molecules. However, SyntheMol can be easily adapted to use any set of building blocks and reactions.
 
-SyntheMol is described in the paper [TODO](TODO), where we applied SyntheMol to design novel antibiotic candidates for the Gram-negative bacterium _Acinetobacter baumannii_. Full details for reproducing the results in the paper are provided in the [docs](docs) directory.
-
-If you use SyntheMol in your research, please cite:
-
-```
-TODO
-```
+SyntheMol is described in a forthcoming paper in _Nature Machine Intelligence_, where we applied SyntheMol to design novel antibiotic candidates for the Gram-negative bacterium _Acinetobacter baumannii_. Full details for reproducing the results in the paper are provided in the [docs](docs) directory.
 
 
 ## Table of contents
@@ -53,11 +47,6 @@ If there are version issues with the required packages, create a conda environme
 ```bash
 pip install -r requirements.txt
 pip install -e .
-```
-
-Download the necessary data files to `SyntheMol/synthemol/files`.
-```bash
-gdown "https://drive.google.com/drive/folders/1LLLwxe_nQAnsRSQpIRq_ngyCm1txS-Sq" -O $(python -c "import synthemol; print(synthemol.__path__[0])")/files --folder
 ```
 
 **Note:** If you get the issue `ImportError: libXrender.so.1: cannot open shared object file: No such file or directory`, run `conda install -c conda-forge xorg-libxrender`.
