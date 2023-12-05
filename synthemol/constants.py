@@ -1,5 +1,5 @@
 """Contains constants shared throughout synthemol."""
-from pathlib import Path
+from importlib import resources
 from typing import Literal
 
 from rdkit.Chem import Mol
@@ -41,8 +41,9 @@ RL_PREDICTION_TYPES = Literal["classification", "regression"]
 OPTIMIZATION_TYPES = Literal["maximize", "minimize"]
 
 # Path where data files are stored
-DATA_DIR = Path(__file__).parent / "files"
+with resources.path("synthemol", "resources") as resources_dir:
+    DATA_DIR = resources_dir
 
 # If using custom building blocks, replace BUILDING_BLOCKS_PATH and set REACTION_TO_BUILDING_BLOCKS_PATH to None
-BUILDING_BLOCKS_PATH = DATA_DIR / "building_blocks.csv"
-REACTION_TO_BUILDING_BLOCKS_PATH = DATA_DIR / "reaction_to_building_blocks.pkl"
+BUILDING_BLOCKS_PATH = DATA_DIR / "real" / "building_blocks.csv"
+REACTION_TO_BUILDING_BLOCKS_PATH = DATA_DIR / "real" / "reaction_to_building_blocks.pkl"

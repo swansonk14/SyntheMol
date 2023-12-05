@@ -24,7 +24,7 @@ setup(
     download_url=f"https://github.com/swansonk14/SyntheMol/archive/refs/tags/v_{__version__}.tar.gz",
     license="MIT",
     packages=find_packages(),
-    package_data={"synthemol": ["py.typed"]},
+    package_data={"synthemol": ["py.typed", "resources/**/*"]},
     entry_points={
         "console_scripts": [
             "synthemol=synthemol.generate.generate:generate_command_line"
