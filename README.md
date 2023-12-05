@@ -99,7 +99,7 @@ After training, use the model to pre-compute scores of building blocks to accele
 
 ```bash
 chemprop_predict \
-    --test_path synthemol/files/building_blocks.csv \
+    --test_path "$(python -c 'import synthemol; print(str(synthemol.constants.BUILDING_BLOCKS_PATH))')" \
     --preds_path models/chemprop/building_blocks.csv \
     --checkpoint_dir models/chemprop
 ```
