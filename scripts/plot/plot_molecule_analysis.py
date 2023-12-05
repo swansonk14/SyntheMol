@@ -8,12 +8,12 @@ from plot_generated_molecule_analysis import plot_scores, plot_similarity
 
 
 def plot_molecule_analysis(
-        data_path: Path,
-        save_dir: Path,
-        score_columns: list[str],
-        train_hits_path: Path | None = None,
-        smiles_column: str = SMILES_COL,
-        train_hits_smiles_column: str = SMILES_COL,
+    data_path: Path,
+    save_dir: Path,
+    score_columns: list[str],
+    train_hits_path: Path | None = None,
+    smiles_column: str = SMILES_COL,
+    train_hits_smiles_column: str = SMILES_COL,
 ) -> None:
     """Assess the novelty, scores, and diversity of molecules.
 
@@ -28,7 +28,7 @@ def plot_molecule_analysis(
     data = pd.read_csv(data_path)
 
     # Count molecules
-    print(f'Number of molecules = {len(data):,}')
+    print(f"Number of molecules = {len(data):,}")
 
     # Create save directory
     save_dir.mkdir(parents=True, exist_ok=True)
@@ -36,16 +36,12 @@ def plot_molecule_analysis(
     # Plot score distributions
     for score_column in score_columns:
         plot_scores(
-            scores=data[score_column],
-            save_dir=save_dir,
-            score_name=score_column
+            scores=data[score_column], save_dir=save_dir, score_name=score_column
         )
 
     # Similarity within REAL molecules
     plot_similarity(
-        smiles=data[smiles_column],
-        similarity_type='tanimoto',
-        save_dir=save_dir
+        smiles=data[smiles_column], similarity_type="tanimoto", save_dir=save_dir
     )
 
     if train_hits_path is not None:
@@ -55,14 +51,14 @@ def plot_molecule_analysis(
         # Similarity between REAL molecules and train hits
         plot_similarity(
             smiles=data[smiles_column],
-            similarity_type='tversky',
+            similarity_type="tversky",
             save_dir=save_dir,
             reference_smiles=train_hits[train_hits_smiles_column],
-            reference_name='Train Hits'
+            reference_name="Train Hits",
         )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from tap import tapify
 
     tapify(plot_molecule_analysis)

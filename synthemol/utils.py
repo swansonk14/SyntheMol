@@ -8,21 +8,16 @@ from rdkit import Chem
 from synthemol.constants import MOLECULE_TYPE
 
 
-def strip_atom_mapping(
-        smarts: str
-) -> str:
+def strip_atom_mapping(smarts: str) -> str:
     """Strips the atom mapping from a SMARTS (i.e., any ":" followed by digits).
 
     :param smarts: A SMARTS string with atom mapping indices.
     :return: The same SMARTS string but without the atom mapping indices.
     """
-    return re.sub(r'\[([^:]+)(:\d+)]', r'[\1]', smarts)
+    return re.sub(r"\[([^:]+)(:\d+)]", r"[\1]", smarts)
 
 
-def convert_to_mol(
-        mol: MOLECULE_TYPE,
-        add_hs: bool = False
-) -> Chem.Mol:
+def convert_to_mol(mol: MOLECULE_TYPE, add_hs: bool = False) -> Chem.Mol:
     """Converts a SMILES to an RDKit Mol object (if not already converted) and optionally adds Hs.
 
     :param mol: A SMILES string or an RDKit Mol object.
@@ -39,10 +34,10 @@ def convert_to_mol(
 
 
 def random_choice(
-        rng: np.random.Generator,
-        array: list[Any],
-        size: int | None = None,
-        replace: bool = True
+    rng: np.random.Generator,
+    array: list[Any],
+    size: int | None = None,
+    replace: bool = True,
 ) -> Any:
     """An efficient random choice function built on top of NumPy.
 
@@ -55,6 +50,4 @@ def random_choice(
     if size is None:
         return array[rng.integers(len(array))]
 
-    return [
-        array[i] for i in rng.choice(len(array), size=size, replace=replace)
-    ]
+    return [array[i] for i in rng.choice(len(array), size=size, replace=replace)]

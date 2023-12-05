@@ -139,3 +139,6 @@ dmypy.json
 /generations
 /models
 /synthemol/files
+
+# Weights & Biases
+wandb

@@ -1,15 +1,11 @@
 # Documentation
 
-This directory contains instructions for reproducing the results in forthcoming paper in _Nature Machine Intelligence_.
+This directory contains instructions for reproducing the results in our two antibiotic generation papers.
 
-The relevant data should be downloaded from [this Zenodo record](https://zenodo.org/records/10257839), unzipped, and moved to `SyntheMol/data`.
+## SyntheMol-MCTS
 
-Note that here, we use the 2021 q3-4 version of the building blocks and the 2022 q1-2 version of the enumerated REAL Space molecules. However, by default, SyntheMol now downloads a newer version of the building blocks during installation.
+The instructions for reproducing the results from the paper [TODO](TODO), which uses the Monte Carlo tree search (MCTS) version of SyntheMol, are in [mcts](mcts).
 
-[real.md](real.md): Instructions for processing Enamine REAL building blocks, reactions, and molecules.
+## SyntheMol-RL
 
-[clogp.md](clogp.md): Instructions for performing an _in silico_ study of SyntheMol using a computational molecular property, cLogP, which is the computed octanol-water partition coefficient.
-
-[antibiotics.md](antibiotics.md): Instructions for generating antibiotic candidates for _Acinetobacter baumannii_. Includes instructions for processing antibiotics data, training antibacterial activity prediction models, generating molecules with SyntheMol, and selecting candidates.
-
-[plots.md](plots.md) Instructions for producing plots analyzing the data and results.
+The instructions for reproducing the results from the paper [TODO](TODO), which uses the reinforcement learning (RL) version of SyntheMol, are in [rl](rl).

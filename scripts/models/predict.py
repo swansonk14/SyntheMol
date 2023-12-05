@@ -14,17 +14,17 @@ from synthemol.models import chemprop_load, sklearn_load, sklearn_predict
 
 
 def predict(
-        data_path: Path,
-        model_path: Path,
-        model_type: MODEL_TYPES,
-        save_path: Path | None = None,
-        smiles_column: str = SMILES_COL,
-        preds_column_prefix: str | None = None,
-        fingerprint_type: FINGERPRINT_TYPES | None = None,
-        average_preds: bool = False,
-        num_workers: int = 0,
-        use_gpu: bool = False,
-        no_cache: bool = False
+    data_path: Path,
+    model_path: Path,
+    model_type: MODEL_TYPES,
+    save_path: Path | None = None,
+    smiles_column: str = SMILES_COL,
+    preds_column_prefix: str | None = None,
+    fingerprint_type: FINGERPRINT_TYPES | None = None,
+    average_preds: bool = False,
+    num_workers: int = 0,
+    use_gpu: bool = False,
+    no_cache: bool = False,
 ) -> None:
     """Make predictions with a model or ensemble of models and save them to a file.
 
@@ -51,8 +51,8 @@ def predict(
     smiles = list(data[smiles_column])
 
     # Check compatibility of model and fingerprint type
-    if model_type != 'chemprop' and fingerprint_type is None:
-        raise ValueError('Must define fingerprint_type if using sklearn model.')
+    if model_type != "chemprop" and fingerprint_type is None:
+        raise ValueError("Must define fingerprint_type if using sklearn model.")
 
     # Compute fingerprints
     if fingerprint_type is not None:
@@ -62,61 +62,71 @@ def predict(
 
     # Get model paths
     if model_path.is_dir():
-        model_paths = list(model_path.glob('**/*.pt' if model_type == 'chemprop' else '**/*.pkl'))
+        model_paths = list(
+            model_path.glob("**/*.pt" if model_type == "chemprop" else "**/*.pkl")
+        )
 
         if len(model_paths) == 0:
-            raise ValueError(f'Could not find any models in directory {model_path}.')
+            raise ValueError(f"Could not find any models in directory {model_path}.")
     else:
         model_paths = [model_path]
 
     # Load models
-    if model_type == 'chemprop':
+    if model_type == "chemprop":
         # Set device
         if use_gpu:
-            device = torch.device('cuda')
+            device = torch.device("cuda")
         else:
-            device = torch.device('cpu')
+            device = torch.device("cpu")
 
         # Ensure reproducibility
         torch.manual_seed(0)
 
-        if device.type == 'cpu':
+        if device.type == "cpu":
             torch.use_deterministic_algorithms(True)
 
-        models = [chemprop_load(model_path=model_path, device=device) for model_path in model_paths]
+        models = [
+            chemprop_load(model_path=model_path, device=device)
+            for model_path in model_paths
+        ]
     else:
         models = [sklearn_load(model_path=model_path) for model_path in model_paths]
 
     # Make predictions
-    if model_type == 'chemprop':
-        preds = np.array([
-            chemprop_predict(
-                model=model,
-                smiles=smiles,
-                fingerprints=fingerprints,
-                num_workers=num_workers
-            ) for model in tqdm(models, desc='models')
-        ])
+    if model_type == "chemprop":
+        preds = np.array(
+            [
+                chemprop_predict(
+                    model=model,
+                    smiles=smiles,
+                    fingerprints=fingerprints,
+                    num_workers=num_workers,
+                )
+                for model in tqdm(models, desc="models")
+            ]
+        )
     else:
-        preds = np.array([
-            sklearn_predict(
-                model=model,
-                fingerprints=fingerprints,
-            ) for model in tqdm(models, desc='models')
-        ])
+        preds = np.array(
+            [
+                sklearn_predict(model=model, fingerprints=fingerprints,)
+                for model in tqdm(models, desc="models")
+            ]
+        )
 
     if average_preds:
         preds = np.mean(preds, axis=0)
 
     # Define model string
-    model_string = f'{model_type}{f"_{fingerprint_type}" if fingerprint_type is not None else ""}'
+    model_string = (
+        f'{model_type}{f"_{fingerprint_type}" if fingerprint_type is not None else ""}'
+    )
     preds_string = f'{f"{preds_column_prefix}_" if preds_column_prefix is not None else ""}{model_string}'
 
     if average_preds:
-        data[f'{preds_string}_ensemble_preds'] = preds
+        data[f"{preds_string}_ensemble_preds"] = preds
     else:
         for model_num, model_preds in enumerate(preds):
-            data[f'{preds_string}_model_{model_num}_preds'] = model_preds
+            data[f"{preds_string}_model_{model_num}_preds"] = model_preds
 
     # Save predictions
     if save_path is None:
@@ -126,7 +136,7 @@ def predict(
     data.to_csv(save_path, index=False)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from tap import tapify
 
     tapify(predict)

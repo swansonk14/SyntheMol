@@ -7,16 +7,16 @@ import numpy as np
 import pandas as pd
 from tqdm import trange
 
-from synthemol.constants import REAL_BUILDING_BLOCK_ID_COL, SCORE_COL
+from synthemol.constants import REAL_BUILDING_BLOCK_ID_COL, ROLLOUT_COL, SCORE_COL
 
 
 def plot_heatmap(
-        data_path: Path,
-        building_blocks_path: Path,
-        save_dir: Path,
-        num_reactions: int,
-        building_blocks_id_column: str = REAL_BUILDING_BLOCK_ID_COL,
-        building_blocks_score_column: str = SCORE_COL,
+    data_path: Path,
+    building_blocks_path: Path,
+    save_dir: Path,
+    num_reactions: int,
+    building_blocks_id_column: str = REAL_BUILDING_BLOCK_ID_COL,
+    building_blocks_score_column: str = SCORE_COL,
 ) -> None:
     """Plots a heatmap of the MCTS node scores over rollouts.
 
@@ -32,23 +32,27 @@ def plot_heatmap(
     building_blocks = pd.read_csv(building_blocks_path)
 
     # Map from building block ID to score
-    building_block_id_to_score = dict(zip(
-        building_blocks[building_blocks_id_column],
-        building_blocks[building_blocks_score_column]
-    ))
+    building_block_id_to_score = dict(
+        zip(
+            building_blocks[building_blocks_id_column],
+            building_blocks[building_blocks_score_column],
+        )
+    )
 
     # Map rollout to row indices
     rollout_to_row_index = defaultdict(list)
-    for row_index, rollout in enumerate(data['rollout_num']):
+    for row_index, rollout in enumerate(data[ROLLOUT_COL]):
         rollout_to_row_index[rollout].append(row_index)
 
     # Build heatmap with rollouts as columns and nodes as rows
     building_block_id_columns = sorted(
         column
         for column in data.columns
-        if column.startswith('building_block_') and column.endswith('_id') and int(column.split('_')[2]) <= num_reactions
+        if column.startswith("building_block_")
+        and column.endswith("_id")
+        and int(column.split("_")[2]) <= num_reactions
     )
-    max_rollout = max(data['rollout_num'])
+    max_rollout = max(data[ROLLOUT_COL])
 
     row_size = 100
     heatmap = np.zeros((row_size * (len(building_block_id_columns) + 1), len(data)))
@@ -57,17 +61,19 @@ def plot_heatmap(
     for rollout in trange(1, max_rollout + 1):
         for row_index in rollout_to_row_index[rollout]:
             # Skip if wrong number of reactions
-            if data.loc[row_index, 'num_reactions'] != num_reactions:
+            if data.loc[row_index, "num_reactions"] != num_reactions:
                 continue
 
             # Get building block scores
             for i, building_block_id_column in enumerate(building_block_id_columns):
-                heatmap[i * row_size:(i + 1) * row_size, molecule_index] = building_block_id_to_score.get(
+                heatmap[
+                    i * row_size : (i + 1) * row_size, molecule_index
+                ] = building_block_id_to_score.get(
                     data.loc[row_index, building_block_id_column], 0
                 )
 
             # Get full molecule score
-            heatmap[-row_size:, molecule_index] = data.loc[row_index, 'score']
+            heatmap[-row_size:, molecule_index] = data.loc[row_index, SCORE_COL]
             molecule_index += 1
 
     heatmap = heatmap[:, :molecule_index]
@@ -82,18 +88,21 @@ def plot_heatmap(
     heatmap_split = np.array_split(heatmap, num_im_rows, axis=1)
 
     for heatmap_section, ax in zip(heatmap_split, axes):
-        ax.imshow(heatmap_section, cmap='hot', interpolation='none')
-        ax.axis('off')
+        ax.imshow(heatmap_section, cmap="hot", interpolation="none")
+        ax.axis("off")
 
     # fig.colorbar(heatmap)
     # plt.xlabel('Molecule')
     # plt.ylabel('Node')
     # plt.title('MCTS Node Scores')
 
-    plt.savefig(save_dir / f'mcts_node_scores_{num_reactions}_reactions.pdf', bbox_inches='tight')
+    plt.savefig(
+        save_dir / f"mcts_node_scores_{num_reactions}_reactions.pdf",
+        bbox_inches="tight",
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from tap import tapify
 
     tapify(plot_heatmap)

@@ -6,7 +6,6 @@ SyntheMol consists of a Monte Carlo tree search (MCTS) that explores a combinato
 
 SyntheMol is described in a forthcoming paper in _Nature Machine Intelligence_, where we applied SyntheMol to design novel antibiotic candidates for the Gram-negative bacterium _Acinetobacter baumannii_. Full details for reproducing the results in the paper are provided in the [docs](docs) directory.
 
-
 ## Table of contents
 
 * [Installation](#installation)
@@ -21,13 +20,15 @@ SyntheMol is described in a forthcoming paper in _Nature Machine Intelligence_, 
   + [Diversity](#diversity)
 
 
+TODO: Update README with multiparameter optimization input to generate.py
+
 ## Installation
 
 SyntheMol can be installed in < 3 minutes on any operating system using pip (optionally within a conda environment). SyntheMol can be run on a standard laptop (e.g., 16 GB memory and 8-16 CPUs), although a GPU is useful for faster training and prediction of the underlying bioactivity prediction model (Chemprop).
 
 Optionally, create a conda environment.
 ```bash
-conda create -y -n synthemol python=3.10
+conda create -y -n synthemol python=3.11
 conda activate synthemol
 ```
 
@@ -44,8 +45,16 @@ pip install -e .
 ```
 
 If there are version issues with the required packages, create a conda environment with specific working versions of the packages as follows.
+
+SyntheMol-MCTS
 ```bash
-pip install -r requirements.txt
+pip install -r requirements_mcts.txt
+pip install -e .
+```
+
+SyntheMol-RL
+```bash
+pip install -r requirements_rl.txt
 pip install -e .
 ```
 
@@ -111,6 +120,7 @@ SyntheMol uses the bioactivity prediction model within a Monte Carlo tree search
 
 ```bash
 synthemol \
+    --search_type mcts \
     --model_path models/chemprop \
     --model_type chemprop \
     --save_dir generations/chemprop \

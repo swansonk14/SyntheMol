@@ -10,14 +10,16 @@ from synthemol.utils import convert_to_mol, strip_atom_mapping
 class QueryMol:
     """Contains a molecule query in the form of a SMARTS string along with helper functions."""
 
-    def __init__(self, smarts: str) -> None:
+    def __init__(self, smarts: str, subsets: tuple[str, ...] | None = None) -> None:
         """Initializes the QueryMol.
 
         :param smarts: A SMARTS string representing the molecular query.
+        :param subsets: An optional tuple of building block subsets that this QueryMol belongs to.
         """
         self.smarts_with_atom_mapping = smarts
         self.smarts = strip_atom_mapping(smarts)
         self.query_mol = Chem.MolFromSmarts(self.smarts)
+        self.subsets = subsets
 
         # All building block SMILES
         self._all_building_block_set = self._all_building_block_list = None
@@ -39,7 +41,7 @@ class QueryMol:
         :param all_building_blocks: An iterable of building block SMILES that are allowed for this QueryMol.
         """
         if self._all_building_block_set is not None:
-            raise ValueError('All building block SMILES has already been set.')
+            raise ValueError("All building block SMILES has already been set.")
 
         self._all_building_block_set = set(all_building_blocks)
         self._all_building_block_list = sorted(self._all_building_block_set)
@@ -56,7 +58,7 @@ class QueryMol:
         :param allowed_building_blocks: An iterable of building block SMILES that are allowed for this QueryMol.
         """
         if self._allowed_building_block_set is not None:
-            raise ValueError('Allowed building block SMILES has already been set.')
+            raise ValueError("Allowed building block SMILES has already been set.")
 
         self._allowed_building_block_set = set(allowed_building_blocks)
         self._allowed_building_block_list = sorted(self._allowed_building_block_set)
@@ -86,8 +88,14 @@ class QueryMol:
         :return: True if the molecule matches this QueryMol, False otherwise.
         """
         # If SMILES is not in allowed building block set, return False (unless it's not a building block at all)
-        if self._allowed_building_block_set is not None and smiles not in self._allowed_building_block_set:
-            if self._all_building_block_set is not None and smiles not in self._all_building_block_set:
+        if (
+            self._allowed_building_block_set is not None
+            and smiles not in self._allowed_building_block_set
+        ):
+            if (
+                self._all_building_block_set is not None
+                and smiles not in self._all_building_block_set
+            ):
                 pass
             else:
                 return False
@@ -97,4 +105,4 @@ class QueryMol:
 
     def __str__(self) -> str:
         """Gets a string representation of the QueryMol."""
-        return f'QueryMol({self.smarts})'
+        return f"QueryMol({self.smarts})"

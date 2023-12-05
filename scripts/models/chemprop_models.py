@@ -5,18 +5,27 @@ import numpy as np
 import torch
 from chemprop.args import TrainArgs
 from chemprop.data import MoleculeDataLoader, MoleculeDatapoint, MoleculeDataset
-from chemprop.train import get_loss_func, predict as _chemprop_predict, train as _chemprop_train
+from chemprop.train import (
+    get_loss_func,
+    predict as _chemprop_predict,
+    train as _chemprop_train,
+)
 from chemprop.models import MoleculeModel
-from chemprop.utils import build_optimizer, build_lr_scheduler, load_checkpoint, save_checkpoint
+from chemprop.utils import (
+    build_optimizer,
+    build_lr_scheduler,
+    load_checkpoint,
+    save_checkpoint,
+)
 from sklearn.metrics import average_precision_score, mean_absolute_error
 from tqdm import trange
 
 
 def chemprop_predict(
-        model: MoleculeModel,
-        smiles: list[str],
-        fingerprints: np.ndarray | None = None,
-        num_workers: int = 0
+    model: MoleculeModel,
+    smiles: list[str],
+    fingerprints: np.ndarray | None = None,
+    num_workers: int = 0,
 ) -> np.ndarray:
     """Predicts molecular properties using a Chemprop model.
 
@@ -28,9 +37,7 @@ def chemprop_predict(
     """
     # Set up data loader
     data_loader = chemprop_build_data_loader(
-        smiles=smiles,
-        fingerprints=fingerprints,
-        num_workers=num_workers
+        smiles=smiles, fingerprints=fingerprints, num_workers=num_workers
     )
 
     # Make predictions
@@ -40,11 +47,11 @@ def chemprop_predict(
 
 
 def chemprop_build_data_loader(
-        smiles: list[str],
-        fingerprints: np.ndarray | None = None,
-        properties: list[int] | None = None,
-        shuffle: bool = False,
-        num_workers: int = 0
+    smiles: list[str],
+    fingerprints: np.ndarray | None = None,
+    properties: list[int] | None = None,
+    shuffle: bool = False,
+    num_workers: int = 0,
 ) -> MoleculeDataLoader:
     """Builds a chemprop MoleculeDataLoader.
 
@@ -65,32 +72,31 @@ def chemprop_build_data_loader(
         properties = [[float(prop)] for prop in properties]
 
     return MoleculeDataLoader(
-        dataset=MoleculeDataset([
-            MoleculeDatapoint(
-                smiles=[smiles],
-                targets=prop,
-                features=fingerprint,
-            ) for smiles, fingerprint, prop in zip(smiles, fingerprints, properties)
-        ]),
+        dataset=MoleculeDataset(
+            [
+                MoleculeDatapoint(smiles=[smiles], targets=prop, features=fingerprint,)
+                for smiles, fingerprint, prop in zip(smiles, fingerprints, properties)
+            ]
+        ),
         num_workers=num_workers,
-        shuffle=shuffle
+        shuffle=shuffle,
     )
 
 
 def chemprop_train(
-        dataset_type: str,
-        train_smiles: list[str],
-        val_smiles: list[str],
-        fingerprint_type: str | None,
-        train_fingerprints: np.ndarray | None,
-        val_fingerprints: np.ndarray | None,
-        property_name: str,
-        train_properties: list[int],
-        val_properties: list[int],
-        epochs: int,
-        save_path: Path,
-        num_workers: int = 0,
-        use_gpu: bool = False
+    dataset_type: str,
+    train_smiles: list[str],
+    val_smiles: list[str],
+    fingerprint_type: str | None,
+    train_fingerprints: np.ndarray | None,
+    val_fingerprints: np.ndarray | None,
+    property_name: str,
+    train_properties: list[int],
+    val_properties: list[int],
+    epochs: int,
+    save_path: Path,
+    num_workers: int = 0,
+    use_gpu: bool = False,
 ) -> MoleculeModel:
     """Trains and saves a Chemprop model.
 
@@ -110,22 +116,29 @@ def chemprop_train(
     """
     # Create args
     arg_list = [
-        '--data_path', 'foo.csv',
-        '--dataset_type', dataset_type,
-        '--save_dir', 'foo',
-        '--epochs', str(epochs),
-        '--quiet'
-    ] + ([] if use_gpu else ['--no_cuda'])
+        "--data_path",
+        "foo.csv",
+        "--dataset_type",
+        dataset_type,
+        "--save_dir",
+        "foo",
+        "--epochs",
+        str(epochs),
+        "--quiet",
+    ] + ([] if use_gpu else ["--no_cuda"])
 
-    match fingerprint_type:
-        case 'morgan':
-            arg_list += ['--features_generator', 'morgan']
-        case 'rdkit':
-            arg_list += ['--features_generator', 'rdkit_2d_normalized', '--no_features_scaling']
-        case None:
-            pass
-        case _:
-            raise ValueError(f'Fingerprint type "{fingerprint_type}" is not supported.')
+    if fingerprint_type == "morgan":
+        arg_list += ["--features_generator", "morgan"]
+    elif fingerprint_type == "rdkit":
+        arg_list += [
+            "--features_generator",
+            "rdkit_2d_normalized",
+            "--no_features_scaling",
+        ]
+    elif fingerprint_type is None:
+        pass
+    else:
+        raise ValueError(f'Fingerprint type "{fingerprint_type}" is not supported.')
 
     args = TrainArgs().parse_args(arg_list)
     args.task_names = [property_name]
@@ -146,7 +159,7 @@ def chemprop_train(
         fingerprints=train_fingerprints,
         properties=train_properties,
         shuffle=True,
-        num_workers=num_workers
+        num_workers=num_workers,
     )
 
     # Build model
@@ -160,11 +173,11 @@ def chemprop_train(
 
     # Run training
     save_path = str(save_path)
-    best_score = float('inf') if args.minimize_score else -float('inf')
-    val_metric = 'PRC-AUC' if dataset_type == 'classification' else 'MAE'
+    best_score = float("inf") if args.minimize_score else -float("inf")
+    val_metric = "PRC-AUC" if dataset_type == "classification" else "MAE"
     best_epoch = n_iter = 0
     for epoch in trange(args.epochs):
-        print(f'Epoch {epoch}')
+        print(f"Epoch {epoch}")
         n_iter = _chemprop_train(
             model=model,
             data_loader=train_data_loader,
@@ -172,19 +185,17 @@ def chemprop_train(
             optimizer=optimizer,
             scheduler=scheduler,
             args=args,
-            n_iter=n_iter
+            n_iter=n_iter,
         )
 
         val_probs = chemprop_predict(
-            model=model,
-            smiles=val_smiles,
-            fingerprints=val_fingerprints
+            model=model, smiles=val_smiles, fingerprints=val_fingerprints
         )
 
-        if dataset_type == 'classification':
+        if dataset_type == "classification":
             val_score = average_precision_score(val_properties, val_probs)
             new_best_val_score = val_score > best_score
-        elif dataset_type == 'regression':
+        elif dataset_type == "regression":
             val_score = mean_absolute_error(val_properties, val_probs)
             new_best_val_score = val_score < best_score
         else:
@@ -195,7 +206,7 @@ def chemprop_train(
             save_checkpoint(path=save_path, model=model, args=args)
 
     # Evaluate on test set using model with the best validation score
-    print(f'Best validation {val_metric} = {best_score:.6f} on epoch {best_epoch}')
+    print(f"Best validation {val_metric} = {best_score:.6f} on epoch {best_epoch}")
     model = load_checkpoint(save_path, device=args.device)
 
     return model

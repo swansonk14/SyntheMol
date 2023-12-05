@@ -7,10 +7,7 @@ import pandas as pd
 
 
 def plot_regression_values(
-        data_path: Path,
-        rep1_column: str,
-        rep2_column: str,
-        save_dir: Path
+    data_path: Path, rep1_column: str, rep2_column: str, save_dir: Path
 ) -> None:
     """Plot the regression values for data with two replicates.
 
@@ -23,15 +20,15 @@ def plot_regression_values(
     data = pd.read_csv(data_path)
 
     # Compute mean value
-    data['mean'] = (data[rep1_column] + data[rep2_column]) / 2
-    data.sort_values(by='mean', inplace=True)
+    data["mean"] = (data[rep1_column] + data[rep2_column]) / 2
+    data.sort_values(by="mean", inplace=True)
 
     # Compute binary activity threshold
-    mean = data['mean'].mean()
-    std = data['mean'].std()
+    mean = data["mean"].mean()
+    std = data["mean"].std()
     threshold = mean - 2 * std
-    threshold_color = ['red']
-    threshold_name = r'$\mu - 2 \sigma$'
+    threshold_color = ["red"]
+    threshold_name = r"$\mu - 2 \sigma$"
 
     # Get regression values
     index = np.arange(len(data))
@@ -47,50 +44,52 @@ def plot_regression_values(
         plt.clf()
         plt.scatter(index, sorted(data[rep_column]), s=5)
 
-        plt.hlines(threshold, 0, len(data), colors=threshold_color, label=threshold_name)
+        plt.hlines(
+            threshold, 0, len(data), colors=threshold_color, label=threshold_name
+        )
 
-        plt.xlabel('Molecule Index')
-        plt.ylabel('Inhibition')
-        plt.title(f'{data_name} Replicate {rep_num} Inhibition')
+        plt.xlabel("Molecule Index")
+        plt.ylabel("Inhibition")
+        plt.title(f"{data_name} Replicate {rep_num} Inhibition")
         plt.legend()
-        plt.savefig(save_dir / f'replicate_{rep_num}.pdf')
+        plt.savefig(save_dir / f"replicate_{rep_num}.pdf")
 
         fig_data = data[[rep_column]]
-        fig_data.to_csv(save_dir / f'replicate_{rep_num}.csv', index=False)
+        fig_data.to_csv(save_dir / f"replicate_{rep_num}.csv", index=False)
 
     # Plot mean (sorted)
-    data.sort_values(by='mean', inplace=True)
+    data.sort_values(by="mean", inplace=True)
 
     plt.clf()
-    plt.scatter(index, data['mean'], s=5)
+    plt.scatter(index, data["mean"], s=5)
 
     plt.hlines(threshold, 0, len(data), colors=threshold_color, label=threshold_name)
 
-    plt.xlabel('Molecule Index')
-    plt.ylabel('Mean Inhibition')
-    plt.title(f'{data_name} Mean Inhibition')
+    plt.xlabel("Molecule Index")
+    plt.ylabel("Mean Inhibition")
+    plt.title(f"{data_name} Mean Inhibition")
     plt.legend()
-    plt.savefig(save_dir / 'mean_sorted.pdf')
+    plt.savefig(save_dir / "mean_sorted.pdf")
 
-    fig_data = data[['mean']]
-    fig_data.to_csv(save_dir / 'mean_sorted.csv', index=False)
+    fig_data = data[["mean"]]
+    fig_data.to_csv(save_dir / "mean_sorted.csv", index=False)
 
     # Plot mean (unsorted)
     data = data.sample(frac=1, replace=False, random_state=0)
 
     plt.clf()
-    plt.scatter(index, data['mean'], s=5)
+    plt.scatter(index, data["mean"], s=5)
 
     plt.hlines(threshold, 0, len(data), colors=threshold_color, label=threshold_name)
 
-    plt.xlabel('Molecule Index')
-    plt.ylabel('Mean Inhibition')
-    plt.title(f'{data_name} Mean Inhibition')
+    plt.xlabel("Molecule Index")
+    plt.ylabel("Mean Inhibition")
+    plt.title(f"{data_name} Mean Inhibition")
     plt.legend()
-    plt.savefig(save_dir / 'mean_unsorted.pdf')
+    plt.savefig(save_dir / "mean_unsorted.pdf")
 
-    fig_data = data[['mean']]
-    fig_data.to_csv(save_dir / 'mean_unsorted.csv', index=False)
+    fig_data = data[["mean"]]
+    fig_data.to_csv(save_dir / "mean_unsorted.csv", index=False)
 
     # Plot r1 vs r2
     plt.clf()
@@ -99,17 +98,17 @@ def plot_regression_values(
     plt.hlines(threshold, 0, threshold, colors=threshold_color, label=threshold_name)
     plt.vlines(threshold, 0, threshold, colors=threshold_color)
 
-    plt.xlabel('Replicate 1 Inhibition')
-    plt.ylabel('Replicate 2 Inhibition')
-    plt.title(f'{data_name} Replicate 1 vs 2 Inhibition')
+    plt.xlabel("Replicate 1 Inhibition")
+    plt.ylabel("Replicate 2 Inhibition")
+    plt.title(f"{data_name} Replicate 1 vs 2 Inhibition")
     plt.legend()
-    plt.savefig(save_dir / 'replicate_1_vs_2.pdf')
+    plt.savefig(save_dir / "replicate_1_vs_2.pdf")
 
     fig_data = data[[rep1_column, rep2_column]]
-    fig_data.to_csv(save_dir / 'replicate_1_vs_2.csv', index=False)
+    fig_data.to_csv(save_dir / "replicate_1_vs_2.csv", index=False)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from tap import tapify
 
     tapify(plot_regression_values)

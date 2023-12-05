@@ -1,12 +1,15 @@
-chemfunc==1.0.3
+chemfunc==1.0.4
 chemprop==1.5.2
 descriptastorus==2.6.0
 matplotlib==3.7.1
+networkx==3.1
 numpy==1.24.3
+openpyxl==3.1.2
 pandas==2.0.1
 rdkit==2022.3.4
 scikit-learn==1.2.2
 scipy==1.10.1
 torch==2.0.1
 tqdm==4.65.0
-typed-argument-parser==1.8.0
+typed-argument-parser==1.9.0
+wandb==0.15.4
