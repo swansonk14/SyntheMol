@@ -1,6 +1,6 @@
 # Documentation
 
-This directory contains instructions for reproducing the results in our antibiotic generation paper: [TODO](TODO).
+This directory contains instructions for reproducing the results in forthcoming paper in _Nature Machine Intelligence_.
 
 The relevant data should be downloaded from [this Zenodo record](https://zenodo.org/records/10257839), unzipped, and moved to `SyntheMol/data`.
 
