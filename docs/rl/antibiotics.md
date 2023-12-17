@@ -362,24 +362,35 @@ synthemol \
     --wandb_log
 ```
 
-Chemprop-RDKit on REAL + WuXi
-TODO: how to sample WuXi randomly?
+Chemprop-RDKit on random REAL and WuXi
 ```bash
+for SPACE in real wuxi
+do
+
+if [ "${SPACE}" = "real" ]; then
+  SIZE="40m"
+else
+  SIZE="20m"
+fi
+
+FILE_NAME="random_${SPACE}_${SIZE}"
+
 chemfunc save_fingerprints \
-    --data_path rl/data/real/random_real_25m.csv \
+    --data_path rl/data/${SPACE}/${FILE_NAME}.csv \
     --fingerprint_type rdkit \
-    --save_path rl/data/real/random_real_25m.npz
+    --save_path rl/data/${SPACE}/${FILE_NAME}.npz
 
+for PROPERTY in s_aureus solubility
+do
 chemprop_predict \
-    --test_path rl/data/real/random_real_25m.csv \
-    --preds_path rl/generations/chemprop_rdkit_s_aureus_solubility_dynamic_weights_real.csv \
-    --checkpoint_dir rl/models/s_aureus_chemprop_rdkit \
-    --features_path rl/data/real/random_real_25m.npz \
+    --test_path rl/data/${SPACE}/${FILE_NAME}.csv \
+    --preds_path rl/generations/chemprop_rdkit_${PROPERTY}_${FILE_NAME}.csv \
+    --checkpoint_dir rl/models/${PROPERTY}_chemprop_rdkit \
+    --features_path rl/data/${SPACE}/${FILE_NAME}.npz \
     --no_features_scaling
+done
+done
 ```
-
-Random
-TODO: how to sample WuXi randomly?
 
 
 ## Filter generated molecules

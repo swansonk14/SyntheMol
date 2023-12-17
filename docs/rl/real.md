@@ -148,10 +148,10 @@ python scripts/data/sample_real_space.py \
     --num_molecules 10000
 ```
 
-Randomly sample 66 million REAL Space molecules. This is used for a time-based comparison of Chemprop versus SyntheMol-RL.
+Randomly sample 40 million REAL Space molecules. This is used for a time-based comparison of Chemprop versus SyntheMol-RL.
 ```bash
 python scripts/data/sample_real_space.py \
     --data_dir rl/data/real/real_space \
-    --save_path rl/data/real/random_real_66m.csv \
-    --num_molecules 66000000
+    --save_path rl/data/real/random_real_40m.csv \
+    --num_molecules 40000000
 ```
