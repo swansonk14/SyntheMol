@@ -400,10 +400,15 @@ class Generator:
         :param total_visit_count: The total number of visits to all nodes at the same level as this Node.
         :return: The MCTS score of the Node.
         """
-        # Compute initial MCTS score
-        mcts_score = node.exploit_score + node.property_score * node.explore_score(
-            n=total_visit_count
+        # Compute components of MCTS score
+        exploit_score = node.exploit_score
+        property_score = node.property_score
+        explore_score = node.explore_score(
+            n=total_visit_count, sign=1 if property_score >= 0 else -1
         )
+
+        # Compute initial MCTS score (without building block diversity)
+        mcts_score = exploit_score + property_score * explore_score
 
         # Optionally encourage building block diversity by reducing MCTS score based on building block usage
         if self.building_block_diversity and node.num_molecules > 0:

@@ -1,7 +1,7 @@
 """Contains the Node class, which represents a step in the combinatorial molecule construction process."""
 import math
 from functools import cached_property
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 
@@ -112,9 +112,14 @@ class Node:
 
         return weighted_average_best_molecule_scores
 
-    def explore_score(self, n: int) -> float:
-        """Value that encourages exploration of Nodes with few visits."""
-        return self.explore_weight * math.sqrt(1 + n) / (1 + self.num_visits)
+    def explore_score(self, n: int, sign: Literal[1, -1] = 1) -> float:
+        """Value that encourages exploration of Nodes with few visits.
+
+        :param n: The total number of times that nodes on the same level have been visited.
+        :param sign: The sign of the property score, which determines whether the explore
+                     score or its reciprocal should be used since the two are multiplied.
+        """
+        return (self.explore_weight * math.sqrt(1 + n) / (1 + self.num_visits)) ** sign
 
     @property
     def num_molecules(self) -> int:
