@@ -140,18 +140,18 @@ Total number of molecules with selected building blocks/reactions = 30,330,025,2
 
 ### Sample REAL molecules
 
-Randomly sample 25,000 REAL Space molecules. This is used for analysis of a representative sample of REAL Space molecules.
+Randomly sample 10,000 REAL Space molecules. This is used for analysis of a representative sample of REAL Space molecules.
 ```bash
 python scripts/data/sample_real_space.py \
     --data_dir rl/data/real/real_space \
-    --save_path rl/data/real/random_real_25k.csv \
-    --num_molecules 25000
+    --save_path rl/data/real/random_real_10k.csv \
+    --num_molecules 10000
 ```
 
-Randomly sample 25 million REAL Space molecules. This is used for a time-based comparison of Chemprop versus SyntheMol-RL.
+Randomly sample 66 million REAL Space molecules. This is used for a time-based comparison of Chemprop versus SyntheMol-RL.
 ```bash
 python scripts/data/sample_real_space.py \
     --data_dir rl/data/real/real_space \
-    --save_path rl/data/real/random_real_25m.csv \
-    --num_molecules 25000000
+    --save_path rl/data/real/random_real_66m.csv \
+    --num_molecules 66000000
 ```

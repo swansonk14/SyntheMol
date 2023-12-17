@@ -87,3 +87,34 @@ python scripts/data/map_wuxi_reactions_to_building_blocks.py \
     --building_blocks_path rl/data/wuxi/building_blocks.csv \
     --save_path rl/data/wuxi/reaction_to_building_blocks.pkl
 ```
+
+## WuXi GalaXi molecules
+
+Below, we describe the steps for processing the REAL Space molecules.
+
+TODO: Update details below in note
+
+Note: The enumerated REAL space requires over 1T of storage and a similar amount of RAM in order to process it. However, the following steps are a one-time operation, and only minimal storage and RAM are required to store the processed data and run SyntheMol. Each of the following commands run in <= 24 hours using 10 cores and <= 1 TB of RAM.
+
+
+### Download REAL Space
+
+Contact WuXi to request access to download the full enumerated WuXi GalaXi. The following commands assume that CSV file containing compounds from phases 1, 2, and 3 are in a single directory called `rl/data/wuxi/wuxi_galaxi`. In total, the WuXi GalaXi contains 16,146,071,436 molecules with 24,093,422 in phase 1; 6,864,759,544 in phase 2; and 9,257,218,470 in phase 3.
+
+### Sample WuXi molecules
+
+Randomly sample 10,000 WuXi GalaXi molecules. This is used for analysis of a representative sample of WuXi GalaXi molecules.
+```bash
+python scripts/data/sample_wuxi_galaxi.py \
+    --data_dir rl/data/wuxi/wuxi_galaxi \
+    --save_path rl/data/wuxi/random_wuxi_10k.csv \
+    --num_molecules 10000
+```
+
+Randomly sample 34 million WuXi GalaXi molecules. This is used for a time-based comparison of Chemprop versus SyntheMol-RL.
+```bash
+python scripts/data/sample_wuxi_galaxi.py \
+    --data_dir rl/data/wuxi/wuxi_galaxi \
+    --save_path rl/data/wuxi/random_wuxi_34m.csv \
+    --num_molecules 34000000
+```
