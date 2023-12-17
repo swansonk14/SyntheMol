@@ -343,8 +343,6 @@ synthemol \
 ```
 
 MCTS
-TODO: Handle negative rewards with solubility
-TODO: Determine number of rollouts
 ```bash
 synthemol \
     --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
@@ -357,7 +355,7 @@ synthemol \
     --building_blocks_score_columns s_aureus_activity solubility \
     --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
     --save_dir rl/generations/mcts_s_aureus_solubility_dynamic_weights_real_wuxi \
-    --n_rollout 100000 \
+    --n_rollout 300000 \
     --search_type mcts \
     --wandb_project_name synthemol_rl \
     --wandb_run_name mcts_s_aureus_solubility_dynamic_weights_real_wuxi \
@@ -591,8 +589,6 @@ done
 ```
 
 MCTS
-TODO: Handle negative rewards with solubility
-TODO: Determine number of rollouts
 ```bash
 for EXPLORE_WEIGHT in 0.5 1.0 5.0 50.0
 do
@@ -607,7 +603,7 @@ synthemol \
     --building_blocks_score_columns s_aureus_activity solubility \
     --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
     --save_dir rl/generations/mcts_s_aureus_solubility_dynamic_weights_real_wuxi_explore_weight_${EXPLORE_WEIGHT} \
-    --n_rollout 100000 \
+    --n_rollout 300000 \
     --search_type mcts \
     --explore_weight ${EXPLORE_WEIGHT} \
     --wandb_project_name synthemol_rl \
