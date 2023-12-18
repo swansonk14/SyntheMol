@@ -28,13 +28,13 @@ def sample_wuxi_galaxi(data_dir: Path, save_path: Path, num_molecules: int,) -> 
     count = 0
     for data_path in tqdm(data_paths):
         # Load WuXi GalaXi file
-        data = pd.read_csv(data_path, header=None, names=[WUXI_ID_COL, WUXI_SMILES_COL])
-        count += len(data)
+        file_data = pd.read_csv(data_path, header=None, names=[WUXI_ID_COL, WUXI_SMILES_COL])
+        count += len(file_data)
 
         # Sample rows
         rng = np.random.default_rng(seed=abs(hash(data_path.stem)))
-        probs = rng.uniform(size=len(data))
-        sampled_data = data.iloc[probs < sample_proportion]
+        probs = rng.uniform(size=len(file_data))
+        sampled_data = file_data.iloc[probs < sample_proportion]
 
         data.append(sampled_data)
 
