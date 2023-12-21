@@ -92,9 +92,7 @@ python scripts/data/map_wuxi_reactions_to_building_blocks.py \
 
 Below, we describe the steps for processing the REAL Space molecules.
 
-TODO: Update details below in note
-
-Note: The enumerated REAL space requires over 1T of storage and a similar amount of RAM in order to process it. However, the following steps are a one-time operation, and only minimal storage and RAM are required to store the processed data and run SyntheMol. Each of the following commands run in <= 24 hours using 10 cores and <= 1 TB of RAM.
+Note: The enumerated WuXi GalaXi requires over 1 TB of storage and a similar amount of RAM in order to process it. However, the following steps are a one-time operation, and only minimal storage and RAM are required to store the processed data and run SyntheMol. Each of the following commands run in <= 24 hours using 10 cores and <= 1 TB of RAM.
 
 
 ### Download REAL Space
