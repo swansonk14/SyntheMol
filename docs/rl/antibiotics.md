@@ -393,6 +393,40 @@ done
 ```
 
 
+## Analyze generated molecules
+
+TODO: have this loop over all generated molecules
+
+Compute similarity to training hits.
+```bash
+chemfunc nearest_neighbor \
+    --data_path rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi/molecules.csv \
+    --reference_data_path rl/data/s_aureus/s_aureus_hits.csv \
+    --reference_name train_hits \
+    --metric tversky
+```
+
+Compute similarity to ChEMBL antibiotics.
+```bash
+chemfunc nearest_neighbor \
+    --data_path rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi/molecules.csv \
+    --reference_data_path rl/data/chembl/chembl.csv \
+    --reference_name chembl \
+    --metric tversky
+```
+
+Analyze generated molecules.
+```bash
+python scripts/analysis/analyze_generated_molecules.py \
+    --data_path rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi/molecules.csv \
+    --save_path rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi/analysis.csv \
+    --score_columns "S. aureus" "Solubility" \
+    --score_thresholds 0.5 -4
+```
+
+TODO: select molecules
+
+
 ## Filter generated molecules
 
 
