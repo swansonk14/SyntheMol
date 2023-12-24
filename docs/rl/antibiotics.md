@@ -266,6 +266,7 @@ for MODEL in s_aureus solubility
 do
 chemprop_predict \
     --test_path rl/data/${CHEMICAL_SPACE}/building_blocks.csv \
+    --smiles_column smiles \
     --preds_path rl/data/${CHEMICAL_SPACE}/building_blocks.csv \
     --checkpoint_dir rl/models/${MODEL}_chemprop_rdkit \
     --features_path rl/data/${CHEMICAL_SPACE}/building_blocks.npz \
@@ -384,6 +385,7 @@ for PROPERTY in s_aureus solubility
 do
 chemprop_predict \
     --test_path rl/data/${SPACE}/${FILE_NAME}.csv \
+    --smiles_column smiles \
     --preds_path rl/generations/chemprop_rdkit_${PROPERTY}_${FILE_NAME}.csv \
     --checkpoint_dir rl/models/${PROPERTY}_chemprop_rdkit \
     --features_path rl/data/${SPACE}/${FILE_NAME}.npz \
@@ -415,11 +417,12 @@ chemfunc nearest_neighbor \
     --metric tversky
 ```
 
-Analyze generated molecules.
+Analyze generated molecules and select best molecules.
 ```bash
 python scripts/analysis/analyze_generated_molecules.py \
     --data_path rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi/molecules.csv \
-    --save_path rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi/analysis.csv \
+    --save_analysis_path rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi/analysis.csv \
+    --save_molecules_path rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi/selected.csv \
     --score_columns "S. aureus" "Solubility" \
     --score_thresholds 0.5 -4
 ```

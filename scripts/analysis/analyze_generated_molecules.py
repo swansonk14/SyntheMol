@@ -22,10 +22,10 @@ def compute_average_maximum_similarity(similarities: np.ndarray) -> float:
     return average_max_similarity
 
 
-def compute_approximate_maximum_independent_set(
+def get_approximate_maximum_independent_set(
     similarities: np.ndarray, threshold: float, num_tries: int = 10
-) -> int:
-    """Computes the approximate size of the maximum independent set of molecules within a similarity threshold.
+) -> set[int]:
+    """Gets a maximal independent set approximating the maximum independent set of molecules within a similarity threshold.
 
     Note: This does not provide a formal approximation since there are no theoretical guarantees on using
           maximal independent sets to approximate maximum independent sets.
@@ -33,25 +33,26 @@ def compute_approximate_maximum_independent_set(
     :param similarities: A 2D numpy array of pairwise molecule similarities.
     :param threshold: Similarity threshold.
     :param num_tries: Number of times to run the approximation (i.e., number of maximal independent sets to try).
-    :return: The approximate size of the maximum independent set (i.e., the size of the largest maximal
-             independent set found across the num_tries attempts).
+    :return: The approximate maximum independent set (set of indices of molecules).
     """
     # Create similarities graph
     similarities_matrix = similarities >= threshold
     similarities_graph = nx.from_numpy_array(similarities_matrix)
 
     # Compute approximate maximum independent set
-    max_independent_set_size = 0
+    max_independent_set = set()
     for seed in range(num_tries):
         independent_set = nx.maximal_independent_set(similarities_graph, seed=seed)
-        max_independent_set_size = max(max_independent_set_size, len(independent_set))
+        if len(independent_set) > len(max_independent_set):
+            max_independent_set = independent_set
 
-    return max_independent_set_size
+    return max_independent_set
 
 
 def analyze_generated_molecules(
     data_path: Path,
-    save_path: Path,
+    save_analysis_path: Path,
+    save_molecules_path: Path,
     smiles_column: str = SMILES_COL,
     score_columns: tuple[str, ...] = (SCORE_COL,),
     novelty_columns: tuple[str, ...] = (
@@ -66,7 +67,8 @@ def analyze_generated_molecules(
     """Analyzes a set of generated molecules for hits, novelty, and diversity.
 
     :param data_path: Path to CSV file containing generated molecules.
-    :param save_path: Path to CSV file where the analysis will be saved.
+    :param save_analysis_path: Path to CSV file where the analysis will be saved.
+    :param save_molecules_path: Path to a CSV file where the selected molecules will be saved.
     :param smiles_column: Name of the column containing SMILES.
     :param score_columns: Name of the columns containing scores.
     :param novelty_columns: Name of the columns containing similarity scores compared to known hits (for novelty).
@@ -75,6 +77,10 @@ def analyze_generated_molecules(
     :param similarity_threshold: Threshold to use for calculating the maximum independent set (diverse molecules).
     :param max_rollout: Maximum rollout number to include in the analysis.
     """
+    # Create save directories
+    save_analysis_path.parent.mkdir(parents=True, exist_ok=True)
+    save_molecules_path.parent.mkdir(parents=True, exist_ok=True)
+
     # Load generated molecules
     molecules = pd.read_csv(data_path)
 
@@ -116,27 +122,41 @@ def analyze_generated_molecules(
     percent_novel_hits = 100 * num_novel_hits / num_molecules
     print(f"Number of novel hits = {num_novel_hits:,} ({percent_novel_hits:.2f}%)")
 
-    # Handle case of no novel hits
-    if len(novel_hits) == 0:
-        raise NotImplementedError  # TODO
+    # If novel hits, compute diversity and select independent set
+    if len(novel_hits) > 0:
+        # Calculate pairwise similarities
+        novel_hit_molecules = novel_hits[smiles_column].tolist()
+        pairwise_similarities = compute_pairwise_tanimoto_similarities(
+            novel_hit_molecules
+        )
 
-    # Calculate pairwise similarities
-    novel_hit_molecules = novel_hits[smiles_column].tolist()
-    pairwise_similarities = compute_pairwise_tanimoto_similarities(novel_hit_molecules)
+        # Compute average maximum pairwise similarity
+        average_maximum_similarity = compute_average_maximum_similarity(
+            similarities=pairwise_similarities
+        )
 
-    # Compute average maximum pairwise similarity
-    average_maximum_similarity = compute_average_maximum_similarity(
-        similarities=pairwise_similarities
-    )
+        print(
+            f"Novel hits average maximum similarity = {average_maximum_similarity:.2f}"
+        )
 
-    print(f"Novel hits average maximum similarity = {average_maximum_similarity:.2f}")
+        # Compute maximum independent set
+        maximum_independent_set_indices = get_approximate_maximum_independent_set(
+            similarities=pairwise_similarities, threshold=similarity_threshold
+        )
+        maximum_independent_set_size = len(maximum_independent_set_indices)
 
-    # Compute maximum independent set
-    maximum_independent_set = compute_approximate_maximum_independent_set(
-        similarities=pairwise_similarities, threshold=similarity_threshold
-    )
+        print(
+            f"Novel hits maximum independent set size = {maximum_independent_set_size:,}"
+        )
 
-    print(f"Novel hits maximum independent set = {maximum_independent_set:,}")
+        # Select molecules from maximum independent set
+        selected = novel_hits.iloc[sorted(maximum_independent_set_indices)]
+
+    # Otherwise, skip diversity analysis
+    else:
+        average_maximum_similarity = float("nan")
+        maximum_independent_set_size = 0
+        selected = pd.DataFrame()
 
     # Create DataFrame with results
     results = pd.DataFrame(
@@ -148,14 +168,14 @@ def analyze_generated_molecules(
                 "num_novel_hits": num_novel_hits,
                 "percent_novel_hits": percent_novel_hits,
                 "novel_hits_average_maximum_similarity": average_maximum_similarity,
-                "novel_hits_maximum_independent_set": maximum_independent_set,
+                "novel_hits_maximum_independent_set_size": maximum_independent_set_size,
             }
         ]
     )
 
     # Save results
-    save_path.parent.mkdir(parents=True, exist_ok=True)
-    results.to_csv(save_path, index=False)
+    results.to_csv(save_analysis_path, index=False)
+    selected.to_csv(save_molecules_path, index=False)
 
 
 if __name__ == "__main__":
