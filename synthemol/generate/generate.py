@@ -59,7 +59,7 @@ def generate(
     rl_model_paths: list[Path] | None = None,
     rl_prediction_type: RL_PREDICTION_TYPES = "classification",
     rl_base_temperature: float = 0.1,
-    rl_temperature_similarity_target: float = 0.5,
+    rl_temperature_similarity_target: float = 0.6,
     rl_train_frequency: int = 10,
     rl_train_epochs: int = 5,
     rl_extended_evaluation: bool = False,

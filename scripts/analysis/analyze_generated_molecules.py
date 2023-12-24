@@ -60,8 +60,8 @@ def analyze_generated_molecules(
         "chembl_tversky_nearest_neighbor_similarity",
     ),
     score_thresholds: tuple[float, ...] = (0.5,),
-    novelty_thresholds: tuple[float, ...] = (0.5, 0.5),
-    similarity_threshold: float = 0.5,
+    novelty_thresholds: tuple[float, ...] = (0.6, 0.6),
+    similarity_threshold: float = 0.6,
     max_rollout: int | None = None,
 ) -> None:
     """Analyzes a set of generated molecules for hits, novelty, and diversity.

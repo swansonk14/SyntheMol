@@ -333,7 +333,7 @@ synthemol \
     --building_blocks_score_columns s_aureus_activity solubility \
     --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
     --save_dir rl/generations/rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi \
-    --n_rollout 50000 \
+    --n_rollout 10000 \
     --search_type rl \
     --rl_model_type mlp_rdkit \
     --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/fold_0/model_0/model.pt \
@@ -356,7 +356,7 @@ synthemol \
     --building_blocks_score_columns s_aureus_activity solubility \
     --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
     --save_dir rl/generations/mcts_s_aureus_solubility_dynamic_weights_real_wuxi \
-    --n_rollout 300000 \
+    --n_rollout 10000 \
     --search_type mcts \
     --wandb_project_name synthemol_rl \
     --wandb_run_name mcts_s_aureus_solubility_dynamic_weights_real_wuxi \
@@ -386,7 +386,7 @@ do
 chemprop_predict \
     --test_path rl/data/${SPACE}/${FILE_NAME}.csv \
     --smiles_column smiles \
-    --preds_path rl/generations/chemprop_rdkit_${PROPERTY}_${FILE_NAME}.csv \
+    --preds_path rl/generations/chemprop_rdkit_${FILE_NAME}_${PROPERTY}.csv \
     --checkpoint_dir rl/models/${PROPERTY}_chemprop_rdkit \
     --features_path rl/data/${SPACE}/${FILE_NAME}.npz \
     --no_features_scaling
@@ -503,7 +503,7 @@ synthemol \
     --building_blocks_score_columns s_aureus_activity solubility \
     --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
     --save_dir rl/generations/rl_mlp_rdkit_s_aureus_${S_AUREUS_WEIGHT}_solubility_${SOLUBILITY_WEIGHT}_real_wuxi \
-    --n_rollout 50000 \
+    --n_rollout 10000 \
     --search_type rl \
     --rl_model_type mlp_rdkit \
     --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/fold_0/model_0/model.pt \
@@ -516,11 +516,11 @@ done
 
 ### Dynamic temperature
 
-Final (target similarity of 0.5) versus target similarities of 0.3, 0.4, 0.6, 0.7.
+Final (target similarity of 0.6) versus target similarities of 0.4, 0.5, 0.7, 0.8.
 
 RL Chemprop-RDKit
 ```bash
-for SIMILARITY_TARGET in 0.3 0.4 0.6 0.7
+for SIMILARITY_TARGET in 0.4 0.5 0.7 0.8
 do
 synthemol \
     --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
@@ -549,7 +549,7 @@ done
 
 RL MLP-RDKit
 ```bash
-for SIMILARITY_TARGET in 0.3 0.4 0.6 0.7
+for SIMILARITY_TARGET in 0.4 0.5 0.7 0.8
 do
 synthemol \
     --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
@@ -562,7 +562,7 @@ synthemol \
     --building_blocks_score_columns s_aureus_activity solubility \
     --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
     --save_dir rl/generations/rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_similarity_target_${SIMILARITY_TARGET} \
-    --n_rollout 50000 \
+    --n_rollout 10000 \
     --search_type rl \
     --rl_model_type mlp_rdkit \
     --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/fold_0/model_0/model.pt \
@@ -623,7 +623,7 @@ synthemol \
     --building_blocks_score_columns s_aureus_activity solubility \
     --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
     --save_dir rl/generations/rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_temperature_${TEMPERATURE} \
-    --n_rollout 50000 \
+    --n_rollout 10000 \
     --search_type rl \
     --rl_model_type mlp_rdkit \
     --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/fold_0/model_0/model.pt \
@@ -651,7 +651,7 @@ synthemol \
     --building_blocks_score_columns s_aureus_activity solubility \
     --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
     --save_dir rl/generations/mcts_s_aureus_solubility_dynamic_weights_real_wuxi_explore_weight_${EXPLORE_WEIGHT} \
-    --n_rollout 300000 \
+    --n_rollout 10000 \
     --search_type mcts \
     --explore_weight ${EXPLORE_WEIGHT} \
     --wandb_project_name synthemol_rl \
@@ -725,7 +725,7 @@ synthemol \
     --building_blocks_score_columns s_aureus_activity solubility \
     --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
     --save_dir rl/generations/rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_no_rl_training \
-    --n_rollout 50000 \
+    --n_rollout 10000 \
     --search_type rl \
     --rl_model_type mlp_rdkit \
     --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/fold_0/model_0/model.pt \
@@ -749,7 +749,7 @@ synthemol \
     --building_blocks_score_columns s_aureus_activity solubility \
     --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
     --save_dir rl/generations/rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_no_pretraining \
-    --n_rollout 50000 \
+    --n_rollout 10000 \
     --search_type rl \
     --rl_model_type mlp_rdkit \
     --rl_prediction_type regression \
