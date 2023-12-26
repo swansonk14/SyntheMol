@@ -43,7 +43,7 @@ class Generator:
         rl_temperature_similarity_target: float | None,
         rl_train_frequency: int,
         optimization: OPTIMIZATION_TYPES,
-        reactions: tuple[Reaction],
+        reactions: tuple[Reaction, ...],
         rng_seed: int,
         no_building_block_diversity: bool,
         store_nodes: bool,

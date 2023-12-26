@@ -389,7 +389,8 @@ chemprop_predict \
     --preds_path rl/generations/chemprop_rdkit_${FILE_NAME}_${PROPERTY}.csv \
     --checkpoint_dir rl/models/${PROPERTY}_chemprop_rdkit \
     --features_path rl/data/${SPACE}/${FILE_NAME}.npz \
-    --no_features_scaling
+    --no_features_scaling \
+    --no_cache_mol
 done
 done
 ```
