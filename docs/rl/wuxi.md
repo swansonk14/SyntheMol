@@ -97,7 +97,7 @@ Note: The enumerated WuXi GalaXi requires over 1 TB of storage and a similar amo
 
 ### Download REAL Space
 
-Contact WuXi to request access to download the full enumerated WuXi GalaXi. The following commands assume that CSV file containing compounds from phases 1, 2, and 3 are in a single directory called `rl/data/wuxi/wuxi_galaxi`. In total, the WuXi GalaXi contains 16,146,071,436 molecules with 24,093,422 in phase 1; 6,864,759,544 in phase 2; and 9,257,218,470 in phase 3.
+Contact WuXi to request access to download the full enumerated WuXi GalaXi. The following commands assume that CSV file containing compounds from phases 1, 2, and 3 are in a single directory called `rl/data/wuxi/wuxi_galaxi`. In total, the WuXi GalaXi contains 16,146,071,436 molecules with 24,093,422 in phase 1; 6,864,759,544 in phase 2; and 9,257,218,470 in phase 3 from the 12/31/2022 download.
 
 ### Sample WuXi molecules
 

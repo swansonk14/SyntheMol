@@ -1,4 +1,4 @@
-"""Analyzes a set of generated molecules for hits, novelty, and diversity."""
+"""Selects a set of diverse, novel hit molecules from a set of molecules."""
 from pathlib import Path
 
 import networkx as nx
@@ -49,10 +49,10 @@ def get_approximate_maximum_independent_set(
     return max_independent_set
 
 
-def analyze_generated_molecules(
+def select_molecules(
     data_path: Path,
-    save_analysis_path: Path,
     save_molecules_path: Path,
+    save_analysis_path: Path | None = None,
     smiles_column: str = SMILES_COL,
     score_columns: tuple[str, ...] = (SCORE_COL,),
     novelty_columns: tuple[str, ...] = (
@@ -63,12 +63,15 @@ def analyze_generated_molecules(
     novelty_thresholds: tuple[float, ...] = (0.6, 0.6),
     similarity_threshold: float = 0.6,
     max_rollout: int | None = None,
+    select_num: int | None = None,
+    sort_column: str | None = None,
+    descending: bool = False,
 ) -> None:
-    """Analyzes a set of generated molecules for hits, novelty, and diversity.
+    """Selects a set of diverse, novel hit molecules from a set of molecules
 
-    :param data_path: Path to CSV file containing generated molecules.
-    :param save_analysis_path: Path to CSV file where the analysis will be saved.
+    :param data_path: Path to CSV file containing molecules.
     :param save_molecules_path: Path to a CSV file where the selected molecules will be saved.
+    :param save_analysis_path: Optional path to CSV file where the analysis will be saved.
     :param smiles_column: Name of the column containing SMILES.
     :param score_columns: Name of the columns containing scores.
     :param novelty_columns: Name of the columns containing similarity scores compared to known hits (for novelty).
@@ -76,12 +79,12 @@ def analyze_generated_molecules(
     :param novelty_thresholds: Thresholds to use for filtering by novelty (one per novelty column).
     :param similarity_threshold: Threshold to use for calculating the maximum independent set (diverse molecules).
     :param max_rollout: Maximum rollout number to include in the analysis.
+    :param select_num: Optional number of molecules to select (otherwise keeps entire maximum independent set).
+    :param sort_column: Optional name of the column to sort by before selecting molecules.
+                        If None, selects molecules in the order of the input file.
+    :param descending: Whether to sort in descending order.
     """
-    # Create save directories
-    save_analysis_path.parent.mkdir(parents=True, exist_ok=True)
-    save_molecules_path.parent.mkdir(parents=True, exist_ok=True)
-
-    # Load generated molecules
+    # Load molecules
     molecules = pd.read_csv(data_path)
 
     print(f"Number of molecules = {len(molecules):,}")
@@ -158,27 +161,42 @@ def analyze_generated_molecules(
         maximum_independent_set_size = 0
         selected = pd.DataFrame()
 
-    # Create DataFrame with results
-    results = pd.DataFrame(
-        [
-            {
-                "num_molecules": num_molecules,
-                "num_hits": num_hits,
-                "percent_hits": percent_hits,
-                "num_novel_hits": num_novel_hits,
-                "percent_novel_hits": percent_novel_hits,
-                "novel_hits_average_maximum_similarity": average_maximum_similarity,
-                "novel_hits_maximum_independent_set_size": maximum_independent_set_size,
-            }
-        ]
-    )
+    # Sort and select molecules
+    if len(selected) > 0:
+        # Sort molecules
+        if sort_column is not None:
+            print(f"Sorting molecules by {sort_column}")
+            selected.sort_values(sort_column, inplace=True, ascending=not descending)
 
-    # Save results
-    results.to_csv(save_analysis_path, index=False)
+        # Select molecules
+        if select_num is not None and len(selected) < select_num:
+            print(f"Selecting {len(selected):,} molecules")
+            selected = selected.iloc[:select_num]
+
+    # Save selected molecules
+    save_molecules_path.parent.mkdir(parents=True, exist_ok=True)
     selected.to_csv(save_molecules_path, index=False)
+
+    # Save analysis
+    if save_analysis_path is not None:
+        save_analysis_path.parent.mkdir(parents=True, exist_ok=True)
+
+        pd.DataFrame(
+            [
+                {
+                    "num_molecules": num_molecules,
+                    "num_hits": num_hits,
+                    "percent_hits": percent_hits,
+                    "num_novel_hits": num_novel_hits,
+                    "percent_novel_hits": percent_novel_hits,
+                    "novel_hits_average_maximum_similarity": average_maximum_similarity,
+                    "novel_hits_maximum_independent_set_size": maximum_independent_set_size,
+                }
+            ]
+        ).to_csv(save_analysis_path, index=False)
 
 
 if __name__ == "__main__":
     from tap import tapify
 
-    tapify(analyze_generated_molecules)
+    tapify(select_molecules)

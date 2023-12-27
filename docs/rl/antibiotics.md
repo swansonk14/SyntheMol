@@ -288,12 +288,7 @@ Time with an 8-core, 1-GPU machine:
 
 ## Generate molecules with SyntheMol-RL
 
-Generate molecules with SyntheMol-RL.
-
-
-### Final generations
-
-RL models for _S. aureus_ and solubility dynamic multiparameter REAL & WuXi
+Generate molecules with SyntheMol-RL using RL models for _S. aureus_ and solubility with dynamic multiparameter and exploring REAL & WuXi chemical spaces.
 
 RL Chemprop-RDKit
 ```bash
@@ -363,6 +358,8 @@ synthemol \
     --wandb_log
 ```
 
+## Screen molecules with Chemprop-RDKit
+
 Chemprop-RDKit on random REAL and WuXi
 ```bash
 for SPACE in real wuxi
@@ -386,7 +383,7 @@ do
 chemprop_predict \
     --test_path rl/data/${SPACE}/${FILE_NAME}.csv \
     --smiles_column smiles \
-    --preds_path rl/generations/chemprop_rdkit_${FILE_NAME}_${PROPERTY}.csv \
+    --preds_path rl/screened/chemprop_rdkit_${FILE_NAME}_${PROPERTY}.csv \
     --checkpoint_dir rl/models/${PROPERTY}_chemprop_rdkit \
     --features_path rl/data/${SPACE}/${FILE_NAME}.npz \
     --no_features_scaling \
@@ -396,64 +393,106 @@ done
 ```
 
 
-## Analyze generated molecules
+## Select generated molecules
 
-TODO: have this loop over all generated molecules
-
-Compute similarity to training hits.
+Compute similarity to training hits and ChEMBL antibiotics.
 ```bash
+for MODEL in rl_chemprop_rdkit rl_mlp_rdkit mcts
+do
 chemfunc nearest_neighbor \
-    --data_path rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi/molecules.csv \
+    --data_path rl/generations/${MODEL}_s_aureus_solubility_dynamic_weights_real_wuxi/molecules.csv \
     --reference_data_path rl/data/s_aureus/s_aureus_hits.csv \
     --reference_name train_hits \
     --metric tversky
-```
 
-Compute similarity to ChEMBL antibiotics.
-```bash
 chemfunc nearest_neighbor \
-    --data_path rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi/molecules.csv \
+    --data_path rl/generations/${MODEL}_s_aureus_solubility_dynamic_weights_real_wuxi/molecules.csv \
     --reference_data_path rl/data/chembl/chembl.csv \
     --reference_name chembl \
     --metric tversky
+done
 ```
 
-Analyze generated molecules and select best molecules.
+Select the top 100 diverse, novel hit molecules. Hits are defined as _S. aureus_ >= 0.5 and solubility >= -4. Novelty is defined as maximum 0.6 Tversky similarity to training hits and ChEMBL antibiotics. Diversity is defined as maximum 0.6 Tanimoto similarity to other selected molecules (maximum independent set). Final selection is the top 100 diverse, novel hits molecules sorted by _S. aureus_ score.
 ```bash
-python scripts/analysis/analyze_generated_molecules.py \
-    --data_path rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi/molecules.csv \
-    --save_analysis_path rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi/analysis.csv \
-    --save_molecules_path rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi/selected.csv \
+for MODEL in rl_chemprop_rdkit rl_mlp_rdkit mcts
+do
+python scripts/data/select_molecules.py \
+    --data_path rl/generations/${MODEL}_s_aureus_solubility_dynamic_weights_real_wuxi/molecules.csv \
+    --save_molecules_path rl/generations/${MODEL}_s_aureus_solubility_dynamic_weights_real_wuxi/selected.csv \
+    --save_analysis_path rl/generations/${MODEL}_s_aureus_solubility_dynamic_weights_real_wuxi/analysis.csv \
     --score_columns "S. aureus" "Solubility" \
-    --score_thresholds 0.5 -4
+    --score_thresholds 0.5 -4 \
+    --novelty_threshold 0.6 \
+    --similarity_threshold 0.6 \
+    --select_num 100 \
+    --sort_column "S. aureus" \
+    --descending
+done
 ```
 
-TODO: select molecules
+## Select screened molecules
 
+Filter by hits, where hits are defined as _S. aureus_ >= 0.5 and solubility >= -4.
+```bash
+for NAME in real_40m wuxi_20m
+do
+chemfunc filter_molecules \
+    --data_path rl/screened/chemprop_rdkit_random_${NAME}.csv \
+    --save_path rl/screened/chemprop_rdkit_random_${NAME}_hits.csv \
+    --filter_column "s_aureus_activity" \
+    --min_value ${S_AUREUS}
 
-## Filter generated molecules
+chemfunc filter_molecules \
+    --data_path rl/screened/chemprop_rdkit_random_${NAME}_hits.csv \
+    --save_path rl/screened/chemprop_rdkit_random_${NAME}_hits.csv \
+    --filter_column "solubility" \
+    --min_value -4
+done
+```
 
+Compute similarity to training hits and ChEMBL antibiotics.
+```bash
+for MODEL in rl_chemprop_rdkit rl_mlp_rdkit mcts
+do
+chemfunc nearest_neighbor \
+    --data_path rl/screened/chemprop_rdkit_random_${NAME}_hits.csv \
+    --reference_data_path rl/data/s_aureus/s_aureus_hits.csv \
+    --reference_name train_hits \
+    --metric tversky
 
-### Novelty
+chemfunc nearest_neighbor \
+    --data_path rl/screened/chemprop_rdkit_random_${NAME}_hits.csv \
+    --reference_data_path rl/data/chembl/chembl.csv \
+    --reference_name chembl \
+    --metric tversky
+done
+```
 
-
-### Bioactivity
-
-
-### Diversity
-
-
-### ADMET
-
-
-## Map molecules to REAL IDs
+Select the top 100 diverse, novel hit molecules. Hits are defined as _S. aureus_ >= 0.5 and solubility >= -4. Novelty is defined as maximum 0.6 Tversky similarity to training hits and ChEMBL antibiotics. Diversity is defined as maximum 0.6 Tanimoto similarity to other selected molecules (maximum independent set). Final selection is the top 100 diverse, novel hits molecules sorted by _S. aureus_ score.
+```bash
+for MODEL in rl_chemprop_rdkit rl_mlp_rdkit mcts
+do
+python scripts/data/select_molecules.py \
+    --data_path rl/screened/chemprop_rdkit_random_${NAME}_hits.csv \
+    --save_molecules_path rl/screened/rl/screened/chemprop_rdkit_random_${NAME}_selected.csv \
+    --save_analysis_path rl/screened/rl/screened/chemprop_rdkit_random_${NAME}_analysis.csv \
+    --score_columns "S. aureus" "Solubility" \
+    --score_thresholds 0.5 -4 \
+    --novelty_threshold 0.6 \
+    --similarity_threshold 0.6 \
+    --select_num 100 \
+    --sort_column "S. aureus" \
+    --descending
+done
+```
 
 
 ## Ablation experiments
 
 ### Chemical space
 
-Simply analyze REAL versus WuXi from final generations.
+Analyze REAL versus WuXi from final generations above.
 
 ### Multiparameter
 
