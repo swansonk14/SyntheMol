@@ -166,11 +166,11 @@ def select_molecules(
         # Sort molecules
         if sort_column is not None:
             print(f"Sorting molecules by {sort_column}")
-            selected.sort_values(sort_column, inplace=True, ascending=not descending)
+            selected = selected.sort_values(sort_column, ascending=not descending)
 
         # Select molecules
-        if select_num is not None and len(selected) < select_num:
-            print(f"Selecting {len(selected):,} molecules")
+        if select_num is not None and len(selected) > select_num:
+            print(f"Selecting {select_num:,} molecules")
             selected = selected.iloc[:select_num]
 
     # Save selected molecules

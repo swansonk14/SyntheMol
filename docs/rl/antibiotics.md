@@ -451,40 +451,43 @@ chemfunc filter_molecules \
 done
 ```
 
+Combine REAL and WuXi hits.
+```bash
+python -c "import pandas as pd; \
+pd.concat([ \
+    pd.read_csv('rl/screened/chemprop_rdkit_random_real_40m_hits.csv'), \
+    pd.read_csv('rl/screened/chemprop_rdkit_random_wuxi_20m_hits.csv') \
+]).to_csv('rl/screened/chemprop_rdkit_random_real_wuxi_60m_hits.csv', index=False)"
+```
+
 Compute similarity to training hits and ChEMBL antibiotics.
 ```bash
-for MODEL in rl_chemprop_rdkit rl_mlp_rdkit mcts
-do
 chemfunc nearest_neighbor \
-    --data_path rl/screened/chemprop_rdkit_random_${NAME}_hits.csv \
+    --data_path rl/screened/chemprop_rdkit_random_real_wuxi_60m_hits.csv \
     --reference_data_path rl/data/s_aureus/s_aureus_hits.csv \
     --reference_name train_hits \
     --metric tversky
 
 chemfunc nearest_neighbor \
-    --data_path rl/screened/chemprop_rdkit_random_${NAME}_hits.csv \
+    --data_path rl/screened/chemprop_rdkit_random_real_wuxi_60m_hits.csv \
     --reference_data_path rl/data/chembl/chembl.csv \
     --reference_name chembl \
     --metric tversky
-done
 ```
 
 Select the top 100 diverse, novel hit molecules. Hits are defined as _S. aureus_ >= 0.5 and solubility >= -4. Novelty is defined as maximum 0.6 Tversky similarity to training hits and ChEMBL antibiotics. Diversity is defined as maximum 0.6 Tanimoto similarity to other selected molecules (maximum independent set). Final selection is the top 100 diverse, novel hits molecules sorted by _S. aureus_ score.
 ```bash
-for MODEL in rl_chemprop_rdkit rl_mlp_rdkit mcts
-do
 python scripts/data/select_molecules.py \
-    --data_path rl/screened/chemprop_rdkit_random_${NAME}_hits.csv \
-    --save_molecules_path rl/screened/rl/screened/chemprop_rdkit_random_${NAME}_selected.csv \
-    --save_analysis_path rl/screened/rl/screened/chemprop_rdkit_random_${NAME}_analysis.csv \
-    --score_columns "S. aureus" "Solubility" \
+    --data_path rl/screened/chemprop_rdkit_random_real_wuxi_60m_hits.csv \
+    --save_molecules_path rl/screened/chemprop_rdkit_random_real_wuxi_60m_selected.csv \
+    --save_analysis_path rl/screened/chemprop_rdkit_random_real_wuxi_60m_analysis.csv \
+    --score_columns "s_aureus_activity" "solubility" \
     --score_thresholds 0.5 -4 \
     --novelty_threshold 0.6 \
     --similarity_threshold 0.6 \
     --select_num 100 \
-    --sort_column "S. aureus" \
+    --sort_column "s_aureus_activity" \
     --descending
-done
 ```
 
 
