@@ -255,6 +255,25 @@ Results for solubility (10-fold cross-validation, 8-core, 1-GPU machine):
 
 The Chemprop-RDKit models are the best for both _S. aureus_ and solubility. Therefore, those models are used to evaluate building blocks and molecules.
 
+### Add labels to test preds
+
+When saving predictions, Chemprop does not save the labels. This command adds the labels to the predictions files (and also corrects the formatting of SMILES strings).
+
+```bash
+for MODEL in chemprop chemprop_rdkit mlp_rdkit
+do
+python scripts/data/add_labels_to_test_preds.py \
+    --true_path rl/data/s_aureus/s_aureus.csv \
+    --preds_path rl/models/s_aureus_${MODEL} \
+    --value_column s_aureus_activity
+
+python scripts/data/add_labels_to_test_preds.py \
+    --true_path rl/data/solubility/solubility.csv \
+    --preds_path rl/models/solubility_${MODEL} \
+    --value_column solubility
+done
+```
+
 ### Compute model scores for building blocks
 
 After training, use the Chemprop-RDKit models to pre-compute scores of building blocks.
