@@ -379,17 +379,19 @@ synthemol \
 
 ## Screen molecules with Chemprop-RDKit
 
-Chemprop-RDKit on random REAL and WuXi
+Chemprop-RDKit on random REAL 14 million and 100 and WuXi 7 million and 50.
 ```bash
 for SPACE in real wuxi
 do
 
 if [ "${SPACE}" = "real" ]; then
-  SIZE="14m"
+  SIZES=("14m" "100")
 else
-  SIZE="7m"
+  SIZES=("7m" "50")
 fi
 
+for SIZE in "${SIZES[@]}"
+do
 FILE_NAME="random_${SPACE}_${SIZE}"
 
 chemfunc save_fingerprints \
@@ -407,6 +409,7 @@ chemprop_predict \
     --features_path rl/data/${SPACE}/${FILE_NAME}.npz \
     --no_features_scaling \
     --no_cache_mol
+done
 done
 done
 ```
@@ -822,9 +825,11 @@ synthemol \
 
 ### Random seed
 
+Test variability of the final methods under different random seeds. Note that random seed 0 is the same as the final models above, so it is testing reproducibility under a given random seed.
+
 RL Chemprop-RDKit
 ```bash
-for SEED in 1 2
+for SEED in 0 1 2
 do
 synthemol \
     --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
@@ -853,7 +858,7 @@ done
 
 RL MLP-RDKit
 ```bash
-for SEED in 1 2
+for SEED in 0 1 2
 do
 synthemol \
     --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
