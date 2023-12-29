@@ -385,9 +385,9 @@ for SPACE in real wuxi
 do
 
 if [ "${SPACE}" = "real" ]; then
-  SIZE="40m"
+  SIZE="14m"
 else
-  SIZE="20m"
+  SIZE="7m"
 fi
 
 FILE_NAME="random_${SPACE}_${SIZE}"
@@ -432,7 +432,7 @@ chemfunc nearest_neighbor \
 done
 ```
 
-Select the top 100 diverse, novel hit molecules. Hits are defined as _S. aureus_ >= 0.5 and solubility >= -4. Novelty is defined as maximum 0.6 Tversky similarity to training hits and ChEMBL antibiotics. Diversity is defined as maximum 0.6 Tanimoto similarity to other selected molecules (maximum independent set). Final selection is the top 100 diverse, novel hits molecules sorted by _S. aureus_ score.
+Select the top 150 diverse, novel hit molecules. Hits are defined as _S. aureus_ >= 0.5 and solubility >= -4. Novelty is defined as maximum 0.6 Tversky similarity to training hits and ChEMBL antibiotics. Diversity is defined as maximum 0.6 Tanimoto similarity to other selected molecules (maximum independent set). Final selection is the top 100 diverse, novel hits molecules sorted by _S. aureus_ score.
 ```bash
 for MODEL in rl_chemprop_rdkit rl_mlp_rdkit mcts
 do
@@ -444,7 +444,7 @@ python scripts/data/select_molecules.py \
     --score_thresholds 0.5 -4 \
     --novelty_threshold 0.6 \
     --similarity_threshold 0.6 \
-    --select_num 100 \
+    --select_num 150 \
     --sort_column "S. aureus" \
     --descending
 done
@@ -454,7 +454,7 @@ done
 
 Filter by hits, where hits are defined as _S. aureus_ >= 0.5 and solubility >= -4.
 ```bash
-for NAME in real_40m wuxi_20m
+for NAME in real_14m wuxi_7m
 do
 chemfunc filter_molecules \
     --data_path rl/screened/chemprop_rdkit_random_${NAME}.csv \
@@ -474,37 +474,37 @@ Combine REAL and WuXi hits.
 ```bash
 python -c "import pandas as pd; \
 pd.concat([ \
-    pd.read_csv('rl/screened/chemprop_rdkit_random_real_40m_hits.csv'), \
-    pd.read_csv('rl/screened/chemprop_rdkit_random_wuxi_20m_hits.csv') \
-]).to_csv('rl/screened/chemprop_rdkit_random_real_wuxi_60m_hits.csv', index=False)"
+    pd.read_csv('rl/screened/chemprop_rdkit_random_real_14m_hits.csv'), \
+    pd.read_csv('rl/screened/chemprop_rdkit_random_wuxi_7m_hits.csv') \
+]).to_csv('rl/screened/chemprop_rdkit_random_real_wuxi_21m_hits.csv', index=False)"
 ```
 
 Compute similarity to training hits and ChEMBL antibiotics.
 ```bash
 chemfunc nearest_neighbor \
-    --data_path rl/screened/chemprop_rdkit_random_real_wuxi_60m_hits.csv \
+    --data_path rl/screened/chemprop_rdkit_random_real_wuxi_21m_hits.csv \
     --reference_data_path rl/data/s_aureus/s_aureus_hits.csv \
     --reference_name train_hits \
     --metric tversky
 
 chemfunc nearest_neighbor \
-    --data_path rl/screened/chemprop_rdkit_random_real_wuxi_60m_hits.csv \
+    --data_path rl/screened/chemprop_rdkit_random_real_wuxi_21m_hits.csv \
     --reference_data_path rl/data/chembl/chembl.csv \
     --reference_name chembl \
     --metric tversky
 ```
 
-Select the top 100 diverse, novel hit molecules. Hits are defined as _S. aureus_ >= 0.5 and solubility >= -4. Novelty is defined as maximum 0.6 Tversky similarity to training hits and ChEMBL antibiotics. Diversity is defined as maximum 0.6 Tanimoto similarity to other selected molecules (maximum independent set). Final selection is the top 100 diverse, novel hits molecules sorted by _S. aureus_ score.
+Select the top 150 diverse, novel hit molecules. Hits are defined as _S. aureus_ >= 0.5 and solubility >= -4. Novelty is defined as maximum 0.6 Tversky similarity to training hits and ChEMBL antibiotics. Diversity is defined as maximum 0.6 Tanimoto similarity to other selected molecules (maximum independent set). Final selection is the top 100 diverse, novel hits molecules sorted by _S. aureus_ score.
 ```bash
 python scripts/data/select_molecules.py \
-    --data_path rl/screened/chemprop_rdkit_random_real_wuxi_60m_hits.csv \
-    --save_molecules_path rl/screened/chemprop_rdkit_random_real_wuxi_60m_selected.csv \
-    --save_analysis_path rl/screened/chemprop_rdkit_random_real_wuxi_60m_analysis.csv \
+    --data_path rl/screened/chemprop_rdkit_random_real_wuxi_21m_hits.csv \
+    --save_molecules_path rl/screened/chemprop_rdkit_random_real_wuxi_21m_selected.csv \
+    --save_analysis_path rl/screened/chemprop_rdkit_random_real_wuxi_21m_analysis.csv \
     --score_columns "s_aureus_activity" "solubility" \
     --score_thresholds 0.5 -4 \
     --novelty_threshold 0.6 \
     --similarity_threshold 0.6 \
-    --select_num 100 \
+    --select_num 150 \
     --sort_column "s_aureus_activity" \
     --descending
 ```
@@ -818,4 +818,62 @@ synthemol \
     --wandb_project_name synthemol_rl \
     --wandb_run_name rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_no_pretraining \
     --wandb_log
+```
+
+### Random seed
+
+RL Chemprop-RDKit
+```bash
+for SEED in 1 2
+do
+synthemol \
+    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --model_types chemprop chemprop \
+    --fingerprint_types rdkit rdkit \
+    --model_names 'S. aureus' 'Solubility' \
+    --success_thresholds '>=0.5' '>=-4' \
+    --chemical_spaces real wuxi \
+    --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
+    --building_blocks_score_columns s_aureus_activity solubility \
+    --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
+    --save_dir rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_rng_seed_${SEED} \
+    --n_rollout 10000 \
+    --search_type rl \
+    --rl_model_type chemprop_rdkit \
+    --rl_model_paths rl/models/s_aureus_chemprop_rdkit/fold_0/model_0/model.pt rl/models/solubility_chemprop_rdkit/fold_0/model_0/model.pt \
+    --rl_prediction_type regression \
+    --use_gpu \
+    --num_workers 8 \
+    --rng_seed ${SEED} \
+    --wandb_project_name synthemol_rl \
+    --wandb_run_name rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_rng_seed_${SEED} \
+    --wandb_log
+done
+```
+
+RL MLP-RDKit
+```bash
+for SEED in 1 2
+do
+synthemol \
+    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --model_types chemprop chemprop \
+    --fingerprint_types rdkit rdkit \
+    --model_names 'S. aureus' 'Solubility' \
+    --success_thresholds '>=0.5' '>=-4' \
+    --chemical_spaces real wuxi \
+    --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
+    --building_blocks_score_columns s_aureus_activity solubility \
+    --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
+    --save_dir rl/generations/rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_rng_seed_${SEED} \
+    --n_rollout 10000 \
+    --search_type rl \
+    --rl_model_type mlp_rdkit \
+    --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/fold_0/model_0/model.pt \
+    --rl_prediction_type regression \
+    --rng_seed ${SEED} \
+    --wandb_project_name synthemol_rl \
+    --wandb_run_name rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_rng_seed_${SEED} \
+    --wandb_log
+done
 ```

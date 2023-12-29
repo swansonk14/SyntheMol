@@ -109,10 +109,18 @@ python scripts/data/sample_wuxi_galaxi.py \
     --num_molecules 10000
 ```
 
-Randomly sample 20 million WuXi GalaXi molecules. This is used for a time-based comparison of Chemprop versus SyntheMol-RL.
+Randomly sample 7 million WuXi GalaXi molecules for a time-based comparison of Chemprop-RDKit versus SyntheMol-RL.
 ```bash
 python scripts/data/sample_wuxi_galaxi.py \
     --data_dir rl/data/wuxi/wuxi_galaxi \
-    --save_path rl/data/wuxi/random_wuxi_20m.csv \
-    --num_molecules 20000000
+    --save_path rl/data/wuxi/random_wuxi_7m.csv \
+    --num_molecules 7000000
+```
+
+Randomly sample 150 WuXi GalaXi molecules for experimental validation.
+```bash
+python scripts/data/sample_wuxi_galaxi.py \
+    --data_dir rl/data/wuxi/wuxi_galaxi \
+    --save_path rl/data/wuxi/random_wuxi_150.csv \
+    --num_molecules 150
 ```
