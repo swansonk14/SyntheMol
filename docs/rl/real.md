@@ -156,10 +156,10 @@ python scripts/data/sample_real_space.py \
     --num_molecules 14000000
 ```
 
-Randomly sample 150 REAL Space molecules for experimental validation.
+Randomly sample 100 REAL Space molecules for experimental validation.
 ```bash
 python scripts/data/sample_real_space.py \
     --data_dir rl/data/real/real_space \
     --save_path rl/data/real/random_real_150.csv \
-    --num_molecules 150
+    --num_molecules 100
 ```

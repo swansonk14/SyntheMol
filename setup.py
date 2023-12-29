@@ -31,7 +31,7 @@ setup(
         ]
     },
     install_requires=[
-        "chemfunc>=1.0.3",
+        "chemfunc>=1.0.5",
         "chemprop",
         "descriptastorus",
         "gdown",

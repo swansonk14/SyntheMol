@@ -1,4 +1,4 @@
-chemfunc==1.0.4
+chemfunc==1.0.5
 chemprop==1.6.1
 descriptastorus==2.6.1
 gdown==4.7.1
