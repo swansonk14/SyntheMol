@@ -1,30 +1,34 @@
 # Generating Novel Antibiotics with SyntheMol-RL
 
-Instructions for generating antibiotic candidates for _Acinetobacter baumannii_ using SyntheMol-RL from the paper [TODO](TODO).
+Instructions for generating antibiotic candidates for _Acinetobacter baumannii_ using SyntheMol-RL from the
+paper [TODO](TODO).
 
-This includes instructions for processing antibiotics data, training antibacterial activity prediction models, generating molecules with SyntheMol, and selecting candidates. Assumes relevant data has already been downloaded (see [docs/README.md](README.md)).
+This includes instructions for processing antibiotics data, training antibacterial activity prediction models,
+generating molecules with SyntheMol, and selecting candidates. Assumes relevant data has already been downloaded (
+see [docs/README.md](README.md)).
 
 TODO: update table of contents
+
 - [Process antibiotics training data](#process-antibiotics-training-data)
 - [Process ChEMBL antibacterials](#process-chembl-antibacterials)
 - [Build bioactivity prediction models](#build-bioactivity-prediction-models)
-  * [Train models](#train-models)
-  * [Compute model scores for building blocks](#compute-model-scores-for-building-blocks)
+    * [Train models](#train-models)
+    * [Compute model scores for building blocks](#compute-model-scores-for-building-blocks)
 - [Generate molecules with SyntheMol-RL](#generate-molecules-with-synthemol-rl)
 - [Filter generated molecules](#filter-generated-molecules)
-  * [Novelty](#novelty)
-  * [Bioactivity](#bioactivity)
-  * [Diversity](#diversity)
+    * [Novelty](#novelty)
+    * [Bioactivity](#bioactivity)
+    * [Diversity](#diversity)
 - [Map molecules to REAL IDs](#map-molecules-to-real-ids)
 - [Predict toxicity](#predict-toxicity)
 
-
 ## Data
-
 
 ### Process S. aureus training data
 
-The training data consists of molecules tested for inhibitory activity against _Staphylococcus aureus_. The following command processes the data to compute binary activity labels based on the inhibition values based on the mean (of two replicates) normalized 16-hour optical density (OD) values.
+The training data consists of molecules tested for inhibitory activity against _Staphylococcus aureus_. The following
+command processes the data to compute binary activity labels based on the inhibition values based on the mean (of two
+replicates) normalized 16-hour optical density (OD) values.
 
 ```bash
 python scripts/data/process_data.py \
@@ -36,6 +40,7 @@ python scripts/data/process_data.py \
 ```
 
 Output:
+
 ```
 Data size = 10,716
 Mean activity = 0.8938596024636059
@@ -53,10 +58,10 @@ Number of hits = 1,137
 Number of non-hits = 9,521
 ```
 
-
 ### Process ChEMBL antibacterials
 
-Download lists of known antibiotic-related compounds from ChEMBL using the following search terms. For each, click the CSV download button, unzip the downloaded file, and rename the CSV file appropriately.
+Download lists of known antibiotic-related compounds from ChEMBL using the following search terms. For each, click the
+CSV download button, unzip the downloaded file, and rename the CSV file appropriately.
 
 - [antibacterial](https://www.ebi.ac.uk/chembl/g/#search_results/compounds/query=antibacterial)
 - [antibiotic](https://www.ebi.ac.uk/chembl/g/#search_results/compounds/query=antibiotic)
@@ -69,6 +74,7 @@ The files are:
 - `chembl_antibiotic.csv` with 636 molecules (591 with SMILES)
 
 Merge these two files to form a single collection of antibiotic-related compounds.
+
 ```bash
 python scripts/data/merge_chembl_downloads.py \
     --data_paths rl/data/chembl/chembl_antibacterial.csv rl/data/chembl/chembl_antibiotic.csv \
@@ -78,28 +84,27 @@ python scripts/data/merge_chembl_downloads.py \
 
 The file `chembl.csv` contains 1,007 molecules.
 
-
-
 ### Solubility data
 
-Aqueous solubility data was obtained from [ADMET-AI](TODO), which preprocessed data from the [Therapeutics Data Commons](https://tdcommons.ai/). This dataset contains 9,982 molecules with aqueous solubility measurements in units of log mol/L. The data is saved to `data/solubility/solubility.csv`.
-
+Aqueous solubility data was obtained from [ADMET-AI](TODO), which preprocessed data from
+the [Therapeutics Data Commons](https://tdcommons.ai/). This dataset contains 9,982 molecules with aqueous solubility
+measurements in units of log mol/L. The data is saved to `data/solubility/solubility.csv`.
 
 ## Build bioactivity prediction models
 
-
-Here, we build three binary classification bioactivity prediction models to predict antibiotic activity against _S. aureus_ and to predict aqueous solubility. The three models are:
+Here, we build three binary classification bioactivity prediction models to predict antibiotic activity against _S.
+aureus_ and to predict aqueous solubility. The three models are:
 
 1. Chemprop: a graph neural network model
 2. Chemprop-RDKit: a graph neural network model augmented with 200 RDKit features
 3. MLP-RDKit: a multilayer perceptron using 200 RDKit features
-
 
 ### Compute RDKit features
 
 Pre-compute the 200 RDKit features for the training data and the building blocks.
 
 Training data
+
 ```bash
 chemfunc save_fingerprints \
     --data_path rl/data/s_aureus/s_aureus.csv \
@@ -110,6 +115,7 @@ chemfunc save_fingerprints \
 Time: 1 minute, 28 seconds with an 8-core machine.
 
 Solubility data
+
 ```bash
 chemfunc save_fingerprints \
     --data_path rl/data/solubility/solubility.csv \
@@ -120,6 +126,7 @@ chemfunc save_fingerprints \
 Time: 2 minutes, 0 seconds with an 8-core machine.
 
 Building blocks
+
 ```bash
 for CHEMICAL_SPACE in real wuxi
 do
@@ -132,12 +139,12 @@ done
 
 Time: REAL = 10 minutes, 7 seconds; WuXi = 2 minutes, 3 seconds with an 8-core machine.
 
-
 ### Train models
 
 For each model type, train 10 models using 10-fold cross-validation.
 
 Chemprop for _S. aureus_
+
 ```bash
 chemprop_train \
     --data_path rl/data/s_aureus/s_aureus.csv \
@@ -153,6 +160,7 @@ chemprop_train \
 ```
 
 Chemprop for solubility
+
 ```bash
 chemprop_train \
     --data_path rl/data/solubility/solubility.csv \
@@ -168,6 +176,7 @@ chemprop_train \
 ```
 
 Chemprop-RDKit for _S. aureus_
+
 ```bash
 chemprop_train \
     --data_path rl/data/s_aureus/s_aureus.csv \
@@ -185,6 +194,7 @@ chemprop_train \
 ```
 
 Chemprop-RDKit for solubility
+
 ```bash
 chemprop_train \
     --data_path rl/data/solubility/solubility.csv \
@@ -202,6 +212,7 @@ chemprop_train \
 ```
 
 MLP-RDKit for _S. aureus_
+
 ```bash
 chemprop_train \
     --data_path rl/data/s_aureus/s_aureus.csv \
@@ -220,6 +231,7 @@ chemprop_train \
 ```
 
 MLP-RDKit for solubility
+
 ```bash
 chemprop_train \
     --data_path rl/data/solubility/solubility.csv \
@@ -253,11 +265,13 @@ Results for solubility (10-fold cross-validation, 8-core, 1-GPU machine):
 | Chemprop-RDKit | 0.656 +/- 0.023 | 0.822 +/- 0.021 | 36m, 59s |
 | MLP-RDKit      | 0.688 +/- 0.020 | 0.817 +/- 0.013 | 24m, 22s |
 
-The Chemprop-RDKit models are the best for both _S. aureus_ and solubility. Therefore, those models are used to evaluate building blocks and molecules.
+The Chemprop-RDKit models are the best for both _S. aureus_ and solubility. Therefore, those models are used to evaluate
+building blocks and molecules.
 
 ### Add labels to test preds
 
-When saving predictions, Chemprop does not save the labels. This command adds the labels to the predictions files (and also corrects the formatting of SMILES strings).
+When saving predictions, Chemprop does not save the labels. This command adds the labels to the predictions files (and
+also corrects the formatting of SMILES strings).
 
 ```bash
 for MODEL in chemprop chemprop_rdkit mlp_rdkit
@@ -303,13 +317,13 @@ Time with an 8-core, 1-GPU machine:
 | Solubility | REAL           | 20m, 06s |
 | Solubility | WuXi           | 2m, 19s  |
 
-
-
 ## Generate molecules with SyntheMol-RL
 
-Generate molecules with SyntheMol-RL using RL models for _S. aureus_ and solubility with dynamic multiparameter and exploring REAL & WuXi chemical spaces.
+Generate molecules with SyntheMol-RL using RL models for _S. aureus_ and solubility with dynamic multiparameter and
+exploring REAL & WuXi chemical spaces.
 
 RL Chemprop-RDKit
+
 ```bash
 synthemol \
     --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
@@ -335,6 +349,7 @@ synthemol \
 ```
 
 RL MLP-RDKit
+
 ```bash
 synthemol \
     --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
@@ -358,6 +373,7 @@ synthemol \
 ```
 
 MCTS
+
 ```bash
 synthemol \
     --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
@@ -380,6 +396,7 @@ synthemol \
 ## Screen molecules with Chemprop-RDKit
 
 Chemprop-RDKit on random REAL 14 million and 100 and WuXi 7 million and 50.
+
 ```bash
 for SPACE in real wuxi
 do
@@ -410,14 +427,21 @@ chemprop_predict \
     --no_features_scaling \
     --no_cache_mol
 done
+
+python -c "import pandas as pd; \
+data = pd.read_csv('rl/screened/chemprop_rdkit_${FILE_NAME}_s_aureus.csv'); \
+sol = pd.read_csv('rl/screened/chemprop_rdkit_${FILE_NAME}_solubility.csv'); \
+data['solubility'] = sol['solubility']; \
+data.to_csv('rl/screened/chemprop_rdkit_${FILE_NAME}.csv', index=False)"
+
 done
 done
 ```
 
-
 ## Select generated molecules
 
 Compute similarity to training hits and ChEMBL antibiotics.
+
 ```bash
 for MODEL in rl_chemprop_rdkit rl_mlp_rdkit mcts
 do
@@ -435,7 +459,11 @@ chemfunc nearest_neighbor \
 done
 ```
 
-Select the top 150 diverse, novel hit molecules. Hits are defined as _S. aureus_ >= 0.5 and solubility >= -4. Novelty is defined as maximum 0.6 Tversky similarity to training hits and ChEMBL antibiotics. Diversity is defined as maximum 0.6 Tanimoto similarity to other selected molecules (maximum independent set). Final selection is the top 100 diverse, novel hits molecules sorted by _S. aureus_ score.
+Select the top 150 diverse, novel hit molecules. Hits are defined as _S. aureus_ >= 0.5 and solubility >= -4. Novelty is
+defined as maximum 0.6 Tversky similarity to training hits and ChEMBL antibiotics. Diversity is defined as maximum 0.6
+Tanimoto similarity to other selected molecules (maximum independent set). Final selection is the top 100 diverse, novel
+hits molecules sorted by _S. aureus_ score.
+
 ```bash
 for MODEL in rl_chemprop_rdkit rl_mlp_rdkit mcts
 do
@@ -456,6 +484,7 @@ done
 ## Select screened molecules
 
 Filter by hits, where hits are defined as _S. aureus_ >= 0.5 and solubility >= -4.
+
 ```bash
 for NAME in real_14m wuxi_7m
 do
@@ -474,6 +503,7 @@ done
 ```
 
 Combine REAL and WuXi hits.
+
 ```bash
 python -c "import pandas as pd; \
 pd.concat([ \
@@ -483,6 +513,7 @@ pd.concat([ \
 ```
 
 Compute similarity to training hits and ChEMBL antibiotics.
+
 ```bash
 chemfunc nearest_neighbor \
     --data_path rl/screened/chemprop_rdkit_random_real_wuxi_21m_hits.csv \
@@ -497,7 +528,11 @@ chemfunc nearest_neighbor \
     --metric tversky
 ```
 
-Select the top 150 diverse, novel hit molecules. Hits are defined as _S. aureus_ >= 0.5 and solubility >= -4. Novelty is defined as maximum 0.6 Tversky similarity to training hits and ChEMBL antibiotics. Diversity is defined as maximum 0.6 Tanimoto similarity to other selected molecules (maximum independent set). Final selection is the top 100 diverse, novel hits molecules sorted by _S. aureus_ score.
+Select the top 150 diverse, novel hit molecules. Hits are defined as _S. aureus_ >= 0.5 and solubility >= -4. Novelty is
+defined as maximum 0.6 Tversky similarity to training hits and ChEMBL antibiotics. Diversity is defined as maximum 0.6
+Tanimoto similarity to other selected molecules (maximum independent set). Final selection is the top 100 diverse, novel
+hits molecules sorted by _S. aureus_ score.
+
 ```bash
 python scripts/data/select_molecules.py \
     --data_path rl/screened/chemprop_rdkit_random_real_wuxi_21m_hits.csv \
@@ -512,7 +547,6 @@ python scripts/data/select_molecules.py \
     --descending
 ```
 
-
 ## Ablation experiments
 
 ### Chemical space
@@ -524,6 +558,7 @@ Analyze REAL versus WuXi from final generations above.
 Final (dynamic weights) versus the fixed weights below.
 
 RL Chemprop-RDKit
+
 ```bash
 for S_AUREUS_WEIGHT in 0.00 0.86 0.90 0.92 0.94 0.96 1.00
 do
@@ -553,6 +588,7 @@ done
 ```
 
 RL MLP-RDKit
+
 ```bash
 for S_AUREUS_WEIGHT in 0.00 0.86 0.90 0.92 0.94 0.98 1.00
 do
@@ -584,6 +620,7 @@ done
 Final (target similarity of 0.6) versus target similarities of 0.4, 0.5, 0.7, 0.8.
 
 RL Chemprop-RDKit
+
 ```bash
 for SIMILARITY_TARGET in 0.4 0.5 0.7 0.8
 do
@@ -613,6 +650,7 @@ done
 ```
 
 RL MLP-RDKit
+
 ```bash
 for SIMILARITY_TARGET in 0.4 0.5 0.7 0.8
 do
@@ -641,9 +679,11 @@ done
 
 ### Exploration parameters (RL temperature vs MCTS explore weight)
 
-RL with fixed temperatures of 0.01, 0.05, 0.1, 0.5, 1.0 versus MCTS with fixed explore weights of 0.5, 1.0, 5.0, 10.0, 50.0 (note: 10.0 is covered by the final model).
+RL with fixed temperatures of 0.01, 0.05, 0.1, 0.5, 1.0 versus MCTS with fixed explore weights of 0.5, 1.0, 5.0, 10.0,
+50.0 (note: 10.0 is covered by the final model).
 
 RL Chemprop-RDKit
+
 ```bash
 for TEMPERATURE in 0.01 0.05 0.1 0.5 1.0
 do
@@ -674,6 +714,7 @@ done
 ```
 
 RL MLP-RDKit
+
 ```bash
 for TEMPERATURE in 0.01 0.05 0.1 0.5 1.0
 do
@@ -702,6 +743,7 @@ done
 ```
 
 MCTS
+
 ```bash
 for EXPLORE_WEIGHT in 0.5 1.0 5.0 50.0
 do
@@ -728,6 +770,7 @@ done
 ### RL Training
 
 RL Chemprop-RDKit (pretrained models, no RL training)
+
 ```bash
 synthemol \
     --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
@@ -754,6 +797,7 @@ synthemol \
 ```
 
 RL Chemprop-RDKit (from scratch models, with RL training)
+
 ```bash
 synthemol \
     --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
@@ -778,6 +822,7 @@ synthemol \
 ```
 
 RL MLP-RDKit (pretrained models, no RL training)
+
 ```bash
 synthemol \
     --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
@@ -802,6 +847,7 @@ synthemol \
 ```
 
 RL MLP-RDKit (from scratch models, with RL training)
+
 ```bash
 synthemol \
     --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
@@ -825,9 +871,11 @@ synthemol \
 
 ### Random seed
 
-Test variability of the final methods under different random seeds. Note that random seed 0 is the same as the final models above, so it is testing reproducibility under a given random seed.
+Test variability of the final methods under different random seeds. Note that random seed 0 is the same as the final
+models above, so it is testing reproducibility under a given random seed.
 
 RL Chemprop-RDKit
+
 ```bash
 for SEED in 0 1 2
 do
@@ -857,6 +905,7 @@ done
 ```
 
 RL MLP-RDKit
+
 ```bash
 for SEED in 0 1 2
 do

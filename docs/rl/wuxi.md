@@ -99,7 +99,7 @@ Note: The enumerated WuXi GalaXi requires over 1 TB of storage and a similar amo
 However, the following steps are a one-time operation, and only minimal storage and RAM are required to store the
 processed data and run SyntheMol. Each of the following commands run in <= 24 hours using 10 cores and <= 1 TB of RAM.
 
-### Download REAL Space
+### Download WuXi GalaXi
 
 Contact WuXi to request access to download the full enumerated WuXi GalaXi. The following commands assume that CSV file
 containing compounds from phases 1, 2, and 3 are in a single directory called `rl/data/wuxi/wuxi_galaxi`. In total, the
