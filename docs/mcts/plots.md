@@ -1,38 +1,39 @@
 # Plots
 
-Instructions for producing plots analyzing the data and results. Assumes relevant data has already been downloaded (see [docs/README.md](README.md)).
+Instructions for producing plots analyzing the data and results. Assumes relevant data has already been downloaded (
+see [docs/README.md](README.md)).
 
 - [Data](#data)
-  * [Data distribution](#data-distribution)
-  * [t-SNE of training data and ChEMBL data](#t-sne-of-training-data-and-chembl-data)
+    * [Data distribution](#data-distribution)
+    * [t-SNE of training data and ChEMBL data](#t-sne-of-training-data-and-chembl-data)
 - [Property prediction model](#property-prediction-model)
-  * [Model performance on training data](#model-performance-on-training-data)
-  * [Model generalization](#model-generalization)
+    * [Model performance on training data](#model-performance-on-training-data)
+    * [Model generalization](#model-generalization)
 - [REAL data](#real-data)
-  * [REAL reactions](#real-reactions)
-  * [REAL reaction and reactant counts](#real-reaction-and-reactant-counts)
-  * [REAL vs train molecular properties](#real-vs-train-molecular-properties)
-  * [t-SNE of REAL vs train](#t-sne-of-real-vs-train)
+    * [REAL reactions](#real-reactions)
+    * [REAL reaction and reactant counts](#real-reaction-and-reactant-counts)
+    * [REAL vs train molecular properties](#real-vs-train-molecular-properties)
+    * [t-SNE of REAL vs train](#t-sne-of-real-vs-train)
 - [Model on REAL Data](#model-on-real-data)
-  * [Building block scores](#building-block-scores)
-  * [Building block vs full molecule scores](#building-block-vs-full-molecule-scores)
-  * [Assess REAL molecules](#assess-real-molecules)
-  * [Chemprop vs SyntheMol](#chemprop-vs-synthemol)
+    * [Building block scores](#building-block-scores)
+    * [Building block vs full molecule scores](#building-block-vs-full-molecule-scores)
+    * [Assess REAL molecules](#assess-real-molecules)
+    * [Chemprop vs SyntheMol](#chemprop-vs-synthemol)
 - [MCTS Analysis](#mcts-analysis)
-  * [Building block diversity](#building-block-diversity)
-  * [Score by rollout](#score-by-rollout)
+    * [Building block diversity](#building-block-diversity)
+    * [Score by rollout](#score-by-rollout)
 - [Generated Sets](#generated-sets)
-  * [Generate set characteristics](#generate-set-characteristics)
-  * [Images of generated molecules](#images-of-generated-molecules)
-  * [t-SNE of final generated sets](#t-sne-of-final-generated-sets)
-  * [ClinTox predictions](#clintox-predictions)
-
+    * [Generate set characteristics](#generate-set-characteristics)
+    * [Images of generated molecules](#images-of-generated-molecules)
+    * [t-SNE of final generated sets](#t-sne-of-final-generated-sets)
+    * [ClinTox predictions](#clintox-predictions)
 
 ## Data
 
 ### Data distribution
 
 Plot data values for each training set.
+
 ```bash
 for LIBRARY in library_1 library_2 library_3
 do
@@ -47,6 +48,7 @@ done
 ### t-SNE of training data and ChEMBL data
 
 Plot t-SNE of training data and ChEMBL antibiotics.
+
 ```bash
 chemfunc dimensionality_reduction \
     --data_paths data/Data/2_chembl/chembl_antibacterial_antibiotic.csv \
@@ -69,7 +71,9 @@ chemfunc dimensionality_reduction \
 
 ### Model performance on training data
 
-Plot ROC-AUC and PRC-AUC curves for each model. (Replace model paths and names as needed and curve type with ROC or PRC.)
+Plot ROC-AUC and PRC-AUC curves for each model. (Replace model paths and names as needed and curve type with ROC or
+PRC.)
+
 ```bash
 python scripts/plot/plot_auc.py \
     --data_dir data/Models/antibiotic_random_forest \
@@ -83,6 +87,7 @@ python scripts/plot/plot_auc.py \
 Plot model generalization between training sets.
 
 Separately process each training set.
+
 ```bash
 for LIBRARY in library_1 library_2 library_3
 do
@@ -93,6 +98,7 @@ done
 ```
 
 Results of separate data processing.
+
 ```
 library_1
 Data size = 2,371
@@ -144,6 +150,7 @@ Number of non-hits = 5,264
 ```
 
 Train models on each training set.
+
 ```bash
 for LIBRARY in library_1 library_2 library_3
 do
@@ -170,6 +177,7 @@ done
 ```
 
 Make predictions on other training sets.
+
 ```bash
 for LIBRARY_A in library_1 library_2 library_3
 do
@@ -227,12 +235,12 @@ python scripts/plot/plot_model_generalization.py \
     --save_dir plots/model_generalization
 ```
 
-
 ## REAL data
 
 ### REAL reactions
 
 Visualize REAL reactions.
+
 ```bash
 chemfunc visualize_reactions \
     --data_path data/Data/4_real_space/reactions.csv \
@@ -244,6 +252,7 @@ chemfunc visualize_reactions \
 ### REAL reaction and reactant counts
 
 Plot REAL reaction and reactant counts.
+
 ```bash
 python scripts/plot/plot_real_counts.py \
     --reaction_counts_path data/Data/4_real_space/reaction_counts.csv \
@@ -254,6 +263,7 @@ python scripts/plot/plot_real_counts.py \
 ### REAL vs train molecular properties
 
 Deduplicate building blocks by SMILES.
+
 ```bash
 chemfunc deduplicate_smiles \
     --data_path data/Data/4_real_space/building_blocks.csv \
@@ -263,6 +273,7 @@ chemfunc deduplicate_smiles \
 This leaves 132,479 unique building block molecules.
 
 Compute properties of REAL building blocks, REAL molecules, and train molecules.
+
 ```bash
 for DATA in 4_real_space/building_blocks_unique 4_real_space/random_real 1_training_data/antibiotics
 do
@@ -273,6 +284,7 @@ done
 ```
 
 Plot logP distributions.
+
 ```bash
 chemfunc plot_property_distribution \
     --data_paths data/Data/4_real_space/building_blocks_unique.csv \
@@ -285,6 +297,7 @@ chemfunc plot_property_distribution \
 ```
 
 Plot molecular weight distributions.
+
 ```bash
 chemfunc plot_property_distribution \
     --data_paths data/Data/4_real_space/building_blocks_unique.csv \
@@ -295,10 +308,10 @@ chemfunc plot_property_distribution \
     --max_value 1000
 ```
 
-
 ### t-SNE of REAL vs train
 
 Plot t-SNE of training data and REAL space sample.
+
 ```bash
 chemfunc dimensionality_reduction \
     --data_paths data/Data/4_real_space/random_real.csv \
@@ -311,12 +324,12 @@ chemfunc dimensionality_reduction \
     --save_path plots/tsne/train_vs_train_hits_vs_real_vs_real_building_blocks.pdf
 ```
 
-
 ## Model on REAL Data
 
 ### Building block scores
 
 Plot building block score distribution for each model.
+
 ```bash
 python scripts/plot/plot_building_block_scores.py \
     --building_blocks_path data/Models/antibiotic_random_forest/building_block_scores.csv \
@@ -343,6 +356,7 @@ python scripts/plot/plot_building_block_scores.py \
 Plot building block vs full molecule scores for random sample of REAL molecules.
 
 First, make predictions on a random sample of REAL molecules using each model.
+
 ```bash
 python predict_model.py \
     --data_path data/Data/4_real_space/random_real.csv \
@@ -365,7 +379,9 @@ python predict_model.py \
     --average_preds
 ```
 
-Then, plot the building block vs full molecule scores. (Note: Only 24,276 out of 25,000 molecules have all required building block SMILES.)
+Then, plot the building block vs full molecule scores. (Note: Only 24,276 out of 25,000 molecules have all required
+building block SMILES.)
+
 ```bash
 python scripts/plot/plot_full_molecule_vs_building_block_scores.py \
     --data_path data/Data/4_real_space/random_real.csv \
@@ -396,6 +412,7 @@ python scripts/plots/plot_full_molecule_vs_building_block_scores.py \
 ### Assess REAL molecules
 
 Assess scores and similarity distributions of REAL molecules.
+
 ```bash
 python scripts/plot/plot_molecule_analysis.py \
     --data_path data/Data/4_real_space/random_real.csv \
@@ -404,17 +421,19 @@ python scripts/plot/plot_molecule_analysis.py \
     --score_columns random_forest_rdkit_ensemble_preds chemprop_ensemble_preds chemprop_rdkit_ensemble_preds
 ```
 
-
 ### Chemprop vs SyntheMol
 
-Make predictions on a random sample of 10 million REAL molecules using the Chemprop model for a time-based comparison against SyntheMol with Chemprop. Note that is uses a GPU and 16 parallel data loaders.
+Make predictions on a random sample of 10 million REAL molecules using the Chemprop model for a time-based comparison
+against SyntheMol with Chemprop. Note that is uses a GPU and 16 parallel data loaders.
 
 First, unzip the random sample of 10 million REAL molecules if necessary.
+
 ```bash
 gunzip data/Data/4_real_space/random_real_10m.csv.gz
 ```
 
 Now, make Chemprop predictions.
+
 ```bash
 python scripts/models/predict.py \
     --data_path data/Data/4_real_space/random_real_10m.csv \
@@ -427,16 +446,18 @@ python scripts/models/predict.py \
     --save_path data/Data/4_real_space/random_real_10m.csv
 ```
 
-
 ## MCTS Analysis
 
 ### Building block diversity
 
-Building block counts before and after building block diversity. Run `SyntheMol.generate` as before but with the `--no_building_block_diversity` flag. Then run `SyntheMol.plot.plot_generated_molecule_analysis` and look at `building_block_counts.pdf`.
+Building block counts before and after building block diversity. Run `SyntheMol.generate` as before but with
+the `--no_building_block_diversity` flag. Then run `SyntheMol.plot.plot_generated_molecule_analysis` and look
+at `building_block_counts.pdf`.
 
 ### Score by rollout
 
 Score of molecules binned by rollout.
+
 ```bash
 python scripts/plot/plot_mcts_over_time.py \
     --data_path data/Data/6_generations_chemprop/molecules.csv \
@@ -461,12 +482,12 @@ python scripts/plot/plot_mcts_over_time.py \
     --increment 2000
 ```
 
-
 ## Generated Sets
 
 ### Generate set characteristics
 
 Assess generated molecules for novelty, score, and diversity for each model.
+
 ```bash
 for NAME in 6_generations_chemprop 7_generations_chemprop_rdkit 8_generations_random_forest
 do
@@ -478,6 +499,7 @@ done
 ```
 
 Assess selected molecules for novelty, score, and diversity for each model.
+
 ```bash
 for NAME in chemprop chemprop_rdkit random_forest
 do
@@ -491,6 +513,7 @@ done
 ### Images of generated molecules
 
 Visualize the selected molecules.
+
 ```bash
 for NAME in chemprop chemprop_rdkit random_forest
 do
@@ -500,10 +523,10 @@ chemfunc visualize_molecules \
 done
 ```
 
-
 ### t-SNE of final generated sets
 
 t-SNE for final generated sets.
+
 ```bash
 chemfunc dimensionality_reduction \
     --data_paths data/Data/1_training_data/antibiotics.csv \
@@ -524,6 +547,7 @@ chemfunc dimensionality_reduction \
 ### ClinTox predictions
 
 Show potent molecules vs test molecules.
+
 ```bash
 python scripts/plot/plot_toxicity.py \
     --test_dir data/Models/clintox_chemprop_rdkit \

@@ -1,6 +1,8 @@
 # Generating High cLogP Molecules with SyntheMol
 
-Instructions for performing an _in silico_ study of SyntheMol using a computational molecular property, cLogP, which is the computed octanol-water partition coefficient. Assumes relevant data has already been downloaded (see [docs/README.md](README.md)).
+Instructions for performing an _in silico_ study of SyntheMol using a computational molecular property, cLogP, which is
+the computed octanol-water partition coefficient. Assumes relevant data has already been downloaded (
+see [docs/README.md](README.md)).
 
 - [Compute cLogP](#compute-clogp)
 - [Binarize clogP](#binarize-clogp)
@@ -9,10 +11,10 @@ Instructions for performing an _in silico_ study of SyntheMol using a computatio
 - [Generate molecules](#generate-molecules)
 - [Compute true cLogP](#compute-true-clogp)
 
-
 ## Compute cLogP
 
 Compute cLogP on the training set.
+
 ```bash
 chemfunc compute_properties \
     --data_path data/Data/1_training_data/antibiotics.csv \
@@ -20,12 +22,12 @@ chemfunc compute_properties \
 ```
 
 For comparison purposes, compute cLogP on a random sample of REAL molecules.
+
 ```bash
 chemfunc compute_properties \
     --data_path data/Data/4_real_space/random_real.csv \
     --properties clogp
 ```
-
 
 ## Binarize clogP
 
@@ -51,10 +53,10 @@ chemfunc regression_to_classification \
 
 **Random REAL:** 11 cLogP positive (0.044%) out of 25,000.
 
-
 ## Train model
 
 Train a Chemprop model on binary cLogP data using 30 epochs (strong model) or 1 epoch (weak model).
+
 ```bash
 for EPOCHS in 1 30
 do
@@ -73,10 +75,10 @@ done
 
 **30 epochs:** ROC-AUC = 0.973 +/- 0.007, PRC-AUC = 0.736 +/- 0.049
 
-
 ## Compute model scores for building blocks
 
 Compute model scores for building blocks.
+
 ```bash
 for EPOCHS in 1 30
 do
@@ -89,10 +91,10 @@ python scripts/models/predict.py \
 done
 ```
 
-
 ## Generate molecules
 
 Apply SyntheMol to generate molecules.
+
 ```bash
 for EPOCHS in 1 30
 do
@@ -114,10 +116,10 @@ done
 
 **30 epochs:** 25,550 generated molecules in 8 hours and 53 minutes.
 
-
 ## Compute true cLogP
 
 Compute the true cLogP for generated molecules.
+
 ```bash
 for EPOCHS in 1 30
 do
@@ -128,6 +130,7 @@ done
 ```
 
 Plot distribution of train vs generated vs REAL cLogP.
+
 ```bash
 chemfunc plot_property_distribution \
     --data_paths data/Data/1_training_data/antibiotics.csv \
