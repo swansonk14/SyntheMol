@@ -461,7 +461,7 @@ done
 
 Select the top 150 diverse, novel hit molecules. Hits are defined as _S. aureus_ >= 0.5 and solubility >= -4. Novelty is
 defined as maximum 0.6 Tversky similarity to training hits and ChEMBL antibiotics. Diversity is defined as maximum 0.6
-Tanimoto similarity to other selected molecules (maximum independent set). Final selection is the top 100 diverse, novel
+Tanimoto similarity to other selected molecules (maximum independent set). Final selection is the top 150 diverse, novel
 hits molecules sorted by _S. aureus_ score.
 
 ```bash
@@ -469,8 +469,8 @@ for MODEL in rl_chemprop_rdkit rl_mlp_rdkit mcts
 do
 python scripts/data/select_molecules.py \
     --data_path rl/generations/${MODEL}_s_aureus_solubility_dynamic_weights_real_wuxi/molecules.csv \
-    --save_molecules_path rl/generations/${MODEL}_s_aureus_solubility_dynamic_weights_real_wuxi/selected.csv \
-    --save_analysis_path rl/generations/${MODEL}_s_aureus_solubility_dynamic_weights_real_wuxi/analysis.csv \
+    --save_molecules_path rl/selections/${MODEL}/molecules.csv \
+    --save_analysis_path rl/selections/${MODEL}/analysis.csv \
     --score_columns "S. aureus" "Solubility" \
     --score_thresholds 0.5 -4 \
     --novelty_threshold 0.6 \
@@ -492,7 +492,7 @@ chemfunc filter_molecules \
     --data_path rl/screened/chemprop_rdkit_random_${NAME}.csv \
     --save_path rl/screened/chemprop_rdkit_random_${NAME}_hits.csv \
     --filter_column "s_aureus_activity" \
-    --min_value ${S_AUREUS}
+    --min_value 0.5
 
 chemfunc filter_molecules \
     --data_path rl/screened/chemprop_rdkit_random_${NAME}_hits.csv \
@@ -507,8 +507,8 @@ Combine REAL and WuXi hits.
 ```bash
 python -c "import pandas as pd; \
 pd.concat([ \
-    pd.read_csv('rl/screened/chemprop_rdkit_random_real_14m_hits.csv'), \
-    pd.read_csv('rl/screened/chemprop_rdkit_random_wuxi_7m_hits.csv') \
+    pd.read_csv('rl/screened/chemprop_rdkit_random_real_14m_hits.csv').assign(chemical_space='real'), \
+    pd.read_csv('rl/screened/chemprop_rdkit_random_wuxi_7m_hits.csv').assign(chemical_space='wuxi') \
 ]).to_csv('rl/screened/chemprop_rdkit_random_real_wuxi_21m_hits.csv', index=False)"
 ```
 
@@ -530,14 +530,14 @@ chemfunc nearest_neighbor \
 
 Select the top 150 diverse, novel hit molecules. Hits are defined as _S. aureus_ >= 0.5 and solubility >= -4. Novelty is
 defined as maximum 0.6 Tversky similarity to training hits and ChEMBL antibiotics. Diversity is defined as maximum 0.6
-Tanimoto similarity to other selected molecules (maximum independent set). Final selection is the top 100 diverse, novel
+Tanimoto similarity to other selected molecules (maximum independent set). Final selection is the top 150 diverse, novel
 hits molecules sorted by _S. aureus_ score.
 
 ```bash
 python scripts/data/select_molecules.py \
     --data_path rl/screened/chemprop_rdkit_random_real_wuxi_21m_hits.csv \
-    --save_molecules_path rl/screened/chemprop_rdkit_random_real_wuxi_21m_selected.csv \
-    --save_analysis_path rl/screened/chemprop_rdkit_random_real_wuxi_21m_analysis.csv \
+    --save_molecules_path rl/selections/chemprop_rdkit/molecules.csv \
+    --save_analysis_path rl/selections/chemprop_rdkit/analysis.csv \
     --score_columns "s_aureus_activity" "solubility" \
     --score_thresholds 0.5 -4 \
     --novelty_threshold 0.6 \
@@ -546,6 +546,30 @@ python scripts/data/select_molecules.py \
     --sort_column "s_aureus_activity" \
     --descending
 ```
+
+Merge random molecules (no filtering).
+
+```bash
+python -c "import pandas as pd; \
+pd.concat([ \
+    pd.read_csv('rl/screened/chemprop_rdkit_random_real_100.csv').assign(chemical_space='real'), \
+    pd.read_csv('rl/screened/chemprop_rdkit_random_wuxi_50.csv').assign(chemical_space='wuxi') \
+]).to_csv('rl/selections/random/molecules.csv', index=False)"
+```
+
+## Visualize selected molecules
+
+Create images of the structures of the selected molecules.
+```bash
+for NAME in rl_chemprop_rdkit rl_mlp_rdkit mcts chemprop_rdkit random
+do
+chemfunc visualize_molecules \
+    --data_path rl/selections/${NAME}/molecules.csv \
+    --save_dir rl/selections/${NAME}
+done
+```
+
+TODO: t-SNE
 
 ## Ablation experiments
 
