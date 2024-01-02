@@ -6,7 +6,7 @@ from synthemol.reactions.reaction import Reaction
 
 
 def set_all_building_blocks(
-    reactions: tuple[Reaction], building_blocks: set[str]
+    reactions: tuple[Reaction, ...], building_blocks: set[str]
 ) -> None:
     """Sets the allowed building block SMILES for all Reactions in a list of Reactions.
 
@@ -21,7 +21,7 @@ def set_all_building_blocks(
 
 
 def load_and_set_allowed_reaction_building_blocks(
-    reactions: tuple[Reaction],
+    reactions: tuple[Reaction, ...],
     chemical_spaces: tuple[str, ...],
     reaction_to_building_blocks_paths: tuple[Path, ...],
 ) -> None:

@@ -1,4 +1,4 @@
-"""Generate molecules combinatorially using a Monte Carlo tree search guided by a molecular property predictor."""
+"""Generate molecules combinatorially using a search guided by a molecular property predictor."""
 from datetime import datetime
 from pathlib import Path
 from typing import Literal
@@ -76,7 +76,7 @@ def generate(
     wandb_project_name: str = "synthemol",
     wandb_run_name: str | None = None,
 ) -> None:
-    """Generate molecules combinatorially using a Monte Carlo tree search guided by a molecular property predictor.
+    """Generate molecules combinatorially using a search guided by a molecular property predictor.
 
     :param search_type: The type of search to perform. 'mcts' = Monte Carlo tree search. 'rl' = Reinforcement learning.
     :param save_dir: Path to directory where the generated molecules will be saved.
@@ -430,10 +430,7 @@ def generate(
     )
 
     # Set up device for model
-    if use_gpu:
-        device = torch.device("cuda")
-    else:
-        device = torch.device("cpu")
+    device = torch.device("cuda" if use_gpu else "cpu")
 
     # Define model scoring function
     print("Loading models and creating model scorer...")
@@ -509,6 +506,7 @@ def generate(
     print(f"Generating molecules for {n_rollout:,} rollouts...")
     start_time = datetime.now()
     molecules_save_path = save_dir / "molecules.csv"
+    nodes = []
 
     for rollout_start in range(0, n_rollout, save_frequency):
         # Set rollout end

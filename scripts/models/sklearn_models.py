@@ -4,7 +4,6 @@ from pathlib import Path
 
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.neural_network import MLPClassifier, MLPRegressor
 
 from synthemol.constants import (
     DATASET_TYPES,
@@ -30,7 +29,7 @@ def sklearn_build_model(
 ) -> SKLEARN_MODEL_TYPES:
     """Builds a scikit-learn model.
 
-    :param model_type: The type of model (random forest or multilayer perceptron).
+    :param model_type: The type of model (random forest).
     :param dataset_type: The type of dataset (classification or regression).
     :return: A scikit-learn model.
     """
@@ -43,15 +42,6 @@ def sklearn_build_model(
             raise ValueError(f'Dataset type "{dataset_type}" is not supported.')
 
         model = random_forest_class(n_jobs=-1, random_state=0)
-    elif model_type == "mlp":
-        if dataset_type == "classification":
-            mlp_class = MLPClassifier
-        elif dataset_type == "regression":
-            mlp_class = MLPRegressor
-        else:
-            raise ValueError(f'Dataset type "{dataset_type}" is not supported.')
-
-        model = mlp_class(hidden_layer_sizes=(100, 100, 100), random_state=0)
     else:
         raise ValueError(f'Model type "{model_type}" is not supported.')
 
@@ -67,7 +57,7 @@ def sklearn_train(
 ) -> SKLEARN_MODEL_TYPES:
     """Trains a scikit-learn model.
 
-    :param model_type: The type of model (random forest or multilayer perceptron).
+    :param model_type: The type of model (random forest).
     :param dataset_type: The type of dataset (classification or regression).
     :param fingerprints: A 2D array of molecular fingerprints (num_molecules, num_features).
     :param properties: A 1D array of molecular properties (num_molecules,).

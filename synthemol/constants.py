@@ -4,7 +4,6 @@ from typing import Literal
 
 from rdkit.Chem import Mol
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.neural_network import MLPClassifier, MLPRegressor
 
 
 CHEMICAL_SPACES = Literal["real", "wuxi", "custom"]
@@ -30,14 +29,11 @@ SMILES_COL = "smiles"
 ACTIVITY_COL = "activity"
 SCORE_COL = "score"
 ROLLOUT_COL = "rollout_num"
-MODEL_TYPE = Literal["random_forest", "mlp", "chemprop"]
 FINGERPRINT_TYPES = Literal["none", "morgan", "rdkit"]
 MOLECULE_TYPE = str | Mol  # Either a SMILES string or an RDKit Mol object
-SKLEARN_MODEL_TYPES = (
-    RandomForestClassifier | RandomForestRegressor | MLPClassifier | MLPRegressor
-)
-SKLEARN_MODEL_NAME_TYPES = Literal["random_forest", "mlp"]
-MODEL_TYPES = Literal["random_forest", "mlp", "chemprop", "qed"]
+SKLEARN_MODEL_TYPES = RandomForestClassifier | RandomForestRegressor
+SKLEARN_MODEL_NAME_TYPES = Literal["random_forest"]
+MODEL_TYPES = Literal["random_forest", "chemprop", "qed"]
 DATASET_TYPES = Literal["classification", "regression"]
 RL_MODEL_TYPES = Literal["mlp_rdkit", "chemprop", "chemprop_rdkit"]
 RL_PREDICTION_TYPES = Literal["classification", "regression"]

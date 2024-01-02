@@ -169,10 +169,6 @@ def create_model_scorer(
     :param fingerprint_type: The type of fingerprint to use as input features for the model.
     :param device: The device on which to run the model.
     """
-    # Check compatibility of model and fingerprint type
-    if model_type in {"random_forest", "mlp"} and fingerprint_type == "none":
-        raise ValueError("Must define fingerprint_type if using a scikit-learn model.")
-
     # Load models and set up scoring function
     if model_type == "qed":
         scorer = QEDScorer()
@@ -180,8 +176,15 @@ def create_model_scorer(
         scorer = ChempropScorer(
             model_path=model_path, fingerprint_type=fingerprint_type, device=device
         )
-    else:
+    elif model_type == "random_forest":
+        if fingerprint_type == "none":
+            raise ValueError(
+                "Must define fingerprint_type if using a random forest model."
+            )
+
         scorer = SKLearnScorer(model_path=model_path, fingerprint_type=fingerprint_type)
+    else:
+        raise ValueError(f"Model type {model_type} is not supported.")
 
     return scorer
 

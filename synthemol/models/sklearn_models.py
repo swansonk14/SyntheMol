@@ -4,7 +4,6 @@ from pathlib import Path
 
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.neural_network import MLPClassifier, MLPRegressor
 
 from synthemol.constants import SKLEARN_MODEL_TYPES
 
@@ -28,9 +27,9 @@ def sklearn_predict(model: SKLEARN_MODEL_TYPES, fingerprints: np.ndarray) -> np.
     :param fingerprints: A 2D array of molecular fingerprints (num_molecules, num_features).
     :return: A 1D array of predicted properties (num_molecules,).
     """
-    if isinstance(model, RandomForestClassifier) or isinstance(model, MLPClassifier):
+    if isinstance(model, RandomForestClassifier):
         preds = model.predict_proba(fingerprints)[:, 1]
-    elif isinstance(model, RandomForestRegressor) or isinstance(model, MLPRegressor):
+    elif isinstance(model, RandomForestRegressor):
         preds = model.predict(fingerprints)
     else:
         raise ValueError(f"Model type {type(model)} is not supported.")
