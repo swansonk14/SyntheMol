@@ -560,6 +560,7 @@ pd.concat([ \
 ## Visualize selected molecules
 
 Create images of the structures of the selected molecules.
+
 ```bash
 for NAME in rl_chemprop_rdkit rl_mlp_rdkit mcts chemprop_rdkit random
 do
@@ -569,7 +570,21 @@ chemfunc visualize_molecules \
 done
 ```
 
-TODO: t-SNE
+Plot t-SNE of the selected molecules vs training hits and ChEMBL antibiotics.
+
+```bash
+chemfunc plot_tsne \
+    --data_paths rl/data/chembl/chembl.csv \
+    rl/data/s_aureus/s_aureus_hits.csv \
+    rl/selections/random/molecules.csv \
+    rl/selections/chemprop_rdkit/molecules.csv \
+    rl/selections/mcts/molecules.csv \
+    rl/selections/rl_mlp_rdkit/molecules.csv \
+    rl/selections/rl_chemprop_rdkit/molecules.csv \
+    --data_names chembl train_hits random chemprop_rdkit mcts rl_mlp_rdkit rl_chemprop_rdkit \
+    --save_path rl/plots/selections_tsne.pdf \
+    --point_size 2000
+```
 
 ## Ablation experiments
 
