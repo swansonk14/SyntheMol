@@ -7,8 +7,8 @@ from chemfunc import compute_fingerprint
 from rdkit import Chem
 from rdkit.Chem.QED import qed
 
-from synthemol.constants import FINGERPRINT_TYPES, MODEL_TYPES
-from synthemol.generate.model_weights import ModelWeights
+from synthemol.constants import FINGERPRINT_TYPES, SCORE_TYPES
+from synthemol.generate.score_weights import ScoreWeights
 from synthemol.models import (
     chemprop_load,
     chemprop_load_scaler,
@@ -156,35 +156,36 @@ class ChempropScorer(Scorer):
 
 
 # TODO: no model_path or fingerprint_type needed for qed
-def create_model_scorer(
-    model_type: MODEL_TYPES,
-    model_path: Path,
+def create_scorer(
+    score_type: SCORE_TYPES,
+    score_path: Path,
     fingerprint_type: FINGERPRINT_TYPES,
     device: torch.device = torch.device("cpu"),
 ) -> Scorer:
     """Creates a scorer object that scores a molecule.
 
-    :param model_type: The type of model to use.
-    :param model_path: Path to a directory of model checkpoints (ensemble) or to a specific PKL or PT file.
-    :param fingerprint_type: The type of fingerprint to use as input features for the model.
-    :param device: The device on which to run the model.
+    :param score_type: The type of scorer to use.
+    :param score_path: Path pointing to a directory of model checkpoints (ensemble)
+                       or to a specific PKL or PT file containing a trained model for use in a scorer.
+                       Note: Model must have a single output.
+    :param fingerprint_type: The type of fingerprint to use as input features for the scorer.
+    :param device: The device on which to run the scorer.
     """
-    # Load models and set up scoring function
-    if model_type == "qed":
+    if score_type == "qed":
         scorer = QEDScorer()
-    elif model_type == "chemprop":
+    elif score_type == "chemprop":
         scorer = ChempropScorer(
-            model_path=model_path, fingerprint_type=fingerprint_type, device=device
+            model_path=score_path, fingerprint_type=fingerprint_type, device=device
         )
-    elif model_type == "random_forest":
+    elif score_type == "random_forest":
         if fingerprint_type == "none":
             raise ValueError(
                 "Must define fingerprint_type if using a random forest model."
             )
 
-        scorer = SKLearnScorer(model_path=model_path, fingerprint_type=fingerprint_type)
+        scorer = SKLearnScorer(model_path=score_path, fingerprint_type=fingerprint_type)
     else:
-        raise ValueError(f"Model type {model_type} is not supported.")
+        raise ValueError(f"Scorer type {score_type} is not supported.")
 
     return scorer
 
@@ -192,38 +193,38 @@ def create_model_scorer(
 class MoleculeScorer:
     def __init__(
         self,
-        model_types: list[MODEL_TYPES],
-        model_paths: list[Path],
+        score_types: list[SCORE_TYPES],
+        score_paths: list[Path],
         fingerprint_types: tuple[FINGERPRINT_TYPES, ...],
-        model_weights: ModelWeights,
+        score_weights: ScoreWeights,
         device: torch.device = torch.device("cpu"),
         smiles_to_scores: dict[str, list[float]] | None = None,
     ) -> None:
         """Initialize the MoleculeScorer, which contains a collection of one or more individual scorers.
 
-        :param model_types: List of types of models provided by model_paths.
-        :param model_paths: List of paths with each path pointing to a directory of model checkpoints (ensemble)
-                            or to a specific PKL or PT file containing a trained model.
-                            Note: All models must have a single output.
-        :param fingerprint_types: List of types of fingerprints to use as input features for the model_paths.
-        :param model_weights: Weights for each model/ensemble in model_paths for defining the reward function.
-        :param device: The device on which to run the model.
+        :param score_types: List of types of scores to score molecules.
+        :param score_paths: List of paths with each path pointing to a directory of model checkpoints (ensemble)
+                            or to a specific PKL or PT file containing a trained model for use in a scorer.
+                            Note: Models must have a single output.
+        :param fingerprint_types: List of types of fingerprints to use as input features for the scorers in score_paths.
+        :param score_weights: Weights for each scorer for defining the reward function.
+        :param device: The device on which to run the scorer.
         :param smiles_to_scores: An optional dictionary mapping SMILES to precomputed scores.
         """
         # Save parameters
-        self.model_weights = model_weights
+        self.score_weights = score_weights
         self.smiles_to_individual_scores = smiles_to_scores
 
         # Create individual scorers
         self.scorers = [
-            create_model_scorer(
-                model_type=model_type,
-                model_path=model_path,
+            create_scorer(
+                score_type=score_type,
+                score_path=score_path,
                 fingerprint_type=fingerprint_type,
                 device=device,
             )
-            for model_type, model_path, fingerprint_type in zip(
-                model_types, model_paths, fingerprint_types
+            for score_type, score_path, fingerprint_type in zip(
+                score_types, score_paths, fingerprint_types
             )
         ]
 
@@ -233,7 +234,7 @@ class MoleculeScorer:
     @property
     def num_scores(self) -> int:
         """Returns the number of scores."""
-        return self.model_weights.num_weights
+        return self.score_weights.num_weights
 
     def compute_individual_scores(self, smiles: str) -> list[float]:
         """Computes the individual scores of a molecule (with caching).
@@ -266,7 +267,7 @@ class MoleculeScorer:
         score = sum(
             individual_score * weight
             for individual_score, weight in zip(
-                individual_scores, self.model_weights.weights
+                individual_scores, self.score_weights.weights
             )
         )
 

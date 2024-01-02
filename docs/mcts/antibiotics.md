@@ -194,8 +194,8 @@ Here, we apply SyntheMol to generate molecules using a Monte Carlo tree search (
 Chemprop
 ```bash
 synthemol \
-    --model_path data/Models/antibiotic_chemprop \
-    --model_type chemprop \
+    --score_type chemprop \
+    --score_path data/Models/antibiotic_chemprop \
     --building_blocks_path data/Models/antibiotic_chemprop/building_blocks.csv \
     --building_blocks_score_column chemprop_ensemble_preds \
     --building_blocks_id_column Reagent_ID \
@@ -209,8 +209,8 @@ synthemol \
 Chemprop-RDKit
 ```bash
 synthemol \
-    --model_path data/Models/antibiotic_chemprop_rdkit \
-    --model_type chemprop \
+    --score_type chemprop \
+    --score_path data/Models/antibiotic_chemprop_rdkit \
     --building_blocks_path data/Models/antibiotic_chemprop_rdkit/building_blocks.csv \
     --building_blocks_score_column chemprop_rdkit_ensemble_preds \
     --building_blocks_id_column Reagent_ID \
@@ -225,8 +225,8 @@ synthemol \
 Random forest
 ```bash
 synthemol \
-    --model_path data/Models/antibiotic_random_forest \
-    --model_type random_forest \
+    --score_type random_forest \
+    --score_path data/Models/antibiotic_random_forest \
     --building_blocks_path data/Models/antibiotic_random_forest/building_blocks.csv \
     --building_blocks_score_column random_forest_rdkit_ensemble_preds \
     --building_blocks_id_column Reagent_ID \

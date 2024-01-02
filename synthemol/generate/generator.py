@@ -15,7 +15,7 @@ from tqdm import trange
 
 from synthemol.constants import OPTIMIZATION_TYPES
 from synthemol.generate.logs import ConstructionLog, ReactionLog
-from synthemol.generate.model_weights import ModelWeights
+from synthemol.generate.score_weights import ScoreWeights
 from synthemol.generate.node import Node
 from synthemol.generate.scorer import MoleculeScorer
 from synthemol.generate.rl_models import RLModel
@@ -35,7 +35,7 @@ class Generator:
         chemical_space_to_building_block_smiles_to_id: dict[str, dict[str, str]],
         max_reactions: int,
         scorer: MoleculeScorer,
-        model_weights: ModelWeights,
+        score_weights: ScoreWeights,
         success_comparators: tuple[Callable[[float], bool], ...] | None,
         explore_weight: float,
         num_expand_nodes: int | None,
@@ -52,7 +52,7 @@ class Generator:
         rolling_average_weight: float = 0.98,
         min_temperature: float = 0.001,
         max_temperature: float = 10.0,
-        min_model_weight: float = 0.001,
+        min_score_weight: float = 0.001,
         replicate: bool = False,
         wandb_log: bool = False,
     ) -> None:
@@ -63,10 +63,10 @@ class Generator:
                                                               SMILES to IDs.
         :param max_reactions: The maximum number of reactions to use to construct a molecule.
         :param scorer: A callable object that takes as input a SMILES representing a molecule and returns a score.
-        :param model_weights: The weights to use for the scoring function.
+        :param score_weights: The weights to use for the scoring function.
         :param success_comparators: A tuple of functions that take as input a score and return whether the score
                                     indicates a successful molecule.
-                                    If provided, then the model weights are dynamically set.
+                                    If provided, then the score weights are dynamically set.
         :param explore_weight: The hyperparameter that encourages exploration.
         :param num_expand_nodes: The number of tree nodes to expand when extending the child nodes in the search tree.
                                   If None, then all nodes are expanded.
@@ -91,7 +91,7 @@ class Generator:
                                        and success (dynamic model weights).
         :param min_temperature: The minimum temperature when using dynamic temperature.
         :param max_temperature: The maximum temperature when using dynamic temperature.
-        :param min_model_weight: The minimum model weight (pre-normalization) when using dynamic model weights.
+        :param min_score_weight: The minimum score weight (pre-normalization) when using dynamic score weights.
         :param replicate: This is necessary to replicate the results from the paper, but otherwise should not be used
                           since it limits the potential choices of building blocks.
         :param wandb_log: Whether to log results to Weights & Biases.
@@ -102,7 +102,7 @@ class Generator:
         )
         self.max_reactions = max_reactions
         self.scorer = scorer
-        self.model_weights = model_weights
+        self.score_weights = score_weights
         self.success_comparators = success_comparators
         self.explore_weight = explore_weight
         self.num_expand_nodes = num_expand_nodes
@@ -120,7 +120,7 @@ class Generator:
         self.rolling_average_weight = rolling_average_weight
         self.min_temperature = min_temperature
         self.max_temperature = max_temperature
-        self.min_model_weight = min_model_weight
+        self.min_score_weight = min_score_weight
         self.wandb_log = wandb_log
 
         # Check that the search type is valid
@@ -129,10 +129,10 @@ class Generator:
                 'RL model must be provided if and only if search_type is "rl"'
             )
 
-        # Check that model weights is a list if success comparators is provided
-        if self.success_comparators is not None and self.model_weights.immutable:
+        # Check that score weights is a list if success comparators is provided
+        if self.success_comparators is not None and self.score_weights.immutable:
             raise ValueError(
-                "Model weights must be mutable if success comparators are provided"
+                "Score weights must be mutable if success comparators are provided"
             )
 
         # Get all building blocks that are used in at least one reaction
@@ -195,8 +195,8 @@ class Generator:
         else:
             self.rolling_average_similarity = 0.0
 
-        # Set up rolling average successes for model weight adjustment
-        self.rolling_average_success_rate = np.zeros(self.model_weights.num_weights)
+        # Set up rolling average successes for score weight adjustment
+        self.rolling_average_success_rate = np.zeros(self.score_weights.num_weights)
 
     def get_next_building_blocks(self, molecules: tuple[str]) -> list[str]:
         """Get the next building blocks that can be added to the given molecules.
@@ -705,8 +705,8 @@ class Generator:
 
         return successes
 
-    def update_model_weights(self, successes: list[int]) -> None:
-        """Update the model weights based on the rolling average success rate.
+    def update_score_weights(self, successes: list[int]) -> None:
+        """Update the score weights based on the rolling average success rate.
 
         :param successes: The successes (1/0) of the new molecule with respect to property success thresholds.
         """
@@ -732,13 +732,13 @@ class Generator:
                 self.rolling_average_success_rate.shape
             )
 
-        # Get current model weights
-        weights = np.array(self.model_weights.weights)
+        # Get current score weights
+        weights = np.array(self.score_weights.weights)
 
-        # Compute new model weights based on percent deviation from average success
+        # Compute new score weights based on percent deviation from average success
         new_weights = weights - percent_deviation_from_average * weights
 
-        # Compute model weights as weighted average of new and old weights
+        # Compute score weights as weighted average of new and old weights
         weights = (
             self.rolling_average_weight * weights
             + (1 - self.rolling_average_weight) * new_weights
@@ -747,14 +747,14 @@ class Generator:
         # Normalize weights
         weights /= np.sum(weights)
 
-        # Ensure model weights exceed min bound
-        weights = np.maximum(weights, self.min_model_weight)
+        # Ensure score weights exceed min bound
+        weights = np.maximum(weights, self.min_score_weight)
 
         # Renormalize weights
         weights /= np.sum(weights)
 
-        # Update model weights
-        self.model_weights.weights = weights
+        # Update score weights
+        self.score_weights.weights = weights
 
     def generate(self, n_rollout: int) -> list[Node]:
         """Generate molecules for the specified number of rollouts.
@@ -783,10 +783,10 @@ class Generator:
             rollout_stats["Rollout Time"] = time.time() - start_time
 
             # Log individual scores of new molecule
-            for model_name, average_score in zip(
-                self.model_weights.model_names, best_node.individual_scores
+            for score_name, average_score in zip(
+                self.score_weights.score_names, best_node.individual_scores
             ):
-                rollout_stats[f"{model_name} Score"] = average_score
+                rollout_stats[f"{score_name} Score"] = average_score
 
             # Compute similarity of new molecule compared to previous molecules
             start_time = time.time()
@@ -801,27 +801,27 @@ class Generator:
                 for node in self.node_map
             )
 
-            # Optionally, update model weights based on success rate
+            # Optionally, update score weights based on success rate
             if self.success_comparators is not None:
                 # Compute successes for new node
                 successes = self.compute_successes(node=best_node)
 
                 # Add successes to rollout stats
-                for model_name, success in zip(
-                    self.model_weights.model_names, successes
+                for score_name, success in zip(
+                    self.score_weights.score_names, successes
                 ):
-                    rollout_stats[f"{model_name} Success"] = success
+                    rollout_stats[f"{score_name} Success"] = success
 
                 rollout_stats[f"Joint Success"] = int(int(all(successes)))
 
-                # Update model weights
-                self.update_model_weights(successes=successes)
+                # Update score weights
+                self.update_score_weights(successes=successes)
 
-            # Add model weights to rollout stats
-            for model_name, model_weight in zip(
-                self.model_weights.model_names, self.model_weights.weights
+            # Add score weights to rollout stats
+            for score_name, score_weight in zip(
+                self.score_weights.score_names, self.score_weights.weights
             ):
-                rollout_stats[f"{model_name} Weight"] = model_weight
+                rollout_stats[f"{score_name} Weight"] = score_weight
 
             # RL-specific updates and training
             if self.search_type == "rl":

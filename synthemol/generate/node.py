@@ -86,7 +86,7 @@ class Node:
         return sum(
             weight * score
             for weight, score in zip(
-                self.scorer.model_weights.weights, self.individual_scores
+                self.scorer.score_weights.weights, self.individual_scores
             )
         )
 
@@ -102,12 +102,12 @@ class Node:
             self.total_best_molecule_scores / self.num_visits
         )  # (num_scores,)
 
-        # Get model weights
-        model_weights = np.array(self.scorer.model_weights.weights)  # (num_scores,)
+        # Get score weights
+        score_weights = np.array(self.scorer.score_weights.weights)  # (num_scores,)
 
         # Compute weighted average of model scores
         weighted_average_best_molecule_scores = np.dot(
-            average_best_molecule_scores, model_weights
+            average_best_molecule_scores, score_weights
         )
 
         return weighted_average_best_molecule_scores

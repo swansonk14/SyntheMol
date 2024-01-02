@@ -24,14 +24,14 @@ OPERATORS = {
 def save_generated_molecules(
     nodes: list[Node],
     chemical_space_to_building_block_id_to_smiles: dict[str, dict[str, str]],
-    model_names: tuple[str, ...],
+    score_names: tuple[str, ...],
     save_path: Path,
 ) -> None:
     """Save generated molecules to a CSV file.
 
     :param nodes: A list of Nodes containing molecules. Only nodes with a single molecule are saved.
     :param chemical_space_to_building_block_id_to_smiles: A dictionary mapping building block IDs to SMILES.
-    :param model_names: A list of model names corresponding to the individual scores of the Nodes.
+    :param score_names: A list of score names corresponding to the individual scores of the Nodes.
     :param save_path: A path to a CSV file where the molecules will be saved.
     """
     construction_dicts = []
@@ -75,8 +75,8 @@ def save_generated_molecules(
         # Get individual scores
         individual_score_dicts.append(
             {
-                model_name: score
-                for model_name, score in zip(model_names, node.individual_scores)
+                score_name: score
+                for score_name, score in zip(score_names, node.individual_scores)
             }
         )
 
@@ -87,7 +87,7 @@ def save_generated_molecules(
         "num_expansions",
         ROLLOUT_COL,
         SCORE_COL,
-        *model_names,
+        *score_names,
         "Q_value",
         "num_reactions",
     ]

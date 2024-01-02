@@ -326,10 +326,10 @@ RL Chemprop-RDKit
 
 ```bash
 synthemol \
-    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
-    --model_types chemprop chemprop \
+    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_types chemprop chemprop \
     --fingerprint_types rdkit rdkit \
-    --model_names 'S. aureus' 'Solubility' \
+    --score_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
     --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
@@ -352,10 +352,10 @@ RL MLP-RDKit
 
 ```bash
 synthemol \
-    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
-    --model_types chemprop chemprop \
+    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_types chemprop chemprop \
     --fingerprint_types rdkit rdkit \
-    --model_names 'S. aureus' 'Solubility' \
+    --score_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
     --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
@@ -376,10 +376,10 @@ MCTS
 
 ```bash
 synthemol \
-    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
-    --model_types chemprop chemprop \
+    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_types chemprop chemprop \
     --fingerprint_types rdkit rdkit \
-    --model_names 'S. aureus' 'Solubility' \
+    --score_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
     --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
@@ -603,11 +603,11 @@ for S_AUREUS_WEIGHT in 0.00 0.86 0.90 0.92 0.94 0.96 1.00
 do
 SOLUBILITY_WEIGHT="0$(echo "1.0 - S_AUREUS_WEIGHT" | bc)"
 synthemol \
-    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
-    --model_types chemprop chemprop \
+    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_types chemprop chemprop \
     --fingerprint_types rdkit rdkit \
-    --model_names 'S. aureus' 'Solubility' \
-    --base_model_weights ${S_AUREUS_WEIGHT} ${SOLUBILITY_WEIGHT} \
+    --score_names 'S. aureus' 'Solubility' \
+    --base_score_weights ${S_AUREUS_WEIGHT} ${SOLUBILITY_WEIGHT} \
     --chemical_spaces real wuxi \
     --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
     --building_blocks_score_columns s_aureus_activity solubility \
@@ -633,11 +633,11 @@ for S_AUREUS_WEIGHT in 0.00 0.86 0.90 0.92 0.94 0.98 1.00
 do
 SOLUBILITY_WEIGHT="0$(echo "1.0 - S_AUREUS_WEIGHT" | bc)"
 synthemol \
-    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
-    --model_types chemprop chemprop \
+    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_types chemprop chemprop \
     --fingerprint_types rdkit rdkit \
-    --model_names 'S. aureus' 'Solubility' \
-    --base_model_weights ${S_AUREUS_WEIGHT} ${SOLUBILITY_WEIGHT} \
+    --score_names 'S. aureus' 'Solubility' \
+    --base_score_weights ${S_AUREUS_WEIGHT} ${SOLUBILITY_WEIGHT} \
     --chemical_spaces real wuxi \
     --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
     --building_blocks_score_columns s_aureus_activity solubility \
@@ -664,10 +664,10 @@ RL Chemprop-RDKit
 for SIMILARITY_TARGET in 0.4 0.5 0.7 0.8
 do
 synthemol \
-    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
-    --model_types chemprop chemprop \
+    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_types chemprop chemprop \
     --fingerprint_types rdkit rdkit \
-    --model_names 'S. aureus' 'Solubility' \
+    --score_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
     --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
@@ -694,10 +694,10 @@ RL MLP-RDKit
 for SIMILARITY_TARGET in 0.4 0.5 0.7 0.8
 do
 synthemol \
-    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
-    --model_types chemprop chemprop \
+    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_types chemprop chemprop \
     --fingerprint_types rdkit rdkit \
-    --model_names 'S. aureus' 'Solubility' \
+    --score_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
     --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
@@ -727,10 +727,10 @@ RL Chemprop-RDKit
 for TEMPERATURE in 0.01 0.05 0.1 0.5 1.0
 do
 synthemol \
-    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
-    --model_types chemprop chemprop \
+    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_types chemprop chemprop \
     --fingerprint_types rdkit rdkit \
-    --model_names 'S. aureus' 'Solubility' \
+    --score_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
     --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
@@ -758,10 +758,10 @@ RL MLP-RDKit
 for TEMPERATURE in 0.01 0.05 0.1 0.5 1.0
 do
 synthemol \
-    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
-    --model_types chemprop chemprop \
+    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_types chemprop chemprop \
     --fingerprint_types rdkit rdkit \
-    --model_names 'S. aureus' 'Solubility' \
+    --score_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
     --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
@@ -787,10 +787,10 @@ MCTS
 for EXPLORE_WEIGHT in 0.5 1.0 5.0 50.0
 do
 synthemol \
-    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
-    --model_types chemprop chemprop \
+    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_types chemprop chemprop \
     --fingerprint_types rdkit rdkit \
-    --model_names 'S. aureus' 'Solubility' \
+    --score_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
     --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
@@ -812,10 +812,10 @@ RL Chemprop-RDKit (pretrained models, no RL training)
 
 ```bash
 synthemol \
-    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
-    --model_types chemprop chemprop \
+    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_types chemprop chemprop \
     --fingerprint_types rdkit rdkit \
-    --model_names 'S. aureus' 'Solubility' \
+    --score_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
     --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
@@ -839,10 +839,10 @@ RL Chemprop-RDKit (from scratch models, with RL training)
 
 ```bash
 synthemol \
-    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
-    --model_types chemprop chemprop \
+    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_types chemprop chemprop \
     --fingerprint_types rdkit rdkit \
-    --model_names 'S. aureus' 'Solubility' \
+    --score_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
     --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
@@ -864,10 +864,10 @@ RL MLP-RDKit (pretrained models, no RL training)
 
 ```bash
 synthemol \
-    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
-    --model_types chemprop chemprop \
+    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_types chemprop chemprop \
     --fingerprint_types rdkit rdkit \
-    --model_names 'S. aureus' 'Solubility' \
+    --score_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
     --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
@@ -889,10 +889,10 @@ RL MLP-RDKit (from scratch models, with RL training)
 
 ```bash
 synthemol \
-    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
-    --model_types chemprop chemprop \
+    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_types chemprop chemprop \
     --fingerprint_types rdkit rdkit \
-    --model_names 'S. aureus' 'Solubility' \
+    --score_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
     --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
@@ -919,10 +919,10 @@ RL Chemprop-RDKit
 for SEED in 0 1 2
 do
 synthemol \
-    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
-    --model_types chemprop chemprop \
+    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_types chemprop chemprop \
     --fingerprint_types rdkit rdkit \
-    --model_names 'S. aureus' 'Solubility' \
+    --score_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
     --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
@@ -949,10 +949,10 @@ RL MLP-RDKit
 for SEED in 0 1 2
 do
 synthemol \
-    --model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
-    --model_types chemprop chemprop \
+    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_types chemprop chemprop \
     --fingerprint_types rdkit rdkit \
-    --model_names 'S. aureus' 'Solubility' \
+    --score_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
     --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \

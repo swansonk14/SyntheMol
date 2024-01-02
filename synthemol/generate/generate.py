@@ -13,7 +13,7 @@ from synthemol.constants import (
     CHEMICAL_SPACES,
     FINGERPRINT_TYPES,
     ID_COL,
-    MODEL_TYPES,
+    SCORE_TYPES,
     OPTIMIZATION_TYPES,
     REACTION_TO_BUILDING_BLOCKS_PATH,
     RL_MODEL_TYPES,
@@ -21,7 +21,7 @@ from synthemol.constants import (
     SCORE_COL,
     SMILES_COL,
 )
-from synthemol.generate.model_weights import ModelWeights
+from synthemol.generate.score_weights import ScoreWeights
 from synthemol.generate.rl_models import RLModelChemprop, RLModelMLP
 from synthemol.reactions import (
     CHEMICAL_SPACE_TO_REACTIONS,
@@ -36,11 +36,11 @@ from synthemol.generate.utils import parse_success_threshold, save_generated_mol
 def generate(
     search_type: Literal["mcts", "rl"],
     save_dir: Path,
-    model_types: list[MODEL_TYPES],
-    model_paths: list[Path],
+    score_types: list[SCORE_TYPES],
+    score_paths: list[Path],
     fingerprint_types: tuple[FINGERPRINT_TYPES, ...] = ("none",),
-    model_names: list[str] = None,
-    base_model_weights: list[float] | None = None,
+    score_names: list[str] = None,
+    base_score_weights: list[float] | None = None,
     success_thresholds: list[str] | None = None,
     chemical_spaces: tuple[CHEMICAL_SPACES, ...] = ("real",),
     building_blocks_paths: tuple[Path, ...] = (BUILDING_BLOCKS_PATH,),
@@ -80,18 +80,18 @@ def generate(
 
     :param search_type: The type of search to perform. 'mcts' = Monte Carlo tree search. 'rl' = Reinforcement learning.
     :param save_dir: Path to directory where the generated molecules will be saved.
-    :param model_types: List of types of models provided by model_paths.
-    :param model_paths: List of paths with each path pointing to a directory of model checkpoints (ensemble)
-                        or to a specific PKL or PT file containing a trained model.
-                        Note: All models must have a single output.
-    :param fingerprint_types: List of types of fingerprints to use as input features for the model_paths.
-    :param model_names: List of names for each model/ensemble in model_paths.
-                        If None, models will be named "Model 1", "Model 2", etc.
-    :param base_model_weights: Initial weights for each model/ensemble in model_paths for defining the reward function.
-                               If None, defaults to equal weights for each model/ensemble.
-    :param success_thresholds: The threshold for each model/ensemble in model_paths for defining success of the form "> 0.5".
-                               If provided, the model weights will be dynamically set to maximize joint success
-                               across all models/ensembles.
+    :param score_types: List of types of scores to score molecules.
+    :param score_paths: List of paths with each path pointing to a directory of model checkpoints (ensemble)
+                        or to a specific PKL or PT file containing a trained model for use in a scorer.
+                        Note: Models must have a single output.
+    :param fingerprint_types: List of types of fingerprints to use as input features for the models in score_paths.
+    :param score_names: List of names for each score.
+                        If None, scores will be named "Score 1", "Score 2", etc.
+    :param base_score_weights: Initial weights for each score for defining the reward function.
+                               If None, defaults to equal weights for each score.
+    :param success_thresholds: The threshold for each score for defining success of the form "> 0.5".
+                               If provided, the score weights will be dynamically set to maximize joint success
+                               across all scores.
     :param chemical_spaces: A tuple of names of reaction sets to use. 'real' = Enamine REAL Space reactions.
                             'wuxi' = WuXi GalaXi reactions. 'custom' = Custom reactions (in synthemol/reactions/custom.py).
     :param building_blocks_paths: Paths to CSV files containing molecular building blocks.
@@ -104,7 +104,7 @@ def generate(
     :param explore_weight: The hyperparameter that encourages exploration.
     :param num_expand_nodes: The number of child nodes to include when expanding a given node. If None, all child nodes will be included.
     :param rolling_average_weight: The weight to use for the rolling average of similarity (dynamic temperature)
-                                    and success (dynamic model weights).
+                                   and success (dynamic score weights).
     :param rl_model_type: The type of RL model to use. 'mlp_rdkit' = MLP RDKit model.
                           'chemprop' = Chemprop model. 'chemprop_rdkit' = Chemprop RDKit model.
     :param rl_model_paths: List of paths with each path pointing to a PT file containing a trained model that will be
@@ -141,25 +141,25 @@ def generate(
     # Change type of building blocks score columns for compatibility with Pandas
     building_blocks_score_columns = list(building_blocks_score_columns)
 
-    # Get number of models
-    num_models = len(model_types)
+    # Get number of scores
+    num_scores = len(score_types)
 
-    # Set up default model weights as equal weighting
-    if base_model_weights is None:
-        base_model_weights = [1 / num_models] * num_models
+    # Set up default score weights as equal weighting
+    if base_score_weights is None:
+        base_score_weights = [1 / num_scores] * num_scores
 
     # Check lengths of model arguments match
     for arg in [
-        model_types,
-        model_paths,
+        score_types,
+        score_paths,
         rl_model_paths,
         fingerprint_types,
-        model_names,
-        base_model_weights,
+        score_names,
+        base_score_weights,
         building_blocks_score_columns,
         success_thresholds,
     ]:
-        if arg is not None and len(arg) != num_models:
+        if arg is not None and len(arg) != num_scores:
             raise ValueError("Model parameters have the same length.")
 
     # Check lengths of chemical space arguments match
@@ -185,23 +185,23 @@ def generate(
     if rl_temperature_similarity_target == -1:
         rl_temperature_similarity_target = None
 
-    # Set up model weights, with option for dynamic weights if success_thresholds is provided
+    # Set up score weights, with option for dynamic weights if success_thresholds is provided
     if success_thresholds is not None:
         success_comparators = tuple(
             parse_success_threshold(success_threshold)
             for success_threshold in success_thresholds
         )
-        model_weights = ModelWeights(
-            base_model_weights=base_model_weights,
+        score_weights = ScoreWeights(
+            base_score_weights=base_score_weights,
             immutable=False,
-            model_names=model_names,
+            score_names=score_names,
         )
     else:
         success_comparators = None
-        model_weights = ModelWeights(
-            base_model_weights=base_model_weights,
+        score_weights = ScoreWeights(
+            base_score_weights=base_score_weights,
             immutable=True,
-            model_names=model_names,
+            score_names=score_names,
         )
 
     # Create save directory
@@ -343,8 +343,8 @@ def generate(
                 f"_{rl_model_type}" if search_type == "rl" else ""
             )
 
-            for model_type, fingerprint_type in zip(model_types, fingerprint_types):
-                wandb_run_name += f"_{model_type}" + (
+            for score_type, fingerprint_type in zip(score_types, fingerprint_types):
+                wandb_run_name += f"_{score_type}" + (
                     f"_{fingerprint_type}" if fingerprint_type != "none" else ""
                 )
 
@@ -357,11 +357,11 @@ def generate(
             config={
                 "search_type": search_type,
                 "save_dir": save_dir,
-                "model_paths": model_paths,
-                "model_types": model_types,
+                "score_paths": score_paths,
+                "score_types": score_types,
                 "fingerprint_types": fingerprint_types,
-                "model_names": model_names,
-                "base_model_weights": base_model_weights,
+                "score_names": score_names,
+                "base_score_weights": base_score_weights,
                 "success_thresholds": success_thresholds,
                 "chemical_spaces": chemical_spaces,
                 "building_blocks_paths": building_blocks_paths,
@@ -404,16 +404,16 @@ def generate(
             # Build table of building block scores
             wandb_bb_table = wandb.Table(
                 data=building_block_data[building_blocks_score_columns].values,
-                columns=list(model_weights.model_names),
+                columns=list(score_weights.score_names),
             )
 
             # Log building block score histograms
-            for model_name in model_weights.model_names:
-                histogram_name = f"{chemical_space} Building Block {model_name} Scores"
+            for score_name in score_weights.score_names:
+                histogram_name = f"{chemical_space} Building Block {score_name} Scores"
                 wandb.log(
                     {
                         histogram_name: wandb.plot.histogram(
-                            wandb_bb_table, model_name, title=histogram_name,
+                            wandb_bb_table, score_name, title=histogram_name,
                         )
                     }
                 )
@@ -432,13 +432,13 @@ def generate(
     # Set up device for model
     device = torch.device("cuda" if use_gpu else "cpu")
 
-    # Define model scoring function
-    print("Loading models and creating model scorer...")
+    # Define scorer
+    print("Creating scorer...")
     scorer = MoleculeScorer(
-        model_paths=model_paths,
-        model_types=model_types,
+        score_types=score_types,
+        score_paths=score_paths,
         fingerprint_types=fingerprint_types,
-        model_weights=model_weights,
+        score_weights=score_weights,
         device=device,
         smiles_to_scores=building_block_smiles_to_scores,
     )
@@ -451,7 +451,7 @@ def generate(
         # Set up RL model args
         rl_model_args = {
             "prediction_type": rl_prediction_type,
-            "model_weights": model_weights,
+            "score_weights": score_weights,
             "model_paths": rl_model_paths,
             "num_workers": num_workers,
             "num_epochs": rl_train_epochs,
@@ -483,7 +483,7 @@ def generate(
         chemical_space_to_building_block_smiles_to_id=chemical_space_to_building_block_smiles_to_id,
         max_reactions=max_reactions,
         scorer=scorer,
-        model_weights=model_weights,
+        score_weights=score_weights,
         success_comparators=success_comparators,
         explore_weight=explore_weight,
         num_expand_nodes=num_expand_nodes,
@@ -524,7 +524,7 @@ def generate(
         save_generated_molecules(
             nodes=nodes,
             chemical_space_to_building_block_id_to_smiles=chemical_space_to_building_block_id_to_smiles,
-            model_names=model_weights.model_names,
+            score_names=score_weights.score_names,
             save_path=molecules_save_path,
         )
 
@@ -571,16 +571,16 @@ def generate(
         # Build table of scores of generated molecules
         node_scores = [node.individual_scores for node in nodes]
         wandb_gen_table = wandb.Table(
-            data=node_scores, columns=list(model_weights.model_names)
+            data=node_scores, columns=list(score_weights.score_names)
         )
 
         # Log histograms of scores of generated molecules
-        for model_name in model_weights.model_names:
-            histogram_name = f"Generated Molecule {model_name} Scores"
+        for score_name in score_weights.score_names:
+            histogram_name = f"Generated Molecule {score_name} Scores"
             wandb.log(
                 {
                     histogram_name: wandb.plot.histogram(
-                        wandb_gen_table, model_name, title=histogram_name,
+                        wandb_gen_table, score_name, title=histogram_name,
                     )
                 }
             )

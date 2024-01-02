@@ -14,7 +14,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 from tqdm import tqdm, trange
 
 from synthemol.constants import RL_PREDICTION_TYPES
-from synthemol.generate.model_weights import ModelWeights
+from synthemol.generate.score_weights import ScoreWeights
 from synthemol.generate.node import Node
 from synthemol.models import chemprop_build_model, chemprop_load, MLP
 
@@ -29,7 +29,7 @@ class RLModel(ABC):
     def __init__(
         self,
         prediction_type: RL_PREDICTION_TYPES,
-        model_weights: ModelWeights,
+        score_weights: ScoreWeights,
         model_paths: list[Path] | None = None,
         max_num_molecules: int = 3,
         features_size: int = 200,
@@ -44,7 +44,7 @@ class RLModel(ABC):
 
         :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
                                 'classification' = binary classification. 'regression' = regression.
-        :param model_weights: The weights of the models for each property.
+        :param score_weights: The weights of the scores.
         :param model_paths: A list of paths to PT files or directories of PT files containing models to load if using
                             pretrained models. For directories, the first PT file in the directory will be used.
                             If None, models are initialized randomly.
@@ -58,14 +58,14 @@ class RLModel(ABC):
         :param extended_evaluation: Whether to perform extended evaluation of the RL models using all combinations
                                     of numbers of source/target building blocks.
         """
-        if model_paths is not None and len(model_paths) != model_weights.num_weights:
+        if model_paths is not None and len(model_paths) != score_weights.num_weights:
             raise ValueError(
                 f"Number of model paths ({len(model_paths):,}) must match number "
-                f"of model weights ({model_weights.num_weights:,})."
+                f"of model weights ({score_weights.num_weights:,})."
             )
 
         self.prediction_type = prediction_type
-        self.model_weights = model_weights
+        self.score_weights = score_weights
         self.model_paths = model_paths
         self.max_num_molecules = max_num_molecules
         self.features_size = features_size
@@ -87,7 +87,7 @@ class RLModel(ABC):
         # Build or load models
         if model_paths is None:
             # Build models
-            self.models = [self.build_model() for _ in range(model_weights.num_weights)]
+            self.models = [self.build_model() for _ in range(score_weights.num_weights)]
         else:
             # Get model path or first model path from each ensemble
             model_paths = [
@@ -298,9 +298,9 @@ class RLModel(ABC):
         split_name = split.title()
 
         # Get statistics for each property
-        for model_index in range(self.model_weights.num_weights):
+        for model_index in range(self.score_weights.num_weights):
             # Get predictions and rewards for this property
-            model_name = self.model_weights.model_names[model_index]
+            model_name = self.score_weights.score_names[model_index]
             model_predictions = predictions[:, model_index]
             model_rewards = rewards[:, model_index]
 
@@ -418,7 +418,9 @@ class RLModel(ABC):
         )  # (num_molecules, num_properties)
 
         # Move weights to tensor
-        weights = torch.tensor(self.model_weights.weights, dtype=torch.float32)  # (num_properties,)
+        weights = torch.tensor(
+            self.score_weights.weights, dtype=torch.float32
+        )  # (num_properties,)
 
         # Compute weighted average
         predictions = torch.matmul(individual_preds, weights)  # (num_molecules,)
@@ -551,7 +553,7 @@ class RLModelMLP(RLModel):
     def __init__(
         self,
         prediction_type: RL_PREDICTION_TYPES,
-        model_weights: ModelWeights,
+        score_weights: ScoreWeights,
         model_paths: list[Path] | None = None,
         max_num_molecules: int = 3,
         features_size: int = 200,
@@ -568,7 +570,7 @@ class RLModelMLP(RLModel):
 
         :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
                                 'classification' = binary classification. 'regression' = regression.
-        :param model_weights: The weights of the models for each property.
+        :param score_weights: The weights of the models for each property.
         :param model_paths: A list of paths to PT files or directories of PT files containing models to load if using
                             pretrained models. For directories, the first PT file in the directory will be used.
                             If None, models are initialized randomly.
@@ -591,7 +593,7 @@ class RLModelMLP(RLModel):
 
         super().__init__(
             prediction_type=prediction_type,
-            model_weights=model_weights,
+            score_weights=score_weights,
             model_paths=model_paths,
             max_num_molecules=max_num_molecules,
             features_size=features_size,
@@ -867,7 +869,7 @@ class RLModelChemprop(RLModel):
         self,
         use_rdkit_features: bool,
         prediction_type: RL_PREDICTION_TYPES,
-        model_weights: ModelWeights,
+        score_weights: ScoreWeights,
         model_paths: list[Path] | None = None,
         max_num_molecules: int = 3,
         features_size: int = 200,
@@ -883,7 +885,7 @@ class RLModelChemprop(RLModel):
         :param use_rdkit_features: Whether to use RDKit fingerprints as features.
         :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
                                 'classification' = binary classification. 'regression' = regression.
-        :param model_weights: The weights of the models for each property.
+        :param score_weights: The weights of the models for each property.
         :param model_paths: A list of paths to PT files or directories of PT files containing models to load if using
                             pretrained models. For directories, the first PT file in the directory will be used.
                             If None, models are initialized randomly.
@@ -902,7 +904,7 @@ class RLModelChemprop(RLModel):
 
         super().__init__(
             prediction_type=prediction_type,
-            model_weights=model_weights,
+            score_weights=score_weights,
             model_paths=model_paths,
             max_num_molecules=max_num_molecules,
             features_size=features_size,
