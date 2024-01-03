@@ -30,11 +30,7 @@ from synthemol.reactions import (
 )
 from synthemol.generate.generator import Generator
 from synthemol.generate.scorer import MoleculeScorer
-from synthemol.generate.utils import (
-    convert_none_list,
-    parse_success_threshold,
-    save_generated_molecules,
-)
+from synthemol.generate.utils import parse_success_threshold, save_generated_molecules
 
 
 def generate(

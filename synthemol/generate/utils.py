@@ -162,17 +162,3 @@ def parse_success_threshold(success_threshold: str) -> Callable[[float], bool]:
     )
 
     return compare_to_threshold_fn
-
-
-def convert_none_list(
-    arguments: list[Any | Literal["None"] | None] | None,
-) -> list[Any | None] | None:
-    """Parses a list of arguments where "None" strings are replaced with None.
-
-    :param arguments: A list of arguments that may be None or may have "None" strings.
-    :return: A list with "None" replaced with None or simply None if the input is None.
-    """
-    if arguments is None:
-        return None
-
-    return [None if argument == "None" else argument for argument in arguments]
