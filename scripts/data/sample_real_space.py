@@ -52,7 +52,7 @@ def sample_real_space(
     :param save_path: Path to CSV file where sampled molecules will be saved.
     :param num_molecules: Number of molecules to sample.
     :param single_id_column: Whether the reaction and building blocks are in a single ID column (newer versions of REAL)
-                             or in separate columns (older versions of REAL).
+        or in separate columns (older versions of REAL).
     """
     # Get paths to data files
     data_paths = sorted(data_dir.rglob("*.cxsmiles.bz2"))

@@ -179,13 +179,13 @@ def create_scorer(
 
     :param score_type: The type of score to use.
     :param model_path: For score types that are model-based ("random_forest" and "chemprop"), the corresponding
-                       model path should be a path to a directory of model checkpoints (ensemble)
-                       or to a specific PKL or PT file containing a trained model with a single output.
-                       For score types that are not model-based, the corresponding model path must be None.
+            model path should be a path to a directory of model checkpoints (ensemble)
+            or to a specific PKL or PT file containing a trained model with a single output.
+            For score types that are not model-based, the corresponding model path must be None.
     :param fingerprint_type: For score types that are model-based and require fingerprints as input, the corresponding
-                             fingerprint type should be the type of fingerprint (e.g., "rdkit").
-                             For model-based scores that don't require fingerprints or non-model-based scores,
-                             the corresponding fingerprint type must be None.
+            fingerprint type should be the type of fingerprint (e.g., "rdkit").
+            For model-based scores that don't require fingerprints or non-model-based scores,
+            the corresponding fingerprint type must be None.
     :param device: The device on which to run the scorer.
     """
     if score_type == "qed":
@@ -240,15 +240,15 @@ class MoleculeScorer:
         :param score_types: List of types of scores to score molecules.
         :param score_weights: Weights for each scorer for defining the reward function.
         :param model_paths: For score types that are model-based ("random_forest" and "chemprop"), the corresponding
-                            model path should be a path to a directory of model checkpoints (ensemble)
-                            or to a specific PKL or PT file containing a trained model with a single output.
-                            For score types that are not model-based, the corresponding model path must be None.
-                            If all score types are not model-based, this argument can be None.
+            model path should be a path to a directory of model checkpoints (ensemble)
+            or to a specific PKL or PT file containing a trained model with a single output.
+            For score types that are not model-based, the corresponding model path must be None.
+            If all score types are not model-based, this argument can be None.
         :param fingerprint_types: For score types that are model-based and require fingerprints as input, the corresponding
-                                  fingerprint type should be the type of fingerprint (e.g., "rdkit").
-                                  For model-based scores that don't require fingerprints or non-model-based scores,
-                                  the corresponding fingerprint type must be None.
-                                  If all score types do not require fingerprints, this argument can be None.
+            fingerprint type should be the type of fingerprint (e.g., "rdkit").
+            For model-based scores that don't require fingerprints or non-model-based scores,
+            the corresponding fingerprint type must be None.
+            If all score types do not require fingerprints, this argument can be None.
         :param device: The device on which to run the scorer.
         :param smiles_to_scores: An optional dictionary mapping SMILES to precomputed scores.
         """

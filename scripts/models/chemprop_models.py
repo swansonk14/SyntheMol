@@ -60,7 +60,7 @@ def chemprop_build_data_loader(
     :param properties: A list of molecular properties (num_molecules,).
     :param shuffle: Whether to shuffle the data loader.
     :param num_workers: The number of workers for the data loader.
-                        Zero workers needed for deterministic behavior and faster training/testing when CPU only.
+        Zero workers needed for deterministic behavior and faster training/testing when CPU only.
     :return: A Chemprop data loader.
     """
     if fingerprints is None:

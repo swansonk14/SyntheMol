@@ -24,7 +24,7 @@ def filter_real_reactions_to_building_blocks(
     """Filter out REAL building blocks that do not match the REAL reaction templates and map BB IDs to SMILES.
 
     :param reaction_to_building_blocks_path: Path to a PKL file mapping from reaction ID
-                                             to reactant index to a set of allowed building block IDs.
+        to reactant index to a set of allowed building block IDs.
     :param save_path: Path to a PKL file where the filtered reaction to building blocks will be saved.
     :param reactions: A tuple of Reactions whose allowed building blocks will be determined.
     :param building_blocks_path: Path to a CSV file containing building block IDs and SMILES.

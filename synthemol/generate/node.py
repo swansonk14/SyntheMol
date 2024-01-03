@@ -28,10 +28,10 @@ class Node:
         :param scorer: A callable object that takes as input a SMILES representing a molecule and returns a score.
         :param node_id: The ID of the Node, which should correspond to the order in which the Mode was visited.
         :param molecules: A tuple of SMILES. The first element is the currently constructed molecule
-                          while the remaining elements are the building blocks that are about to be added.
+            while the remaining elements are the building blocks that are about to be added.
         :param unique_building_block_ids: A set of building block IDS used in this Node.
         :param construction_log: A ConstructionLog containing information about each reaction
-                                 used to construct the molecules in this Node.
+            used to construct the molecules in this Node.
         :param rollout_num: The number of the rollout on which this Node was created.
         """
         self.explore_weight = explore_weight
@@ -117,7 +117,7 @@ class Node:
 
         :param n: The total number of times that nodes on the same level have been visited.
         :param sign: The sign of the property score, which determines whether the explore
-                     score or its reciprocal should be used since the two are multiplied.
+            score or its reciprocal should be used since the two are multiplied.
         """
         return (self.explore_weight * math.sqrt(1 + n) / (1 + self.num_visits)) ** sign
 

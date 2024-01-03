@@ -6,15 +6,15 @@ class ReactionLog:
     """A ReactionLog contains information about a reaction and the building blocks combined by that reaction."""
 
     def __init__(
-        self, chemical_space: str, reaction_id: int, reactant_ids: tuple[int, ...]
+        self, chemical_space: str, reaction_id: int, reactant_ids: tuple[str, ...]
     ) -> None:
         """Initializes the ReactionLog.
 
         :param chemical_space: The chemical space the reaction belongs to.
         :param reaction_id: The ID of the reaction.
-        :param reactant_ids: A tuple of reactant IDs, which are building block IDs except for -1,
-                             which indicates a non-building block molecule (i.e., a molecule already
-                             containing multiple building blocks).
+        :param reactant_ids: A tuple of reactant IDs, which are building block IDs except for "-1",
+            which indicates a non-building block molecule (i.e., a molecule already
+            containing multiple building blocks).
         """
         self.chemical_space = chemical_space
         self.reaction_id = reaction_id
@@ -27,8 +27,8 @@ class ReactionLog:
 
     @property
     def num_building_blocks(self) -> int:
-        """Gets the number of building blocks in the reaction (i.e., all reactants with ID != -1)."""
-        return sum(reactant_id != -1 for reactant_id in self.reactant_ids)
+        """Gets the number of building blocks in the reaction (i.e., all reactants with ID != "-1")."""
+        return sum(reactant_id != "-1" for reactant_id in self.reactant_ids)
 
 
 class ConstructionLog:

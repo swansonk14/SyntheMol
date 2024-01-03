@@ -60,9 +60,9 @@ def count_real_space_for_file(
     :param building_block_set: Set of building blocks to filter by.
     :param only_selected_reactions: Whether to only count reactions in REAL_REACTION_IDS.
     :param single_id_column: Whether the reaction and building blocks are in a single ID column (newer versions of REAL)
-                             or in separate columns (older versions of REAL).
+        or in separate columns (older versions of REAL).
     :return: A tuple containing the reaction counts, building block counts,
-             number of molecules in the file, and number of molecules counted.
+        number of molecules in the file, and number of molecules counted.
     """
     # Load REAL data file
     data = pd.read_csv(
@@ -129,7 +129,7 @@ def count_real_space(
     :param building_block_id_column: Column in building block file that contains building block IDs.
     :param only_selected_reactions: If True, only count reactions that are in the selected reactions in real_reactions.py.
     :param single_id_column: Whether the reaction and building blocks are in a single ID column (newer versions of REAL)
-                             or in separate columns (older versions of REAL).
+        or in separate columns (older versions of REAL).
     """
     # Get paths to data files
     data_paths = sorted(data_dir.rglob("*.cxsmiles.bz2"))

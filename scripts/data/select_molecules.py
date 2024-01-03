@@ -28,7 +28,7 @@ def get_approximate_maximum_independent_set(
     """Gets a maximal independent set approximating the maximum independent set of molecules within a similarity threshold.
 
     Note: This does not provide a formal approximation since there are no theoretical guarantees on using
-          maximal independent sets to approximate maximum independent sets.
+        maximal independent sets to approximate maximum independent sets.
 
     :param similarities: A 2D numpy array of pairwise molecule similarities.
     :param threshold: Similarity threshold.
@@ -81,7 +81,7 @@ def select_molecules(
     :param max_rollout: Maximum rollout number to include in the analysis.
     :param select_num: Optional number of molecules to select (otherwise keeps entire maximum independent set).
     :param sort_column: Optional name of the column to sort by before selecting molecules.
-                        If None, selects molecules in the order of the input file.
+        If None, selects molecules in the order of the input file.
     :param descending: Whether to sort in descending order.
     """
     # Load molecules

@@ -43,11 +43,11 @@ class RLModel(ABC):
         """Initializes the model.
 
         :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
-                                'classification' = binary classification. 'regression' = regression.
+            'classification' = binary classification. 'regression' = regression.
         :param score_weights: The weights of the scores.
         :param model_paths: A list of paths to PT files or directories of PT files containing models to load if using
-                            pretrained models. For directories, the first PT file in the directory will be used.
-                            If None, models are initialized randomly.
+            pretrained models. For directories, the first PT file in the directory will be used.
+            If None, models are initialized randomly.
         :param max_num_molecules: The maximum number of molecules to process at a time.
         :param features_size: The size of the features for each molecule.
         :param num_workers: The number of workers to use for data loading.
@@ -56,7 +56,7 @@ class RLModel(ABC):
         :param learning_rate: The learning rate.
         :param device: The device to use for the model.
         :param extended_evaluation: Whether to perform extended evaluation of the RL models using all combinations
-                                    of numbers of source/target building blocks.
+            of numbers of source/target building blocks.
         """
         if model_paths is not None and len(model_paths) != score_weights.num_weights:
             raise ValueError(
@@ -125,9 +125,9 @@ class RLModel(ABC):
         :param molecule_tuples: A list of tuples of SMILES strings representing one or more molecules.
         :param average_across_tuple: Whether to average the features across the molecules in each tuple.
         :return: A tensor containing the features for molecules in each tuple of molecules.
-                 If average_across_tuple is True, then the tensor will have shape (num_tuples, features_size).
-                 If average_across_tuple is False, then the tensor will have shape (num_tuples, total_features_size)
-                 where total_features_size = max_num_molecules * features_size.
+            If average_across_tuple is True, then the tensor will have shape (num_tuples, features_size).
+            If average_across_tuple is False, then the tensor will have shape (num_tuples, total_features_size)
+            where total_features_size = max_num_molecules * features_size.
         """
         # Get all molecules
         molecule_nums = [len(molecules) for molecules in molecule_tuples]
@@ -190,7 +190,7 @@ class RLModel(ABC):
 
         :param source_node: A node on the pathway to target_node.
         :param target_node: The target node, which is the best node found during the search
-                            along the pathway from source_node.
+            along the pathway from source_node.
         """
         self.test_source_nodes.append(source_node)
         self.test_target_nodes.append(target_node)
@@ -236,7 +236,6 @@ class RLModel(ABC):
                     loss.backward()
                     optimizer.step()
 
-    # TODO: also evaluate on weighted average property prediction?
     def evaluate(self, split: Literal["train", "test"]) -> dict[str, float]:
         """Evaluates the model on the train or test set.
 
@@ -378,7 +377,7 @@ class RLModel(ABC):
 
         :param molecule_tuples: A list of tuples of SMILES strings representing one or more molecules.
         :return: A 2D tensor containing the predicted individual scores for
-                 each tuple of molecules (num_molecules, num_properties).
+            each tuple of molecules (num_molecules, num_properties).
         """
         # Set models to eval mode
         self.eval_mode()
@@ -569,11 +568,11 @@ class RLModelMLP(RLModel):
         """Initializes the RL MLP model.
 
         :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
-                                'classification' = binary classification. 'regression' = regression.
+            'classification' = binary classification. 'regression' = regression.
         :param score_weights: The weights of the models for each property.
         :param model_paths: A list of paths to PT files or directories of PT files containing models to load if using
-                            pretrained models. For directories, the first PT file in the directory will be used.
-                            If None, models are initialized randomly.
+            pretrained models. For directories, the first PT file in the directory will be used.
+            If None, models are initialized randomly.
         :param max_num_molecules: The maximum number of molecules to process at a time.
         :param features_size: The size of the features for each molecule.
         :param hidden_dim: The dimensionality of the hidden layers.
@@ -584,7 +583,7 @@ class RLModelMLP(RLModel):
         :param learning_rate: The learning rate.
         :param device: The device to use for the model.
         :param extended_evaluation: Whether to perform extended evaluation of the RL models using all combinations
-                                    of numbers of source/target building blocks.
+            of numbers of source/target building blocks.
         """
         # Store MLP-specific parameters
         self.hidden_dim = hidden_dim
@@ -768,7 +767,7 @@ class RLChempropMoleculeDataset(torch.utils.data.Dataset):
 
         :param molecule_tuples: A list of tuples of SMILES strings representing one or more molecules.
         :param features: A tensor containing the features for each molecule in each tuple of molecules
-                         (num_tuples, total_features_size).
+            (num_tuples, total_features_size).
         :param rewards: A list of lists of rewards for each tuple of molecules of shape (num_molecules, num_properties).
         """
         # Store molecule tuples
@@ -884,11 +883,11 @@ class RLModelChemprop(RLModel):
 
         :param use_rdkit_features: Whether to use RDKit fingerprints as features.
         :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
-                                'classification' = binary classification. 'regression' = regression.
+            'classification' = binary classification. 'regression' = regression.
         :param score_weights: The weights of the models for each property.
         :param model_paths: A list of paths to PT files or directories of PT files containing models to load if using
-                            pretrained models. For directories, the first PT file in the directory will be used.
-                            If None, models are initialized randomly.
+            pretrained models. For directories, the first PT file in the directory will be used.
+            If None, models are initialized randomly.
         :param max_num_molecules: The maximum number of molecules to process at a time.
         :param features_size: The size of the features for each molecule.
         :param num_workers: The number of workers to use for data loading.
@@ -897,7 +896,7 @@ class RLModelChemprop(RLModel):
         :param learning_rate: The learning rate.
         :param device: The device to use for the model.
         :param extended_evaluation: Whether to perform extended evaluation of the RL models using all combinations
-                                    of numbers of source/target building blocks.
+            of numbers of source/target building blocks.
         """
         # Store whether to use RDKit features
         self.use_rdkit_features = use_rdkit_features

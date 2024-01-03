@@ -60,40 +60,38 @@ class Generator:
 
         :param search_type: The type of search to perform. 'mcts' = Monte Carlo tree search. 'rl' = Reinforcement learning.
         :param chemical_space_to_building_block_smiles_to_id: A dictionary mapping chemical space to building block
-                                                              SMILES to IDs.
+            SMILES to IDs.
         :param max_reactions: The maximum number of reactions to use to construct a molecule.
         :param scorer: A callable object that takes as input a SMILES representing a molecule and returns a score.
         :param score_weights: The weights to use for the scoring function.
         :param success_comparators: A tuple of functions that take as input a score and return whether the score
-                                    indicates a successful molecule.
-                                    If provided, then the score weights are dynamically set.
+            indicates a successful molecule. If provided, then the score weights are dynamically set.
         :param explore_weight: The hyperparameter that encourages exploration.
         :param num_expand_nodes: The number of tree nodes to expand when extending the child nodes in the search tree.
-                                  If None, then all nodes are expanded.
+            If None, then all nodes are expanded.
         :param rl_base_temperature: The initial temperature parameter for the softmax function used to select building blocks.
-                                    Higher temperature means more exploration. If rl_temperature_similarity_target is provided,
-                                    the temperature is adjusted based on generated molecule diversity.
+            Higher temperature means more exploration. If rl_temperature_similarity_target is provided,
+            the temperature is adjusted based on generated molecule diversity.
         :param rl_temperature_similarity_target: If provided, adjusts the temperature to obtain the maximally scoring molecules
-                                                 that are at most this similar to previously generated molecules. Starts with
-                                                 the temperature provided by rl_base_temperature.
-                                                 If None, the temperature is not adjusted.
+            that are at most this similar to previously generated molecules. Starts with
+            the temperature provided by rl_base_temperature. If None, the temperature is not adjusted.
         :param rl_train_frequency: The number of rollouts between each training step of the RL model.
         :param optimization: Whether to maximize or minimize the score.
         :param reactions: A tuple of reactions that combine molecular building blocks.
         :param rng_seed: Seed for the random number generator.
         :param no_building_block_diversity: Whether to turn off the score modification that encourages diverse building blocks.
         :param store_nodes: Whether to store the child nodes of each node in the search tree.
-                            This doubles the speed of the search but significantly increases
-                            the memory usage (e.g., 450GB for 20,000 rollouts instead of 600 MB).
+            This doubles the speed of the search but significantly increases
+            the memory usage (e.g., 450GB for 20,000 rollouts instead of 600 MB).
         :param verbose: Whether to print out additional statements during generation.
         :param rl_model: The RL model to use for the RL search. Must be provided if and only if search_type is 'rl'.
         :param rolling_average_weight: The weight to use for the rolling average of similarity (dynamic temperature)
-                                       and success (dynamic model weights).
+            and success (dynamic model weights).
         :param min_temperature: The minimum temperature when using dynamic temperature.
         :param max_temperature: The maximum temperature when using dynamic temperature.
         :param min_score_weight: The minimum score weight (pre-normalization) when using dynamic score weights.
         :param replicate: This is necessary to replicate the results from the paper, but otherwise should not be used
-                          since it limits the potential choices of building blocks.
+            since it limits the potential choices of building blocks.
         :param wandb_log: Whether to log results to Weights & Biases.
         """
         self.search_type = search_type
@@ -247,7 +245,7 @@ class Generator:
 
         :param molecules: A tuple of SMILES strings representing the molecules to run reactions on.
         :return: A list of tuples, where each tuple contains a reaction and a dictionary mapping
-                 the molecules to the indices of the reactants they match.
+            the molecules to the indices of the reactants they match.
         """
         matching_reactions = []
 

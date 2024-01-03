@@ -39,7 +39,7 @@ def predict(
     :param num_workers: Number of workers for the data loader (only applicable to chemprop model type).
     :param use_gpu: Whether to use GPU (only applicable to chemprop model type).
     :param no_cache: Whether to disable caching (only applicable to chemprop model type).
-                     Turn off caching when making predictions on large datasets
+        Turn off caching when making predictions on large datasets
     """
     # Disable Chemprop caching for prediction to avoid memory issues with large datasets
     if no_cache:
