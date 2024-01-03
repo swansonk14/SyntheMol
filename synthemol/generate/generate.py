@@ -41,8 +41,9 @@ def generate(
     search_type: Literal["mcts", "rl"],
     save_dir: Path,
     score_types: list[SCORE_TYPES],
-    score_paths: list[Path | Literal["None"] | None] | None = None,
-    fingerprint_types: list[FINGERPRINT_TYPES | Literal["None"] | None] | None = None,
+    score_model_paths: list[Path | Literal["None"] | None] | None = None,
+    score_fingerprint_types: list[FINGERPRINT_TYPES | Literal["None"] | None]
+    | None = None,
     score_names: list[str] | None = None,
     base_score_weights: list[float] | None = None,
     success_thresholds: list[str] | None = None,
@@ -85,24 +86,24 @@ def generate(
     :param search_type: The type of search to perform. 'mcts' = Monte Carlo tree search. 'rl' = Reinforcement learning.
     :param save_dir: Path to directory where the generated molecules will be saved.
     :param score_types: List of types of scores to score molecules.
-    :param score_paths: For score types that are model-based ("random_forest" and "chemprop"), the corresponding
-                        score path should be a path to a directory of model checkpoints (ensemble)
-                        or to a specific PKL or PT file containing a trained model with a single output.
-                        For score types that are not model-based, the corresponding score_path must be None.
-                        If all score types are not model-based, this argument can be None.
-    :param fingerprint_types: For score types that are model-based and require fingerprints as input, the corresponding
-                              fingerprint type should be the type of fingerprint (e.g., "rdkit").
-                              For model-based scores that don't require fingerprints or non-model-based scores,
-                              the corresponding fingerprint type must be None.
-                              If all score types do not require fingerprints, this argument can be None.
+    :param score_model_paths: For score types that are model-based ("random_forest" and "chemprop"), the corresponding
+        score model path should be a path to a directory of model checkpoints (ensemble)
+        or to a specific PKL or PT file containing a trained model with a single output.
+        For score types that are not model-based, the corresponding score model path must be None.
+        If all score types are not model-based, this argument can be None.
+    :param score_fingerprint_types: For score types that are model-based and require fingerprints as input, the corresponding
+        fingerprint type should be the type of fingerprint (e.g., "rdkit").
+        For model-based scores that don't require fingerprints or non-model-based scores,
+        the corresponding fingerprint type must be None.
+        If all score types do not require fingerprints, this argument can be None.
     :param score_names: List of names for each score. If None, scores will be named "Score 1", "Score 2", etc.
     :param base_score_weights: Initial weights for each score for defining the reward function.
-                               If None, defaults to equal weights for each score.
+        If None, defaults to equal weights for each score.
     :param success_thresholds: The threshold for each score for defining success of the form "> 0.5".
-                               If provided, the score weights will be dynamically set to maximize joint success
-                               across all scores.
+        If provided, the score weights will be dynamically set to maximize joint success
+        across all scores.
     :param chemical_spaces: A tuple of names of reaction sets to use. 'real' = Enamine REAL Space reactions.
-                            'wuxi' = WuXi GalaXi reactions. 'custom' = Custom reactions (in synthemol/reactions/custom.py).
+        'wuxi' = WuXi GalaXi reactions. 'custom' = Custom reactions (in synthemol/reactions/custom.py).
     :param building_blocks_paths: Paths to CSV files containing molecular building blocks.
     :param reaction_to_building_blocks_paths: Paths to PKL files containing mapping from reactions to allowed building blocks.
     :param building_blocks_id_column: Name of the column containing IDs for each building block.
@@ -113,21 +114,19 @@ def generate(
     :param explore_weight: The hyperparameter that encourages exploration.
     :param num_expand_nodes: The number of child nodes to include when expanding a given node. If None, all child nodes will be included.
     :param rolling_average_weight: The weight to use for the rolling average of similarity (dynamic temperature)
-                                   and success (dynamic score weights).
+        and success (dynamic score weights).
     :param rl_model_type: The type of RL model to use. 'mlp_rdkit' = MLP RDKit model.
-                          'chemprop' = Chemprop model. 'chemprop_rdkit' = Chemprop RDKit model.
+        'chemprop' = Chemprop model. 'chemprop_rdkit' = Chemprop RDKit model.
     :param rl_model_paths: List of paths with each path pointing to a PT file containing a trained model that will be
-                           used as the initial weights for the RL models.
-                           If None, RL models are trained from scratch.
+        used as the initial weights for the RL models. If None, RL models are trained from scratch.
     :param rl_prediction_type: The type of prediction made by the RL model, which determines the loss function.
-                               'classification' = binary classification. 'regression' = regression.
+        'classification' = binary classification. 'regression' = regression.
     :param rl_base_temperature: The initial temperature parameter for the softmax function used to select building blocks.
-                                Higher temperature means more exploration. If rl_temperature_similarity_target is provided,
-                                the temperature is adjusted based on generated molecule diversity.
+        Higher temperature means more exploration. If rl_temperature_similarity_target is provided,
+        the temperature is adjusted based on generated molecule diversity.
     :param rl_temperature_similarity_target: Adjusts the temperature to obtain the maximally scoring molecules
-                                             that are at most this similar to previously generated molecules. Starts with
-                                             the temperature provided by rl_base_temperature.
-                                             If -1, the temperature is not adjusted.
+        that are at most this similar to previously generated molecules. Starts with the temperature provided
+        by rl_base_temperature. If -1, the temperature is not adjusted.
     :param rl_train_frequency: The number of rollouts between each training step of the RL model.
     :param rl_train_epochs: The number of epochs to train the RL model for each training step.
     :param rl_extended_evaluation: Whether to perform extended evaluation of the RL model after each training step.
@@ -137,19 +136,19 @@ def generate(
     :param rng_seed: Seed for random number generators.
     :param no_building_block_diversity: Whether to turn off the score modification that encourages diverse building blocks.
     :param store_nodes: Whether to store in memory all the nodes of the search tree.
-                        This doubles the speed of the search but significantly increases
-                        the memory usage (e.g., 450 GB for 20,000 rollouts instead of 600 MB).
+        This doubles the speed of the search but significantly increases
+        the memory usage (e.g., 450 GB for 20,000 rollouts instead of 600 MB).
     :param save_frequency: The number of rollouts between each save of the generated molecules.
     :param verbose: Whether to print out additional information during generation.
     :param replicate: This is necessary to replicate the results from the paper, but otherwise should not be used
-                      since it limits the potential choices of building blocks.
+        since it limits the potential choices of building blocks.
     :param wandb_log: Whether to log results to Weights & Biases.
     :param wandb_project_name: The name of the Weights & Biases project to log results to.
     :param wandb_run_name: The name of the Weights & Biases run to log results to.
     """
     # Convert "None" arguments to None type
-    score_paths = convert_none_list(arguments=score_paths)
-    fingerprint_types = convert_none_list(arguments=fingerprint_types)
+    score_model_paths = convert_none_list(arguments=score_model_paths)
+    score_fingerprint_types = convert_none_list(arguments=score_fingerprint_types)
 
     # Change type of building blocks score columns for compatibility with Pandas
     building_blocks_score_columns = list(building_blocks_score_columns)
@@ -164,9 +163,9 @@ def generate(
     # Check lengths of model arguments match
     for arg in [
         score_types,
-        score_paths,
+        score_model_paths,
         rl_model_paths,
-        fingerprint_types,
+        score_fingerprint_types,
         score_names,
         base_score_weights,
         building_blocks_score_columns,
@@ -366,9 +365,9 @@ def generate(
             config={
                 "search_type": search_type,
                 "save_dir": save_dir,
-                "score_paths": score_paths,
                 "score_types": score_types,
-                "fingerprint_types": fingerprint_types,
+                "score_model_paths": score_model_paths,
+                "score_fingerprint_types": score_fingerprint_types,
                 "score_names": score_names,
                 "base_score_weights": base_score_weights,
                 "success_thresholds": success_thresholds,
@@ -446,8 +445,8 @@ def generate(
     scorer = MoleculeScorer(
         score_types=score_types,
         score_weights=score_weights,
-        score_paths=score_paths,
-        fingerprint_types=fingerprint_types,
+        model_paths=score_model_paths,
+        fingerprint_types=score_fingerprint_types,
         device=device,
         smiles_to_scores=building_block_smiles_to_scores,
     )

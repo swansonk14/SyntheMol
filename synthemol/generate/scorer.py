@@ -171,17 +171,17 @@ class ChempropScorer(Scorer):
 
 def create_scorer(
     score_type: SCORE_TYPES,
-    score_path: Path | None = None,
+    model_path: Path | None = None,
     fingerprint_type: FINGERPRINT_TYPES | None = None,
     device: torch.device = torch.device("cpu"),
 ) -> Scorer:
     """Creates a scorer object that scores a molecule.
 
     :param score_type: The type of score to use.
-    :param score_path: For score types that are model-based ("random_forest" and "chemprop"), the corresponding
-                       score path should be a path to a directory of model checkpoints (ensemble)
+    :param model_path: For score types that are model-based ("random_forest" and "chemprop"), the corresponding
+                       model path should be a path to a directory of model checkpoints (ensemble)
                        or to a specific PKL or PT file containing a trained model with a single output.
-                       For score types that are not model-based, the corresponding score_path must be None.
+                       For score types that are not model-based, the corresponding model path must be None.
     :param fingerprint_type: For score types that are model-based and require fingerprints as input, the corresponding
                              fingerprint type should be the type of fingerprint (e.g., "rdkit").
                              For model-based scores that don't require fingerprints or non-model-based scores,
@@ -189,36 +189,36 @@ def create_scorer(
     :param device: The device on which to run the scorer.
     """
     if score_type == "qed":
-        if score_path is not None:
-            raise ValueError("QED does not use a score path.")
+        if model_path is not None:
+            raise ValueError("QED does not use a model path.")
 
         if fingerprint_type is not None:
             raise ValueError("QED does not use fingerprints.")
 
         scorer = QEDScorer()
     if score_type == "clogp":
-        if score_path is not None:
-            raise ValueError("CLogP does not use a score path.")
+        if model_path is not None:
+            raise ValueError("CLogP does not use a model path.")
 
         if fingerprint_type is not None:
             raise ValueError("CLogP does not use fingerprints.")
 
         scorer = CLogPScorer()
     elif score_type == "chemprop":
-        if score_path is None:
-            raise ValueError("Chemprop requires a score path.")
+        if model_path is None:
+            raise ValueError("Chemprop requires a model path.")
 
         scorer = ChempropScorer(
-            model_path=score_path, fingerprint_type=fingerprint_type, device=device
+            model_path=model_path, fingerprint_type=fingerprint_type, device=device
         )
     elif score_type == "random_forest":
-        if score_path is None:
-            raise ValueError("Random forest requires a score path.")
+        if model_path is None:
+            raise ValueError("Random forest requires a model path.")
 
         if fingerprint_type is None:
             raise ValueError("Random forest requires a fingerprint type.")
 
-        scorer = SKLearnScorer(model_path=score_path, fingerprint_type=fingerprint_type)
+        scorer = SKLearnScorer(model_path=model_path, fingerprint_type=fingerprint_type)
     else:
         raise ValueError(f"Score type {score_type} is not supported.")
 
@@ -230,7 +230,7 @@ class MoleculeScorer:
         self,
         score_types: list[SCORE_TYPES],
         score_weights: ScoreWeights,
-        score_paths: list[Path | None] | None = None,
+        model_paths: list[Path | None] | None = None,
         fingerprint_types: list[FINGERPRINT_TYPES | None] | None = None,
         device: torch.device = torch.device("cpu"),
         smiles_to_scores: dict[str, list[float]] | None = None,
@@ -239,10 +239,10 @@ class MoleculeScorer:
 
         :param score_types: List of types of scores to score molecules.
         :param score_weights: Weights for each scorer for defining the reward function.
-        :param score_paths: For score types that are model-based ("random_forest" and "chemprop"), the corresponding
-                            score path should be a path to a directory of model checkpoints (ensemble)
+        :param model_paths: For score types that are model-based ("random_forest" and "chemprop"), the corresponding
+                            model path should be a path to a directory of model checkpoints (ensemble)
                             or to a specific PKL or PT file containing a trained model with a single output.
-                            For score types that are not model-based, the corresponding score_path must be None.
+                            For score types that are not model-based, the corresponding model path must be None.
                             If all score types are not model-based, this argument can be None.
         :param fingerprint_types: For score types that are model-based and require fingerprints as input, the corresponding
                                   fingerprint type should be the type of fingerprint (e.g., "rdkit").
@@ -256,9 +256,9 @@ class MoleculeScorer:
         self.score_weights = score_weights
         self.smiles_to_individual_scores = smiles_to_scores
 
-        # Handle None score_paths and fingerprint_types
-        if score_paths is None:
-            score_paths = [None] * len(score_types)
+        # Handle None model_paths and fingerprint_types
+        if model_paths is None:
+            model_paths = [None] * len(score_types)
 
         if fingerprint_types is None:
             fingerprint_types = [None] * len(score_types)
@@ -267,12 +267,12 @@ class MoleculeScorer:
         self.scorers = [
             create_scorer(
                 score_type=score_type,
-                score_path=score_path,
+                model_path=model_path,
                 fingerprint_type=fingerprint_type,
                 device=device,
             )
-            for score_type, score_path, fingerprint_type in zip(
-                score_types, score_paths, fingerprint_types
+            for score_type, model_path, fingerprint_type in zip(
+                score_types, model_paths, fingerprint_types
             )
         ]
 
