@@ -30,16 +30,20 @@ from synthemol.reactions import (
 )
 from synthemol.generate.generator import Generator
 from synthemol.generate.scorer import MoleculeScorer
-from synthemol.generate.utils import parse_success_threshold, save_generated_molecules
+from synthemol.generate.utils import (
+    convert_none_list,
+    parse_success_threshold,
+    save_generated_molecules,
+)
 
 
 def generate(
     search_type: Literal["mcts", "rl"],
     save_dir: Path,
     score_types: list[SCORE_TYPES],
-    score_paths: list[Path],
-    fingerprint_types: tuple[FINGERPRINT_TYPES, ...] = ("none",),
-    score_names: list[str] = None,
+    score_paths: list[Path | Literal["None"] | None] | None = None,
+    fingerprint_types: list[FINGERPRINT_TYPES | Literal["None"] | None] | None = None,
+    score_names: list[str] | None = None,
     base_score_weights: list[float] | None = None,
     success_thresholds: list[str] | None = None,
     chemical_spaces: tuple[CHEMICAL_SPACES, ...] = ("real",),
@@ -81,12 +85,17 @@ def generate(
     :param search_type: The type of search to perform. 'mcts' = Monte Carlo tree search. 'rl' = Reinforcement learning.
     :param save_dir: Path to directory where the generated molecules will be saved.
     :param score_types: List of types of scores to score molecules.
-    :param score_paths: List of paths with each path pointing to a directory of model checkpoints (ensemble)
-                        or to a specific PKL or PT file containing a trained model for use in a scorer.
-                        Note: Models must have a single output.
-    :param fingerprint_types: List of types of fingerprints to use as input features for the models in score_paths.
-    :param score_names: List of names for each score.
-                        If None, scores will be named "Score 1", "Score 2", etc.
+    :param score_paths: For score types that are model-based ("random_forest" and "chemprop"), the corresponding
+                        score path should be a path to a directory of model checkpoints (ensemble)
+                        or to a specific PKL or PT file containing a trained model with a single output.
+                        For score types that are not model-based, the corresponding score_path must be None.
+                        If all score types are not model-based, this argument can be None.
+    :param fingerprint_types: For score types that are model-based and require fingerprints as input, the corresponding
+                              fingerprint type should be the type of fingerprint (e.g., "rdkit").
+                              For model-based scores that don't require fingerprints or non-model-based scores,
+                              the corresponding fingerprint type must be None.
+                              If all score types do not require fingerprints, this argument can be None.
+    :param score_names: List of names for each score. If None, scores will be named "Score 1", "Score 2", etc.
     :param base_score_weights: Initial weights for each score for defining the reward function.
                                If None, defaults to equal weights for each score.
     :param success_thresholds: The threshold for each score for defining success of the form "> 0.5".
@@ -138,6 +147,10 @@ def generate(
     :param wandb_project_name: The name of the Weights & Biases project to log results to.
     :param wandb_run_name: The name of the Weights & Biases run to log results to.
     """
+    # Convert "None" arguments to None type
+    score_paths = convert_none_list(arguments=score_paths)
+    fingerprint_types = convert_none_list(arguments=fingerprint_types)
+
     # Change type of building blocks score columns for compatibility with Pandas
     building_blocks_score_columns = list(building_blocks_score_columns)
 
@@ -339,16 +352,12 @@ def generate(
     if wandb_log:
         # Set up Weights & Biases run name
         if wandb_run_name is None:
-            wandb_run_name = f"{search_type}" + (
-                f"_{rl_model_type}" if search_type == "rl" else ""
+            wandb_run_name = (
+                f"{search_type}"
+                f"{f'_{rl_model_type}' if search_type == 'rl' else ''}"
+                f"_{'_'.join(score_types)}"
+                f"_{'_'.join(chemical_spaces)}"
             )
-
-            for score_type, fingerprint_type in zip(score_types, fingerprint_types):
-                wandb_run_name += f"_{score_type}" + (
-                    f"_{fingerprint_type}" if fingerprint_type != "none" else ""
-                )
-
-            wandb_run_name += f'_{"_".join(chemical_spaces)}'
 
         # Initialize Weights & Biases logging
         wandb.init(
@@ -436,9 +445,9 @@ def generate(
     print("Creating scorer...")
     scorer = MoleculeScorer(
         score_types=score_types,
+        score_weights=score_weights,
         score_paths=score_paths,
         fingerprint_types=fingerprint_types,
-        score_weights=score_weights,
         device=device,
         smiles_to_scores=building_block_smiles_to_scores,
     )

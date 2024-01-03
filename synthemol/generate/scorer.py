@@ -5,7 +5,9 @@ from pathlib import Path
 import torch
 from chemfunc import compute_fingerprint
 from rdkit import Chem
+from rdkit.Chem.Crippen import MolLogP
 from rdkit.Chem.QED import qed
+
 
 from synthemol.constants import FINGERPRINT_TYPES, SCORE_TYPES
 from synthemol.generate.score_weights import ScoreWeights
@@ -41,6 +43,18 @@ class QEDScorer(Scorer):
         :return: The score of the molecule.
         """
         return qed(Chem.MolFromSmiles(smiles))
+
+
+class CLogPScorer(Scorer):
+    """Scores molecules using CLogP."""
+
+    def __call__(self, smiles: str) -> float:
+        """Scores a molecule using CLogP.
+
+        :param smiles: A SMILES string.
+        :return: The score of the molecule.
+        """
+        return MolLogP(Chem.MolFromSmiles(smiles))
 
 
 class SKLearnScorer(Scorer):
@@ -94,7 +108,7 @@ class ChempropScorer(Scorer):
     def __init__(
         self,
         model_path: Path,
-        fingerprint_type: FINGERPRINT_TYPES,
+        fingerprint_type: FINGERPRINT_TYPES | None = None,
         device: torch.device = torch.device("cpu"),
     ) -> None:
         """Initialize the scorer.
@@ -139,7 +153,7 @@ class ChempropScorer(Scorer):
         :return: The score of the molecule.
         """
         # Compute fingerprint
-        if self.fingerprint_type != "none":
+        if self.fingerprint_type is not None:
             fingerprint = compute_fingerprint(
                 smiles, fingerprint_type=self.fingerprint_type
             )
@@ -155,37 +169,58 @@ class ChempropScorer(Scorer):
         )
 
 
-# TODO: no model_path or fingerprint_type needed for qed
 def create_scorer(
     score_type: SCORE_TYPES,
-    score_path: Path,
-    fingerprint_type: FINGERPRINT_TYPES,
+    score_path: Path | None = None,
+    fingerprint_type: FINGERPRINT_TYPES | None = None,
     device: torch.device = torch.device("cpu"),
 ) -> Scorer:
     """Creates a scorer object that scores a molecule.
 
-    :param score_type: The type of scorer to use.
-    :param score_path: Path pointing to a directory of model checkpoints (ensemble)
-                       or to a specific PKL or PT file containing a trained model for use in a scorer.
-                       Note: Model must have a single output.
-    :param fingerprint_type: The type of fingerprint to use as input features for the scorer.
+    :param score_type: The type of score to use.
+    :param score_path: For score types that are model-based ("random_forest" and "chemprop"), the corresponding
+                       score path should be a path to a directory of model checkpoints (ensemble)
+                       or to a specific PKL or PT file containing a trained model with a single output.
+                       For score types that are not model-based, the corresponding score_path must be None.
+    :param fingerprint_type: For score types that are model-based and require fingerprints as input, the corresponding
+                             fingerprint type should be the type of fingerprint (e.g., "rdkit").
+                             For model-based scores that don't require fingerprints or non-model-based scores,
+                             the corresponding fingerprint type must be None.
     :param device: The device on which to run the scorer.
     """
     if score_type == "qed":
+        if score_path is not None:
+            raise ValueError("QED does not use a score path.")
+
+        if fingerprint_type is not None:
+            raise ValueError("QED does not use fingerprints.")
+
         scorer = QEDScorer()
+    if score_type == "clogp":
+        if score_path is not None:
+            raise ValueError("CLogP does not use a score path.")
+
+        if fingerprint_type is not None:
+            raise ValueError("CLogP does not use fingerprints.")
+
+        scorer = CLogPScorer()
     elif score_type == "chemprop":
+        if score_path is None:
+            raise ValueError("Chemprop requires a score path.")
+
         scorer = ChempropScorer(
             model_path=score_path, fingerprint_type=fingerprint_type, device=device
         )
     elif score_type == "random_forest":
-        if fingerprint_type == "none":
-            raise ValueError(
-                "Must define fingerprint_type if using a random forest model."
-            )
+        if score_path is None:
+            raise ValueError("Random forest requires a score path.")
+
+        if fingerprint_type is None:
+            raise ValueError("Random forest requires a fingerprint type.")
 
         scorer = SKLearnScorer(model_path=score_path, fingerprint_type=fingerprint_type)
     else:
-        raise ValueError(f"Scorer type {score_type} is not supported.")
+        raise ValueError(f"Score type {score_type} is not supported.")
 
     return scorer
 
@@ -194,26 +229,39 @@ class MoleculeScorer:
     def __init__(
         self,
         score_types: list[SCORE_TYPES],
-        score_paths: list[Path],
-        fingerprint_types: tuple[FINGERPRINT_TYPES, ...],
         score_weights: ScoreWeights,
+        score_paths: list[Path | None] | None = None,
+        fingerprint_types: list[FINGERPRINT_TYPES | None] | None = None,
         device: torch.device = torch.device("cpu"),
         smiles_to_scores: dict[str, list[float]] | None = None,
     ) -> None:
         """Initialize the MoleculeScorer, which contains a collection of one or more individual scorers.
 
         :param score_types: List of types of scores to score molecules.
-        :param score_paths: List of paths with each path pointing to a directory of model checkpoints (ensemble)
-                            or to a specific PKL or PT file containing a trained model for use in a scorer.
-                            Note: Models must have a single output.
-        :param fingerprint_types: List of types of fingerprints to use as input features for the scorers in score_paths.
         :param score_weights: Weights for each scorer for defining the reward function.
+        :param score_paths: For score types that are model-based ("random_forest" and "chemprop"), the corresponding
+                            score path should be a path to a directory of model checkpoints (ensemble)
+                            or to a specific PKL or PT file containing a trained model with a single output.
+                            For score types that are not model-based, the corresponding score_path must be None.
+                            If all score types are not model-based, this argument can be None.
+        :param fingerprint_types: For score types that are model-based and require fingerprints as input, the corresponding
+                                  fingerprint type should be the type of fingerprint (e.g., "rdkit").
+                                  For model-based scores that don't require fingerprints or non-model-based scores,
+                                  the corresponding fingerprint type must be None.
+                                  If all score types do not require fingerprints, this argument can be None.
         :param device: The device on which to run the scorer.
         :param smiles_to_scores: An optional dictionary mapping SMILES to precomputed scores.
         """
         # Save parameters
         self.score_weights = score_weights
         self.smiles_to_individual_scores = smiles_to_scores
+
+        # Handle None score_paths and fingerprint_types
+        if score_paths is None:
+            score_paths = [None] * len(score_types)
+
+        if fingerprint_types is None:
+            fingerprint_types = [None] * len(score_types)
 
         # Create individual scorers
         self.scorers = [
