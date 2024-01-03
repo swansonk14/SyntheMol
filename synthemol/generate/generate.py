@@ -41,9 +41,8 @@ def generate(
     search_type: Literal["mcts", "rl"],
     save_dir: Path,
     score_types: list[SCORE_TYPES],
-    score_model_paths: list[Path | Literal["None"] | None] | None = None,
-    score_fingerprint_types: list[FINGERPRINT_TYPES | Literal["None"] | None]
-    | None = None,
+    score_model_paths: list[str] | None = None,
+    score_fingerprint_types: list[str] | None = None,
     score_names: list[str] | None = None,
     base_score_weights: list[float] | None = None,
     success_thresholds: list[str] | None = None,
@@ -89,12 +88,12 @@ def generate(
     :param score_model_paths: For score types that are model-based ("random_forest" and "chemprop"), the corresponding
         score model path should be a path to a directory of model checkpoints (ensemble)
         or to a specific PKL or PT file containing a trained model with a single output.
-        For score types that are not model-based, the corresponding score model path must be None.
+        For score types that are not model-based, the corresponding score model path must be "None".
         If all score types are not model-based, this argument can be None.
     :param score_fingerprint_types: For score types that are model-based and require fingerprints as input, the corresponding
         fingerprint type should be the type of fingerprint (e.g., "rdkit").
         For model-based scores that don't require fingerprints or non-model-based scores,
-        the corresponding fingerprint type must be None.
+        the corresponding fingerprint type must be "None".
         If all score types do not require fingerprints, this argument can be None.
     :param score_names: List of names for each score. If None, scores will be named "Score 1", "Score 2", etc.
     :param base_score_weights: Initial weights for each score for defining the reward function.
@@ -146,9 +145,23 @@ def generate(
     :param wandb_project_name: The name of the Weights & Biases project to log results to.
     :param wandb_run_name: The name of the Weights & Biases run to log results to.
     """
-    # Convert "None" arguments to None type
-    score_model_paths = convert_none_list(arguments=score_model_paths)
-    score_fingerprint_types = convert_none_list(arguments=score_fingerprint_types)
+    # Convert score_model_paths to Path/None
+    # TODO: change tapify to allow list[Path | Literal["None"] | None]
+    if score_model_paths is not None:
+        score_model_paths: list[Path | None] = [
+            Path(score_model_path) if score_model_path not in ("None", None) else None
+            for score_model_path in score_model_paths
+        ]
+
+    # Convert score_fingerprint_types to FINGERPRINT_TYPES/None
+    # TODO: change tapify to allow list[FINGERPRINT_TYPES | Literal["None"] | None]
+    if score_fingerprint_types is not None:
+        score_fingerprint_types: list[FINGERPRINT_TYPES | None] = [
+            score_fingerprint_type
+            if score_fingerprint_type not in ("None", None)
+            else None
+            for score_fingerprint_type in score_fingerprint_types
+        ]
 
     # Change type of building blocks score columns for compatibility with Pandas
     building_blocks_score_columns = list(building_blocks_score_columns)
