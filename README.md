@@ -149,15 +149,15 @@ GPUs).
 ```bash
 synthemol \
     --search_type mcts \
-    --model_path models/chemprop \
-    --model_type chemprop \
     --save_dir generations/chemprop \
-    --building_blocks_path models/chemprop/building_blocks.csv \
-    --building_blocks_score_column activity \
+    --score_types chemprop \
+    --score_model_paths models/chemprop \
+    --building_blocks_paths models/chemprop/building_blocks.csv \
+    --building_blocks_score_columns activity \
     --n_rollout 20000
 ```
 
-Note: The `building_blocks_score_column` must match the column name in the building blocks file that contains the
+Note: The `building_blocks_score_columns` must match the column name in the building blocks file that contains the
 building block scores. When using `chemprop_train` and `chemprop_predict`, the column name will be the same as the
 column that contains target activity/property values in the training data file (e.g., `activity`).
 
