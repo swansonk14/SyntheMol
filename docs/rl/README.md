@@ -24,3 +24,6 @@ Space molecules.
 [antibiotics.md](antibiotics.md): Instructions for generating antibiotic candidates for _Staphyloccocus aureus_ using
 reinforcement learning (RL). Includes instructions for processing antibiotics data, training antibacterial activity
 prediction models, generating molecules with SyntheMol-RL, and selecting candidates.
+
+[ablations.md](ablations.md): Instructions for reproducing the ablation experiments in the paper to determine the
+importance of various components of SyntheMol-RL.
