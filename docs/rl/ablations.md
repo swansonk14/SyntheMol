@@ -3,11 +3,11 @@
 Instructions for reproducing the ablation experiments in the paper to determine the importance of various components of
 SyntheMol-RL.
 
-### Chemical space
+## Chemical space
 
 Analyze REAL versus WuXi from final generations above.
 
-### Multiparameter
+## Multiparameter
 
 Final (dynamic weights) versus the fixed weights below.
 
@@ -69,7 +69,7 @@ synthemol \
 done
 ```
 
-### Dynamic temperature
+## Dynamic temperature
 
 Final (target similarity of 0.6) versus target similarities of 0.4, 0.5, 0.7, 0.8.
 
@@ -131,7 +131,7 @@ synthemol \
 done
 ```
 
-### Exploration parameters (RL temperature vs MCTS explore weight)
+## Exploration parameters (RL temperature vs MCTS explore weight)
 
 RL with fixed temperatures of 0.01, 0.05, 0.1, 0.5, 1.0 versus MCTS with fixed explore weights of 0.5, 1.0, 5.0, 10.0,
 50.0 (note: 10.0 is covered by the final model).
@@ -221,7 +221,7 @@ synthemol \
 done
 ```
 
-### RL Training
+## RL Training
 
 RL Chemprop-RDKit (pretrained models, no RL training)
 
@@ -323,7 +323,7 @@ synthemol \
     --wandb_log
 ```
 
-### Random seed
+## Random seed
 
 Test variability of the final methods under different random seeds. Note that random seed 0 is the same as the final
 models above, so it is testing reproducibility under a given random seed.
@@ -383,5 +383,38 @@ synthemol \
     --wandb_project_name synthemol_rl \
     --wandb_run_name rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_rng_seed_${SEED} \
     --wandb_log
+done
+```
+
+
+## Analyze ablation experiments
+
+Analyze each ablation experiment by determining the number of compounds that pass all the filtering steps.
+
+```bash
+for DIR in rl/generations/*/
+do
+chemfunc nearest_neighbor \
+    --data_path ${DIR}/molecules.csv \
+    --reference_data_path rl/data/s_aureus/s_aureus_hits.csv \
+    --reference_name train_hits \
+    --metric tversky
+
+chemfunc nearest_neighbor \
+    --data_path ${DIR}/molecules.csv \
+    --reference_data_path rl/data/chembl/chembl.csv \
+    --reference_name chembl \
+    --metric tversky
+
+python scripts/data/select_molecules.py \
+    --data_path ${DIR}/molecules.csv \
+    --save_molecules_path ${DIR}/hits.csv \
+    --save_analysis_path ${DIR}/analysis.csv \
+    --score_columns "S. aureus" "Solubility" \
+    --score_thresholds 0.5 -4 \
+    --novelty_threshold 0.6 \
+    --similarity_threshold 0.6 \
+    --sort_column "S. aureus" \
+    --descending
 done
 ```
