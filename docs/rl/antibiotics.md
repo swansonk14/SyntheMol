@@ -502,6 +502,37 @@ chemfunc filter_molecules \
 done
 ```
 
+
+REAL Output:
+
+```
+Original data size = 14,000,000
+Data size after filtering with min_value 0.5 = 3,702
+Final data size = 3,702
+
+Original data size = 3,702
+Data size after filtering with min_value -4.0 = 853
+Final data size = 853
+```
+
+Note: The REAL random 14M has 3,702 (0.026%) with S. aureus >= 0.5; 11,371,677 (81.23%) with solubility >= -4; and 853 (0.006%) with both.
+
+
+WuXi Output:
+
+```
+Original data size = 7,000,000
+Data size after filtering with min_value 0.5 = 105,055
+Final data size = 105,055
+
+Original data size = 105,055
+Data size after filtering with min_value -4.0 = 437
+Final data size = 437
+```
+
+Note: The WuXi random 7M has 105,055 (1.50%) with S. aureus >= 0.5; 1,868,378 (26.69%) with solubility >= -4; and 437 (0.006%) with both.
+
+
 Combine REAL and WuXi hits.
 
 ```bash
