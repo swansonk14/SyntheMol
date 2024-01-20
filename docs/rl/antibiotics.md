@@ -627,7 +627,6 @@ Note: This requires installing ADMET-AI via `pip install admet_ai`.
 for NAME in rl_chemprop_rdkit rl_mlp_rdkit mcts chemprop_rdkit random
 do
 admet_predict \
-    --data_path rl/selections/${NAME}/molecules.csv \
-    --save_path rl/selections/${NAME}/admet.csv
+    --data_path rl/selections/${NAME}/molecules.csv
 done
 ```
