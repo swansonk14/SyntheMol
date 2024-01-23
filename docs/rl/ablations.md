@@ -22,7 +22,7 @@ SOLUBILITY_WEIGHT="0$(echo "1.0 - S_AUREUS_WEIGHT" | bc)"
 synthemol \
     --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
-    --fingerprint_types rdkit rdkit \
+    --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
     --base_score_weights ${S_AUREUS_WEIGHT} ${SOLUBILITY_WEIGHT} \
     --chemical_spaces real wuxi \
@@ -52,7 +52,7 @@ SOLUBILITY_WEIGHT="0$(echo "1.0 - S_AUREUS_WEIGHT" | bc)"
 synthemol \
     --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
-    --fingerprint_types rdkit rdkit \
+    --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
     --base_score_weights ${S_AUREUS_WEIGHT} ${SOLUBILITY_WEIGHT} \
     --chemical_spaces real wuxi \
@@ -83,7 +83,7 @@ do
 synthemol \
     --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
-    --fingerprint_types rdkit rdkit \
+    --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
@@ -113,7 +113,7 @@ do
 synthemol \
     --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
-    --fingerprint_types rdkit rdkit \
+    --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
@@ -146,7 +146,7 @@ do
 synthemol \
     --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
-    --fingerprint_types rdkit rdkit \
+    --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
@@ -177,7 +177,7 @@ do
 synthemol \
     --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
-    --fingerprint_types rdkit rdkit \
+    --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
@@ -206,7 +206,7 @@ do
 synthemol \
     --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
-    --fingerprint_types rdkit rdkit \
+    --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
@@ -231,7 +231,7 @@ RL Chemprop-RDKit (pretrained models, no RL training)
 synthemol \
     --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
-    --fingerprint_types rdkit rdkit \
+    --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
@@ -258,7 +258,7 @@ RL Chemprop-RDKit (from scratch models, with RL training)
 synthemol \
     --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
-    --fingerprint_types rdkit rdkit \
+    --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
@@ -283,7 +283,7 @@ RL MLP-RDKit (pretrained models, no RL training)
 synthemol \
     --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
-    --fingerprint_types rdkit rdkit \
+    --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
@@ -308,7 +308,7 @@ RL MLP-RDKit (from scratch models, with RL training)
 synthemol \
     --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
-    --fingerprint_types rdkit rdkit \
+    --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \

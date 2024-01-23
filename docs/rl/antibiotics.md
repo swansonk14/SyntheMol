@@ -328,7 +328,7 @@ RL Chemprop-RDKit
 synthemol \
     --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
-    --fingerprint_types rdkit rdkit \
+    --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
@@ -354,7 +354,7 @@ RL MLP-RDKit
 synthemol \
     --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
-    --fingerprint_types rdkit rdkit \
+    --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
@@ -378,7 +378,7 @@ MCTS
 synthemol \
     --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
-    --fingerprint_types rdkit rdkit \
+    --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
     --success_thresholds '>=0.5' '>=-4' \
     --chemical_spaces real wuxi \
