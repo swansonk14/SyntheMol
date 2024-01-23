@@ -3,6 +3,8 @@
 Instructions for reproducing the ablation experiments in the paper to determine the importance of various components of
 SyntheMol-RL.
 
+Note: All experiments should be run with five random seeds (0-4) using the `--rng_seed <seed>` flag to measure variability.
+
 ## Chemical space
 
 Analyze REAL versus WuXi from final generations above.
@@ -321,69 +323,6 @@ synthemol \
     --wandb_project_name synthemol_rl \
     --wandb_run_name rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_no_pretraining \
     --wandb_log
-```
-
-## Random seed
-
-Test variability of the final methods under different random seeds. Note that random seed 0 is the same as the final
-models above, so it is testing reproducibility under a given random seed.
-
-RL Chemprop-RDKit
-
-```bash
-for SEED in 0 1 2
-do
-synthemol \
-    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
-    --score_types chemprop chemprop \
-    --fingerprint_types rdkit rdkit \
-    --score_names 'S. aureus' 'Solubility' \
-    --success_thresholds '>=0.5' '>=-4' \
-    --chemical_spaces real wuxi \
-    --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
-    --building_blocks_score_columns s_aureus_activity solubility \
-    --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
-    --save_dir rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_rng_seed_${SEED} \
-    --n_rollout 10000 \
-    --search_type rl \
-    --rl_model_type chemprop_rdkit \
-    --rl_model_paths rl/models/s_aureus_chemprop_rdkit/fold_0/model_0/model.pt rl/models/solubility_chemprop_rdkit/fold_0/model_0/model.pt \
-    --rl_prediction_type regression \
-    --use_gpu \
-    --num_workers 8 \
-    --rng_seed ${SEED} \
-    --wandb_project_name synthemol_rl \
-    --wandb_run_name rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_rng_seed_${SEED} \
-    --wandb_log
-done
-```
-
-RL MLP-RDKit
-
-```bash
-for SEED in 0 1 2
-do
-synthemol \
-    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
-    --score_types chemprop chemprop \
-    --fingerprint_types rdkit rdkit \
-    --score_names 'S. aureus' 'Solubility' \
-    --success_thresholds '>=0.5' '>=-4' \
-    --chemical_spaces real wuxi \
-    --building_blocks_paths rl/data/real/building_blocks.csv rl/data/wuxi/building_blocks.csv \
-    --building_blocks_score_columns s_aureus_activity solubility \
-    --reaction_to_building_blocks_paths rl/data/real/reaction_to_building_blocks.pkl rl/data/wuxi/reaction_to_building_blocks.pkl \
-    --save_dir rl/generations/rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_rng_seed_${SEED} \
-    --n_rollout 10000 \
-    --search_type rl \
-    --rl_model_type mlp_rdkit \
-    --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/fold_0/model_0/model.pt \
-    --rl_prediction_type regression \
-    --rng_seed ${SEED} \
-    --wandb_project_name synthemol_rl \
-    --wandb_run_name rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_rng_seed_${SEED} \
-    --wandb_log
-done
 ```
 
 
