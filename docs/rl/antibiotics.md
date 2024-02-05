@@ -472,7 +472,7 @@ python scripts/data/select_molecules.py \
     --save_molecules_path rl/selections/${MODEL}/molecules.csv \
     --save_analysis_path rl/selections/${MODEL}/analysis.csv \
     --score_columns "S. aureus" "Solubility" \
-    --score_thresholds 0.5 -4 \
+    --score_comparators ">=0.5" ">=-4" \
     --novelty_threshold 0.6 \
     --similarity_threshold 0.6 \
     --select_num 150 \
@@ -570,7 +570,7 @@ python scripts/data/select_molecules.py \
     --save_molecules_path rl/selections/chemprop_rdkit/molecules.csv \
     --save_analysis_path rl/selections/chemprop_rdkit/analysis.csv \
     --score_columns "s_aureus_activity" "solubility" \
-    --score_thresholds 0.5 -4 \
+    --score_comparators ">=0.5" ">=-4" \
     --novelty_threshold 0.6 \
     --similarity_threshold 0.6 \
     --select_num 150 \

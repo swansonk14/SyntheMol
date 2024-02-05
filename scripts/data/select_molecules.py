@@ -7,6 +7,7 @@ import pandas as pd
 from chemfunc import compute_pairwise_tanimoto_similarities
 
 from synthemol.constants import SCORE_COL, SMILES_COL
+from synthemol.generate.utils import parse_comparator_string
 
 
 def compute_average_maximum_similarity(similarities: np.ndarray) -> float:
@@ -31,12 +32,12 @@ def get_approximate_maximum_independent_set(
         maximal independent sets to approximate maximum independent sets.
 
     :param similarities: A 2D numpy array of pairwise molecule similarities.
-    :param threshold: Similarity threshold.
+    :param threshold: Similarity threshold, which is the maximum similarity allowed between molecules in the set.
     :param num_tries: Number of times to run the approximation (i.e., number of maximal independent sets to try).
     :return: The approximate maximum independent set (set of indices of molecules).
     """
     # Create similarities graph
-    similarities_matrix = similarities >= threshold
+    similarities_matrix = similarities > threshold
     similarities_graph = nx.from_numpy_array(similarities_matrix)
 
     # Compute approximate maximum independent set
@@ -59,7 +60,7 @@ def select_molecules(
         "train_hits_tversky_nearest_neighbor_similarity",
         "chembl_tversky_nearest_neighbor_similarity",
     ),
-    score_thresholds: tuple[float, ...] = (0.5,),
+    score_comparators: tuple[str, ...] = (">= 0.5",),
     novelty_thresholds: tuple[float, ...] = (0.6, 0.6),
     similarity_threshold: float = 0.6,
     max_rollout: int | None = None,
@@ -75,9 +76,12 @@ def select_molecules(
     :param smiles_column: Name of the column containing SMILES.
     :param score_columns: Name of the columns containing scores.
     :param novelty_columns: Name of the columns containing similarity scores compared to known hits (for novelty).
-    :param score_thresholds: Thresholds to use for calculating the hits and similarity (one per score column).
+    :param score_comparators: Comparators to use for calculating the hits and similarity (one per score column).
+        The comparators should be of the form ">= 0.5".
     :param novelty_thresholds: Thresholds to use for filtering by novelty (one per novelty column).
+        Molecules with similarity scores at or below the threshold are considered novel.
     :param similarity_threshold: Threshold to use for calculating the maximum independent set (diverse molecules).
+        Molecules with pairwise similarity scores at or below the threshold are considered diverse.
     :param max_rollout: Maximum rollout number to include in the analysis.
     :param select_num: Optional number of molecules to select (otherwise keeps entire maximum independent set).
     :param sort_column: Optional name of the column to sort by before selecting molecules.
@@ -102,8 +106,8 @@ def select_molecules(
     # Filter to hits (i.e., molecules matching/exceeding all score thresholds)
     hits = molecules.query(
         " & ".join(
-            f"`{score_column}` >= {score_threshold}"
-            for score_column, score_threshold in zip(score_columns, score_thresholds)
+            f"`{score_column}` {score_comparator}"
+            for score_column, score_comparator in zip(score_columns, score_comparators)
         )
     )
 

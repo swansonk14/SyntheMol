@@ -136,29 +136,29 @@ def compare_to_threshold(score: float, comparator: str, threshold: float,) -> bo
     return OPERATORS[comparator](score, threshold)
 
 
-def parse_success_threshold(success_threshold: str) -> Callable[[float], bool]:
-    """Parses a success threshold string into a function that determines whether a molecule is successful.
+def parse_comparator_string(comparator_string: str) -> Callable[[float], bool]:
+    """Parses a comparator string into a function that determines whether a value satisfies the comparison.
 
-    :param success_threshold: A string of the form "> 0.5" with a comparator and a threshold value.
-    :return: A function that determines whether a molecule is successful according to the threshold.
+    :param comparator_string: A string of the form "> 0.5" with a comparator and a threshold value.
+    :return: A function that determines whether a value satisfies a comparison.
     """
     # Create regex to match the success threshold pattern
-    success_threshold_pattern = (
+    comparator_pattern = (
         r"^(?P<comparator>[<>!=]{1,2})\s*(?P<threshold>-*\d+(?:\.\d+)?)$"
     )
 
-    # Parse success threshold
-    match = re.match(success_threshold_pattern, success_threshold)
+    # Parse comparator string
+    match = re.match(comparator_pattern, comparator_string)
 
     if match is None:
-        raise ValueError(f"Invalid success threshold: {success_threshold}")
+        raise ValueError(f"Invalid success threshold: {comparator_string}")
 
     comparator = match.group("comparator")
     threshold = float(match.group("threshold"))
 
-    # Create function that determines whether a molecule is successful according to the threshold
-    compare_to_threshold_fn = partial(
+    # Create function that determines whether a value satisfies the comparison
+    comparator_fn = partial(
         compare_to_threshold, comparator=comparator, threshold=threshold
     )
 
-    return compare_to_threshold_fn
+    return comparator_fn
