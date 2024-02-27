@@ -155,7 +155,7 @@ WUXI_REACTIONS_PHASE_3 = (
     Reaction(
         reactants=[
             QueryMol(
-                "[c:11]-[#35].CC(C)(C)OC(=O)[N:12]-[C:13]",
+                "[c:11]-[#35].CC(C)(C)OC(=O)[N:12]-[#6:13]",
                 subsets=PHASE_3_BR_N_BOC_SUBSETS,
             ),  # BR_N-Boc
             QueryMol("[#6:21]-[#5](-[#8])-[#8]", subsets=BT_SUBSETS),  # BT
@@ -169,7 +169,7 @@ WUXI_REACTIONS_PHASE_3 = (
     Reaction(
         reactants=[
             QueryMol(
-                "[c:11]-[#35].CC(C)(C)OC(=O)[N:12]-[C:13]",
+                "[c:11]-[#35].CC(C)(C)OC(=O)[N:12]-[#6:13]",
                 subsets=PHASE_3_BR_N_BOC_SUBSETS,
             ),  # BR_N-Boc
             QueryMol("[#6:21]-[#5](-[#8])-[#8]", subsets=BT_SUBSETS),  # BT
@@ -196,7 +196,7 @@ WUXI_REACTIONS_PHASE_3 = (
     Reaction(
         reactants=[
             QueryMol(
-                "[c:11]-[#35].CC(C)(C)OC(=O)[N:12]-[C:13]",
+                "[c:11]-[#35].CC(C)(C)OC(=O)[N:12]-[#6:13]",
                 subsets=PHASE_3_BR_N_BOC_SUBSETS,
             ),  # BR_N-Boc
             QueryMol("[#6:21]-[#5](-[#8])-[#8]", subsets=BT_SUBSETS),  # BT
@@ -210,7 +210,7 @@ WUXI_REACTIONS_PHASE_3 = (
     Reaction(
         reactants=[
             QueryMol(
-                "[O:12]=[C:11]([OH,O-])[*:13].CC(C)(C)OC(=O)[N:14]-[C:15]",
+                "[O:12]=[C:11]([OH,O-])[*:13].CC(C)(C)OC(=O)[N:14]-[#6:15]",
                 subsets=PHASE_3_COOH_N_BOC_SUBSETS,
             ),  # COOH_N-Boc
             QueryMol("[N&!H0;!$(N[C,S]=[O,S,N]):21]", subsets=A_SUBSETS),  # AF/AG/AK/AN
@@ -226,7 +226,7 @@ WUXI_REACTIONS_PHASE_3 = (
     Reaction(
         reactants=[
             QueryMol(
-                "[O:12]=[C:11]([OH,O-])[*:13].CC(C)(C)OC(=O)[N:14]-[C:15]",
+                "[O:12]=[C:11]([OH,O-])[*:13].CC(C)(C)OC(=O)[N:14]-[#6:15]",
                 subsets=PHASE_3_COOH_N_BOC_SUBSETS,
             ),  # COOH_N-Boc
             QueryMol("[N&!H0;!$(N[C,S]=[O,S,N]):21]", subsets=A_SUBSETS),  # AF/AG/AK/AN
@@ -256,7 +256,7 @@ WUXI_REACTIONS_PHASE_3 = (
     Reaction(
         reactants=[
             QueryMol(
-                "[O:12]=[C:11]([OH,O-])[*:13].CC(C)(C)OC(=O)[N:14]-[C:15]",
+                "[O:12]=[C:11]([OH,O-])[*:13].CC(C)(C)OC(=O)[N:14]-[#6:15]",
                 subsets=PHASE_3_COOH_N_BOC_SUBSETS,
             ),  # COOH_N-Boc
             QueryMol("[N&!H0;!$(N[C,S]=[O,S,N]):21]", subsets=A_SUBSETS),  # AF/AG/AK/AN
@@ -288,7 +288,7 @@ WUXI_REACTIONS_PHASE_3 = (
     Reaction(
         reactants=[
             QueryMol(
-                "[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]-[C:14]",
+                "[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]-[#6:14]",
                 subsets=PHASE_3_N_BOC_NH_SUBSETS,
             ),  # NH_N-Boc
             QueryMol("[#6:21]-[#7]=C=O", subsets=YV_SUBSETS),  # YV
@@ -304,7 +304,7 @@ WUXI_REACTIONS_PHASE_3 = (
     Reaction(
         reactants=[
             QueryMol(
-                "[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]-[C:14]",
+                "[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]-[#6:14]",
                 subsets=PHASE_3_N_BOC_NH_SUBSETS,
             ),  # NH_N-Boc
             QueryMol("[#6:21]-[#7]=C=O", subsets=YV_SUBSETS),  # YV
@@ -336,7 +336,7 @@ WUXI_REACTIONS_PHASE_3 = (
     Reaction(
         reactants=[
             QueryMol(
-                "[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]-[C:14]",
+                "[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]-[#6:14]",
                 subsets=PHASE_3_N_BOC_NH_SUBSETS,
             ),  # NH_N-Boc
             QueryMol("[#6:21]-[#7]=C=O", subsets=YV_SUBSETS),  # YV
@@ -368,7 +368,7 @@ WUXI_REACTIONS_PHASE_3 = (
     Reaction(
         reactants=[
             QueryMol(
-                "[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]-[C:14]",
+                "[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]-[#6:14]",
                 subsets=PHASE_3_N_BOC_NH_SUBSETS,
             ),  # NH_N-Boc
             QueryMol("[#6:21]-[#17]", subsets=LP_SUBSETS),  # LP
@@ -384,7 +384,7 @@ WUXI_REACTIONS_PHASE_3 = (
     Reaction(
         reactants=[
             QueryMol(
-                "[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]-[C:14]",
+                "[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]-[#6:14]",
                 subsets=PHASE_3_N_BOC_NH_SUBSETS,
             ),  # NH_N-Boc
             QueryMol("[#6:21]-[#17]", subsets=LP_SUBSETS),  # LP
@@ -414,7 +414,7 @@ WUXI_REACTIONS_PHASE_3 = (
     Reaction(
         reactants=[
             QueryMol(
-                "[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]-[C:14]",
+                "[#6:11]-[N&!H0;!$(N[C,S]=[O,S,N]):12].CC(C)(C)OC(=O)[N:13]-[#6:14]",
                 subsets=PHASE_3_N_BOC_NH_SUBSETS,
             ),  # NH_N-Boc
             QueryMol("[#6:21]-[#17]", subsets=LP_SUBSETS),  # LP
@@ -446,7 +446,7 @@ WUXI_REACTIONS_PHASE_3 = (
     Reaction(
         reactants=[
             QueryMol(
-                "[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]-[C:13]",
+                "[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]-[#6:13]",
                 subsets=PHASE_3_N_BOC_NH_SUBSETS,
             ),  # NH_N-Boc
             QueryMol("Cl[S:21]([*:23])(=[O:22])=[O:24]", subsets=HU_SUBSETS),  # HU
@@ -462,7 +462,7 @@ WUXI_REACTIONS_PHASE_3 = (
     Reaction(
         reactants=[
             QueryMol(
-                "[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]-[C:13]",
+                "[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]-[#6:13]",
                 subsets=PHASE_3_N_BOC_NH_SUBSETS,
             ),  # NH_N-Boc
             QueryMol("Cl[S:21]([*:23])(=[O:22])=[O:24]", subsets=HU_SUBSETS),  # HU
@@ -494,7 +494,7 @@ WUXI_REACTIONS_PHASE_3 = (
     Reaction(
         reactants=[
             QueryMol(
-                "[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]-[C:13]",
+                "[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]-[#6:13]",
                 subsets=PHASE_3_N_BOC_NH_SUBSETS,
             ),  # NH_N-Boc
             QueryMol("Cl[S:21]([*:23])(=[O:22])=[O:24]", subsets=HU_SUBSETS),  # HU
@@ -510,7 +510,7 @@ WUXI_REACTIONS_PHASE_3 = (
     Reaction(
         reactants=[
             QueryMol(
-                "[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]-[C:13]",
+                "[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]-[#6:13]",
                 subsets=PHASE_3_N_BOC_NH_SUBSETS,
             ),  # NH_N-Boc
             QueryMol(
@@ -528,7 +528,7 @@ WUXI_REACTIONS_PHASE_3 = (
     Reaction(
         reactants=[
             QueryMol(
-                "[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]-[C:13]",
+                "[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]-[#6:13]",
                 subsets=PHASE_3_N_BOC_NH_SUBSETS,
             ),  # NH_N-Boc
             QueryMol(
@@ -562,7 +562,7 @@ WUXI_REACTIONS_PHASE_3 = (
     Reaction(
         reactants=[
             QueryMol(
-                "[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]-[C:13]",
+                "[N&!H0;!$(N[C,S]=[O,S,N]):11].CC(C)(C)OC(=O)[N:12]-[#6:13]",
                 subsets=PHASE_3_N_BOC_NH_SUBSETS,
             ),  # NH_N-Boc
             QueryMol(
