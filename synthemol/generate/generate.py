@@ -12,6 +12,7 @@ from synthemol.constants import (
     BUILDING_BLOCKS_PATH,
     CHEMICAL_SPACES,
     FINGERPRINT_TYPES,
+    FEATURES_SIZE_MAPPING,
     ID_COL,
     SCORE_TYPES,
     OPTIMIZATION_TYPES,
@@ -55,7 +56,8 @@ def generate(
     explore_weight: float = 10.0,
     num_expand_nodes: int | None = None,
     rolling_average_weight: float = 0.98,
-    rl_model_type: RL_MODEL_TYPES = "mlp_rdkit",
+    rl_model_type: RL_MODEL_TYPES = "mlp",
+    rl_model_fingerprint_type: str | None = None,
     rl_model_paths: list[Path] | None = None,
     rl_prediction_type: RL_PREDICTION_TYPES = "classification",
     rl_base_temperature: float = 0.1,
@@ -110,8 +112,9 @@ def generate(
     :param num_expand_nodes: The number of child nodes to include when expanding a given node. If None, all child nodes will be included.
     :param rolling_average_weight: The weight to use for the rolling average of similarity (dynamic temperature)
         and success (dynamic score weights).
-    :param rl_model_type: The type of RL model to use. 'mlp_rdkit' = MLP RDKit model.
-        'chemprop' = Chemprop model. 'chemprop_rdkit' = Chemprop RDKit model.
+    :param rl_model_type: The type of RL model to use. 'mlp' = MLP model. 'chemprop' = Chemprop model. 
+    :param rl_model_fingerprint_types: The corresponding fingerprint type for the RL model. MLP models require the fingerprint type to be defined, 
+        but Chemprop RL models can have a fingerprint type of "None". 
     :param rl_model_paths: List of paths with each path pointing to a PT file containing a trained model that will be
         used as the initial weights for the RL models. If None, RL models are trained from scratch.
     :param rl_prediction_type: The type of prediction made by the RL model, which determines the loss function.
@@ -143,6 +146,10 @@ def generate(
     """
     # Convert score_model_paths to Path/None
     # TODO: change tapify to allow list[Path | Literal["None"] | None]
+
+    if rl_model_type == "mlp" and rl_model_fingerprint_type == "none":
+        raise ValueError("MLP RL models must have a fingerprint type that is not 'none'")
+
     if score_model_paths is not None:
         score_model_paths: list[Path | None] = [
             Path(score_model_path) if score_model_path not in ("None", None) else None
@@ -392,6 +399,7 @@ def generate(
                 "num_expand_nodes": num_expand_nodes,
                 "rolling_average_weight": rolling_average_weight,
                 "rl_model_type": rl_model_type,
+                "rl_fingerprint_type": rl_model_fingerprint_type,
                 "rl_model_paths": rl_model_paths,
                 "rl_prediction_type": rl_prediction_type,
                 "rl_base_temperature": rl_base_temperature,
@@ -474,16 +482,21 @@ def generate(
             "num_epochs": rl_train_epochs,
             "device": device,
             "extended_evaluation": rl_extended_evaluation,
+            "features_type": rl_model_fingerprint_type
         }
 
+        if rl_model_fingerprint_type == "morgan":
+            rl_model_args["features_size"] = FEATURES_SIZE_MAPPING["morgan"]
+
         # Select RL model class and update RL model args
-        if rl_model_type == "mlp_rdkit":
+        if rl_model_type == "mlp":
             rl_model_class = RLModelMLP
-        elif rl_model_type.startswith("chemprop"):
+        elif rl_model_type == "chemprop":
             rl_model_class = RLModelChemprop
-            rl_model_args["use_rdkit_features"] = rl_model_type == "chemprop_rdkit"
         else:
             raise ValueError(f"Invalid RL model type: {rl_model_type}")
+        
+        
 
         # Create RL model
         rl_model = rl_model_class(**rl_model_args)

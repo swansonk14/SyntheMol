@@ -36,8 +36,9 @@ SKLEARN_MODEL_NAME_TYPES = Literal["random_forest"]
 MODEL_TYPES = Literal["random_forest", "chemprop"]
 SCORE_TYPES = Literal["random_forest", "chemprop", "qed", "clogp"]
 DATASET_TYPES = Literal["classification", "regression"]
-RL_MODEL_TYPES = Literal["mlp_rdkit", "chemprop", "chemprop_rdkit"]
+RL_MODEL_TYPES = Literal["mlp", "chemprop"]
 RL_PREDICTION_TYPES = Literal["classification", "regression"]
+FEATURES_SIZE_MAPPING = {"rdkit": 200, "morgan": 2048}
 OPTIMIZATION_TYPES = Literal["maximize", "minimize"]
 
 # Path where data files are stored

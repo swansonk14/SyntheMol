@@ -7,18 +7,18 @@ from chemprop.args import TrainArgs
 from chemprop.models import MoleculeModel
 from chemprop.utils import load_checkpoint, load_scalers
 from sklearn.preprocessing import StandardScaler
+from synthemol.constants import FEATURES_SIZE_MAPPING
 
 
 def chemprop_build_model(
     dataset_type: str,
-    use_rdkit_features: bool = False,
-    rdkit_features_size: int = 200,
+    features_type: str | None = None,
     property_name: str = "task",
 ) -> MoleculeModel:
     """Builds a Chemprop model.
 
     :param dataset_type: The type of dataset (classification or regression).
-    :param use_rdkit_features: Whether to use RDKit features.
+    :param features_type: The type of features (rdkit, morgan, or none).
     :param rdkit_features_size: The size of the RDKit features vector.
     :param property_name: The name of the property being predicted.
     :return: A Chemprop model.
@@ -33,18 +33,25 @@ def chemprop_build_model(
         "--quiet",
     ]
 
-    if use_rdkit_features:
+    if features_type == "rdkit":
         arg_list += [
             "--features_generator",
             "rdkit_2d_normalized",
+            "--no_features_scaling",
+        ]
+    
+    if features_type == "morgan":
+        arg_list += [
+            "--features_generator",
+            "morgan",
             "--no_features_scaling",
         ]
 
     args = TrainArgs().parse_args(arg_list)
     args.task_names = [property_name]
 
-    if use_rdkit_features:
-        args.features_size = rdkit_features_size
+    if features_type is not None:
+        args.features_size = FEATURES_SIZE_MAPPING[features_type]
 
     # Ensure reproducibility
     torch.manual_seed(0)

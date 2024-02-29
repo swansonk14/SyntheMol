@@ -13,7 +13,7 @@ from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import mean_squared_error, r2_score
 from tqdm import tqdm, trange
 
-from synthemol.constants import RL_PREDICTION_TYPES
+from synthemol.constants import RL_PREDICTION_TYPES, FINGERPRINT_TYPES
 from synthemol.generate.score_weights import ScoreWeights
 from synthemol.generate.node import Node
 from synthemol.models import chemprop_build_model, chemprop_load, MLP
@@ -33,6 +33,7 @@ class RLModel(ABC):
         model_paths: list[Path] | None = None,
         max_num_molecules: int = 3,
         features_size: int = 200,
+        features_type: str | None = None,
         num_workers: int = 0,
         num_epochs: int = 5,
         batch_size: int = 50,
@@ -68,6 +69,7 @@ class RLModel(ABC):
         self.score_weights = score_weights
         self.model_paths = model_paths
         self.max_num_molecules = max_num_molecules
+        self.features_type = features_type
         self.features_size = features_size
         self.total_features_size = max_num_molecules * features_size
         self.num_workers = num_workers
@@ -117,8 +119,8 @@ class RLModel(ABC):
                 f"Prediction type {self.prediction_type} is not supported."
             )
 
-    def compute_rdkit_features(
-        self, molecule_tuples: list[tuple[str]], average_across_tuple: bool = False
+    def compute_features(
+        self, molecule_tuples: list[tuple[str]], average_across_tuple: bool = False, fingerprint_type: FINGERPRINT_TYPES = 'rdkit'
     ) -> torch.Tensor:
         """Computes the RDKit features for molecules in each tuple of molecules.
 
@@ -145,7 +147,7 @@ class RLModel(ABC):
         # Compute features for unknown molecules and add to dictionary
         if unknown_molecules:
             unknown_features = compute_fingerprints(
-                mols=unknown_molecules, fingerprint_type="rdkit"
+                mols=unknown_molecules, fingerprint_type=fingerprint_type
             )
             unknown_features = torch.from_numpy(unknown_features)
 
@@ -556,6 +558,7 @@ class RLModelMLP(RLModel):
         model_paths: list[Path] | None = None,
         max_num_molecules: int = 3,
         features_size: int = 200,
+        features_type: str | None = None,
         hidden_dim: int = 300,
         num_layers: int = 2,
         num_workers: int = 0,
@@ -564,6 +567,7 @@ class RLModelMLP(RLModel):
         learning_rate: float = 1e-3,
         device: torch.device = torch.device("cpu"),
         extended_evaluation: bool = False,
+        fingerprint_type = FINGERPRINT_TYPES,
     ) -> None:
         """Initializes the RL MLP model.
 
@@ -585,6 +589,7 @@ class RLModelMLP(RLModel):
         :param extended_evaluation: Whether to perform extended evaluation of the RL models using all combinations
             of numbers of source/target building blocks.
         """
+
         # Store MLP-specific parameters
         self.hidden_dim = hidden_dim
         self.output_dim = 1
@@ -596,6 +601,7 @@ class RLModelMLP(RLModel):
             model_paths=model_paths,
             max_num_molecules=max_num_molecules,
             features_size=features_size,
+            features_type=features_type,
             num_workers=num_workers,
             num_epochs=num_epochs,
             batch_size=batch_size,
@@ -609,6 +615,7 @@ class RLModelMLP(RLModel):
 
         :return: A model with randomly initialized weights.
         """
+        print(self.max_num_molecules * self.features_size)
         return MLP(
             input_dim=self.max_num_molecules * self.features_size,
             hidden_dim=self.hidden_dim,
@@ -702,7 +709,9 @@ class RLModelMLP(RLModel):
         loaded_state_dict[first_layer_weight_name] = loaded_state_dict[
             first_layer_weight_name
         ].repeat(1, self.max_num_molecules)
-
+        print(self.max_num_molecules)
+        print(model_weight_names)
+        print(loaded_state_dict["layers.0.weight"].shape)
         # Load weights into model
         model.load_state_dict(loaded_state_dict)
 
@@ -731,8 +740,8 @@ class RLModelMLP(RLModel):
         :return: A dataloader.
         """
         # Compute features in bulk across all molecules
-        features = self.compute_rdkit_features(
-            molecule_tuples=molecule_tuples, average_across_tuple=False
+        features = self.compute_features(
+            molecule_tuples=molecule_tuples, average_across_tuple=False, fingerprint_type=self.features_type
         )
 
         # Set up data based on presence of rewards
@@ -866,12 +875,12 @@ def rl_chemprop_collate_fn(
 class RLModelChemprop(RLModel):
     def __init__(
         self,
-        use_rdkit_features: bool,
         prediction_type: RL_PREDICTION_TYPES,
         score_weights: ScoreWeights,
         model_paths: list[Path] | None = None,
         max_num_molecules: int = 3,
         features_size: int = 200,
+        features_type: str | None = None,
         num_workers: int = 0,
         num_epochs: int = 5,
         batch_size: int = 50,
@@ -898,8 +907,6 @@ class RLModelChemprop(RLModel):
         :param extended_evaluation: Whether to perform extended evaluation of the RL models using all combinations
             of numbers of source/target building blocks.
         """
-        # Store whether to use RDKit features
-        self.use_rdkit_features = use_rdkit_features
 
         super().__init__(
             prediction_type=prediction_type,
@@ -907,6 +914,7 @@ class RLModelChemprop(RLModel):
             model_paths=model_paths,
             max_num_molecules=max_num_molecules,
             features_size=features_size,
+            features_type = features_type,
             num_workers=num_workers,
             num_epochs=num_epochs,
             batch_size=batch_size,
@@ -922,8 +930,7 @@ class RLModelChemprop(RLModel):
         """
         return chemprop_build_model(
             dataset_type=self.prediction_type,
-            use_rdkit_features=self.use_rdkit_features,
-            rdkit_features_size=self.features_size,
+            features_type=self.features_type,
             property_name="rl_objective",
         ).to(self.device)
 
@@ -971,10 +978,10 @@ class RLModelChemprop(RLModel):
         :return: A dataloader.
         """
         # Compute RDKit features if needed
-        if self.use_rdkit_features:
+        if self.features_type is not None:
             # Compute features and average across molecules in a tuple for a tensor of shape (num_tuples, features_size)
-            features = self.compute_rdkit_features(
-                molecule_tuples=molecule_tuples, average_across_tuple=True
+            features = self.compute_features(
+                molecule_tuples=molecule_tuples, average_across_tuple=True, fingerprint_type=self.features_type
             )
         else:
             features = None
