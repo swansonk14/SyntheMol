@@ -122,7 +122,7 @@ class RLModel(ABC):
     def compute_features(
         self, molecule_tuples: list[tuple[str]], average_across_tuple: bool = False, fingerprint_type: FINGERPRINT_TYPES = 'rdkit'
     ) -> torch.Tensor:
-        """Computes the RDKit features for molecules in each tuple of molecules.
+        """Computes the features for molecules in each tuple of molecules.
 
         :param molecule_tuples: A list of tuples of SMILES strings representing one or more molecules.
         :param average_across_tuple: Whether to average the features across the molecules in each tuple.
@@ -615,7 +615,6 @@ class RLModelMLP(RLModel):
 
         :return: A model with randomly initialized weights.
         """
-        print(self.max_num_molecules * self.features_size)
         return MLP(
             input_dim=self.max_num_molecules * self.features_size,
             hidden_dim=self.hidden_dim,
@@ -709,9 +708,6 @@ class RLModelMLP(RLModel):
         loaded_state_dict[first_layer_weight_name] = loaded_state_dict[
             first_layer_weight_name
         ].repeat(1, self.max_num_molecules)
-        print(self.max_num_molecules)
-        print(model_weight_names)
-        print(loaded_state_dict["layers.0.weight"].shape)
         # Load weights into model
         model.load_state_dict(loaded_state_dict)
 
@@ -890,7 +886,6 @@ class RLModelChemprop(RLModel):
     ) -> None:
         """Initializes the RL Chemprop model.
 
-        :param use_rdkit_features: Whether to use RDKit fingerprints as features.
         :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
             'classification' = binary classification. 'regression' = regression.
         :param score_weights: The weights of the models for each property.
@@ -914,7 +909,7 @@ class RLModelChemprop(RLModel):
             model_paths=model_paths,
             max_num_molecules=max_num_molecules,
             features_size=features_size,
-            features_type = features_type,
+            features_type=features_type,
             num_workers=num_workers,
             num_epochs=num_epochs,
             batch_size=batch_size,
@@ -977,7 +972,7 @@ class RLModelChemprop(RLModel):
         :param shuffle: Whether to shuffle the data.
         :return: A dataloader.
         """
-        # Compute RDKit features if needed
+        # Compute features if needed
         if self.features_type is not None:
             # Compute features and average across molecules in a tuple for a tensor of shape (num_tuples, features_size)
             features = self.compute_features(
