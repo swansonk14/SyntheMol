@@ -1,7 +1,6 @@
-"""SMARTS representations of the most common Enamine REAL reactions."""
+"""SMARTS representations of some of the Enamine REAL reactions."""
 from synthemol.reactions.query_mol import QueryMol
 from synthemol.reactions.reaction import Reaction
-
 
 REAL_REACTIONS = (
     Reaction(
@@ -103,4 +102,27 @@ REAL_REACTIONS = (
         reaction_id=1458,
         chemical_space="real",
     ),
+)
+
+
+# The 13 most common REAL reaction IDs (used in the SyntheMol MCTS and RL papers)
+MOST_COMMON_REAL_IDS = {
+    275592,
+    22,
+    11,
+    527,
+    240690,
+    2430,
+    2708,
+    2230,
+    2718,
+    40,
+    27,
+    271948,
+    1458,
+}
+
+# The 13 most common REAL reactions
+MOST_COMMON_REAL_REACTIONS = tuple(
+    reaction for reaction in REAL_REACTIONS if reaction.id in MOST_COMMON_REAL_IDS
 )

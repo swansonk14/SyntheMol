@@ -228,12 +228,12 @@ def generate(
     # Create save directory
     save_dir.mkdir(parents=True, exist_ok=True)
 
-    # Get reactions
-    reactions = tuple(
+    # Get (unique) reactions
+    reactions = tuple(dict.fromkeys(
         reaction
         for chemical_space in sorted(set(chemical_spaces))
         for reaction in CHEMICAL_SPACE_TO_REACTIONS[chemical_space]
-    )
+    ))
 
     print(f"Using {len(reactions):,} reactions")
 

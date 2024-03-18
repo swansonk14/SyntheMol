@@ -1,4 +1,6 @@
 """Reaction class and helper functions."""
+from typing import Any
+
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
@@ -63,8 +65,25 @@ class Reaction:
             [convert_to_mol(reactant, add_hs=True) for reactant in reactants]
         )
 
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         """Gets the string representation of the Reaction."""
         return (
             f"{self.__class__.__name__}(id={self.id}, reaction={self.reaction_smarts})"
+        )
+
+    def __repr__(self) -> str:
+        """Gets the representation of the Reaction."""
+        return str(self)
+
+    def __hash__(self) -> int:
+        """Gets the hash of the Reaction."""
+        return hash((self.reaction_smarts, self.id, self.chemical_space))
+
+    def __eq__(self, other: Any) -> bool:
+        """Determines whether the Reaction is equal to another object."""
+        return (
+            isinstance(other, self.__class__)
+            and self.reaction_smarts == other.reaction_smarts
+            and self.id == other.id
+            and self.chemical_space == other.chemical_space
         )
