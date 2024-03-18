@@ -57,7 +57,7 @@ def generate(
     rolling_average_weight: float = 0.98,
     rl_model_type: RL_MODEL_TYPES = "mlp_rdkit",
     rl_model_paths: list[Path] | None = None,
-    rl_prediction_type: RL_PREDICTION_TYPES = "classification",
+    rl_prediction_type: RL_PREDICTION_TYPES = "classification",  # TODO: allow multiple prediction types, one per rl model
     rl_base_temperature: float = 0.1,
     rl_temperature_similarity_target: float = 0.6,
     rl_train_frequency: int = 10,
