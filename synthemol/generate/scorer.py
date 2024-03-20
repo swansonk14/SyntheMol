@@ -110,6 +110,7 @@ class ChempropScorer(Scorer):
         model_path: Path,
         fingerprint_type: FINGERPRINT_TYPES | None = None,
         device: torch.device = torch.device("cpu"),
+        h2o_solvents: bool = False,
     ) -> None:
         """Initialize the scorer.
 
@@ -130,6 +131,9 @@ class ChempropScorer(Scorer):
 
         # Save fingerprint type
         self.fingerprint_type = fingerprint_type
+
+        # Save solvents
+        self.h2o_solvents = h2o_solvents
 
         # Ensure reproducibility
         torch.manual_seed(0)
@@ -166,6 +170,7 @@ class ChempropScorer(Scorer):
             smiles=smiles,
             fingerprint=fingerprint,
             scalers=self.scalers,
+            h2o_solvents=self.h2o_solvents,
         )
 
 
@@ -174,6 +179,7 @@ def create_scorer(
     model_path: Path | None = None,
     fingerprint_type: FINGERPRINT_TYPES | None = None,
     device: torch.device = torch.device("cpu"),
+    h2o_solvents: bool = False,
 ) -> Scorer:
     """Creates a scorer object that scores a molecule.
 
@@ -209,7 +215,7 @@ def create_scorer(
             raise ValueError("Chemprop requires a model path.")
 
         scorer = ChempropScorer(
-            model_path=model_path, fingerprint_type=fingerprint_type, device=device
+            model_path=model_path, fingerprint_type=fingerprint_type, device=device, h2o_solvents=h2o_solvents
         )
     elif score_type == "random_forest":
         if model_path is None:
@@ -232,6 +238,7 @@ class MoleculeScorer:
         score_weights: ScoreWeights,
         model_paths: list[Path | None] | None = None,
         fingerprint_types: list[FINGERPRINT_TYPES | None] | None = None,
+        h2o_solvents: bool = False,
         device: torch.device = torch.device("cpu"),
         smiles_to_scores: dict[str, list[float]] | None = None,
     ) -> None:
@@ -249,6 +256,7 @@ class MoleculeScorer:
             For model-based scores that don't require fingerprints or non-model-based scores,
             the corresponding fingerprint type must be None.
             If all score types do not require fingerprints, this argument can be None.
+        :param h2o_solvents: Whether to concatenate h2o solvent features in the scorer.
         :param device: The device on which to run the scorer.
         :param smiles_to_scores: An optional dictionary mapping SMILES to precomputed scores.
         """

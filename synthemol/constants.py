@@ -40,6 +40,7 @@ RL_MODEL_TYPES = Literal["mlp", "chemprop"]
 RL_PREDICTION_TYPES = Literal["classification", "regression"]
 FEATURES_SIZE_MAPPING = {"rdkit": 200, "morgan": 2048}
 OPTIMIZATION_TYPES = Literal["maximize", "minimize"]
+H2O_FEATURES = [0.681, 0.997, 1.062, 0.025] # SP, SdP, SA, SB
 
 # Path where data files are stored
 with resources.path("synthemol", "resources") as resources_dir:

@@ -7,7 +7,7 @@ from chemprop.args import TrainArgs
 from chemprop.models import MoleculeModel
 from chemprop.utils import load_checkpoint, load_scalers
 from sklearn.preprocessing import StandardScaler
-from synthemol.constants import FEATURES_SIZE_MAPPING
+from synthemol.constants import FEATURES_SIZE_MAPPING, H2O_FEATURES
 
 
 def chemprop_build_model(
@@ -88,6 +88,7 @@ def chemprop_predict_on_molecule(
     smiles: str,
     fingerprint: np.ndarray | None = None,
     scaler: StandardScaler | None = None,
+    h2o_solvents: bool = False,
 ) -> float:
     """Predicts the property of a molecule using a Chemprop model.
 
@@ -98,10 +99,16 @@ def chemprop_predict_on_molecule(
     :return: The prediction on the molecule.
     """
     # Make prediction
-    pred = model(
-        batch=[[smiles]],
-        features_batch=[fingerprint] if fingerprint is not None else None,
-    ).item()
+    if h2o_solvents:
+        pred = model(
+            batch=[[smiles]],
+            features_batch=[np.concatenate((fingerprint, H2O_FEATURES), axis=0)] if fingerprint is not None else None,
+        ).item()
+    else:
+        pred = model(
+            batch=[[smiles]],
+            features_batch=[fingerprint] if fingerprint is not None else None,
+        ).item()
 
     # Scale prediction if applicable
     if scaler is not None:
@@ -115,6 +122,7 @@ def chemprop_predict_on_molecule_ensemble(
     smiles: str,
     fingerprint: np.ndarray | None = None,
     scalers: list[StandardScaler] | None = None,
+    h2o_solvents: bool = False,
 ) -> float:
     """Predicts the property of a molecule using an ensemble of Chemprop models.
 
@@ -128,7 +136,7 @@ def chemprop_predict_on_molecule_ensemble(
         np.mean(
             [
                 chemprop_predict_on_molecule(
-                    model=model, smiles=smiles, fingerprint=fingerprint, scaler=scaler
+                    model=model, smiles=smiles, fingerprint=fingerprint, scaler=scaler, h2o_solvents=h2o_solvents,
                 )
                 for model, scaler in zip(models, scalers)
             ]

@@ -13,7 +13,7 @@ from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import mean_squared_error, r2_score
 from tqdm import tqdm, trange
 
-from synthemol.constants import RL_PREDICTION_TYPES, FINGERPRINT_TYPES
+from synthemol.constants import RL_PREDICTION_TYPES, FINGERPRINT_TYPES, H2O_FEATURES
 from synthemol.generate.score_weights import ScoreWeights
 from synthemol.generate.node import Node
 from synthemol.models import chemprop_build_model, chemprop_load, MLP
@@ -40,6 +40,7 @@ class RLModel(ABC):
         learning_rate: float = 1e-3,
         device: torch.device = torch.device("cpu"),
         extended_evaluation: bool = False,
+        h2o_solvents: bool = False,
     ) -> None:
         """Initializes the model.
 
@@ -78,6 +79,7 @@ class RLModel(ABC):
         self.learning_rate = learning_rate
         self.device = device
         self.extended_evaluation = extended_evaluation
+        self.h2o_solvents = h2o_solvents
 
         self.train_source_nodes: list[Node] = []
         self.train_target_nodes: list[Node] = []
@@ -120,7 +122,7 @@ class RLModel(ABC):
             )
 
     def compute_features(
-        self, molecule_tuples: list[tuple[str]], average_across_tuple: bool = False, fingerprint_type: FINGERPRINT_TYPES = 'rdkit'
+        self, molecule_tuples: list[tuple[str]], average_across_tuple: bool = False, fingerprint_type: FINGERPRINT_TYPES = 'rdkit', h2o_solvents: bool = False,
     ) -> torch.Tensor:
         """Computes the features for molecules in each tuple of molecules.
 
@@ -159,10 +161,15 @@ class RLModel(ABC):
             [self.smiles_to_features[molecule] for molecule in all_molecules]
         )
 
-        # Set up feature vectors for each combination of molecules
-        features_dim = (
-            self.features_size if average_across_tuple else self.total_features_size
-        )
+        if self.h2o_solvents:
+            features_dim = (
+                self.features_size + 4 if average_across_tuple else self.total_features_size + 12
+            )
+        else:
+            # Set up feature vectors for each combination of molecules
+            features_dim = (
+                self.features_size if average_across_tuple else self.total_features_size
+            )
         features = torch.zeros((len(molecule_tuples), features_dim))
         index = 0
         for i, molecule_num in enumerate(molecule_nums):
@@ -180,7 +187,8 @@ class RLModel(ABC):
                 molecules_features = (
                     molecules_features.flatten()
                 )  # (total_features_size,)
-
+            if h2o_solvents:
+                molecules_features = torch.cat((molecules_features, torch.tensor(H2O_FEATURES)), axis=0)
             # Set features for tuple
             features[i, : len(molecules_features)] = molecules_features
             index += molecule_num
@@ -567,7 +575,7 @@ class RLModelMLP(RLModel):
         learning_rate: float = 1e-3,
         device: torch.device = torch.device("cpu"),
         extended_evaluation: bool = False,
-        fingerprint_type = FINGERPRINT_TYPES,
+        h2o_solvents: bool = False,
     ) -> None:
         """Initializes the RL MLP model.
 
@@ -608,6 +616,7 @@ class RLModelMLP(RLModel):
             learning_rate=learning_rate,
             device=device,
             extended_evaluation=extended_evaluation,
+            h2o_solvents=h2o_solvents,
         )
 
     def build_model(self) -> MLP:
@@ -883,6 +892,7 @@ class RLModelChemprop(RLModel):
         learning_rate: float = 1e-3,
         device: torch.device = torch.device("cpu"),
         extended_evaluation: bool = False,
+        h2o_solvents: bool = False,
     ) -> None:
         """Initializes the RL Chemprop model.
 
@@ -916,6 +926,7 @@ class RLModelChemprop(RLModel):
             learning_rate=learning_rate,
             device=device,
             extended_evaluation=extended_evaluation,
+            h2o_solvents=h2o_solvents,
         )
 
     def build_model(self) -> MoleculeModel:

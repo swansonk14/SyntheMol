@@ -77,6 +77,7 @@ def generate(
     wandb_log: bool = False,
     wandb_project_name: str = "synthemol",
     wandb_run_name: str | None = None,
+    h2o_solvents: bool = False,
 ) -> None:
     """Generate molecules combinatorially using a search guided by a molecular property predictor.
 
@@ -143,6 +144,7 @@ def generate(
     :param wandb_log: Whether to log results to Weights & Biases.
     :param wandb_project_name: The name of the Weights & Biases project to log results to.
     :param wandb_run_name: The name of the Weights & Biases run to log results to.
+    :param h2o_solvents: whether or not to concatenate solvent features in molecule scoring.
     """
     # Convert score_model_paths to Path/None
     # TODO: change tapify to allow list[Path | Literal["None"] | None]
@@ -407,6 +409,7 @@ def generate(
                 "rl_train_frequency": rl_train_frequency,
                 "rl_train_epochs": rl_train_epochs,
                 "rl_extended_evaluation": rl_extended_evaluation,
+                "h2o_solvents": h2o_solvents,
                 "optimization": optimization,
                 "rng_seed": rng_seed,
                 "no_building_block_diversity": no_building_block_diversity,
@@ -464,6 +467,7 @@ def generate(
         score_weights=score_weights,
         model_paths=score_model_paths,
         fingerprint_types=score_fingerprint_types,
+        h2o_solvents=h2o_solvents,
         device=device,
         smiles_to_scores=building_block_smiles_to_scores,
     )
@@ -483,7 +487,8 @@ def generate(
             "device": device,
             "extended_evaluation": rl_extended_evaluation,
             "features_type": rl_model_fingerprint_type,
-            "features_size": FEATURES_SIZE_MAPPING[rl_model_fingerprint_type]
+            "features_size": FEATURES_SIZE_MAPPING[rl_model_fingerprint_type],
+            "h2o_solvents": h2o_solvents
         }
 
         # Select RL model class and update RL model args
