@@ -111,13 +111,21 @@ REAL_REACTIONS = (
         chemical_space="real",
     ),
     Reaction(
-        reactants=[QueryMol("[*:1][C:2]([H])=O"), QueryMol("[H]O[C:3]([C:4]([H])([H])[N:5]([H])[C:6]([*:7])=[O:8])=[O:9]")],
-        product=QueryMol("[H]/[C:2](=[C:4]1/[N:5]=[C:6]([*:7])[O:8][C:3]1=[O:9])[*:1]"),  # TODO: should this be an isomeric SMILES? Should it be aromatic?
+        reactants=[
+            QueryMol("[*:1][C:2]([H])=O"),
+            QueryMol("[H]O[C:3]([C:4]([H])([H])[N:5]([H])[C:6]([*:7])=[O:8])=[O:9]"),
+        ],
+        product=QueryMol(
+            "[H]/[C:2](=[C:4]1/[N:5]=[C:6]([*:7])[O:8][C:3]1=[O:9])[*:1]"
+        ),  # TODO: should this be an isomeric SMILES? Should it be aromatic?
         reaction_id=10,
         chemical_space="real",
     ),
     Reaction(
-        reactants=[QueryMol("[H]C([H])([H])C([H])([H])O[CH:1]=[C:2]([*:3])[*:4]"), QueryMol("[NH2:5][*:6]")],
+        reactants=[
+            QueryMol("[H]C([H])([H])C([H])([H])O[CH:1]=[C:2]([*:3])[*:4]"),
+            QueryMol("[NH2:5][*:6]"),
+        ],
         product=QueryMol("[*:6][NH:5][CH:1]=[C:2]([*:3])[*:4]"),
         reaction_id=17,
         chemical_space="real",
@@ -135,20 +143,30 @@ REAL_REACTIONS = (
         chemical_space="real",
     ),
     Reaction(
-        reactants=[QueryMol("[H][N:1]([*:2])[C:3](=[S:4])[N:5]([H])[N:6]([H])[H]"), QueryMol(f"[H][C:7]([{HALIDE}])([*:8])[C:9](=O)[*:10]")],
-        product=QueryMol("[H][N:1]([*:2])[C:3]1=[N:5][N:6]=[C:9]([*:10])[C:7]([H])([*:8])[S:4]1"),
+        reactants=[
+            QueryMol("[H][N:1]([*:2])[C:3](=[S:4])[N:5]([H])[N:6]([H])[H]"),
+            QueryMol(f"[H][C:7]([{HALIDE}])([*:8])[C:9](=O)[*:10]"),
+        ],
+        product=QueryMol(
+            "[H][N:1]([*:2])[C:3]1=[N:5][N:6]=[C:9]([*:10])[C:7]([H])([*:8])[S:4]1"
+        ),
         reaction_id=41,
         chemical_space="real",
     ),
     Reaction(
-        reactants=[QueryMol("[H][C:1]([H])([*:2])[C:3](=O)[*:4]"), QueryMol("")],  # TODO: figure out R group ring
+        reactants=[
+            QueryMol("[H][C:1]([H])([*:2])[C:3](=O)[*:4]"),
+            QueryMol(""),
+        ],  # TODO: figure out R group ring
         product=QueryMol(""),  # TODO: figure out R group ring
         reaction_id=42,
         chemical_space="real",
     ),
     Reaction(
         reactants=[QueryMol(f"[H][C:1]([{HALIDE}])([*:2])[C:3](=O)[*:4]")],
-        product=QueryMol("[H]N([H])c1n[c:3]([*:4])[c:1]([*:2])s1"),  # TODO: check that this is aromatic
+        product=QueryMol(
+            "[H]N([H])c1n[c:3]([*:4])[c:1]([*:2])s1"
+        ),  # TODO: check that this is aromatic
         reaction_id=43,
         chemical_space="real",
     ),
@@ -156,6 +174,102 @@ REAL_REACTIONS = (
         reactants=[QueryMol("[*:1][N:2]([H])[*:3]"), QueryMol(f"[{HALIDE}][*:4]")],
         product=QueryMol("[*:1][N:2]([*:3])[*:4]"),
         reaction_id=44,
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[
+            QueryMol("[H][N:1]([H])[N:2]([H])[*:3]"),
+            QueryMol("[H][C:4]([H])([C:5](=O)[*:6])[C:7](=O)[*:8]"),
+        ],
+        product=QueryMol(
+            "[H][c:4]1[c:7]([*:8]([H])([H])[H])[n:1][n:2]([*:3])[c:5]1[*:6]"
+        ),  # TODO: check if aromatic
+        reaction_id=49,
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[
+            QueryMol("[H][N:1]([H])[N:2]([H])[*:3]"),
+            QueryMol("[H][C:4]([H])([C:5](=O)[*:6])[C:7]([H])([H])[C:8](=O)[*:9]"),
+        ],
+        product=QueryMol(
+            "[H][C:7]1([H])[C:8]([*:9])=[N:1][N:2]([*:3])[C:5]([H])([*:6])[C:4]1([H])[H]"
+        ),  # TODO: check if aromatic
+        reaction_id=49,  # TODO: check if it's okay to reuse ID 49 for the two versions of it
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("[H][N:1]([H])[N:2]([H])[*:3]")],
+        product=QueryMol(
+            "[H]Oc1c([H])c([H])c([H])c([H])c1C(=O)c1c([H])[n:1][n:2]([*:3])c1[H]"
+        ),  # TODO: check if aromatic
+        reaction_id=52,
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol(""), QueryMol("")],
+        product=QueryMol(""),
+        reaction_id=55,  # TODO: figure out R group ring
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol(""), QueryMol("")],
+        product=QueryMol(""),
+        reaction_id=60,  # TODO: figure out R group ring
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("[*:1][N:2]([H])[*:3]"), QueryMol(f"[{HALIDE}][*:4]")],
+        product=QueryMol("[*:1][N:2]([*:3])[*:4]"),
+        reaction_id=61,
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol(f"[{HALIDE}][*:1]"), QueryMol(f"[{HALIDE}][*:2]")],
+        product=QueryMol("[*:1]S[*:2]"),
+        reaction_id=62,
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol(""), QueryMol("")],
+        product=QueryMol(""),
+        reaction_id=0,
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol(""), QueryMol("")],
+        product=QueryMol(""),
+        reaction_id=0,
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol(""), QueryMol("")],
+        product=QueryMol(""),
+        reaction_id=0,
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol(""), QueryMol("")],
+        product=QueryMol(""),
+        reaction_id=0,
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol(""), QueryMol("")],
+        product=QueryMol(""),
+        reaction_id=0,
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol(""), QueryMol("")],
+        product=QueryMol(""),
+        reaction_id=0,
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol(""), QueryMol("")],
+        product=QueryMol(""),
+        reaction_id=0,
         chemical_space="real",
     ),
 )
