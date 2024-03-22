@@ -629,7 +629,7 @@ class RLModelMLP(RLModel):
         :return: A model with randomly initialized weights.
         """
         return MLP(
-            input_dim=self.max_num_molecules * self.features_size,
+            input_dim=self.max_num_molecules * (self.features_size + (len(H2O_FEATURES) if self.h2o_solvents else 0)) ,
             hidden_dim=self.hidden_dim,
             output_dim=1,
             num_layers=self.num_layers,
@@ -674,6 +674,7 @@ class RLModelMLP(RLModel):
         # Load model weights
         loaded_state = torch.load(model_path, map_location=lambda storage, loc: storage)
         loaded_state_dict = loaded_state["state_dict"]
+        print(loaded_state["state_dict"]['readout.1.weight'].shape)
 
         # Get layer names in loaded model (layer names are <name>.<num>.<weight/bias>)
         loaded_weight_names = sorted(
