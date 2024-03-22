@@ -1,6 +1,8 @@
 # Documentation
 
-This directory contains instructions for reproducing the results in forthcoming paper in _Nature Machine Intelligence_.
+This directory contains instructions for reproducing the results in our paper:
+
+Swanson, K., Liu, G., Catacutan, D. B., Arnold, A., Zou, J., Stokes, J. M. [Generative AI for designing and validating easily synthesizable and structurally novel antibiotics](https://www.nature.com/articles/s42256-024-00809-7). _Nature Machine Intelligence_, 2024.
 
 The relevant data should be downloaded from [this Zenodo record](https://zenodo.org/doi/10.5281/zenodo.10257838), unzipped, and moved to `SyntheMol/data`.
 
