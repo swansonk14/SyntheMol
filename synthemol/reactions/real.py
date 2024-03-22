@@ -487,14 +487,69 @@ REAL_REACTIONS = (
             ),
             QueryMol("[N-:10]=[N+:11]=[N:12][*:13]"),  # TODO: is the azide correct?
         ],
-        product=QueryMol("[H][c:9]1[c:8](-[c:7]2[n:1][c:2]([*:4])[s:3][c:5]2[*:6])[n:10][n:11][n:12]1[*:13]"),  # TODO: check if aromatic
+        product=QueryMol(
+            "[H][c:9]1[c:8](-[c:7]2[n:1][c:2]([*:4])[s:3][c:5]2[*:6])[n:10][n:11][n:12]1[*:13]"
+        ),  # TODO: check if aromatic
         reaction_id=274972,
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[
+            QueryMol("[H][N:1]([H])[C:2](=S)[N:3]([*:4])[*:5]"),
+            QueryMol("[H][N:6]([H])[N:7]([H])[C:8](=O)[*:9]"),
+        ],
+        product=QueryMol(
+            "[H][n:1]1[c:8]([*:9])[n:7][n:6][c:2]1[N:3]([*:4])[*:5]"
+        ),  # TODO: check aromatic
+        reaction_id=276090,
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[
+            QueryMol("[H]N=[C:1]([*:2])[N:3]([H])[H]"),
+            QueryMol("[H]O[C:4](=O)[*:5]"),
+            QueryMol("[H][N:6]([H])[N:7]([H])[*:8]"),
+        ],
+        product=QueryMol(
+            "[*:8][n:7]1[n:6][c:1]([*:2])[n:3][c:4]1[*:5]"
+        ),  # TODO: check aromatic
+        reaction_id=276630,
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[
+            QueryMol("[H][N:1]([H])[N:2]([H])[C:3](=O)[*:4]"),
+            QueryMol("[H][N:5]=[C:6]([*:7])OC([H])([H])[H]"),
+        ],
+        product=QueryMol("[H][n:5]1[c:3]([*:4])[n:2][n:1][c:6]1[*:7]"),
+        reaction_id=276670,
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[
+            QueryMol(
+                "[H][c:1]1[c:2]([H])[c:3]([H])[c:4]([N:5]([H])[H])[c:6]([C:7](=O)[*:8])[c:9]1[H]"
+            ),
+            QueryMol(
+                "[H]O[C:10](=[O:11])[C:12]([H])([*:13])[N:14]([H])C(=O)OC(C([H])([H])[H])(C([H])([H])[H])C([H])([H])[H]"
+            ),
+        ],
+        product=QueryMol(
+            "[H][c:1]1[c:2]([H])[c:3]([H])[c:4]2[c:6]([c:9]1[H])[C:7]([*:8])=[N:14][C:12]([H])([*:13])[C:10](=[O:11])[N:5]2[H]"
+        ),  # TODO: check aromatic
+        reaction_id=276770,
         chemical_space="real",
     ),
     Reaction(
         reactants=[QueryMol(""), QueryMol("")],
         product=QueryMol(""),
-        reaction_id=0,
+        reaction_id=279312,  # TODO: R group ring
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol(""), QueryMol("")],
+        product=QueryMol(""),  # TODO: X group with BOC
+        reaction_id=279370,
         chemical_space="real",
     ),
 )
