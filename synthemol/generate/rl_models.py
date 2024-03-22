@@ -163,7 +163,7 @@ class RLModel(ABC):
 
         if self.h2o_solvents:
             features_dim = (
-                self.features_size + 4 if average_across_tuple else self.total_features_size + 12
+                self.features_size + len(H2O_FEATURES) if average_across_tuple else self.total_features_size + len(H2O_FEATURES) * self.max_num_molecules
             )
         else:
             # Set up feature vectors for each combination of molecules
@@ -178,6 +178,11 @@ class RLModel(ABC):
                 index : index + molecule_num
             ]  # (molecule_num, features_size)
 
+            # Optionally add solvent features
+            if h2o_solvents:
+                solvent_features = torch.tensor(H2O_FEATURES).repeat(features.shape[0], 1)  # (molecule_num, solvent_features_size)
+                molecules_features = torch.cat((molecules_features, solvent_features), dim=1)  # (molecule_num, features_size + solvent_features_size)
+
             # Average features across molecules in the tuple if desired
             if average_across_tuple:
                 molecules_features = torch.mean(
@@ -187,8 +192,7 @@ class RLModel(ABC):
                 molecules_features = (
                     molecules_features.flatten()
                 )  # (total_features_size,)
-            if h2o_solvents:
-                molecules_features = torch.cat((molecules_features, torch.tensor(H2O_FEATURES)), axis=0)
+
             # Set features for tuple
             features[i, : len(molecules_features)] = molecules_features
             index += molecule_num

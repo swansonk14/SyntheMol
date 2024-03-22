@@ -98,17 +98,14 @@ def chemprop_predict_on_molecule(
     :param scaler: A data scaler (if applicable).
     :return: The prediction on the molecule.
     """
+    # Set up optional extra features
+    extra_features = H2O_FEATURES if h2o_solvents else []
+
     # Make prediction
-    if h2o_solvents:
-        pred = model(
-            batch=[[smiles]],
-            features_batch=[np.concatenate((fingerprint, H2O_FEATURES), axis=0)] if fingerprint is not None else None,
-        ).item()
-    else:
-        pred = model(
-            batch=[[smiles]],
-            features_batch=[fingerprint] if fingerprint is not None else None,
-        ).item()
+    pred = model(
+        batch=[[smiles]],
+        features_batch=[np.concatenate((fingerprint, extra_features), axis=0)] if fingerprint is not None else None,
+    ).item()
 
     # Scale prediction if applicable
     if scaler is not None:

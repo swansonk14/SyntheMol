@@ -256,7 +256,7 @@ class MoleculeScorer:
             For model-based scores that don't require fingerprints or non-model-based scores,
             the corresponding fingerprint type must be None.
             If all score types do not require fingerprints, this argument can be None.
-        :param h2o_solvents: Whether to concatenate h2o solvent features in the scorer.
+        :param h2o_solvents: Whether to concatenate H2O solvent features with the molecule features during prediction.
         :param device: The device on which to run the scorer.
         :param smiles_to_scores: An optional dictionary mapping SMILES to precomputed scores.
         """

@@ -144,7 +144,7 @@ def generate(
     :param wandb_log: Whether to log results to Weights & Biases.
     :param wandb_project_name: The name of the Weights & Biases project to log results to.
     :param wandb_run_name: The name of the Weights & Biases run to log results to.
-    :param h2o_solvents: whether or not to concatenate solvent features in molecule scoring.
+    :param h2o_solvents: Whether to concatenate H2O solvent features with the molecule features during prediction.
     """
     # Convert score_model_paths to Path/None
     # TODO: change tapify to allow list[Path | Literal["None"] | None]
