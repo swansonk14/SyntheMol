@@ -117,7 +117,7 @@ REAL_REACTIONS = (
         ],
         product=QueryMol(
             "[H]/[C:2](=[C:4]1/[N:5]=[C:6]([*:7])[O:8][C:3]1=[O:9])[*:1]"
-        ),  # TODO: should this be an isomeric SMILES? Should it be aromatic?
+        ),  # TODO: should it be aromatic?
         reaction_id=10,
         chemical_space="real",
     ),
@@ -276,7 +276,7 @@ REAL_REACTIONS = (
         reactants=[
             QueryMol(
                 r"[H][O:1]/[N:2]=[C:3](\[*:4])[N:5]([H])[H]"
-            ),  # TODO: should this be isomeric?
+            ),
             QueryMol("[H]O[C:6](=O)[*:7]"),
         ],
         product=QueryMol(
@@ -301,7 +301,7 @@ REAL_REACTIONS = (
         reactants=[
             QueryMol(r"[H][O:1]/[N:2]=[C:3](\[*:4])[N:5]([H])[H]"),
             QueryMol("[H]O[C:6](=O)[*:7]"),
-        ],  # TODO: should this be isomeric?
+        ],
         product=QueryMol(
             "[*:4][c:3]1[n:2][o:1][c:6]([*:7])[n:5]1"
         ),  # TODO: check if aromatic; BOC cleavage
@@ -356,7 +356,7 @@ REAL_REACTIONS = (
     Reaction(
         reactants=[
             QueryMol(r"[H][O:1]/[N:2]=[C:3](\[*:4])[N:5]([H])[H]")
-        ],  # TODO: should this be isomeric?
+        ],
         product=QueryMol("[H][n:5]1[c:3]([*:4])[n:2][o:1]c1=O"),
         reaction_id=270690,
         chemical_space="real",
@@ -491,6 +491,34 @@ REAL_REACTIONS = (
             "[H][c:9]1[c:8](-[c:7]2[n:1][c:2]([*:4])[s:3][c:5]2[*:6])[n:10][n:11][n:12]1[*:13]"
         ),  # TODO: check if aromatic
         reaction_id=274972,
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[
+            QueryMol(
+                "[H][C:1]#[C:2][*:3].[H]C([H])([H])C(OC(=O)[N:4]([H])[*:5])(C([H])([H])[H])C([H])([H])[H]"
+            ),
+            QueryMol("[N-:6]=[N+:7]=[N:8][*:9]"),
+            QueryMol("[H]O[C:10](=[O:11])[*:12]"),
+        ],
+        product=QueryMol(
+            "[H][N:4]([*:5])[C:10](=[O:11])[*:12].[H][c:1]1[c:2]([*:3])[n:6][n:7][n:8]1[*:9]"
+        ),  # TODO: check aromatic
+        reaction_id=276010,  # TODO: check if okay to reuse ID
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[
+            QueryMol(
+                "[N-:1]=[N+:2]=[N:3][*:4].[H]C([H])([H])C(OC(=O)[N:5]([H])[*:6])(C([H])([H])[H])C([H])([H])[H]"
+            ),
+            QueryMol("[H][C:7]#[C:8][*:9]"),
+            QueryMol("[H]O[C:10](=[O:11])[*:12]"),
+        ],
+        product=QueryMol(
+            "[H][N:5]([*:6])[C:10](=[O:11])[*:12].[H][c:7]1[c:8]([*:9])[n:1][n:2][n:3]1[*:4]"
+        ),  # TODO: check aromatic
+        reaction_id=276010,  # TODO: check if okay to reuse ID
         chemical_space="real",
     ),
     Reaction(
