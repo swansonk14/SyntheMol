@@ -231,39 +231,264 @@ REAL_REACTIONS = (
         chemical_space="real",
     ),
     Reaction(
-        reactants=[QueryMol(""), QueryMol("")],
+        reactants=[QueryMol("[*:1][Cl]"), QueryMol("[*:2][Cl]")],
+        product=QueryMol("O=S(=O)([*:1])[*:2]"),
+        reaction_id=1500,  # TODO: check if okay to reuse ID
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("[*:1][Cl]"), QueryMol("[H]OS(=O)(=O)[*:2]")],
+        product=QueryMol("O=S(=O)([*:1])[*:2]"),
+        reaction_id=1500,  # TODO: check if okay to reuse ID
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("[H]OS(=O)(=O)[*:1]"), QueryMol("[*:2][Cl]")],
+        product=QueryMol("O=S(=O)([*:1])[*:2]"),
+        reaction_id=1500,  # TODO: check if okay to reuse ID
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("[H]OS(=O)(=O)[*:1]"), QueryMol("[H]OS(=O)(=O)[*:2]")],
+        product=QueryMol("O=S(=O)([*:1])[*:2]"),
+        reaction_id=1500,  # TODO: check if okay to reuse ID
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("")],
         product=QueryMol(""),
-        reaction_id=0,
+        reaction_id=1982,  # TODO: figure out R group ring
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("[*:1][SH]"), QueryMol("[*:2][Cl]")],
+        product=QueryMol("O=S(=O)([*:1])[*:2]"),
+        reaction_id=2714,  # TODO: check if okay to reuse ID
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("[*:1][SH]"), QueryMol("[H]OS(=O)(=O)[*:2]")],
+        product=QueryMol("O=S(=O)([*:1])[*:2]"),
+        reaction_id=2714,  # TODO: check if okay to reuse ID
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[
+            QueryMol(
+                r"[H][O:1]/[N:2]=[C:3](\[*:4])[N:5]([H])[H]"
+            ),  # TODO: should this be isomeric?
+            QueryMol("[H]O[C:6](=O)[*:7]"),
+        ],
+        product=QueryMol(
+            "[*:4][c:3]1[n:2][o:1][c:6]([*:7])[n:5]1"
+        ),  # TODO: check if aromatic
+        reaction_id=265764,
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("[*:1][N:2]([H])[*:3]"), QueryMol(f"[{HALIDE}][*:4]")],
+        product=QueryMol("[*:1][N:2]([*:3])[*:4]"),
+        reaction_id=269956,  # TODO: ester hydrolysis
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("[*:1][N:2]([H])[*:3]"), QueryMol(f"[{HALIDE}][*:4]")],
+        product=QueryMol("[*:1][N:2]([*:3])[*:4]"),
+        reaction_id=269982,  # TODO: BOC cleavage
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[
+            QueryMol(r"[H][O:1]/[N:2]=[C:3](\[*:4])[N:5]([H])[H]"),
+            QueryMol("[H]O[C:6](=O)[*:7]"),
+        ],  # TODO: should this be isomeric?
+        product=QueryMol(
+            "[*:4][c:3]1[n:2][o:1][c:6]([*:7])[n:5]1"
+        ),  # TODO: check if aromatic; BOC cleavage
+        reaction_id=270036,
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[
+            QueryMol("[*:1][N:2]([H])[*:3]"),
+            QueryMol("O=C(O[C:4](=[O:5])[*:6])[*]"),
+        ],
+        product=QueryMol("[O:5]=[C:4]([*:6])[N:2]([*:1])[*:3]"),
+        reaction_id=270062,
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("[H][N:1]([H])[*:2]"), QueryMol("[H]O[C:3](=[O:4])[*:5]"),],
+        product=QueryMol("[H][N:1]([*:2])[C:3](=[O:4])[*:5]"),
+        reaction_id=270112,  # TODO: ester hydrolysis
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("[*:1][N:2]([H])[*:3]"), QueryMol(f"[{HALIDE}][*:4]")],
+        product=QueryMol("[*:1][N:2]([*:3])[*:4]"),
+        reaction_id=270122,  # TODO: ester hydrolysis
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("[*:1][N:2]([H])[*:3]"), QueryMol(f"[{HALIDE}][*:4]")],
+        product=QueryMol("[*:1][N:2]([*:3])[*:4]"),
+        reaction_id=270166,  # TODO: BOC cleavage
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("[N:1]#[C:2][*:3]"), QueryMol("[H]O[C:4](=O)[*:5]")],
+        product=QueryMol("[*:3][c:2]1no[c:4]([*:5])[n:3]1"),  # TODO: check if aromatic
+        reaction_id=270196,
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("[*:1][N:2]([H])[*:3]"), QueryMol(f"[{HALIDE}][*:4]")],
+        product=QueryMol("[*:1][N:2]([*:3])[*:4]"),
+        reaction_id=270344,  # TODO: check if okay to reuse ID; ester hydrolysis
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("[*:1][SH:2]"), QueryMol(f"[{HALIDE}][*:3]")],
+        product=QueryMol("[*:1]S[*:3]"),
+        reaction_id=270344,  # TODO: check if okay to reuse ID; ester hydrolysis
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[
+            QueryMol(r"[H][O:1]/[N:2]=[C:3](\[*:4])[N:5]([H])[H]")
+        ],  # TODO: should this be isomeric?
+        product=QueryMol("[H][n:5]1[c:3]([*:4])[n:2][o:1]c1=O"),
+        reaction_id=270690,
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[
+            QueryMol("S=[C:1]=[N:2][*:3]"),
+            QueryMol("[H][N:4]([*:5])[*:6]"),
+            QueryMol("[H][N:7]([H])[N:8]([H])[C:9](=O)[*:10]"),
+        ],
+        product=QueryMol(
+            "[*:5][N:4]([*:6])[c:1]1[n:7][n:8][c:9]([*:10])[n:2]1[*:3]"
+        ),  # TODO: should this be aromatic?
+        reaction_id=270942,
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("[O:1]=[C:2]([*:3])O*"), QueryMol("[*:4][N:5]([H])[*:6]"),],
+        product=QueryMol("[*:3][C:2]([N:5]([*:4])[*:6])=[O:1]"),
+        reaction_id=271144,  # TODO: ester hydrolysis
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("[N:1]#[C:2][*:3]"), QueryMol("[H]O[C:4](=O)[*:5]")],
+        product=QueryMol("[*:3][c:2]1no[c:4]([*:5])[n:3]1"),  # TODO: check if aromatic
+        reaction_id=271362,  # TODO: BOC cleavage
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("[H]OB([*:1])O[H]"), QueryMol(f"[{HALIDE}][*:2]")],
+        product=QueryMol("[*:1][*:2]"),
+        reaction_id=271570,
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[
+            QueryMol("[H][N:1]([H])[N:2]([H])[C:3](=[O:4])[*:5]"),
+            QueryMol("[H]O[C:6](=O)[*:7]"),
+        ],
+        product=QueryMol(
+            "[*:5][c:3]1[n:2][n:1][c:6]([*:7])[o:4]1"
+        ),  # TODO: check if aromatic
+        reaction_id=271722,
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol(f"[H][C:1]([{HALIDE}])([*:2])[C:3](=O)[*:4]"),],
+        product=QueryMol("[H]N([H])c1n[c:3]([*:4])[c:1]([*:2])s1"),
+        reaction_id=272150,  # TODO: BOC cleavage
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("[H][N:1]([H])[*:2]"), QueryMol("[H]O[C:3](=[O:4])[*:5]"),],
+        product=QueryMol("[H][N:1]([*:2])[C:3](=[O:4])[*:5]"),
+        reaction_id=272270,  # TODO: ester hydrolysis
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("[H][N:1]([H])[*:2]"), QueryMol("[H]O[C:3](=[O:4])[*:5]")],
+        product=QueryMol("[H][N:1]([*:2])[C:3](=[O:4])[*:5]"),
+        reaction_id=272430,  # TODO: BOC cleavage
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("[*:1][N:2]([H])[*:3]"), QueryMol(f"[{HALIDE}][*:4]")],
+        product=QueryMol("[*:1][N:2]([*:3])[*:4]"),
+        reaction_id=272692,  # TODO: check if okay to reuse ID; BOC cleavage
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("[*:1][OH:2]"), QueryMol(f"[{HALIDE}][*:3]")],
+        product=QueryMol("[*:1]O[*:3]"),
+        reaction_id=272692,  # TODO: check if okay to reuse ID; BOC cleavage
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("[*:1][N:2]([H])[*:3]"), QueryMol(f"[{HALIDE}][*:4]")],
+        product=QueryMol("[*:1][N:2]([*:3])[*:4]"),
+        reaction_id=272710,  # TODO: check if okay to reuse ID; ester hydrolysis
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("[*:1][OH,SH:2]"), QueryMol(f"[{HALIDE}][*:3]")],
+        product=QueryMol("[*:1][O,S][*:3]"),
+        reaction_id=272710,  # TODO: check if okay to reuse ID; ester hydrolysis
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("[H]OB([*:1])O[H]"), QueryMol(f"[{HALIDE}][*:2]")],
+        product=QueryMol("[*:1][*:2]"),
+        reaction_id=273584,  # TODO: BOC cleavage
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("[H][N:1]([H])[*:2]"), QueryMol("[H]O[C:3](=[O:4])[*:5]")],
+        product=QueryMol("[H][N:1]([*:2])[C:3](=[O:4])[*:5]"),
+        reaction_id=273652,  # TODO: ester hydrolysis
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[QueryMol("[H]OB([*:1])O[H]"), QueryMol(f"[{HALIDE}][*:2]")],
+        product=QueryMol("[*:1][*:2]"),
+        reaction_id=273712,
+        chemical_space="real",
+    ),
+    Reaction(
+        reactants=[
+            QueryMol("[N-:1]=[N+:2]=[N:3][*:4]"),  # TODO: is the azide correct?
+            QueryMol("[H][C:5]#[C:6][*:7]"),
+        ],
+        product=QueryMol(
+            "[H][c:5]1[c:6]([*:7])[n:1][n:2][n:3]1[*:4]"
+        ),  # TODO: check if aromatic
+        reaction_id=273910,
         chemical_space="real",
     ),
     Reaction(
         reactants=[QueryMol(""), QueryMol("")],
         product=QueryMol(""),
-        reaction_id=0,
+        reaction_id=274052,  # TODO: X group with BOC
         chemical_space="real",
     ),
     Reaction(
-        reactants=[QueryMol(""), QueryMol("")],
-        product=QueryMol(""),
-        reaction_id=0,
-        chemical_space="real",
-    ),
-    Reaction(
-        reactants=[QueryMol(""), QueryMol("")],
-        product=QueryMol(""),
-        reaction_id=0,
-        chemical_space="real",
-    ),
-    Reaction(
-        reactants=[QueryMol(""), QueryMol("")],
-        product=QueryMol(""),
-        reaction_id=0,
-        chemical_space="real",
-    ),
-    Reaction(
-        reactants=[QueryMol(""), QueryMol("")],
-        product=QueryMol(""),
-        reaction_id=0,
+        reactants=[
+            QueryMol("[H][N:1]([H])[C:2](=[S:3])[*:4]"),
+            QueryMol(
+                f"[H][C:5]([*:6])([{HALIDE}])[C:7](=O)[C:8]#[C:9][Si](C([H])([H])[H])(C([H])([H])[H])C([H])([H])[H]"
+            ),
+            QueryMol("[N-:10]=[N+:11]=[N:12][*:13]"),  # TODO: is the azide correct?
+        ],
+        product=QueryMol("[H][c:9]1[c:8](-[c:7]2[n:1][c:2]([*:4])[s:3][c:5]2[*:6])[n:10][n:11][n:12]1[*:13]"),  # TODO: check if aromatic
+        reaction_id=274972,
         chemical_space="real",
     ),
     Reaction(
