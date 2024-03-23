@@ -7,7 +7,7 @@ HALIDE = "F,Cl,Br,I"
 REAL_REACTIONS = (
     Reaction(
         reactants=[
-            QueryMol("CC(C)(C)OC(=O)[N:1]([*:2])[*:3].[*:4][N:5]([H])[*:6]"),
+            QueryMol("[H]C([H])([H])C(OC(=O)[N:1]([*:2])[*:3])(C([H])([H])[H])C([H])([H])[H].[*:4][N:5]([H])[*:6]"),
             QueryMol("[OH1][C:7]([*:8])=[O:9]"),
             QueryMol("[OH1][C:10]([*:11])=[O:12]"),
         ],
@@ -117,7 +117,7 @@ REAL_REACTIONS = (
         ],
         product=QueryMol(
             "[H]/[C:2](=[C:4]1/[N:5]=[C:6]([*:7])[O:8][C:3]1=[O:9])[*:1]"
-        ),  # TODO: should it be aromatic?
+        ),
         reaction_id=10,
         chemical_space="real",
     ),
@@ -166,7 +166,7 @@ REAL_REACTIONS = (
         reactants=[QueryMol(f"[H][C:1]([{HALIDE}])([*:2])[C:3](=O)[*:4]")],
         product=QueryMol(
             "[H]N([H])c1n[c:3]([*:4])[c:1]([*:2])s1"
-        ),  # TODO: check that this is aromatic
+        ),
         reaction_id=43,
         chemical_space="real",
     ),
@@ -183,7 +183,7 @@ REAL_REACTIONS = (
         ],
         product=QueryMol(
             "[H][c:4]1[c:7]([*:8]([H])([H])[H])[n:1][n:2]([*:3])[c:5]1[*:6]"
-        ),  # TODO: check if aromatic
+        ),
         reaction_id=49,
         chemical_space="real",
     ),
@@ -194,7 +194,7 @@ REAL_REACTIONS = (
         ],
         product=QueryMol(
             "[H][C:7]1([H])[C:8]([*:9])=[N:1][N:2]([*:3])[C:5]([H])([*:6])[C:4]1([H])[H]"
-        ),  # TODO: check if aromatic
+        ),
         reaction_id=49,  # TODO: check if it's okay to reuse ID 49 for the two versions of it
         chemical_space="real",
     ),
@@ -202,7 +202,7 @@ REAL_REACTIONS = (
         reactants=[QueryMol("[H][N:1]([H])[N:2]([H])[*:3]")],
         product=QueryMol(
             "[H]Oc1c([H])c([H])c([H])c([H])c1C(=O)c1c([H])[n:1][n:2]([*:3])c1[H]"
-        ),  # TODO: check if aromatic
+        ),
         reaction_id=52,
         chemical_space="real",
     ),
@@ -274,14 +274,12 @@ REAL_REACTIONS = (
     ),
     Reaction(
         reactants=[
-            QueryMol(
-                r"[H][O:1]/[N:2]=[C:3](\[*:4])[N:5]([H])[H]"
-            ),
+            QueryMol(r"[H][O:1]/[N:2]=[C:3](\[*:4])[N:5]([H])[H]"),
             QueryMol("[H]O[C:6](=O)[*:7]"),
         ],
         product=QueryMol(
             "[*:4][c:3]1[n:2][o:1][c:6]([*:7])[n:5]1"
-        ),  # TODO: check if aromatic
+        ),
         reaction_id=265764,
         chemical_space="real",
     ),
@@ -304,7 +302,7 @@ REAL_REACTIONS = (
         ],
         product=QueryMol(
             "[*:4][c:3]1[n:2][o:1][c:6]([*:7])[n:5]1"
-        ),  # TODO: check if aromatic; BOC cleavage
+        ),
         reaction_id=270036,
         chemical_space="real",
     ),
@@ -337,7 +335,7 @@ REAL_REACTIONS = (
     ),
     Reaction(
         reactants=[QueryMol("[N:1]#[C:2][*:3]"), QueryMol("[H]O[C:4](=O)[*:5]")],
-        product=QueryMol("[*:3][c:2]1no[c:4]([*:5])[n:3]1"),  # TODO: check if aromatic
+        product=QueryMol("[*:3][c:2]1no[c:4]([*:5])[n:3]1"),
         reaction_id=270196,
         chemical_space="real",
     ),
@@ -354,9 +352,7 @@ REAL_REACTIONS = (
         chemical_space="real",
     ),
     Reaction(
-        reactants=[
-            QueryMol(r"[H][O:1]/[N:2]=[C:3](\[*:4])[N:5]([H])[H]")
-        ],
+        reactants=[QueryMol(r"[H][O:1]/[N:2]=[C:3](\[*:4])[N:5]([H])[H]")],
         product=QueryMol("[H][n:5]1[c:3]([*:4])[n:2][o:1]c1=O"),
         reaction_id=270690,
         chemical_space="real",
@@ -369,7 +365,7 @@ REAL_REACTIONS = (
         ],
         product=QueryMol(
             "[*:5][N:4]([*:6])[c:1]1[n:7][n:8][c:9]([*:10])[n:2]1[*:3]"
-        ),  # TODO: should this be aromatic?
+        ),
         reaction_id=270942,
         chemical_space="real",
     ),
@@ -381,7 +377,7 @@ REAL_REACTIONS = (
     ),
     Reaction(
         reactants=[QueryMol("[N:1]#[C:2][*:3]"), QueryMol("[H]O[C:4](=O)[*:5]")],
-        product=QueryMol("[*:3][c:2]1no[c:4]([*:5])[n:3]1"),  # TODO: check if aromatic
+        product=QueryMol("[*:3][c:2]1no[c:4]([*:5])[n:3]1"),
         reaction_id=271362,  # TODO: BOC cleavage
         chemical_space="real",
     ),
@@ -398,7 +394,7 @@ REAL_REACTIONS = (
         ],
         product=QueryMol(
             "[*:5][c:3]1[n:2][n:1][c:6]([*:7])[o:4]1"
-        ),  # TODO: check if aromatic
+        ),
         reaction_id=271722,
         chemical_space="real",
     ),
@@ -469,7 +465,7 @@ REAL_REACTIONS = (
         ],
         product=QueryMol(
             "[H][c:5]1[c:6]([*:7])[n:1][n:2][n:3]1[*:4]"
-        ),  # TODO: check if aromatic
+        ),
         reaction_id=273910,
         chemical_space="real",
     ),
@@ -489,7 +485,7 @@ REAL_REACTIONS = (
         ],
         product=QueryMol(
             "[H][c:9]1[c:8](-[c:7]2[n:1][c:2]([*:4])[s:3][c:5]2[*:6])[n:10][n:11][n:12]1[*:13]"
-        ),  # TODO: check if aromatic
+        ),
         reaction_id=274972,
         chemical_space="real",
     ),
@@ -503,7 +499,7 @@ REAL_REACTIONS = (
         ],
         product=QueryMol(
             "[H][N:4]([*:5])[C:10](=[O:11])[*:12].[H][c:1]1[c:2]([*:3])[n:6][n:7][n:8]1[*:9]"
-        ),  # TODO: check aromatic
+        ),
         reaction_id=276010,  # TODO: check if okay to reuse ID
         chemical_space="real",
     ),
@@ -517,7 +513,7 @@ REAL_REACTIONS = (
         ],
         product=QueryMol(
             "[H][N:5]([*:6])[C:10](=[O:11])[*:12].[H][c:7]1[c:8]([*:9])[n:1][n:2][n:3]1[*:4]"
-        ),  # TODO: check aromatic
+        ),
         reaction_id=276010,  # TODO: check if okay to reuse ID
         chemical_space="real",
     ),
@@ -528,7 +524,7 @@ REAL_REACTIONS = (
         ],
         product=QueryMol(
             "[H][n:1]1[c:8]([*:9])[n:7][n:6][c:2]1[N:3]([*:4])[*:5]"
-        ),  # TODO: check aromatic
+        ),
         reaction_id=276090,
         chemical_space="real",
     ),
@@ -540,7 +536,7 @@ REAL_REACTIONS = (
         ],
         product=QueryMol(
             "[*:8][n:7]1[n:6][c:1]([*:2])[n:3][c:4]1[*:5]"
-        ),  # TODO: check aromatic
+        ),
         reaction_id=276630,
         chemical_space="real",
     ),
@@ -564,7 +560,7 @@ REAL_REACTIONS = (
         ],
         product=QueryMol(
             "[H][c:1]1[c:2]([H])[c:3]([H])[c:4]2[c:6]([c:9]1[H])[C:7]([*:8])=[N:14][C:12]([H])([*:13])[C:10](=[O:11])[N:5]2[H]"
-        ),  # TODO: check aromatic
+        ),
         reaction_id=276770,
         chemical_space="real",
     ),
