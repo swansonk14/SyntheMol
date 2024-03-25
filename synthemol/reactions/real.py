@@ -518,9 +518,16 @@ REAL_REACTIONS = (
         chemical_space="real",
     ),
     Reaction(
-        reactants=[QueryMol(""), QueryMol("")],
-        product=QueryMol(""),
-        reaction_id=274052,  # TODO: X group with BOC
+        reactants=[
+            QueryMol(
+                "[H]C([H])([H])O[C:1]1=[N:2][C:3]([H])([H])[O,CH2:4][O,CH2:5][C:6]1([H])[H]"
+            ),
+            QueryMol("[H][N:7]([H])[N:8]([H])[C:9](=O)[*:10]"),
+        ],
+        product=QueryMol(
+            "[H][C:6]1([H])[O,CH2:5][O,CH2:4][C:3]([H])([H])[n:2]2[c:9]([*:10])[n:8][n:7][c:1]21"
+        ),
+        reaction_id=274052,
         chemical_space="real",
     ),
     Reaction(
@@ -615,9 +622,16 @@ REAL_REACTIONS = (
         chemical_space="real",
     ),
     Reaction(
-        reactants=[QueryMol(""), QueryMol("")],
-        product=QueryMol(""),  # TODO: X group with BOC
-        reaction_id=279370,
+        reactants=[
+            QueryMol(
+                "[H]C([H])([H])O[C:1]1=[N:2][C:3]([H])([H])[O,CH2:4][O,CH2:5][C:6]1([H])[H]"
+            ),
+            QueryMol("[H][N:7]([H])[N:8]([H])[C:9](=O)[*:10]"),
+        ],
+        product=QueryMol(
+            "[H][C:6]1([H])[O,CH2:5][O,CH2:4][C:3]([H])([H])[n:2]2[c:9]([*:10])[n:8][n:7][c:1]21"
+        ),
+        reaction_id=279370,  # TODO: BOC cleavage
         chemical_space="real",
     ),
 )
