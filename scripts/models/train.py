@@ -122,7 +122,6 @@ def train(
                 smiles=test_data[smiles_column],
                 fingerprints=test_fingerprints,
                 num_workers=num_workers,
-                use_gpu=use_gpu
             )
         else:
             # Train and save sklearn model
