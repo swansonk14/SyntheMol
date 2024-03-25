@@ -510,7 +510,7 @@ REAL_REACTIONS = (
     ),
     Reaction(
         reactants=[
-            QueryMol("[N-:1]=[N+:2]=[N:3][*:4]"),  # TODO: is the azide correct?
+            QueryMol("[N-:1]=[N+:2]=[N:3][*:4]"),
             QueryMol("[H][C:5]#[C:6][*:7]"),
         ],
         product=QueryMol("[H][c:5]1[c:6]([*:7])[n:1][n:2][n:3]1[*:4]"),
@@ -529,7 +529,7 @@ REAL_REACTIONS = (
             QueryMol(
                 f"[H][C:5]([*:6])([{HALIDE}])[C:7](=O)[C:8]#[C:9][Si](C([H])([H])[H])(C([H])([H])[H])C([H])([H])[H]"
             ),
-            QueryMol("[N-:10]=[N+:11]=[N:12][*:13]"),  # TODO: is the azide correct?
+            QueryMol("[N-:10]=[N+:11]=[N:12][*:13]"),
         ],
         product=QueryMol(
             "[H][c:9]1[c:8](-[c:7]2[n:1][c:2]([*:4])[s:3][c:5]2[*:6])[n:10][n:11][n:12]1[*:13]"
