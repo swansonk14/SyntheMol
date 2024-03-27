@@ -278,6 +278,7 @@ class MoleculeScorer:
                 model_path=model_path,
                 fingerprint_type=fingerprint_type,
                 device=device,
+                h2o_solvents=h2o_solvents,
             )
             for score_type, model_path, fingerprint_type in zip(
                 score_types, model_paths, fingerprint_types

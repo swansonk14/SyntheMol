@@ -182,6 +182,9 @@ class RLModel(ABC):
             if h2o_solvents:
                 solvent_features = torch.tensor(H2O_FEATURES).repeat(features.shape[0], 1)  # (molecule_num, solvent_features_size)
                 molecules_features = torch.cat((molecules_features, solvent_features), dim=1)  # (molecule_num, features_size + solvent_features_size)
+            
+            # Cast molecules_features to float
+            molecules_features = molecules_features.float()
 
             # Average features across molecules in the tuple if desired
             if average_across_tuple:
@@ -674,7 +677,6 @@ class RLModelMLP(RLModel):
         # Load model weights
         loaded_state = torch.load(model_path, map_location=lambda storage, loc: storage)
         loaded_state_dict = loaded_state["state_dict"]
-        print(loaded_state["state_dict"]['readout.1.weight'].shape)
 
         # Get layer names in loaded model (layer names are <name>.<num>.<weight/bias>)
         loaded_weight_names = sorted(
