@@ -156,9 +156,11 @@ REAL_REACTIONS = (
     Reaction(
         reactants=[
             QueryMol("[H][C:1]([H])([*:2])[C:3](=O)[*:4]"),
-            QueryMol(""),
-        ],  # TODO: figure out R group ring
-        product=QueryMol(""),  # TODO: figure out R group ring
+            QueryMol("[H][N:5]([H])[c:6][c:7][C:8](=O)[C:9]([H])([H])[H]"),
+        ],  # TODO: check atom mapping of aromatic carbons
+        product=QueryMol(
+            "[H][C:9]([H])([H])[c:8]1[c:7][c:6][n:5][c:3]([*:4])[c:1]1[*:2]"
+        ),
         reaction_id=42,
         chemical_space="real",
     ),
@@ -205,15 +207,21 @@ REAL_REACTIONS = (
         chemical_space="real",
     ),
     Reaction(
-        reactants=[QueryMol(""), QueryMol("")],
-        product=QueryMol(""),
-        reaction_id=55,  # TODO: figure out R group ring
+        reactants=[
+            QueryMol("[H][O:1][c:2][c:3][C:4]([H])=O"),
+            QueryMol(f"[H][C:5]([H])([*:6])[{HALIDE}]"),
+        ],
+        product=QueryMol("[H][C:4]1=[C:5]([*:6])[O:1][c:2][c:3]1"),
+        reaction_id=55,  # TODO: check aromaticity
         chemical_space="real",
     ),
     Reaction(
-        reactants=[QueryMol(""), QueryMol("")],
-        product=QueryMol(""),
-        reaction_id=60,  # TODO: figure out R group ring
+        reactants=[
+            QueryMol("[H][C:1](=O)[*:2]"),
+            QueryMol("[H][N:3]([H])[c:4][c:5][N:6]([H])[H]"),
+        ],
+        product=QueryMol("[H][N:3]1[C:1]([*:2])=[N:6][c:5][c:4]1"),
+        reaction_id=60,  # TODO: check aromaticity
         chemical_space="real",
     ),
     Reaction(
@@ -253,9 +261,12 @@ REAL_REACTIONS = (
         chemical_space="real",
     ),
     Reaction(
-        reactants=[QueryMol("")],
-        product=QueryMol(""),
-        reaction_id=1982,  # TODO: figure out R group ring
+        reactants=[
+            QueryMol("[H][N:1]([H])[c:2][c:3][C:4]#[N:5]"),
+            QueryMol("[H][N:6]([H])[*:7]"),
+        ],
+        product=QueryMol("[H]c1[n:1][c:2][c:3][c:4]([N:6]([H])[*:7])[n:5]1"),
+        reaction_id=1982,  # TODO: check aromaticity
         chemical_space="real",
     ),
     Reaction(
@@ -616,9 +627,12 @@ REAL_REACTIONS = (
         chemical_space="real",
     ),
     Reaction(
-        reactants=[QueryMol(""), QueryMol("")],
-        product=QueryMol(""),
-        reaction_id=279312,  # TODO: R group ring
+        reactants=[
+            QueryMol("[H][N:1]([H])[N:2]([H])[*:3]"),
+            QueryMol("[H][C:4](=[O:5])[c:6][c:7][C:8](=O)OC([H])([H])[H]"),
+        ],
+        product=QueryMol("[H][c:8]1[n:1][n:2]([*:3])[c:4](=[O:5])[c:6][c:7]1"),
+        reaction_id=279312,  # TODO: check aromaticity, BOC cleavage
         chemical_space="real",
     ),
     Reaction(
