@@ -4,6 +4,12 @@ from synthemol.reactions.reaction import Reaction
 
 HALIDE = "F,Cl,Br,I"
 
+BOC_CLEAVAGE = Reaction(
+    reactants=[QueryMol("[H]C([H])([H])C(OC(=O)[*:1])(C([H])([H])[H])C([H])([H])[H]")],
+    product=QueryMol("[*:1]"),
+)
+
+
 REAL_REACTIONS = (
     Reaction(
         reactants=[
@@ -54,7 +60,8 @@ REAL_REACTIONS = (
         product=QueryMol("[*:5][C:4](=[O:6])[N:2]([*:1])[*:3]"),
         chemical_space="real",
         reaction_id=240690,
-    ),  # TODO: Boc cleavage
+        post_reaction=BOC_CLEAVAGE,
+    ),
     Reaction(
         reactants=[QueryMol("[*:1][N:2]([H])[H:3]"), QueryMol("[*:4][N:5]([H])[*:6]")],
         product=QueryMol("O=C([N:2]([*:1])[H:3])[N:5]([*:4])[*:6]"),
@@ -99,7 +106,8 @@ REAL_REACTIONS = (
         product=QueryMol("O=C(C(=O)[N:2]([*:1])[*:3])[N:5]([*:4])[H:6]"),
         chemical_space="real",
         reaction_id=271948,
-    ),  # TODO: Boc cleavage
+        post_reaction=BOC_CLEAVAGE,
+    ),
     Reaction(
         reactants=[QueryMol("[OH1:1][C:2]([*:3])=[O:4]"), QueryMol(f"[{HALIDE}][*:5]")],
         product=QueryMol("[O:4]=[C:2]([*:3])[O:1][*:5]"),
@@ -157,7 +165,7 @@ REAL_REACTIONS = (
         reactants=[
             QueryMol("[H][C:1]([H])([*:2])[C:3](=O)[*:4]"),
             QueryMol("[H][N:5]([H])[c:6][c:7][C:8](=O)[C:9]([H])([H])[H]"),
-        ],  # TODO: check atom mapping of aromatic carbons
+        ],  # TODO: check aromaticity
         product=QueryMol(
             "[H][C:9]([H])([H])[c:8]1[c:7][c:6][n:5][c:3]([*:4])[c:1]1[*:2]"
         ),
@@ -308,7 +316,8 @@ REAL_REACTIONS = (
         reactants=[QueryMol("[*:1][N:2]([H])[*:3]"), QueryMol(f"[{HALIDE}][*:4]")],
         product=QueryMol("[*:1][N:2]([*:3])[*:4]"),
         chemical_space="real",
-        reaction_id=269982,  # TODO: BOC cleavage
+        reaction_id=269982,
+        post_reaction=BOC_CLEAVAGE,
     ),
     Reaction(
         reactants=[
@@ -344,7 +353,8 @@ REAL_REACTIONS = (
         reactants=[QueryMol("[*:1][N:2]([H])[*:3]"), QueryMol(f"[{HALIDE}][*:4]")],
         product=QueryMol("[*:1][N:2]([*:3])[*:4]"),
         chemical_space="real",
-        reaction_id=270166,  # TODO: BOC cleavage
+        reaction_id=270166,
+        post_reaction=BOC_CLEAVAGE,
     ),
     Reaction(
         reactants=[QueryMol("[N:1]#[C:2][*:3]"), QueryMol("[H]O[C:4](=O)[*:5]")],
@@ -392,7 +402,8 @@ REAL_REACTIONS = (
         reactants=[QueryMol("[N:1]#[C:2][*:3]"), QueryMol("[H]O[C:4](=O)[*:5]")],
         product=QueryMol("[*:3][c:2]1no[c:4]([*:5])[n:3]1"),
         chemical_space="real",
-        reaction_id=271362,  # TODO: BOC cleavage
+        reaction_id=271362,
+        post_reaction=BOC_CLEAVAGE,
     ),
     Reaction(
         reactants=[QueryMol("[H]OB([*:1])O[H]"), QueryMol(f"[{HALIDE}][*:2]")],
@@ -413,7 +424,8 @@ REAL_REACTIONS = (
         reactants=[QueryMol(f"[H][C:1]([{HALIDE}])([*:2])[C:3](=O)[*:4]"),],
         product=QueryMol("[H]N([H])c1n[c:3]([*:4])[c:1]([*:2])s1"),
         chemical_space="real",
-        reaction_id=272150,  # TODO: BOC cleavage
+        reaction_id=272150,
+        post_reaction=BOC_CLEAVAGE,
     ),
     Reaction(
         reactants=[QueryMol("[H][N:1]([H])[*:2]"), QueryMol("[H]O[C:3](=[O:4])[*:5]"),],
@@ -425,21 +437,24 @@ REAL_REACTIONS = (
         reactants=[QueryMol("[H][N:1]([H])[*:2]"), QueryMol("[H]O[C:3](=[O:4])[*:5]")],
         product=QueryMol("[H][N:1]([*:2])[C:3](=[O:4])[*:5]"),
         chemical_space="real",
-        reaction_id=272430,  # TODO: BOC cleavage
+        reaction_id=272430,
+        post_reaction=BOC_CLEAVAGE,
     ),
     Reaction(
         reactants=[QueryMol("[*:1][N:2]([H])[*:3]"), QueryMol(f"[{HALIDE}][*:4]")],
         product=QueryMol("[*:1][N:2]([*:3])[*:4]"),
         chemical_space="real",
-        reaction_id=272692,  # TODO: BOC cleavage
+        reaction_id=272692,
         sub_reaction_id=1,
+        post_reaction=BOC_CLEAVAGE,
     ),
     Reaction(
         reactants=[QueryMol("[*:1][OH:2]"), QueryMol(f"[{HALIDE}][*:3]")],
         product=QueryMol("[*:1]O[*:3]"),
         chemical_space="real",
-        reaction_id=272692,  # TODO: BOC cleavage
+        reaction_id=272692,
         sub_reaction_id=2,
+        post_reaction=BOC_CLEAVAGE,
     ),
     Reaction(
         reactants=[QueryMol("[*:1][N:2]([H])[*:3]"), QueryMol(f"[{HALIDE}][*:4]")],
@@ -453,7 +468,7 @@ REAL_REACTIONS = (
         product=QueryMol("[*:1][O,S][*:3]"),
         chemical_space="real",
         reaction_id=272710,  # TODO: ester hydrolysis
-        sub_reaction_id=2
+        sub_reaction_id=2,
     ),
     Reaction(
         reactants=[QueryMol("[H][N:1]([H])[*:2]"), QueryMol("[H][N:3]([H])[*:4]")],
@@ -480,19 +495,22 @@ REAL_REACTIONS = (
         ],
         product=QueryMol("[H][N:1](C(=O)[N:3]([*:4])[*:5])[*:2]"),
         chemical_space="real",
-        reaction_id=273454,  # TODO: BOC cleavage
+        reaction_id=273454,
+        post_reaction=BOC_CLEAVAGE,
     ),
     Reaction(
         reactants=[QueryMol("[H][N:1]([*:2])[*:3]"), QueryMol("[H][N:4]([H])[*:5]")],
         product=QueryMol("[H][N:4](C(=O)[N:1]([*:2])[*:3])[*:5]"),
         chemical_space="real",
-        reaction_id=273458,  # TODO: BOC cleavage
+        reaction_id=273458,
+        post_reaction=BOC_CLEAVAGE,
     ),
     Reaction(
         reactants=[QueryMol("[H][N:1]([H])[*:2]"), QueryMol("[H][N:3]([*:4])[*:5]")],
         product=QueryMol("[H][N:1](C(=O)[N:3]([*:4])[*:5])[*:2]"),
         chemical_space="real",
-        reaction_id=273464,  # TODO: BOC cleavage
+        reaction_id=273464,
+        post_reaction=BOC_CLEAVAGE,
     ),
     Reaction(
         reactants=[QueryMol("[H][N:1]([*:2])[*:3]"), QueryMol("[H][N:4]([H])[*:5]")],
@@ -504,7 +522,8 @@ REAL_REACTIONS = (
         reactants=[QueryMol("[H][N:1]([*:2])[*:3]"), QueryMol("[H][N:4]([H])[*:5]")],
         product=QueryMol("[H][N:4]([*:5])C(=O)C(=O)[N:1]([*:2])[*:3]"),
         chemical_space="real",
-        reaction_id=273496,  # TODO: BOC cleavage
+        reaction_id=273496,
+        post_reaction=BOC_CLEAVAGE,
     ),
     Reaction(
         reactants=[
@@ -513,13 +532,15 @@ REAL_REACTIONS = (
         ],
         product=QueryMol("[H][N:1](C(=O)[N:3]([*:4])[*:5])[*:2]"),
         chemical_space="real",
-        reaction_id=273574,  # TODO: BOC cleavage
+        reaction_id=273574,
+        post_reaction=BOC_CLEAVAGE,
     ),
     Reaction(
         reactants=[QueryMol("[H]OB([*:1])O[H]"), QueryMol(f"[{HALIDE}][*:2]")],
         product=QueryMol("[*:1][*:2]"),
         chemical_space="real",
-        reaction_id=273584,  # TODO: BOC cleavage
+        reaction_id=273584,
+        post_reaction=BOC_CLEAVAGE,
     ),
     Reaction(
         reactants=[QueryMol("[H][N:1]([H])[*:2]"), QueryMol("[H]O[C:3](=[O:4])[*:5]")],
@@ -649,7 +670,8 @@ REAL_REACTIONS = (
         ],
         product=QueryMol("[H][c:8]1[n:1][n:2]([*:3])[c:4](=[O:5])[c:6][c:7]1"),
         chemical_space="real",
-        reaction_id=279312,  # TODO: check aromaticity, BOC cleavage
+        reaction_id=279312,  # TODO: check aromaticity
+        post_reaction=BOC_CLEAVAGE,
     ),
     Reaction(
         reactants=[
@@ -662,7 +684,8 @@ REAL_REACTIONS = (
             "[H][C:6]1([H])[O,CH2:5][O,CH2:4][C:3]([H])([H])[n:2]2[c:9]([*:10])[n:8][n:7][c:1]21"
         ),
         chemical_space="real",
-        reaction_id=279370,  # TODO: BOC cleavage
+        reaction_id=279370,
+        post_reaction=BOC_CLEAVAGE,
     ),
 )
 
@@ -686,5 +709,7 @@ MOST_COMMON_REAL_IDS = {
 
 # The 13 most common REAL reactions
 MOST_COMMON_REAL_REACTIONS = tuple(
-    reaction for reaction in REAL_REACTIONS if reaction.reaction_id in MOST_COMMON_REAL_IDS
+    reaction
+    for reaction in REAL_REACTIONS
+    if reaction.reaction_id in MOST_COMMON_REAL_IDS
 )

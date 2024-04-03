@@ -15,9 +15,10 @@ class Reaction:
         self,
         reactants: list[QueryMol],
         product: QueryMol,
-        chemical_space: str,
-        reaction_id: int,
+        chemical_space: str | None = None,
+        reaction_id: int | None = None,
         sub_reaction_id: int | None = None,
+        post_reaction: "Reaction" | None = None
     ) -> None:
         """Initializes the Reaction.
 
@@ -26,6 +27,7 @@ class Reaction:
         :param chemical_space: The chemical space of the reaction (e.g., Enamine or WuXi).
         :param reaction_id: The ID of the reaction.
         :param sub_reaction_id: The ID of the sub-reaction.
+        :param post_reaction: An optional Reaction to run after the main reaction on the product (e.g., BOC cleavage).
         """
         self.reactants = reactants
         self.product = product
@@ -37,6 +39,7 @@ class Reaction:
             if sub_reaction_id is None
             else f"{reaction_id}_{sub_reaction_id}"
         )
+        self.post_reaction = post_reaction
 
         self.reaction_smarts = (
             f'{".".join(f"({reactant.smarts_with_atom_mapping})" for reactant in self.reactants)}'
@@ -61,17 +64,34 @@ class Reaction:
         """Gets the number of reactants in the reaction."""
         return len(self.reactants)
 
-    def run_reactants(
-        self, reactants: list[MOLECULE_TYPE]
-    ) -> tuple[tuple[Chem.Mol, ...], ...]:
+    def run_reactants(self, reactants: list[MOLECULE_TYPE]) -> list[str]:
         """Runs the reaction on the provided reactants.
 
         :param reactants: A list of reactants.
-        :return: A tuple of tuples of RDKit Mol objects representing the products of the reaction.
+        :return: A list of product SMILES.
         """
-        return self.reaction.RunReactants(
-            [convert_to_mol(reactant, add_hs=True) for reactant in reactants]
-        )
+        # Convert reactants to mols (and add Hs)
+        reactant_mols = [
+            convert_to_mol(reactant, add_hs=True) for reactant in reactants
+        ]
+
+        # Run reaction on reactants
+        product_mols = self.reaction.RunReactants(reactant_mols)
+
+        # Ensure each product has one molecule
+        assert all(len(product_mol) == 1 for product_mol in product_mols)
+
+        # Convert product mols to SMILES (and remove Hs)
+        products = [
+            Chem.MolToSmiles(Chem.RemoveHs(product_mol[0]))
+            for product_mol in product_mols
+        ]
+
+        # Optionally run post-reaction
+        if self.post_reaction is not None:
+            products = [self.post_reaction.run_reactants([product]) for product in products]
+
+        return products
 
     def __str__(self) -> str:
         """Gets the string representation of the Reaction."""
