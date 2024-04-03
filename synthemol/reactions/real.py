@@ -3,13 +3,22 @@ from synthemol.reactions.query_mol import QueryMol
 from synthemol.reactions.reaction import Reaction
 
 HALIDE = "F,Cl,Br,I"
+BOC = QueryMol("[H]C([H])([H])C([O:2][C:3](=[O:4])[*:1])(C([H])([H])[H])C([H])([H])[H]")
+CO2ME = QueryMol("[H]C([H])([H])[O:2][C:3]([*:1])=[O:4]")
+CO2ET = QueryMol("[H]C([H])([H])C([H])([H])[O:2][C:3]([*:1])=[O:4]")
+CO2R = QueryMol("*[O:2][C:3]([*:1])=[O:4]")
+POST_BOC_CLEAVAGE = QueryMol("[*:1]")
+POST_ESTER_HYDROLYSIS = QueryMol("[H][O:2][C:3]([*:1])=[O:4]")
 
-BOC_CLEAVAGE = Reaction(
-    reactants=[QueryMol("[H]C([H])([H])C(OC(=O)[*:1])(C([H])([H])[H])C([H])([H])[H]")],
-    product=QueryMol("[*:1]"),
-)
+# Define post-reactions
+BOC_CLEAVAGE = Reaction(reactants=[BOC], product=POST_BOC_CLEAVAGE,)
+ESTER_HYDROLYSIS_CO2ME = Reaction(reactants=[CO2ME], product=POST_ESTER_HYDROLYSIS,)
+ESTER_HYDROLYSIS_CO2ET = Reaction(reactants=[CO2ET], product=POST_ESTER_HYDROLYSIS,)
+ESTER_HYDROLYSIS_CO2TBU = Reaction(reactants=[BOC], product=POST_ESTER_HYDROLYSIS,)
+ESTER_HYDROLYSIS_CO2R = Reaction(reactants=[CO2R], product=POST_ESTER_HYDROLYSIS,)
 
 
+# Define REAL reactions
 REAL_REACTIONS = (
     Reaction(
         reactants=[
@@ -310,7 +319,8 @@ REAL_REACTIONS = (
         reactants=[QueryMol("[*:1][N:2]([H])[*:3]"), QueryMol(f"[{HALIDE}][*:4]")],
         product=QueryMol("[*:1][N:2]([*:3])[*:4]"),
         chemical_space="real",
-        reaction_id=269956,  # TODO: ester hydrolysis
+        reaction_id=269956,
+        post_reaction=ESTER_HYDROLYSIS_CO2TBU,
     ),
     Reaction(
         reactants=[QueryMol("[*:1][N:2]([H])[*:3]"), QueryMol(f"[{HALIDE}][*:4]")],
@@ -341,13 +351,15 @@ REAL_REACTIONS = (
         reactants=[QueryMol("[H][N:1]([H])[*:2]"), QueryMol("[H]O[C:3](=[O:4])[*:5]"),],
         product=QueryMol("[H][N:1]([*:2])[C:3](=[O:4])[*:5]"),
         chemical_space="real",
-        reaction_id=270112,  # TODO: ester hydrolysis
+        reaction_id=270112,
+        post_reaction=ESTER_HYDROLYSIS_CO2ME,
     ),
     Reaction(
         reactants=[QueryMol("[*:1][N:2]([H])[*:3]"), QueryMol(f"[{HALIDE}][*:4]")],
         product=QueryMol("[*:1][N:2]([*:3])[*:4]"),
         chemical_space="real",
-        reaction_id=270122,  # TODO: ester hydrolysis
+        reaction_id=270122,
+        post_reaction=ESTER_HYDROLYSIS_CO2R,
     ),
     Reaction(
         reactants=[QueryMol("[*:1][N:2]([H])[*:3]"), QueryMol(f"[{HALIDE}][*:4]")],
@@ -366,15 +378,17 @@ REAL_REACTIONS = (
         reactants=[QueryMol("[*:1][N:2]([H])[*:3]"), QueryMol(f"[{HALIDE}][*:4]")],
         product=QueryMol("[*:1][N:2]([*:3])[*:4]"),
         chemical_space="real",
-        reaction_id=270344,  # TODO: ester hydrolysis
+        reaction_id=270344,
         sub_reaction_id=1,
+        post_reaction=ESTER_HYDROLYSIS_CO2ET,
     ),
     Reaction(
         reactants=[QueryMol("[*:1][SH:2]"), QueryMol(f"[{HALIDE}][*:3]")],
         product=QueryMol("[*:1]S[*:3]"),
         chemical_space="real",
-        reaction_id=270344,  # TODO: ester hydrolysis
+        reaction_id=270344,
         sub_reaction_id=2,
+        post_reaction=ESTER_HYDROLYSIS_CO2ET,
     ),
     Reaction(
         reactants=[QueryMol(r"[H][O:1]/[N:2]=[C:3](\[*:4])[N:5]([H])[H]")],
@@ -396,7 +410,8 @@ REAL_REACTIONS = (
         reactants=[QueryMol("[O:1]=[C:2]([*:3])O*"), QueryMol("[*:4][N:5]([H])[*:6]"),],
         product=QueryMol("[*:3][C:2]([N:5]([*:4])[*:6])=[O:1]"),
         chemical_space="real",
-        reaction_id=271144,  # TODO: ester hydrolysis
+        reaction_id=271144,
+        post_reaction=ESTER_HYDROLYSIS_CO2TBU,
     ),
     Reaction(
         reactants=[QueryMol("[N:1]#[C:2][*:3]"), QueryMol("[H]O[C:4](=O)[*:5]")],
@@ -431,7 +446,8 @@ REAL_REACTIONS = (
         reactants=[QueryMol("[H][N:1]([H])[*:2]"), QueryMol("[H]O[C:3](=[O:4])[*:5]"),],
         product=QueryMol("[H][N:1]([*:2])[C:3](=[O:4])[*:5]"),
         chemical_space="real",
-        reaction_id=272270,  # TODO: ester hydrolysis
+        reaction_id=272270,
+        post_reaction=ESTER_HYDROLYSIS_CO2TBU,
     ),
     Reaction(
         reactants=[QueryMol("[H][N:1]([H])[*:2]"), QueryMol("[H]O[C:3](=[O:4])[*:5]")],
@@ -460,33 +476,38 @@ REAL_REACTIONS = (
         reactants=[QueryMol("[*:1][N:2]([H])[*:3]"), QueryMol(f"[{HALIDE}][*:4]")],
         product=QueryMol("[*:1][N:2]([*:3])[*:4]"),
         chemical_space="real",
-        reaction_id=272710,  # TODO: ester hydrolysis
+        reaction_id=272710,
         sub_reaction_id=1,
+        post_reaction=ESTER_HYDROLYSIS_CO2TBU,
     ),
     Reaction(
         reactants=[QueryMol("[*:1][OH,SH:2]"), QueryMol(f"[{HALIDE}][*:3]")],
         product=QueryMol("[*:1][O,S][*:3]"),
         chemical_space="real",
-        reaction_id=272710,  # TODO: ester hydrolysis
+        reaction_id=272710,
         sub_reaction_id=2,
+        post_reaction=ESTER_HYDROLYSIS_CO2TBU,
     ),
     Reaction(
         reactants=[QueryMol("[H][N:1]([H])[*:2]"), QueryMol("[H][N:3]([H])[*:4]")],
         product=QueryMol("[H][N:1]([*:2])C(=O)[N:3]([H])[*:4]"),
         chemical_space="real",
-        reaction_id=273390,  # TODO: ester hydrolysis
+        reaction_id=273390,
+        post_reaction=ESTER_HYDROLYSIS_CO2TBU,
     ),
     Reaction(
         reactants=[QueryMol("[H][N:1]([H])[*:2]"), QueryMol("[H][N:3]([*:4])[*:5]")],
         product=QueryMol("[H][N:1](C(=O)[N:3]([*:4])[*:5])[*:2]"),
         chemical_space="real",
-        reaction_id=273392,  # TODO: ester hydrolysis
+        reaction_id=273392,
+        post_reaction=ESTER_HYDROLYSIS_CO2TBU,
     ),
     Reaction(
         reactants=[QueryMol("[H][N:1]([H])[*:2]"), QueryMol("[H][N:3]([*:4])[*:5]")],
         product=QueryMol("[H][N:1](C(=O)[N:3]([*:4])[*:5])[*:2]"),
         chemical_space="real",
-        reaction_id=273452,  # TODO: ester hydrolysis
+        reaction_id=273452,
+        post_reaction=ESTER_HYDROLYSIS_CO2TBU,
     ),
     Reaction(
         reactants=[
@@ -516,7 +537,8 @@ REAL_REACTIONS = (
         reactants=[QueryMol("[H][N:1]([*:2])[*:3]"), QueryMol("[H][N:4]([H])[*:5]")],
         product=QueryMol("[H][N:4]([*:5])C(=O)C(=O)[N:1]([*:2])[*:3]"),
         chemical_space="real",
-        reaction_id=273494,  # TODO: ester hydrolysis
+        reaction_id=273494,
+        post_reaction=ESTER_HYDROLYSIS_CO2TBU,
     ),
     Reaction(
         reactants=[QueryMol("[H][N:1]([*:2])[*:3]"), QueryMol("[H][N:4]([H])[*:5]")],
@@ -546,7 +568,8 @@ REAL_REACTIONS = (
         reactants=[QueryMol("[H][N:1]([H])[*:2]"), QueryMol("[H]O[C:3](=[O:4])[*:5]")],
         product=QueryMol("[H][N:1]([*:2])[C:3](=[O:4])[*:5]"),
         chemical_space="real",
-        reaction_id=273652,  # TODO: ester hydrolysis
+        reaction_id=273652,
+        post_reaction=ESTER_HYDROLYSIS_CO2TBU,
     ),
     Reaction(
         reactants=[QueryMol("[H]OB([*:1])O[H]"), QueryMol(f"[{HALIDE}][*:2]")],
