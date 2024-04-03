@@ -15,20 +15,28 @@ class Reaction:
         self,
         reactants: list[QueryMol],
         product: QueryMol,
-        reaction_id: int,
         chemical_space: str,
+        reaction_id: int,
+        sub_reaction_id: int | None = None,
     ) -> None:
         """Initializes the Reaction.
 
         :param reactants: A list of QueryMols containing the reactants of the reaction.
         :param product: A QueryMol containing the product of the reaction.
-        :param reaction_id: The ID of the reaction.
         :param chemical_space: The chemical space of the reaction (e.g., Enamine or WuXi).
+        :param reaction_id: The ID of the reaction.
+        :param sub_reaction_id: The ID of the sub-reaction.
         """
         self.reactants = reactants
         self.product = product
-        self.id = reaction_id
         self.chemical_space = chemical_space
+        self.reaction_id = reaction_id
+        self.sub_reaction_id = sub_reaction_id
+        self.id = (
+            str(reaction_id)
+            if sub_reaction_id is None
+            else f"{reaction_id}_{sub_reaction_id}"
+        )
 
         self.reaction_smarts = (
             f'{".".join(f"({reactant.smarts_with_atom_mapping})" for reactant in self.reactants)}'
@@ -67,9 +75,7 @@ class Reaction:
 
     def __str__(self) -> str:
         """Gets the string representation of the Reaction."""
-        return (
-            f"{self.__class__.__name__}(id={self.id}, reaction={self.reaction_smarts})"
-        )
+        return f"{self.__class__.__name__}(space={self.chemical_space}, id={self.id}, reaction={self.reaction_smarts})"
 
     def __repr__(self) -> str:
         """Gets the representation of the Reaction."""
@@ -77,13 +83,13 @@ class Reaction:
 
     def __hash__(self) -> int:
         """Gets the hash of the Reaction."""
-        return hash((self.reaction_smarts, self.id, self.chemical_space))
+        return hash((self.chemical_space, self.id, self.reaction_smarts))
 
     def __eq__(self, other: Any) -> bool:
         """Determines whether the Reaction is equal to another object."""
         return (
             isinstance(other, self.__class__)
-            and self.reaction_smarts == other.reaction_smarts
-            and self.id == other.id
             and self.chemical_space == other.chemical_space
+            and self.id == other.id
+            and self.reaction_smarts == other.reaction_smarts
         )

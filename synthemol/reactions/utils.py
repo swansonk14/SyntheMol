@@ -40,7 +40,7 @@ def load_and_set_allowed_reaction_building_blocks(
 
     # Load allowed building blocks for each reaction in each chemical space
     chemical_space_to_reaction_to_reactant_to_building_blocks: dict[
-        str, dict[int, dict[int, set[str]]]
+        str, dict[str, dict[int, set[str]]]
     ] = {}
     for chemical_space, reaction_to_building_blocks_path in zip(
         chemical_spaces, reaction_to_building_blocks_paths

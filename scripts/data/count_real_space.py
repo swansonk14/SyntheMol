@@ -20,7 +20,7 @@ from synthemol.reactions import REAL_REACTIONS
 
 USE_COLS_MULTIPLE_ID = [REAL_REACTION_COL] + REAL_BUILDING_BLOCK_COLS
 USE_COLS_SINGLE_ID = [REAL_ID_COL]
-REAL_REACTION_IDS = {reaction.id for reaction in REAL_REACTIONS}
+REAL_REACTION_IDS = {reaction.reaction_id for reaction in REAL_REACTIONS}
 
 
 def expand_single_id_column(data: pd.DataFrame) -> pd.DataFrame:

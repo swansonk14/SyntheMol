@@ -66,7 +66,7 @@ def filter_real_reactions_to_building_blocks(
         reaction.id: {
             reactant_index: {
                 smiles
-                for smiles in reaction_to_reactant_to_building_blocks[reaction.id][
+                for smiles in reaction_to_reactant_to_building_blocks[reaction.reaction_id][
                     reactant_index
                 ]
                 if reactant.has_substruct_match(smiles)

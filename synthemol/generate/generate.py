@@ -276,7 +276,7 @@ def generate(
         ]
         reactions = tuple(
             sorted(
-                reactions, key=lambda reaction: old_reactions_order.index(reaction.id)
+                reactions, key=lambda reaction: old_reactions_order.index(reaction.reaction_id)
             )
         )
 

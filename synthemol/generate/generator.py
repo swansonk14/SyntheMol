@@ -314,7 +314,7 @@ class Generator:
             # Create reaction log
             reaction_log = ReactionLog(
                 chemical_space=reaction.chemical_space,
-                reaction_id=reaction.id,
+                reaction_id=reaction.reaction_id,
                 reactant_ids=tuple(
                     self.chemical_space_to_building_block_smiles_to_id[
                         reaction.chemical_space
