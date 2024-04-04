@@ -3,6 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from rdkit import Chem
 
 from synthemol.reactions import REAL_REACTIONS
 from synthemol.constants import (
@@ -28,15 +29,15 @@ def test_real_reactions(
     """
     # Load data
     data = pd.read_csv(data_path)
-    building_blocks = pd.read_csv(building_blocks_path)
+    building_blocks_data = pd.read_csv(building_blocks_path)
 
     # Set building block IDs as index
-    building_blocks.set_index(REAL_BUILDING_BLOCK_ID_COL, inplace=True)
+    building_blocks_data.set_index(REAL_BUILDING_BLOCK_ID_COL, inplace=True)
 
     # Map building block IDs to SMILES in data
     for building_block_col in REAL_BUILDING_BLOCK_COLS:
         data[building_block_col] = data[building_block_col].map(
-            building_blocks[REAL_SMILES_COL]
+            building_blocks_data[REAL_SMILES_COL]
         )
 
     # Test each reaction
@@ -99,6 +100,36 @@ def test_real_reactions(
                         print(f"  {mismatch}")
             print()
         print()
+
+        # Get all the reaction data where every building block matches the reactant SMARTS
+        match_mask = np.array(
+            [
+                reaction_data[building_block_col].apply(reactant.has_substruct_match)
+                for reactant, building_block_col in zip(
+                    reaction.reactants, REAL_BUILDING_BLOCK_COLS
+                )
+            ]
+        )
+
+        matching_reaction_data = reaction_data[np.all(match_mask, axis=0)]
+
+        # For each row of reaction data, compare the real product to the generated product from running the reaction
+        for building_blocks, product in zip(
+            matching_reaction_data[REAL_BUILDING_BLOCK_COLS].itertuples(index=False),
+            matching_reaction_data[REAL_SMILES_COL],
+        ):
+            # Canonicalize product
+            product = Chem.MolToSmiles(Chem.MolFromSmiles(product))
+
+            # Run the reaction on the building blocks
+            generated_products = reaction.run_reactants(building_blocks)
+
+            # Check if the generated product matches the real product
+            if product not in generated_products:
+                print("Mismatch")
+                print(f"Real product: {product}")
+                print(f"Generated products: {generated_products}")
+                print()
 
 
 if __name__ == "__main__":
