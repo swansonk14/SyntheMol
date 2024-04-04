@@ -73,6 +73,9 @@ class QueryMol:
         """
         mol = convert_to_mol(smiles, add_hs=True)
 
+        if mol is None:
+            return False
+
         return mol.HasSubstructMatch(self.query_mol)
 
     @cache

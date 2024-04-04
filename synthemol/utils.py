@@ -17,7 +17,7 @@ def strip_atom_mapping(smarts: str) -> str:
     return re.sub(r"\[([^:]+)(:\d+)]", r"[\1]", smarts)
 
 
-def convert_to_mol(mol: MOLECULE_TYPE, add_hs: bool = False) -> Chem.Mol:
+def convert_to_mol(mol: MOLECULE_TYPE, add_hs: bool = False) -> Chem.Mol | None:
     """Converts a SMILES to an RDKit Mol object (if not already converted) and optionally adds Hs.
 
     :param mol: A SMILES string or an RDKit Mol object.
@@ -26,6 +26,9 @@ def convert_to_mol(mol: MOLECULE_TYPE, add_hs: bool = False) -> Chem.Mol:
     """
     if isinstance(mol, str):
         mol = Chem.MolFromSmiles(mol)
+
+    if mol is None:
+        return None
 
     if add_hs:
         mol = Chem.AddHs(mol)
