@@ -50,7 +50,9 @@ def test_real_reactions(
         if sample_num_per_reaction is not None and sample_num_per_reaction < len(
             reaction_data
         ):
-            reaction_data = reaction_data.sample(sample_num_per_reaction, replace=False)
+            reaction_data = reaction_data.sample(
+                sample_num_per_reaction, random_state=0, replace=False
+            )
 
         # For each reactant in the reaction, test all the building blocks against each reactant SMARTS
         for building_block_num, building_block_col in enumerate(
@@ -90,7 +92,10 @@ def test_real_reactions(
                     print(f"  {reactant.smarts}")
                     print(f"Example mismatching building blocks:")
                     mismatches = reactant_building_blocks[~match_mask]
-                    for mismatch in mismatches.head(show_mismatches_num):
+                    num_show = min(show_mismatches_num, len(mismatches))
+                    for mismatch in mismatches.sample(
+                        num_show, random_state=0, replace=False
+                    ):
                         print(f"  {mismatch}")
             print()
         print()
