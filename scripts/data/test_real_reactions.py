@@ -2,6 +2,7 @@
 from pathlib import Path
 
 import pandas as pd
+from tqdm import tqdm
 
 from synthemol.reactions import REAL_REACTIONS
 from synthemol.constants import (
@@ -32,8 +33,8 @@ def test_real_reactions(data_path: Path, building_blocks_path: Path) -> None:
         )
 
     # Test each reaction
-    for reaction in REAL_REACTIONS:
-        print(f"Reaction {reaction.reaction_id}")
+    for reaction in tqdm(REAL_REACTIONS, desc="REAL reactions"):
+        print(f"Reaction {reaction.reaction_id}\n")
 
         # Get reaction data
         reaction_data = data[data[REAL_REACTION_COL] == reaction.reaction_id]
@@ -53,13 +54,16 @@ def test_real_reactions(data_path: Path, building_blocks_path: Path) -> None:
             for reactant_num, reactant in enumerate(reaction.reactants):
                 num_matches = sum(
                     reactant.has_substruct_match(building_block)
-                    for building_block in reactant_building_blocks
+                    for building_block in tqdm(reactant_building_blocks, desc="Building blocks", leave=False)
                 )
+                percent_matches = 100 * num_matches / len(reactant_building_blocks)
 
                 print(
-                    f"Reactant {reactant_num + 1} building block {building_block_num + 1}: "
-                    f"{num_matches} ({100 * num_matches / len(reactant_building_blocks)}%) matches"
+                    f"Reactant {reactant_num + 1}, building block {building_block_num + 1}: "
+                    f"{percent_matches:.2f}% matches"
                 )
+            print()
+        print()
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 """Reaction class and helper functions."""
-from typing import Any
+from typing import Any, Union
 
 from rdkit import Chem
 from rdkit.Chem import AllChem
@@ -18,7 +18,7 @@ class Reaction:
         chemical_space: str | None = None,
         reaction_id: int | None = None,
         sub_reaction_id: int | None = None,
-        post_reaction: "Reaction" | None = None
+        post_reaction: Union["Reaction", None] = None
     ) -> None:
         """Initializes the Reaction.
 
