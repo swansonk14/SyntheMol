@@ -47,6 +47,18 @@ def test_real_reactions(
         # Get reaction data
         reaction_data = data[data[REAL_REACTION_COL] == reaction.reaction_id]
 
+        # Get building block columns
+        building_block_cols = REAL_BUILDING_BLOCK_COLS[: len(reaction.reactants)]
+
+        # Identify any NaNs in building blocks
+        nan_mask = reaction_data[building_block_cols].isna().any(axis=1)
+
+        if nan_mask.any():
+            print(
+                f"Warning: {nan_mask.sum()} rows contain NaNs in building blocks and will be skipped."
+            )
+            reaction_data = reaction_data[~nan_mask]
+
         # Sample reaction data
         if sample_num_per_reaction is not None and sample_num_per_reaction < len(
             reaction_data
@@ -55,16 +67,15 @@ def test_real_reactions(
                 sample_num_per_reaction, random_state=0, replace=False
             )
 
-        # For each reactant in the reaction, test all the building blocks against each reactant SMARTS
-        for building_block_num, building_block_col in enumerate(
-            REAL_BUILDING_BLOCK_COLS
-        ):
-            # Get reactant building blocks
-            reactant_building_blocks = reaction_data[building_block_col].dropna()
+        # Check if there is any data for this reaction
+        if len(reaction_data) == 0:
+            print("No data for this reaction.\n")
+            continue
 
-            # Skip if no building blocks for the reactant
-            if reactant_building_blocks.empty:
-                continue
+        # For each reactant in the reaction, test all the building blocks against each reactant SMARTS
+        for building_block_num, building_block_col in enumerate(building_block_cols):
+            # Get reactant building blocks
+            reactant_building_blocks = reaction_data[building_block_col]
 
             # For each reactant in the reaction, test all the building blocks
             for reactant_num, reactant in enumerate(reaction.reactants):
