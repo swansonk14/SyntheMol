@@ -18,7 +18,7 @@ class Reaction:
         chemical_space: str | None = None,
         reaction_id: int | None = None,
         sub_reaction_id: int | None = None,
-        post_reaction: Union["Reaction", None] = None
+        post_reaction: Union["Reaction", None] = None,
     ) -> None:
         """Initializes the Reaction.
 
@@ -81,15 +81,27 @@ class Reaction:
         # Ensure each product has one molecule
         assert all(len(product_mol) == 1 for product_mol in product_mols)
 
-        # Convert product mols to SMILES (and remove Hs)
-        products = [
-            Chem.MolToSmiles(Chem.RemoveHs(product_mol[0]))
-            for product_mol in product_mols
-        ]
+        # Convert product mols to unique SMILES (and remove Hs)
+        products = list(
+            dict.fromkeys(
+                Chem.MolToSmiles(Chem.RemoveHs(product_mol[0]))
+                for product_mol in product_mols
+            )
+        )
 
         # Optionally run post-reaction
         if self.post_reaction is not None:
-            products = [self.post_reaction.run_reactants([product]) for product in products]
+            # Run each product through the post-reaction and keep post-product if any, otherwise keep original product
+            products = list(
+                dict.fromkeys(
+                    final_product
+                    for product in products
+                    for post_products in self.post_reaction.run_reactants([product])
+                    for final_product in (
+                        post_products if len(post_products) > 0 else [product]
+                    )
+                )
+            )
 
         return products
 
