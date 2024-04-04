@@ -126,14 +126,14 @@ def test_real_reactions(
 
         # For each row of reaction data, compare the real product to the generated product from running the reaction
         for building_blocks, product in zip(
-            matching_reaction_data[REAL_BUILDING_BLOCK_COLS].itertuples(index=False),
+            matching_reaction_data[building_block_cols].itertuples(index=False),
             matching_reaction_data[REAL_SMILES_COL],
         ):
             # Canonicalize product
             product = Chem.MolToSmiles(Chem.MolFromSmiles(product))
 
             # Run the reaction on the building blocks
-            generated_products = reaction.run_reactants(building_blocks)
+            generated_products = reaction.run_reactants(list(building_blocks))
 
             # Check if the generated product matches the real product
             if product not in generated_products:
