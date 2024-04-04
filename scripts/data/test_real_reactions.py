@@ -13,15 +13,22 @@ from synthemol.constants import (
 )
 
 
-def test_real_reactions(data_path: Path, building_blocks_path: Path) -> None:
+def test_real_reactions(
+    data_path: Path, building_blocks_path: Path, sample_num: int | None = None
+) -> None:
     """Test Enamine REAL reaction SMARTS for building blocks and products.
 
     :param data_path: Path to a CSV file containing a sample of REAL data with building block IDs and product SMILES.
     :param building_blocks_path: Path to a CSV file containing building blocks with IDs and SMILES.
+    :param sample_num: Number of rows to sample from the data. If None, use all rows.
     """
     # Load data
     data = pd.read_csv(data_path)
     building_blocks = pd.read_csv(building_blocks_path)
+
+    # Sample data
+    if sample_num is not None and sample_num < len(data):
+        data = data.sample(sample_num, replace=False)
 
     # Set building block IDs as index
     building_blocks.set_index(REAL_BUILDING_BLOCK_ID_COL, inplace=True)
@@ -33,7 +40,7 @@ def test_real_reactions(data_path: Path, building_blocks_path: Path) -> None:
         )
 
     # Test each reaction
-    for reaction in tqdm(REAL_REACTIONS, desc="REAL reactions"):
+    for reaction in tqdm(REAL_REACTIONS, desc="REAL reactions", leave=False):
         print(f"Reaction {reaction.reaction_id}\n")
 
         # Get reaction data
@@ -54,7 +61,9 @@ def test_real_reactions(data_path: Path, building_blocks_path: Path) -> None:
             for reactant_num, reactant in enumerate(reaction.reactants):
                 num_matches = sum(
                     reactant.has_substruct_match(building_block)
-                    for building_block in tqdm(reactant_building_blocks, desc="Building blocks", leave=False)
+                    for building_block in tqdm(
+                        reactant_building_blocks, desc="Building blocks", leave=False
+                    )
                 )
                 percent_matches = 100 * num_matches / len(reactant_building_blocks)
 
