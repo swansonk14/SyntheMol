@@ -14,21 +14,19 @@ from synthemol.constants import (
 
 
 def test_real_reactions(
-    data_path: Path, building_blocks_path: Path, sample_num: int | None = None
+    data_path: Path,
+    building_blocks_path: Path,
+    sample_num_per_reaction: int | None = None,
 ) -> None:
     """Test Enamine REAL reaction SMARTS for building blocks and products.
 
     :param data_path: Path to a CSV file containing a sample of REAL data with building block IDs and product SMILES.
     :param building_blocks_path: Path to a CSV file containing building blocks with IDs and SMILES.
-    :param sample_num: Number of rows to sample from the data. If None, use all rows.
+    :param sample_num_per_reaction: Number of rows to sample from the data for each reaction. If None, use all rows.
     """
     # Load data
     data = pd.read_csv(data_path)
     building_blocks = pd.read_csv(building_blocks_path)
-
-    # Sample data
-    if sample_num is not None and sample_num < len(data):
-        data = data.sample(sample_num, replace=False)
 
     # Set building block IDs as index
     building_blocks.set_index(REAL_BUILDING_BLOCK_ID_COL, inplace=True)
@@ -45,6 +43,12 @@ def test_real_reactions(
 
         # Get reaction data
         reaction_data = data[data[REAL_REACTION_COL] == reaction.reaction_id]
+
+        # Sample reaction data
+        if sample_num_per_reaction is not None and sample_num_per_reaction < len(
+            reaction_data
+        ):
+            reaction_data = reaction_data.sample(sample_num_per_reaction, replace=False)
 
         # For each reactant in the reaction, test all the building blocks against each reactant SMARTS
         for building_block_num, building_block_col in enumerate(
