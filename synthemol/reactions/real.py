@@ -172,17 +172,17 @@ REAL_REACTIONS = (
     ),
     Reaction(
         reactants=[
-            QueryMol("[H][N:5]([H])[c:6][c:7][C:8](=O)[C:9]([H])([H])[H]"),
+            QueryMol("[H][N:5]([H])[c:6][c:7][C:8]([#6:9])=O"),
             QueryMol("[H][C:1]([H])([*:2])[C:3](=O)[*:4]"),
-        ],  # TODO: check aromaticity
-        product=QueryMol(
-            "[H][C:9]([H])([H])[c:8]1[c:7][c:6][n:5][c:3]([*:4])[c:1]1[*:2]"
-        ),
+        ],
+        product=QueryMol("[#6:9][c:8]1[c:7][c:6][n:5][c:3]([*:4])[c:1]1[*:2]"),
         chemical_space="real",
         reaction_id=42,
     ),
     Reaction(
-        reactants=[QueryMol(f"[H][C:1]([{HALIDE}])([*:2])[C:3](=O)[*:4]")],  # TODO: how to make this appear as reactant 2 instead of 1?
+        reactants=[
+            QueryMol(f"[H][C:1]([{HALIDE}])([*:2])[C:3](=O)[*:4]")
+        ],  # TODO: how to make this appear as reactant 2 instead of 1?
         product=QueryMol("[H]N([H])c1n[c:3]([*:4])[c:1]([*:2])s1"),
         chemical_space="real",
         reaction_id=43,
@@ -232,16 +232,16 @@ REAL_REACTIONS = (
         ],
         product=QueryMol("[H][C:4]1=[C:5]([*:6])[O:1][c:2][c:3]1"),
         chemical_space="real",
-        reaction_id=55,  # TODO: check aromaticity
+        reaction_id=55,
     ),
     Reaction(
         reactants=[
-            QueryMol("[H][N:3]([H])[c:4][c:5][N:6]([H])[H]"),
+            QueryMol("[H][N:3]([H])[c:4][c:5][N:6]"),
             QueryMol("[H][C:1](=O)[*:2]"),
         ],
         product=QueryMol("[H][N:3]1[C:1]([*:2])=[N:6][c:5][c:4]1"),
         chemical_space="real",
-        reaction_id=60,  # TODO: check aromaticity
+        reaction_id=60,
     ),
     Reaction(
         reactants=[QueryMol("[*:1][N:2]([H])[*:3]"), QueryMol(f"[{HALIDE}][*:4]")],
@@ -286,11 +286,11 @@ REAL_REACTIONS = (
     Reaction(
         reactants=[
             QueryMol("[H][N:6]([H])[*:7]"),
-            QueryMol("[H][N:1]([H])[c:2][c:3][C:4]#[N:5]"),
+            QueryMol("[N:1][c:2][c:3][C:4]#[N:5]"),
         ],
         product=QueryMol("[H]c1[n:1][c:2][c:3][c:4]([N:6]([H])[*:7])[n:5]1"),
         chemical_space="real",
-        reaction_id=1982,  # TODO: check aromaticity
+        reaction_id=1982,
     ),
     Reaction(
         reactants=[QueryMol("[*:1][SH]"), QueryMol("[*:2][Cl]")],
@@ -436,7 +436,9 @@ REAL_REACTIONS = (
         reaction_id=271722,
     ),
     Reaction(
-        reactants=[QueryMol(f"[H][C:1]([{HALIDE}])([*:2])[C:3](=O)[*:4]"),],  # TODO: how to make this appear as reactant 2 instead of 1?
+        reactants=[
+            QueryMol(f"[H][C:1]([{HALIDE}])([*:2])[C:3](=O)[*:4]"),
+        ],  # TODO: how to make this appear as reactant 2 instead of 1?
         product=QueryMol("[H]N([H])c1n[c:3]([*:4])[c:1]([*:2])s1"),
         chemical_space="real",
         reaction_id=272150,
