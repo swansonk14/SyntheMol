@@ -3,7 +3,10 @@ from synthemol.reactions.query_mol import QueryMol
 from synthemol.reactions.reaction import Reaction
 
 HALIDE = "F,Cl,Br,I"
-BOC = QueryMol("[H]C([H])([H])C([O:2][C:3](=[O:4])[*:1])(C([H])([H])[H])C([H])([H])[H]")
+BOC = QueryMol("[H]C([H])([H])C([O][C](=[O])[*:1])(C([H])([H])[H])C([H])([H])[H]")
+CO2TBU = QueryMol(
+    "[H]C([H])([H])C([O:2][C:3](=[O:4])[*:1])(C([H])([H])[H])C([H])([H])[H]"
+)
 CO2ME = QueryMol("[H]C([H])([H])[O:2][C:3]([*:1])=[O:4]")
 CO2ET = QueryMol("[H]C([H])([H])C([H])([H])[O:2][C:3]([*:1])=[O:4]")
 CO2R = QueryMol("*[O:2][C:3]([*:1])=[O:4]")
@@ -14,7 +17,7 @@ POST_ESTER_HYDROLYSIS = QueryMol("[H][O:2][C:3]([*:1])=[O:4]")
 BOC_CLEAVAGE = Reaction(reactants=[BOC], product=POST_BOC_CLEAVAGE,)
 ESTER_HYDROLYSIS_CO2ME = Reaction(reactants=[CO2ME], product=POST_ESTER_HYDROLYSIS,)
 ESTER_HYDROLYSIS_CO2ET = Reaction(reactants=[CO2ET], product=POST_ESTER_HYDROLYSIS,)
-ESTER_HYDROLYSIS_CO2TBU = Reaction(reactants=[BOC], product=POST_ESTER_HYDROLYSIS,)
+ESTER_HYDROLYSIS_CO2TBU = Reaction(reactants=[CO2TBU], product=POST_ESTER_HYDROLYSIS,)
 ESTER_HYDROLYSIS_CO2R = Reaction(reactants=[CO2R], product=POST_ESTER_HYDROLYSIS,)
 
 

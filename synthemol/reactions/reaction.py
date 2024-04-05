@@ -92,16 +92,16 @@ class Reaction:
         # Optionally run post-reaction
         if self.post_reaction is not None:
             # Run each product through the post-reaction and keep post-product if any, otherwise keep original product
-            products = list(
-                dict.fromkeys(
-                    final_product
-                    for product in products
-                    for post_products in self.post_reaction.run_reactants([product])
-                    for final_product in (
-                        post_products if len(post_products) > 0 else [product]
-                    )
-                )
-            )
+            final_products = []
+            for product in products:
+                post_products = self.post_reaction.run_reactants([product])
+
+                if len(post_products) > 0:
+                    final_products.extend(post_products)
+                else:
+                    final_products.append(product)
+
+            products = final_products
 
         return products
 
