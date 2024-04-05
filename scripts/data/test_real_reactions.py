@@ -125,6 +125,7 @@ def test_real_reactions(
         matching_reaction_data = reaction_data[np.all(match_mask, axis=0)]
 
         # For each row of reaction data, compare the real product to the generated product from running the reaction
+        num_mismatch_product = 0
         for building_blocks, product in zip(
             matching_reaction_data[building_block_cols].itertuples(index=False),
             matching_reaction_data[REAL_SMILES_COL],
@@ -137,10 +138,15 @@ def test_real_reactions(
 
             # Check if the generated product matches the real product
             if product not in generated_products:
+                num_mismatch_product += 1
                 print("Mismatch")
                 print(f"Real product: {product}")
                 print(f"Generated products: {generated_products}")
                 print()
+
+        print(
+            f"Number of product mismatches: {num_mismatch_product} / {len(matching_reaction_data)}\n"
+        )
 
 
 if __name__ == "__main__":
