@@ -340,6 +340,7 @@ REAL_REACTIONS = (
         product=QueryMol("[*:4][c:3]1[n:2][o:1][c:6]([*:7])[n:5]1"),
         chemical_space="real",
         reaction_id=270036,
+        post_reaction=BOC_CLEAVAGE,
     ),
     Reaction(
         reactants=[
@@ -487,7 +488,7 @@ REAL_REACTIONS = (
     ),
     Reaction(
         reactants=[QueryMol("[*:1][OH,SH:2]"), QueryMol(f"[{HALIDE}][*:3]")],
-        product=QueryMol("[*:1][O,S][*:3]"),
+        product=QueryMol("[*:1][O,S:2][*:3]"),
         chemical_space="real",
         reaction_id=272710,
         sub_reaction_id=2,
