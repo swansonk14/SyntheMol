@@ -134,7 +134,12 @@ def test_real_reactions(
             product = Chem.MolToSmiles(Chem.MolFromSmiles(product))
 
             # Run the reaction on the building blocks
-            generated_products = reaction.run_reactants(list(building_blocks))
+            try:
+                generated_products = reaction.run_reactants(list(building_blocks))
+            except Exception as e:
+                print(f"Error running reaction on building blocks: {e}")
+                num_mismatch_product += 1
+                continue
 
             # Check if the generated product matches the real product
             if product not in generated_products:
