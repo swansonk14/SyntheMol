@@ -127,11 +127,11 @@ python scripts/data/sample_molecules.py \
     --num_molecules 10000
 ```
 
-Randomly sample 50 of those WuXi GalaXi molecules for experimental validation.
+Randomly sample 17 of those WuXi GalaXi molecules for experimental validation.
 
 ```bash
 python scripts/data/sample_molecules.py \
     --data_path rl/data/wuxi/random_wuxi_10k.csv \
-    --save_path rl/data/wuxi/random_wuxi_50.csv \
-    --num_molecules 50
+    --save_path rl/data/wuxi/random_wuxi_17.csv \
+    --num_molecules 17
 ```

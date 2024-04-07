@@ -36,6 +36,7 @@ setup(
         "descriptastorus",
         "gdown",
         "matplotlib",
+        "networkx",
         "numpy",
         "openpyxl",
         "pandas",
