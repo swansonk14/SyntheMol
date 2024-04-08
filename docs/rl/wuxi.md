@@ -132,6 +132,6 @@ Randomly sample 17 of those WuXi GalaXi molecules for experimental validation.
 ```bash
 python scripts/data/sample_molecules.py \
     --data_path rl/data/wuxi/random_wuxi_10k.csv \
-    --save_path rl/data/wuxi/random_wuxi_17.csv \
-    --num_molecules 17
+    --save_path rl/data/wuxi/random_wuxi_50.csv \
+    --num_molecules 50
 ```

@@ -395,16 +395,16 @@ synthemol \
 
 ## Screen molecules with Chemprop-RDKit
 
-Chemprop-RDKit on random REAL 14 million and 33 and WuXi 7 million and 17.
+Chemprop-RDKit on random REAL 14 million and 100 and WuXi 7 million and 50.
 
 ```bash
 for SPACE in real wuxi
 do
 
 if [ "${SPACE}" = "real" ]; then
-  SIZES=("14m" "33")
+  SIZES=("14m" "100")
 else
-  SIZES=("7m" "17")
+  SIZES=("7m" "50")
 fi
 
 for SIZE in "${SIZES[@]}"
@@ -459,9 +459,9 @@ chemfunc nearest_neighbor \
 done
 ```
 
-Select the top 50 diverse, novel hit molecules. Hits are defined as _S. aureus_ >= 0.5 and solubility >= -4. Novelty is
+Select the top 150 diverse, novel hit molecules. Hits are defined as _S. aureus_ >= 0.5 and solubility >= -4. Novelty is
 defined as maximum 0.6 Tversky similarity to training hits and ChEMBL antibiotics. Diversity is defined as maximum 0.6
-Tanimoto similarity to other selected molecules (maximum independent set). Final selection is the top 50 diverse, novel
+Tanimoto similarity to other selected molecules (maximum independent set). Final selection is the top 150 diverse, novel
 hits molecules sorted by _S. aureus_ score.
 
 ```bash
@@ -475,7 +475,7 @@ python scripts/data/select_molecules.py \
     --score_comparators ">=0.5" ">=-4" \
     --novelty_threshold 0.6 \
     --similarity_threshold 0.6 \
-    --select_num 50 \
+    --select_num 150 \
     --sort_column "S. aureus" \
     --descending
 done
@@ -559,9 +559,9 @@ chemfunc nearest_neighbor \
     --metric tversky
 ```
 
-Select the top 50 diverse, novel hit molecules. Hits are defined as _S. aureus_ >= 0.5 and solubility >= -4. Novelty is
+Select the top 150 diverse, novel hit molecules. Hits are defined as _S. aureus_ >= 0.5 and solubility >= -4. Novelty is
 defined as maximum 0.6 Tversky similarity to training hits and ChEMBL antibiotics. Diversity is defined as maximum 0.6
-Tanimoto similarity to other selected molecules (maximum independent set). Final selection is the top 50 diverse, novel
+Tanimoto similarity to other selected molecules (maximum independent set). Final selection is the top 150 diverse, novel
 hits molecules sorted by _S. aureus_ score.
 
 ```bash
@@ -573,7 +573,7 @@ python scripts/data/select_molecules.py \
     --score_comparators ">=0.5" ">=-4" \
     --novelty_threshold 0.6 \
     --similarity_threshold 0.6 \
-    --select_num 50 \
+    --select_num 150 \
     --sort_column "s_aureus_activity" \
     --descending
 ```
@@ -585,8 +585,8 @@ mkdir rl/selections/random
 
 python -c "import pandas as pd; \
 pd.concat([ \
-    pd.read_csv('rl/screened/chemprop_rdkit_random_real_33.csv').assign(chemical_space='real'), \
-    pd.read_csv('rl/screened/chemprop_rdkit_random_wuxi_17.csv').assign(chemical_space='wuxi') \
+    pd.read_csv('rl/screened/chemprop_rdkit_random_real_100.csv').assign(chemical_space='real'), \
+    pd.read_csv('rl/screened/chemprop_rdkit_random_wuxi_50.csv').assign(chemical_space='wuxi') \
 ]).to_csv('rl/selections/random/molecules.csv', index=False)"
 ```
 
