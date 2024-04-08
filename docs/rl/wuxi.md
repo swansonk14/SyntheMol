@@ -127,7 +127,7 @@ python scripts/data/sample_molecules.py \
     --num_molecules 10000
 ```
 
-Randomly sample 17 of those WuXi GalaXi molecules for experimental validation.
+Randomly sample 50 of those WuXi GalaXi molecules for experimental validation.
 
 ```bash
 python scripts/data/sample_molecules.py \
