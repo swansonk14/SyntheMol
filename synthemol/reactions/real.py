@@ -388,7 +388,7 @@ REAL_REACTIONS = (
     ),
     Reaction(
         reactants=[QueryMol("[*:1][SH:2]"), QueryMol(f"[{HALIDE}][*:3]")],
-        product=QueryMol("[*:1]S[*:3]"),
+        product=QueryMol("[*:1][S:2][*:3]"),
         chemical_space="real",
         reaction_id=270344,
         sub_reaction_id=2,
@@ -420,7 +420,7 @@ REAL_REACTIONS = (
     ),
     Reaction(
         reactants=[QueryMol("[N:1]#[C:2][*:3]"), QueryMol("[H]O[C:4](=O)[*:5]")],
-        product=QueryMol("[*:3][c:2]1no[c:4]([*:5])[n:3]1"),
+        product=QueryMol("[*:3][c:2]1no[c:4]([*:5])[n:1]1"),
         chemical_space="real",
         reaction_id=271362,
         post_reaction=BOC_CLEAVAGE,
@@ -474,7 +474,7 @@ REAL_REACTIONS = (
     ),
     Reaction(
         reactants=[QueryMol("[*:1][OH:2]"), QueryMol(f"[{HALIDE}][*:3]")],
-        product=QueryMol("[*:1]O[*:3]"),
+        product=QueryMol("[*:1][O:2][*:3]"),
         chemical_space="real",
         reaction_id=272692,
         sub_reaction_id=2,
