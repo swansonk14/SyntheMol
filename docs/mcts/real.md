@@ -101,7 +101,7 @@ python scripts/data/filter_real_reactions_to_building_blocks.py \
 ```
 
 Note: The filtered file can be used in place of the original file for faster processing when not replicating the
-results (i.e., when not using `--replicate` in SyntheMol).
+results (i.e., when not using `--replicate_mcts` in SyntheMol).
 
 ### Count REAL reactions and building blocks
 

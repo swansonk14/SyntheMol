@@ -39,6 +39,22 @@ DATASET_TYPES = Literal["classification", "regression"]
 RL_MODEL_TYPES = Literal["mlp_rdkit", "chemprop", "chemprop_rdkit"]
 RL_PREDICTION_TYPES = Literal["classification", "regression"]
 OPTIMIZATION_TYPES = Literal["maximize", "minimize"]
+OLD_REACTION_ORDER = [
+    275592,
+    22,
+    11,
+    527,
+    2430,
+    2708,
+    240690,
+    2230,
+    2718,
+    40,
+    1458,
+    271948,
+    27,
+]
+OLD_REACTIONS = set(OLD_REACTION_ORDER)
 
 # Path where data files are stored
 with resources.path("synthemol", "resources") as resources_dir:

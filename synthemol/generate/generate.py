@@ -1,4 +1,5 @@
 """Generate molecules combinatorially using a search guided by a molecular property predictor."""
+from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 from typing import Literal
@@ -14,6 +15,8 @@ from synthemol.constants import (
     FINGERPRINT_TYPES,
     ID_COL,
     SCORE_TYPES,
+    OLD_REACTION_ORDER,
+    OLD_REACTIONS,
     OPTIMIZATION_TYPES,
     REACTION_TO_BUILDING_BLOCKS_PATH,
     RL_MODEL_TYPES,
@@ -71,7 +74,8 @@ def generate(
     store_nodes: bool = False,
     save_frequency: int = 1000,
     verbose: bool = False,
-    replicate: bool = False,
+    replicate_mcts: bool = False,
+    replicate_rl: bool = False,
     wandb_log: bool = False,
     wandb_project_name: str = "synthemol",
     wandb_run_name: str | None = None,
@@ -135,8 +139,10 @@ def generate(
         the memory usage (e.g., 450 GB for 20,000 rollouts instead of 600 MB).
     :param save_frequency: The number of rollouts between each save of the generated molecules.
     :param verbose: Whether to print out additional information during generation.
-    :param replicate: This is necessary to replicate the results from the paper, but otherwise should not be used
-        since it limits the potential choices of building blocks.
+    :param replicate_mcts: This is necessary to replicate the results from the  MCTS paper
+        but otherwise should not be used since it limits the potential choices of building blocks.
+    :param replicate_rl: This is necessary to replicate the result from the RL paper
+        but otherwise should not be used since it does not include reaction fixes.
     :param wandb_log: Whether to log results to Weights & Biases.
     :param wandb_project_name: The name of the Weights & Biases project to log results to.
     :param wandb_run_name: The name of the Weights & Biases run to log results to.
@@ -229,19 +235,41 @@ def generate(
     save_dir.mkdir(parents=True, exist_ok=True)
 
     # Get (unique) reactions
-    reactions = tuple(dict.fromkeys(
-        reaction
-        for chemical_space in sorted(set(chemical_spaces))
-        for reaction in CHEMICAL_SPACE_TO_REACTIONS[chemical_space]
-    ))
+    reactions = tuple(
+        dict.fromkeys(
+            reaction
+            for chemical_space in sorted(set(chemical_spaces))
+            for reaction in CHEMICAL_SPACE_TO_REACTIONS[chemical_space]
+        )
+    )
+
+    # Optionally make changes to reactions to replicate previous experiments
+    if replicate_mcts or replicate_rl:
+        # Only keep old reactions (and copy them to avoid modifying original reactions)
+        reactions = [
+            deepcopy(reaction)
+            for reaction in reactions
+            if reaction.reaction_id in OLD_REACTIONS
+        ]
+
+        # Undo changes to old reactions
+        for reaction in reactions:
+            reaction.id = reaction.reaction_id
+
+            if reaction.id == 240790:
+                reaction.post_reaction = None
+
+            if reaction.id == 271948:
+                reaction.post_reaction = None
+                reaction.reactants = reaction.reactants[::-1]
 
     print(f"Using {len(reactions):,} reactions")
 
     # Load building blocks
     print("Loading building blocks...")
 
-    # Optionally alter building blocks loading to precisely replicate previous experiments
-    if replicate:
+    # Optionally make changes to building blocks to replicate previous experiments
+    if replicate_mcts:
         # Ensure only REAL space
         assert chemical_spaces == ("real",)
 
@@ -258,25 +286,11 @@ def generate(
             building_blocks_score_column
         ] = real_building_block_data[building_blocks_score_column].astype(float)
 
-        # Reorder reactions
-        old_reactions_order = [
-            275592,
-            22,
-            11,
-            527,
-            2430,
-            2708,
-            240690,
-            2230,
-            2718,
-            40,
-            1458,
-            271948,
-            27,
-        ]
+        # Reorder old reactions
         reactions = tuple(
             sorted(
-                reactions, key=lambda reaction: old_reactions_order.index(reaction.reaction_id)
+                reactions,
+                key=lambda reaction: OLD_REACTION_ORDER.index(reaction.reaction_id),
             )
         )
 
@@ -404,7 +418,7 @@ def generate(
                 "no_building_block_diversity": no_building_block_diversity,
                 "store_nodes": store_nodes,
                 "verbose": verbose,
-                "replicate": replicate,
+                "replicate": replicate_mcts,
             },
         )
 
@@ -515,7 +529,7 @@ def generate(
         verbose=verbose,
         rl_model=rl_model,
         rolling_average_weight=rolling_average_weight,
-        replicate=replicate,
+        replicate=replicate_mcts,
         wandb_log=wandb_log,
     )
 

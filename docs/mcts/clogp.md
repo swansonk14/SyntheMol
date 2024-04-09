@@ -108,7 +108,7 @@ synthemol \
     --save_dir data/Data/5_generations_clogp/clogp_chemprop_${EPOCHS}_epochs \
     --max_reactions 1 \
     --n_rollout 20000 \
-    --replicate
+    --replicate_mcts
 done
 ```
 

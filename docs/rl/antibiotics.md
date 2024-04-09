@@ -326,7 +326,7 @@ RL Chemprop-RDKit
 
 ```bash
 synthemol \
-    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
     --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
@@ -343,6 +343,7 @@ synthemol \
     --rl_prediction_type regression \
     --use_gpu \
     --num_workers 8 \
+    --replicate_rl \
     --wandb_project_name synthemol_rl \
     --wandb_run_name rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi \
     --wandb_log
@@ -352,7 +353,7 @@ RL MLP-RDKit
 
 ```bash
 synthemol \
-    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
     --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
@@ -367,6 +368,7 @@ synthemol \
     --rl_model_type mlp_rdkit \
     --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/fold_0/model_0/model.pt \
     --rl_prediction_type regression \
+    --replicate_rl \
     --wandb_project_name synthemol_rl \
     --wandb_run_name rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi \
     --wandb_log
@@ -376,7 +378,7 @@ MCTS
 
 ```bash
 synthemol \
-    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
     --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
@@ -388,6 +390,7 @@ synthemol \
     --save_dir rl/generations/mcts_s_aureus_solubility_dynamic_weights_real_wuxi \
     --n_rollout 10000 \
     --search_type mcts \
+    --replicate_rl \
     --wandb_project_name synthemol_rl \
     --wandb_run_name mcts_s_aureus_solubility_dynamic_weights_real_wuxi \
     --wandb_log

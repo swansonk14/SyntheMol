@@ -400,16 +400,17 @@ REAL_REACTIONS = (
         chemical_space="real",
         reaction_id=270690,
     ),
-    Reaction(
-        reactants=[
-            QueryMol("S=[C:1]=[N:2][*:3]"),
-            QueryMol("[H][N:4]([*:5])[*:6]"),
-            QueryMol("[H][N:7]([H])[N:8]([H])[C:9](=O)[*:10]"),
-        ],
-        product=QueryMol("[*:5][N:4]([*:6])[c:1]1[n:7][n:8][c:9]([*:10])[n:2]1[*:3]"),
-        chemical_space="real",
-        reaction_id=270942,
-    ),
+    # Note: Does not appear in 2022 q1-2 REAL space
+    # Reaction(
+    #     reactants=[
+    #         QueryMol("S=[C:1]=[N:2][*:3]"),
+    #         QueryMol("[H][N:4]([*:5])[*:6]"),
+    #         QueryMol("[H][N:7]([H])[N:8]([H])[C:9](=O)[*:10]"),
+    #     ],
+    #     product=QueryMol("[*:5][N:4]([*:6])[c:1]1[n:7][n:8][c:9]([*:10])[n:2]1[*:3]"),
+    #     chemical_space="real",
+    #     reaction_id=270942,
+    # ),
     Reaction(
         reactants=[QueryMol("[*:4][N:5]([H])[*:6]"), QueryMol("[O:1]=[C:2]([*:3])O*"),],
         product=QueryMol("[*:3][C:2]([N:5]([*:4])[*:6])=[O:1]"),
@@ -430,15 +431,16 @@ REAL_REACTIONS = (
         chemical_space="real",
         reaction_id=271570,
     ),
-    Reaction(
-        reactants=[
-            QueryMol("[H][N:1]([H])[N:2]([H])[C:3](=[O:4])[*:5]"),
-            QueryMol("[H]O[C:6](=O)[*:7]"),
-        ],
-        product=QueryMol("[*:5][c:3]1[n:2][n:1][c:6]([*:7])[o:4]1"),
-        chemical_space="real",
-        reaction_id=271722,
-    ),
+    # Note: Does not appear in 2022 q1-2 REAL space
+    # Reaction(
+    #     reactants=[
+    #         QueryMol("[H][N:1]([H])[N:2]([H])[C:3](=[O:4])[*:5]"),
+    #         QueryMol("[H]O[C:6](=O)[*:7]"),
+    #     ],
+    #     product=QueryMol("[*:5][c:3]1[n:2][n:1][c:6]([*:7])[o:4]1"),
+    #     chemical_space="real",
+    #     reaction_id=271722,
+    # ),
     Reaction(
         reactants=[
             QueryMol(f"[H][C:1]([{HALIDE}])([*:2])[C:3](=O)[*:4]"),
@@ -658,16 +660,17 @@ REAL_REACTIONS = (
         chemical_space="real",
         reaction_id=276090,
     ),
-    Reaction(
-        reactants=[
-            QueryMol("[H]N=[C:1]([*:2])[N:3]([H])[H]"),
-            QueryMol("[H]O[C:4](=O)[*:5]"),
-            QueryMol("[H][N:6]([H])[N:7]([H])[*:8]"),
-        ],
-        product=QueryMol("[*:8][n:7]1[n:6][c:1]([*:2])[n:3][c:4]1[*:5]"),
-        chemical_space="real",
-        reaction_id=276630,
-    ),
+    # Note: Does not appear in 2022 q1-2 REAL space
+    # Reaction(
+    #     reactants=[
+    #         QueryMol("[H]N=[C:1]([*:2])[N:3]([H])[H]"),
+    #         QueryMol("[H]O[C:4](=O)[*:5]"),
+    #         QueryMol("[H][N:6]([H])[N:7]([H])[*:8]"),
+    #     ],
+    #     product=QueryMol("[*:8][n:7]1[n:6][c:1]([*:2])[n:3][c:4]1[*:5]"),
+    #     chemical_space="real",
+    #     reaction_id=276630,
+    # ),
     Reaction(
         reactants=[
             QueryMol("[H][N:1]([H])[N:2]([H])[C:3](=O)[*:4]"),
@@ -716,29 +719,4 @@ REAL_REACTIONS = (
         reaction_id=279370,
         post_reaction=BOC_CLEAVAGE,
     ),
-)
-
-
-# The 13 most common REAL reaction IDs (used in the SyntheMol MCTS and RL papers)
-MOST_COMMON_REAL_IDS = {
-    275592,
-    22,
-    11,
-    527,
-    240690,
-    2430,
-    2708,
-    2230,
-    2718,
-    40,
-    27,
-    271948,
-    1458,
-}
-
-# The 13 most common REAL reactions
-MOST_COMMON_REAL_REACTIONS = tuple(
-    reaction
-    for reaction in REAL_REACTIONS
-    if reaction.reaction_id in MOST_COMMON_REAL_IDS
 )

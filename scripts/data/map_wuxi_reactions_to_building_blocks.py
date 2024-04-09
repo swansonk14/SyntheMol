@@ -29,7 +29,7 @@ def map_wuxi_reactions_to_building_blocks(
     data = pd.read_csv(building_blocks_path)
 
     # Create mapping from reaction ID to reactant ID to list of building block SMILES
-    reaction_to_reactant_to_building_blocks: dict[str, dict[int, set[str]]] = {
+    reaction_to_reactant_to_building_blocks: dict[str, dict[int, list[str]]] = {
         reaction.id: {
             reactant_index: sorted(
                 {

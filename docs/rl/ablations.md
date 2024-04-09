@@ -20,7 +20,7 @@ for S_AUREUS_WEIGHT in 0.00 0.86 0.90 0.92 0.94 0.96 1.00
 do
 SOLUBILITY_WEIGHT="0$(echo "1.0 - S_AUREUS_WEIGHT" | bc)"
 synthemol \
-    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
     --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
@@ -50,7 +50,7 @@ for S_AUREUS_WEIGHT in 0.00 0.86 0.90 0.92 0.94 0.98 1.00
 do
 SOLUBILITY_WEIGHT="0$(echo "1.0 - S_AUREUS_WEIGHT" | bc)"
 synthemol \
-    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
     --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
@@ -81,7 +81,7 @@ RL Chemprop-RDKit
 for SIMILARITY_TARGET in 0.4 0.5 0.7 0.8
 do
 synthemol \
-    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
     --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
@@ -111,7 +111,7 @@ RL MLP-RDKit
 for SIMILARITY_TARGET in 0.4 0.5 0.7 0.8
 do
 synthemol \
-    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
     --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
@@ -144,7 +144,7 @@ RL Chemprop-RDKit
 for TEMPERATURE in 0.01 0.05 0.1 0.5 1.0
 do
 synthemol \
-    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
     --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
@@ -175,7 +175,7 @@ RL MLP-RDKit
 for TEMPERATURE in 0.01 0.05 0.1 0.5 1.0
 do
 synthemol \
-    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
     --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
@@ -204,7 +204,7 @@ MCTS
 for EXPLORE_WEIGHT in 0.5 1.0 5.0 50.0
 do
 synthemol \
-    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
     --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
@@ -229,7 +229,7 @@ RL Chemprop-RDKit (pretrained models, no RL training)
 
 ```bash
 synthemol \
-    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
     --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
@@ -256,7 +256,7 @@ RL Chemprop-RDKit (from scratch models, with RL training)
 
 ```bash
 synthemol \
-    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
     --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
@@ -281,7 +281,7 @@ RL MLP-RDKit (pretrained models, no RL training)
 
 ```bash
 synthemol \
-    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
     --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
@@ -306,7 +306,7 @@ RL MLP-RDKit (from scratch models, with RL training)
 
 ```bash
 synthemol \
-    --score_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
+    --score_model_paths rl/models/s_aureus_chemprop_rdkit rl/models/solubility_chemprop_rdkit \
     --score_types chemprop chemprop \
     --score_fingerprint_types rdkit rdkit \
     --score_names 'S. aureus' 'Solubility' \
