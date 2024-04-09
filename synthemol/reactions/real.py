@@ -152,9 +152,9 @@ REAL_REACTIONS = (
     Reaction(
         reactants=[
             QueryMol("[*:5][N:6]([H])[H]"),
-            QueryMol("[H]C([H])([H])C([H])([H])O[CH:1]=[C:2]([*:3])[*:4]"),
+            QueryMol("[H]C([H])([H])C([H])([H])O[C:1]([H])=[C:2]([*:3])[*:4]"),
         ],
-        product=QueryMol("[*:5][N:6]([H])[CH:1]=[C:2]([*:3])[*:4]"),
+        product=QueryMol("[*:5][N:6]([H])[C:1]([H])=[C:2]([*:3])[*:4]"),
         chemical_space="real",
         reaction_id=17,
     ),
