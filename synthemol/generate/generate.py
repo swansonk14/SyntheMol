@@ -253,6 +253,7 @@ def generate(
         ]
 
         # Undo changes to old reactions
+        # TODO: OH to O[H]?
         for reaction in reactions:
             reaction.id = reaction.reaction_id
 

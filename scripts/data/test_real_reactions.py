@@ -138,6 +138,8 @@ def test_real_reactions(
                 generated_products = reaction.run_reactants(list(building_blocks))
             except Exception as e:
                 print(f"Error running reaction on building blocks: {e}")
+                print(f"Building blocks: {building_blocks}")
+                print(f"Real product: {product}")
                 num_mismatch_product += 1
                 continue
 
@@ -145,6 +147,7 @@ def test_real_reactions(
             if product not in generated_products:
                 num_mismatch_product += 1
                 print("Mismatch")
+                print(f"Building blocks: {building_blocks}")
                 print(f"Real product: {product}")
                 print(f"Generated products: {generated_products}")
                 print()
