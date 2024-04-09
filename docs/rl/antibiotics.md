@@ -639,7 +639,7 @@ done
 Select 50 molecules from each model from the available molecules ranked by ClinTox score (lowest to highest). Note that this uses the `available.csv` file in the `rl/quotes` folder that is created based on the availability of the molecules in quotes from Enamine and WuXi
 
 ```bash
-mkdir rl/purchase
+mkdir rl/order
 
 python -c "import pandas as pd
 available = pd.read_csv('rl/quotes/available.csv')
@@ -647,5 +647,5 @@ for name in ['rl_chemprop_rdkit', 'rl_mlp_rdkit', 'mcts', 'chemprop_rdkit', 'ran
     data = pd.read_csv(f'rl/selections/{name}/molecules.csv')
     data = data[data['smiles'].isin(available['smiles'])]
     data = data.sort_values('ClinTox', ascending=True).head(50)
-    data.to_csv(f'rl/purchase/{name}.csv', index=False)"
+    data.to_csv(f'rl/order/{name}.csv', index=False)"
 ```
