@@ -255,7 +255,7 @@ REAL_REACTIONS = (
     ),
     Reaction(
         reactants=[
-            QueryMol("[H][N:3]([H])[c:4][c:5][N:6]"),
+            QueryMol("[H][N:3]([H])[c:4][c:5][N:6]([*])[*]"),
             QueryMol("[H][C:1](=O)[*:2]"),
         ],
         product=QueryMol("[c:4]1=[N:3][C:1]([*:2])=[N:6][c:5]1"),
