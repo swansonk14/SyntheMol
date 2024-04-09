@@ -127,7 +127,7 @@ REAL_REACTIONS = (
         reaction_id=1458,
     ),
     Reaction(
-        reactants=[QueryMol("[*:1][NH,S,O:2]([H])"), QueryMol(f"[{HALIDE}][*:3]")],
+        reactants=[QueryMol("[*:1][NH2,SH,OH:2]"), QueryMol(f"[{HALIDE}][*:3]")],
         product=QueryMol("[*:1][NH,S,O:2]([*:3])"),
         chemical_space="real",
         reaction_id=7,
@@ -151,7 +151,7 @@ REAL_REACTIONS = (
         reaction_id=17,
     ),
     Reaction(
-        reactants=[QueryMol("[*:1][NH,S,O:2]([H])"), QueryMol(f"[{HALIDE}][*:3]")],
+        reactants=[QueryMol("[*:1][NH2,SH,OH:2]"), QueryMol(f"[{HALIDE}][*:3]")],
         product=QueryMol("[*:1][NH,S,O:2]([*:3])"),
         chemical_space="real",
         reaction_id=34,
