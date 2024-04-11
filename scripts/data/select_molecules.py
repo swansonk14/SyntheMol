@@ -88,6 +88,17 @@ def select_molecules(
         If None, selects molecules in the order of the input file.
     :param descending: Whether to sort in descending order.
     """
+    # Check arguments
+    if len(score_columns) != len(score_comparators):
+        raise ValueError(
+            "Number of score columns must match the number of score comparators."
+        )
+
+    if len(novelty_columns) != len(novelty_thresholds):
+        raise ValueError(
+            "Number of novelty columns must match the number of novelty thresholds."
+        )
+
     # Load molecules
     molecules = pd.read_csv(data_path)
 
