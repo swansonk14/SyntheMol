@@ -473,7 +473,7 @@ python scripts/data/select_molecules.py \
     --save_analysis_path rl/selections/${MODEL}/analysis.csv \
     --score_columns "S. aureus" "Solubility" \
     --score_comparators ">=0.5" ">=-4" \
-    --novelty_threshold 0.6 0.6 \
+    --novelty_thresholds 0.6 0.6 \
     --similarity_threshold 0.6 \
     --select_num 150 \
     --sort_column "S. aureus" \
@@ -571,7 +571,7 @@ python scripts/data/select_molecules.py \
     --save_analysis_path rl/selections/chemprop_rdkit/analysis.csv \
     --score_columns "s_aureus_activity" "solubility" \
     --score_comparators ">=0.5" ">=-4" \
-    --novelty_threshold 0.6 0.6 \
+    --novelty_thresholds 0.6 0.6 \
     --similarity_threshold 0.6 \
     --select_num 150 \
     --sort_column "s_aureus_activity" \
@@ -631,4 +631,34 @@ do
 admet_predict \
     --data_path rl/selections/${NAME}/molecules.csv
 done
+```
+
+## Combine selected molecules
+
+Combine the selected molecules from all methods into a single file.
+
+```bash
+python -c "import pandas as pd
+data = pd.concat([
+    pd.read_csv('rl/selections/rl_chemprop_rdkit/molecules.csv').assign(method='rl_chemprop_rdkit'),
+    pd.read_csv('rl/selections/rl_mlp_rdkit/molecules.csv').assign(method='rl_mlp_rdkit'),
+    pd.read_csv('rl/selections/mcts/molecules.csv').assign(method='mcts'),
+    pd.read_csv('rl/selections/chemprop_rdkit/molecules.csv').assign(method='chemprop_rdkit'),
+    pd.read_csv('rl/selections/random/molecules.csv').assign(method='random')
+])
+print(data['method'].value_counts())
+data.to_csv('rl/selections/all_molecules.csv', index=False)"
+```
+
+## Split selected molecules into REAL and WuXi
+
+Split the selected molecules into REAL and WuXi chemical spaces.
+
+```bash
+python -c "import pandas as pd
+data = pd.read_csv('rl/selections/all_molecules.csv')
+for chemical_space in ['real', 'wuxi']:
+    space_data = data[(data['chemical_space'] == chemical_space) | (data['reaction_1_chemical_space'] == chemical_space)]
+    print(f'{chemical_space}: {len(space_data):,}')
+    space_data.to_csv(f'rl/selections/{chemical_space}_molecules.csv', index=False)"
 ```
