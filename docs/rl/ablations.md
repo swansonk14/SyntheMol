@@ -351,7 +351,7 @@ python scripts/data/select_molecules.py \
     --save_analysis_path ${DIR}/analysis.csv \
     --score_columns "S. aureus" "Solubility" \
     --score_comparators ">=0.5" ">=-4" \
-    --novelty_threshold 0.6 \
+    --novelty_threshold 0.6 0.6 \
     --similarity_threshold 0.6 \
     --sort_column "S. aureus" \
     --descending

@@ -1,5 +1,10 @@
 # SyntheMol: Generative AI for Drug Discovery
 
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/synthemol)](https://badge.fury.io/py/synthemol)
+[![PyPI version](https://badge.fury.io/py/synthemol.svg)](https://badge.fury.io/py/synthemol)
+[![Downloads](https://pepy.tech/badge/synthemol)](https://pepy.tech/project/synthemol)
+[![license](https://img.shields.io/github/license/swansonk14/synthemol.svg)](https://github.com/swansonk14/SyntheMol/blob/main/LICENSE.txt)
+
 SyntheMol is a generative AI method for designing structurally novel and diverse drug candidates with predicted
 bioactivity that are easy to synthesize.
 
@@ -10,9 +15,11 @@ reactions from the [Enamine REAL Space](https://enamine.net/compound-collections
 which can produce over 30 billion molecules. However, SyntheMol can be easily adapted to use any set of building blocks
 and reactions.
 
-SyntheMol is described in a forthcoming paper in _Nature Machine Intelligence_, where we applied SyntheMol to design
-novel antibiotic candidates for the Gram-negative bacterium _Acinetobacter baumannii_. Full details for reproducing the
-results in the paper are provided in the [docs](docs) directory.
+SyntheMol is described in the following paper, where we applied SyntheMol to design novel antibiotic candidates for the Gram-negative bacterium _Acinetobacter baumannii_.
+
+Swanson, K., Liu, G., Catacutan, D. B., Arnold, A., Zou, J., Stokes, J. M. [Generative AI for designing and validating easily synthesizable and structurally novel antibiotics](https://www.nature.com/articles/s42256-024-00809-7). _Nature Machine Intelligence_, 2024.
+
+Full details for reproducing the results in the paper are provided in the [docs](docs) directory.
 
 ## Table of contents
 
