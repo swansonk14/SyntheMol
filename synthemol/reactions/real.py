@@ -15,6 +15,7 @@ POST_ESTER_HYDROLYSIS = QueryMol("[H][O:2][C:3]([*:1])=[O:4]")
 
 # Define post-reactions
 BOC_CLEAVAGE = Reaction(reactants=[BOC], product=POST_BOC_CLEAVAGE,)
+# TODO: treat CO2Me and CO2Et as the same
 ESTER_HYDROLYSIS_CO2ME = Reaction(reactants=[CO2ME], product=POST_ESTER_HYDROLYSIS,)
 ESTER_HYDROLYSIS_CO2ET = Reaction(reactants=[CO2ET], product=POST_ESTER_HYDROLYSIS,)
 ESTER_HYDROLYSIS_CO2TBU = Reaction(reactants=[CO2TBU], product=POST_ESTER_HYDROLYSIS,)
@@ -258,7 +259,7 @@ REAL_REACTIONS = (
             QueryMol("[H][N:3]([H])[c:4][c:5][N:6]([*])[*]"),
             QueryMol("[H][C:1](=O)[*:2]"),
         ],
-        product=QueryMol("[c:4]1=[N:3][C:1]([*:2])=[N:6][c:5]1"),
+        product=QueryMol("[c:4]1[N:3]([H])[C:1]([*:2])=[N:6][c:5]1"),
         chemical_space="real",
         reaction_id=60,
     ),
@@ -606,7 +607,7 @@ REAL_REACTIONS = (
             QueryMol("[N-:1]=[N+:2]=[N:3][*:4]"),
             QueryMol("[H][C:5]#[C:6][*:7]"),
         ],
-        product=QueryMol("[H][c:5]1[c:6]([*:7])[n:1][n:2][n:3]1[*:4]"),
+        product=QueryMol("[H][c:5]1[c:6]([*:7])[n-0:1][n-0:2][n:3]1[*:4]"),
         chemical_space="real",
         reaction_id=273910,
     ),
@@ -614,7 +615,7 @@ REAL_REACTIONS = (
         reactants=[
             QueryMol(
                 "[H]C([H])([H])O[C:1]1=[N:2][C:3]([H])([H])[O,CH2:4][O,CH2:5][C:6]1([H])[H]"
-            ),
+            ),  # TODO: convert CH2 to separate Hs
             QueryMol("[H][N:7]([H])[N:8]([H])[C:9](=O)[*:10]"),
         ],
         product=QueryMol(

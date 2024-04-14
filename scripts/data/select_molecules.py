@@ -7,7 +7,6 @@ import pandas as pd
 from chemfunc import compute_pairwise_tanimoto_similarities
 
 from synthemol.constants import SCORE_COL, SMILES_COL
-from synthemol.generate.utils import parse_comparator_string
 
 
 def compute_average_maximum_similarity(similarities: np.ndarray) -> float:

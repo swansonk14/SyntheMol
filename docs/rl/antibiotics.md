@@ -636,9 +636,9 @@ admet_predict \
 done
 ```
 
-## Combine selected molecules
+## Merge selections into a single file
 
-Combine the selected molecules from all methods into a single file.
+Merge all selections into a single file.
 
 ```bash
 python -c "import pandas as pd
@@ -653,9 +653,9 @@ print(data['method'].value_counts())
 data.to_csv('rl/selections/all_molecules.csv', index=False)"
 ```
 
-## Split selected molecules into REAL and WuXi
+## Separate selections by chemical space
 
-Split the selected molecules into REAL and WuXi chemical spaces.
+Separate selections by chemical space.
 
 ```bash
 python -c "import pandas as pd
