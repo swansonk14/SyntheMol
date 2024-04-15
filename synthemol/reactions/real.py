@@ -374,7 +374,7 @@ REAL_REACTIONS = (
     Reaction(
         reactants=[
             QueryMol("[*:1][#7:2]([H])[*:3]"),
-            QueryMol(f"[*:6]C(=O)[{HALOGEN}]"),
+            QueryMol(f"[*:6][C:4](=[O:5])[{HALOGEN}]"),
         ],
         product=QueryMol("[O:5]=[C:4]([*:6])[#7:2]([*:1])[*:3]"),
         chemical_space="real",
