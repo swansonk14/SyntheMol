@@ -9,7 +9,7 @@ CO2TBU = QueryMol(
 )
 CO2ME = QueryMol("[H]C([H])([H])[O:2][C:3]([*:1])=[O:4]")
 CO2ET = QueryMol("[H]C([H])([H])C([H])([H])[O:2][C:3]([*:1])=[O:4]")
-CO2R = QueryMol("[*][O:2][C:3]([*:1])=[O:4]")
+CO2R = QueryMol("[!H][O:2][C:3]([*:1])=[O:4]")
 CO2F3 = QueryMol("[H]C([H])([O:2][C:3](=[O:4])[*:1])C(F)(F)F")
 POST_BOC_CLEAVAGE = QueryMol("[*:1]")
 POST_ESTER_HYDROLYSIS = QueryMol("[H][O:2][C:3]([*:1])=[O:4]")
