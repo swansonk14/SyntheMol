@@ -101,7 +101,8 @@ class Reaction:
                 else:
                     final_products.append(product)
 
-            products = final_products
+            # Remove duplicate SMILES
+            products = list(dict.fromkeys(final_products))
 
         return products
 
