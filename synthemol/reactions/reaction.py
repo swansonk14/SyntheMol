@@ -18,7 +18,7 @@ class Reaction:
         chemical_space: str | None = None,
         reaction_id: int | None = None,
         sub_reaction_id: int | None = None,
-        post_reaction: Union["Reaction", None] = None,
+        post_reactions: tuple["Reaction", ...] = (),
     ) -> None:
         """Initializes the Reaction.
 
@@ -27,7 +27,8 @@ class Reaction:
         :param chemical_space: The chemical space of the reaction (e.g., Enamine or WuXi).
         :param reaction_id: The ID of the reaction.
         :param sub_reaction_id: The ID of the sub-reaction.
-        :param post_reaction: An optional Reaction to run after the main reaction on the product (e.g., BOC cleavage).
+        :param post_reactions: A list of Reactions to run after the main reaction on the product
+            (e.g., BOC cleavage or ester hydrolysis).
         """
         self.reactants = reactants
         self.product = product
@@ -39,7 +40,7 @@ class Reaction:
             if sub_reaction_id is None
             else f"{reaction_id}_{sub_reaction_id}"
         )
-        self.post_reaction = post_reaction
+        self.post_reactions = post_reactions
 
         self.reaction_smarts = (
             f'{".".join(f"({reactant.smarts_with_atom_mapping})" for reactant in self.reactants)}'
@@ -63,6 +64,22 @@ class Reaction:
     def num_reactants(self) -> int:
         """Gets the number of reactants in the reaction."""
         return len(self.reactants)
+
+    def has_match(self, reactants: list[MOLECULE_TYPE]) -> bool:
+        """Determines whether the provided reactants match the reaction.
+
+        :param reactants: A list of reactants in order.
+        :return: True if the reactants match the reaction, otherwise False.
+        """
+        # Ensure the number of reactants matches
+        if len(reactants) != len(self.reactants):
+            return False
+
+        # Ensure each reactant matches the corresponding QueryMol
+        return all(
+            self.reactants[reactant_index].has_match(reactant)
+            for reactant_index, reactant in enumerate(reactants)
+        )
 
     def run_reactants(self, reactants: list[MOLECULE_TYPE]) -> list[str]:
         """Runs the reaction on the provided reactants.
@@ -89,17 +106,27 @@ class Reaction:
             )
         )
 
-        # Optionally run post-reaction
-        if self.post_reaction is not None:
+        # Run any post-reactions on the products
+        for post_reaction in self.post_reactions:
             # Run each product through the post-reaction and keep post-product if any, otherwise keep original product
             final_products = []
             for product in products:
-                post_products = self.post_reaction.run_reactants([product])
+                # Continue applying post-reaction until it no longer matches (e.g., in case of multiple Boc groups)
+                post_reaction_loops = 0
+                while post_reaction.has_match([product]):
+                    post_products = post_reaction.run_reactants([product])
 
-                if len(post_products) > 0:
-                    final_products.extend(post_products)
-                else:
-                    final_products.append(product)
+                    # If there is only one post-product, use it, otherwise keep the original product
+                    if len(post_products) == 1:
+                        product = post_products[0]
+                        post_reaction_loops += 1
+                    elif post_reaction_loops > 50:
+                        raise ValueError("Post-reaction looped too many times")
+                    else:
+                        break
+
+                # Add the final product to the list
+                final_products.append(product)
 
             # Remove duplicate SMILES
             products = list(dict.fromkeys(final_products))
