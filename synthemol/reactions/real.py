@@ -9,7 +9,6 @@ CO2TBU = QueryMol(
 )
 CO2ME = QueryMol("[H]C([H])([H])[O:2][C:3]([*:1])=[O:4]")
 CO2ET = QueryMol("[H]C([H])([H])C([H])([H])[O:2][C:3]([*:1])=[O:4]")
-CO2R = QueryMol("[!H][O:2][C:3]([*:1])=[O:4]")
 CO2F3 = QueryMol("[H]C([H])([O:2][C:3](=[O:4])[*:1])C(F)(F)F")
 POST_BOC_CLEAVAGE = QueryMol("[*:1]")
 POST_ESTER_HYDROLYSIS = QueryMol("[H][O:2][C:3]([*:1])=[O:4]")
@@ -19,7 +18,6 @@ BOC_CLEAVAGE = Reaction(reactants=[BOC], product=POST_BOC_CLEAVAGE,)
 ESTER_HYDROLYSIS_CO2ME = Reaction(reactants=[CO2ME], product=POST_ESTER_HYDROLYSIS,)
 ESTER_HYDROLYSIS_CO2ET = Reaction(reactants=[CO2ET], product=POST_ESTER_HYDROLYSIS,)
 ESTER_HYDROLYSIS_CO2TBU = Reaction(reactants=[CO2TBU], product=POST_ESTER_HYDROLYSIS,)
-ESTER_HYDROLYSIS_CO2R = Reaction(reactants=[CO2R], product=POST_ESTER_HYDROLYSIS,)
 ESTER_HYDROLYSIS_CO2F3 = Reaction(reactants=[CO2F3], product=POST_ESTER_HYDROLYSIS,)
 
 
@@ -411,7 +409,7 @@ REAL_REACTIONS = (
         product=QueryMol("[*:1][#7:2]([*:3])[*:4]"),
         chemical_space="real",
         reaction_id=270122,
-        post_reactions=(ESTER_HYDROLYSIS_CO2R,),
+        post_reactions=(ESTER_HYDROLYSIS_CO2ME, ESTER_HYDROLYSIS_CO2ET),
     ),
     Reaction(
         reactants=[QueryMol("[*:1][#7:2]([H])[*:3]"), QueryMol(f"[{HALOGEN}][*:4]")],
