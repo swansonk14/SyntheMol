@@ -114,14 +114,19 @@ class Reaction:
                 # Continue applying post-reaction until it no longer matches (e.g., in case of multiple Boc groups)
                 post_reaction_loops = 0
                 while post_reaction.has_match([product]):
+                    # Stop if too many loops
+                    if post_reaction_loops > 50:
+                        raise ValueError(
+                            f"Post-reaction looped too many times for reaction {post_reaction} with product {product}"
+                        )
+
+                    # Run post-reaction
                     post_products = post_reaction.run_reactants([product])
 
                     # If there is only one post-product, use it, otherwise keep the original product
                     if len(post_products) == 1:
                         product = post_products[0]
                         post_reaction_loops += 1
-                    elif post_reaction_loops > 50:
-                        raise ValueError("Post-reaction looped too many times")
                     else:
                         break
 
