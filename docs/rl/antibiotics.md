@@ -639,14 +639,21 @@ Combine the selected molecules from all methods into a single file.
 
 ```bash
 python -c "import pandas as pd
+
+# Combine all selections
 data = pd.concat([
     pd.read_csv('rl/selections/rl_chemprop_rdkit/molecules.csv').assign(method='rl_chemprop_rdkit'),
     pd.read_csv('rl/selections/rl_mlp_rdkit/molecules.csv').assign(method='rl_mlp_rdkit'),
     pd.read_csv('rl/selections/mcts/molecules.csv').assign(method='mcts'),
     pd.read_csv('rl/selections/chemprop_rdkit/molecules.csv').assign(method='chemprop_rdkit'),
     pd.read_csv('rl/selections/random/molecules.csv').assign(method='random')
-])
+]).reset_index(drop=True)
 print(data['method'].value_counts())
+
+# Combine chemical space labels into one column
+data['chemical_space'] = data['chemical_space'].combine_first(data['reaction_1_chemical_space'])
+
+# Save
 data.to_csv('rl/selections/all_molecules.csv', index=False)"
 ```
 
@@ -658,23 +665,47 @@ Split the selected molecules into REAL and WuXi chemical spaces.
 python -c "import pandas as pd
 data = pd.read_csv('rl/selections/all_molecules.csv')
 for chemical_space in ['real', 'wuxi']:
-    space_data = data[(data['chemical_space'] == chemical_space) | (data['reaction_1_chemical_space'] == chemical_space)]
+    space_data = data[data['chemical_space'] == chemical_space]
     print(f'{chemical_space}: {len(space_data):,}')
     space_data.to_csv(f'rl/selections/{chemical_space}_molecules.csv', index=False)"
 ```
 
 ## Select final candidates based on availability and ClinTox score
 
-Select 50 molecules from each model from the available molecules ranked by ClinTox score (lowest to highest). Note that this uses the `available.csv` file in the `rl/quotes` folder that is created based on the availability of the molecules in quotes from Enamine and WuXi
+Select 50 molecules from each model from the available molecules ranked by ClinTox score (lowest to highest), except for random where random molecules are selected. Note that `rl/selections/all_molecules.csv` has been modified to include a column indicating which molecules are available based on quotes from Enamine and WuXi.
 
 ```bash
-mkdir rl/order
-
 python -c "import pandas as pd
-available = pd.read_csv('rl/quotes/available.csv')
-for name in ['rl_chemprop_rdkit', 'rl_mlp_rdkit', 'mcts', 'chemprop_rdkit', 'random']:
-    data = pd.read_csv(f'rl/selections/{name}/molecules.csv')
-    data = data[data['smiles'].isin(available['smiles'])]
-    data = data.sort_values('ClinTox', ascending=True).head(50)
-    data.to_csv(f'rl/order/{name}.csv', index=False)"
+
+# Load molecules
+data = pd.read_csv('rl/selections/all_molecules.csv')
+
+# Get available molecules
+available = data[data['available']]
+
+# Select top 50 molecules by ClinTox score for each method (except random)
+selected = []
+for method in sorted(data['method'].unique()):
+    method_data = available[available['method'] == method]
+
+    if method == 'random':
+        real_data = method_data[method_data['chemical_space'] == 'real']
+        wuxi_data = method_data[method_data['chemical_space'] == 'wuxi']
+        method_data = pd.concat([real_data.sample(33, random_state=0), wuxi_data.sample(17, random_state=0)])
+    else:
+        method_data = method_data.sort_values('ClinTox').head(50)
+
+    selected.append(method_data)
+
+selected = pd.concat(selected)
+
+# Save selected molecules
+selected.to_csv('rl/selections/all_molecules_available_clintox.csv', index=False)
+
+# Save selected molecules by chemical space
+for chemical_space in sorted(selected['chemical_space'].unique()):
+    selected[selected['chemical_space'] == chemical_space].to_csv(
+        f'rl/selections/{chemical_space}_molecules_available_clintox.csv',
+        index=False
+    )"
 ```
