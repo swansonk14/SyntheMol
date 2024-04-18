@@ -28,7 +28,7 @@ class RLModel(ABC):
 
     def __init__(
         self,
-        prediction_types: tuple[RL_PREDICTION_TYPES],
+        prediction_types: tuple[RL_PREDICTION_TYPES, ...],
         score_weights: ScoreWeights,
         model_paths: list[Path] | None = None,
         max_num_molecules: int = 3,
@@ -601,7 +601,7 @@ def rl_mlp_collate_fn(
 class RLModelMLP(RLModel):
     def __init__(
         self,
-        prediction_types: tuple[RL_PREDICTION_TYPES],
+        prediction_types: tuple[RL_PREDICTION_TYPES, ...],
         score_weights: ScoreWeights,
         model_paths: list[Path] | None = None,
         max_num_molecules: int = 3,
@@ -925,7 +925,7 @@ def rl_chemprop_collate_fn(
 class RLModelChemprop(RLModel):
     def __init__(
         self,
-        prediction_types: tuple[RL_PREDICTION_TYPES],
+        prediction_types: tuple[RL_PREDICTION_TYPES, ...],
         score_weights: ScoreWeights,
         model_paths: list[Path] | None = None,
         max_num_molecules: int = 3,
