@@ -36,8 +36,9 @@ SKLEARN_MODEL_NAME_TYPES = Literal["random_forest"]
 MODEL_TYPES = Literal["random_forest", "chemprop"]
 SCORE_TYPES = Literal["random_forest", "chemprop", "qed", "clogp"]
 DATASET_TYPES = Literal["classification", "regression"]
-RL_MODEL_TYPES = Literal["mlp_rdkit", "chemprop", "chemprop_rdkit"]
+RL_MODEL_TYPES = Literal["mlp", "chemprop"]
 RL_PREDICTION_TYPES = Literal["classification", "regression"]
+FEATURES_SIZE_MAPPING = {"rdkit": 200, "morgan": 2048}
 OPTIMIZATION_TYPES = Literal["maximize", "minimize"]
 OLD_REACTION_ORDER = [
     275592,
@@ -55,6 +56,7 @@ OLD_REACTION_ORDER = [
     27,
 ]
 OLD_REACTIONS = set(OLD_REACTION_ORDER)
+H2O_FEATURES = [0.681, 0.997, 1.062, 0.025] # SP, SdP, SA, SB from https://pubs.acs.org/doi/10.1021/acs.jcim.0c01203
 
 # Path where data files are stored
 with resources.path("synthemol", "resources") as resources_dir:
