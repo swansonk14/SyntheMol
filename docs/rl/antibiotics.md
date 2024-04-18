@@ -322,6 +322,10 @@ Time with an 8-core, 1-GPU machine:
 Generate molecules with SyntheMol-RL using RL models for _S. aureus_ and solubility with dynamic multiparameter and
 exploring REAL & WuXi chemical spaces.
 
+Note: Logically, the RL prediction types for the two models should be classification and regression. However, at the
+time this experiment was run, the code required a single model type for both models. Therefore, the models were trained
+as regression models and used as such in the generation.
+
 RL Chemprop-RDKit
 
 ```bash
@@ -340,7 +344,7 @@ synthemol \
     --search_type rl \
     --rl_model_type chemprop_rdkit \
     --rl_model_paths rl/models/s_aureus_chemprop_rdkit/fold_0/model_0/model.pt rl/models/solubility_chemprop_rdkit/fold_0/model_0/model.pt \
-    --rl_prediction_type regression \
+    --rl_prediction_types regression regression \
     --use_gpu \
     --num_workers 8 \
     --wandb_project_name synthemol_rl \
@@ -366,7 +370,7 @@ synthemol \
     --search_type rl \
     --rl_model_type mlp_rdkit \
     --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/fold_0/model_0/model.pt \
-    --rl_prediction_type regression \
+    --rl_prediction_types regression regression \
     --wandb_project_name synthemol_rl \
     --wandb_run_name rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi \
     --wandb_log

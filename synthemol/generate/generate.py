@@ -59,7 +59,7 @@ def generate(
     rl_model_type: RL_MODEL_TYPES = "chemprop",
     rl_model_fingerprint_type: str | None = None,
     rl_model_paths: list[Path] | None = None,
-    rl_prediction_type: RL_PREDICTION_TYPES = "classification",  # TODO: allow multiple prediction types, one per rl model
+    rl_prediction_types: tuple[RL_PREDICTION_TYPES] = ("classification",),
     rl_base_temperature: float = 0.1,
     rl_temperature_similarity_target: float = 0.6,
     rl_train_frequency: int = 10,
@@ -118,7 +118,7 @@ def generate(
         but Chemprop RL models can have a fingerprint type of None. 
     :param rl_model_paths: List of paths with each path pointing to a PT file containing a trained model that will be
         used as the initial weights for the RL models. If None, RL models are trained from scratch.
-    :param rl_prediction_type: The type of prediction made by the RL model, which determines the loss function.
+    :param rl_prediction_types: The types of predictions made by the RL models, which determines the loss functions.
         'classification' = binary classification. 'regression' = regression.
     :param rl_base_temperature: The initial temperature parameter for the softmax function used to select building blocks.
         Higher temperature means more exploration. If rl_temperature_similarity_target is provided,
@@ -403,7 +403,7 @@ def generate(
                 "rl_model_type": rl_model_type,
                 "rl_fingerprint_type": rl_model_fingerprint_type,
                 "rl_model_paths": rl_model_paths,
-                "rl_prediction_type": rl_prediction_type,
+                "rl_prediction_types": rl_prediction_types,
                 "rl_base_temperature": rl_base_temperature,
                 "rl_temperature_similarity_target": rl_temperature_similarity_target,
                 "rl_train_frequency": rl_train_frequency,
@@ -479,7 +479,7 @@ def generate(
 
         # Set up RL model args
         rl_model_args = {
-            "prediction_type": rl_prediction_type,
+            "prediction_types": rl_prediction_types,
             "score_weights": score_weights,
             "model_paths": rl_model_paths,
             "num_workers": num_workers,
@@ -498,8 +498,6 @@ def generate(
             rl_model_class = RLModelChemprop
         else:
             raise ValueError(f"Invalid RL model type: {rl_model_type}")
-        
-        
 
         # Create RL model
         rl_model = rl_model_class(**rl_model_args)
