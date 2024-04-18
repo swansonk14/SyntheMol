@@ -13,7 +13,7 @@ from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import mean_squared_error, r2_score
 from tqdm import tqdm, trange
 
-from synthemol.constants import RL_PREDICTION_TYPES
+from synthemol.constants import RL_PREDICTION_TYPES, FINGERPRINT_TYPES, H2O_FEATURES
 from synthemol.generate.score_weights import ScoreWeights
 from synthemol.generate.node import Node
 from synthemol.models import chemprop_build_model, chemprop_load, MLP
@@ -33,12 +33,14 @@ class RLModel(ABC):
         model_paths: list[Path] | None = None,
         max_num_molecules: int = 3,
         features_size: int = 200,
+        features_type: str | None = None,
         num_workers: int = 0,
         num_epochs: int = 5,
         batch_size: int = 50,
         learning_rate: float = 1e-3,
         device: torch.device = torch.device("cpu"),
         extended_evaluation: bool = False,
+        h2o_solvents: bool = False,
     ) -> None:
         """Initializes the model.
 
@@ -68,6 +70,7 @@ class RLModel(ABC):
         self.score_weights = score_weights
         self.model_paths = model_paths
         self.max_num_molecules = max_num_molecules
+        self.features_type = features_type
         self.features_size = features_size
         self.total_features_size = max_num_molecules * features_size
         self.num_workers = num_workers
@@ -76,6 +79,7 @@ class RLModel(ABC):
         self.learning_rate = learning_rate
         self.device = device
         self.extended_evaluation = extended_evaluation
+        self.h2o_solvents = h2o_solvents
 
         self.train_source_nodes: list[Node] = []
         self.train_target_nodes: list[Node] = []
@@ -117,10 +121,10 @@ class RLModel(ABC):
                 f"Prediction type {self.prediction_type} is not supported."
             )
 
-    def compute_rdkit_features(
-        self, molecule_tuples: list[tuple[str]], average_across_tuple: bool = False
+    def compute_features(
+        self, molecule_tuples: list[tuple[str]], average_across_tuple: bool = False, fingerprint_type: FINGERPRINT_TYPES = 'rdkit', h2o_solvents: bool = False,
     ) -> torch.Tensor:
-        """Computes the RDKit features for molecules in each tuple of molecules.
+        """Computes the features for molecules in each tuple of molecules.
 
         :param molecule_tuples: A list of tuples of SMILES strings representing one or more molecules.
         :param average_across_tuple: Whether to average the features across the molecules in each tuple.
@@ -145,7 +149,7 @@ class RLModel(ABC):
         # Compute features for unknown molecules and add to dictionary
         if unknown_molecules:
             unknown_features = compute_fingerprints(
-                mols=unknown_molecules, fingerprint_type="rdkit"
+                mols=unknown_molecules, fingerprint_type=fingerprint_type
             )
             unknown_features = torch.from_numpy(unknown_features)
 
@@ -157,10 +161,15 @@ class RLModel(ABC):
             [self.smiles_to_features[molecule] for molecule in all_molecules]
         )
 
-        # Set up feature vectors for each combination of molecules
-        features_dim = (
-            self.features_size if average_across_tuple else self.total_features_size
-        )
+        if self.h2o_solvents:
+            features_dim = (
+                self.features_size + len(H2O_FEATURES) if average_across_tuple else self.total_features_size + len(H2O_FEATURES) * self.max_num_molecules
+            )
+        else:
+            # Set up feature vectors for each combination of molecules
+            features_dim = (
+                self.features_size if average_across_tuple else self.total_features_size
+            )
         features = torch.zeros((len(molecule_tuples), features_dim))
         index = 0
         for i, molecule_num in enumerate(molecule_nums):
@@ -168,6 +177,14 @@ class RLModel(ABC):
             molecules_features = all_features[
                 index : index + molecule_num
             ]  # (molecule_num, features_size)
+
+            # Optionally add solvent features
+            if h2o_solvents:
+                solvent_features = torch.tensor(H2O_FEATURES).repeat(features.shape[0], 1)  # (molecule_num, solvent_features_size)
+                molecules_features = torch.cat((molecules_features, solvent_features), dim=1)  # (molecule_num, features_size + solvent_features_size)
+            
+            # Cast molecules_features to float
+            molecules_features = molecules_features.float()
 
             # Average features across molecules in the tuple if desired
             if average_across_tuple:
@@ -556,6 +573,7 @@ class RLModelMLP(RLModel):
         model_paths: list[Path] | None = None,
         max_num_molecules: int = 3,
         features_size: int = 200,
+        features_type: str | None = None,
         hidden_dim: int = 300,
         num_layers: int = 2,
         num_workers: int = 0,
@@ -564,6 +582,7 @@ class RLModelMLP(RLModel):
         learning_rate: float = 1e-3,
         device: torch.device = torch.device("cpu"),
         extended_evaluation: bool = False,
+        h2o_solvents: bool = False,
     ) -> None:
         """Initializes the RL MLP model.
 
@@ -585,6 +604,7 @@ class RLModelMLP(RLModel):
         :param extended_evaluation: Whether to perform extended evaluation of the RL models using all combinations
             of numbers of source/target building blocks.
         """
+
         # Store MLP-specific parameters
         self.hidden_dim = hidden_dim
         self.output_dim = 1
@@ -596,12 +616,14 @@ class RLModelMLP(RLModel):
             model_paths=model_paths,
             max_num_molecules=max_num_molecules,
             features_size=features_size,
+            features_type=features_type,
             num_workers=num_workers,
             num_epochs=num_epochs,
             batch_size=batch_size,
             learning_rate=learning_rate,
             device=device,
             extended_evaluation=extended_evaluation,
+            h2o_solvents=h2o_solvents,
         )
 
     def build_model(self) -> MLP:
@@ -610,7 +632,7 @@ class RLModelMLP(RLModel):
         :return: A model with randomly initialized weights.
         """
         return MLP(
-            input_dim=self.max_num_molecules * self.features_size,
+            input_dim=self.max_num_molecules * (self.features_size + (len(H2O_FEATURES) if self.h2o_solvents else 0)) ,
             hidden_dim=self.hidden_dim,
             output_dim=1,
             num_layers=self.num_layers,
@@ -702,7 +724,6 @@ class RLModelMLP(RLModel):
         loaded_state_dict[first_layer_weight_name] = loaded_state_dict[
             first_layer_weight_name
         ].repeat(1, self.max_num_molecules)
-
         # Load weights into model
         model.load_state_dict(loaded_state_dict)
 
@@ -731,8 +752,8 @@ class RLModelMLP(RLModel):
         :return: A dataloader.
         """
         # Compute features in bulk across all molecules
-        features = self.compute_rdkit_features(
-            molecule_tuples=molecule_tuples, average_across_tuple=False
+        features = self.compute_features(
+            molecule_tuples=molecule_tuples, average_across_tuple=False, fingerprint_type=self.features_type
         )
 
         # Set up data based on presence of rewards
@@ -866,22 +887,22 @@ def rl_chemprop_collate_fn(
 class RLModelChemprop(RLModel):
     def __init__(
         self,
-        use_rdkit_features: bool,
         prediction_type: RL_PREDICTION_TYPES,
         score_weights: ScoreWeights,
         model_paths: list[Path] | None = None,
         max_num_molecules: int = 3,
         features_size: int = 200,
+        features_type: str | None = None,
         num_workers: int = 0,
         num_epochs: int = 5,
         batch_size: int = 50,
         learning_rate: float = 1e-3,
         device: torch.device = torch.device("cpu"),
         extended_evaluation: bool = False,
+        h2o_solvents: bool = False,
     ) -> None:
         """Initializes the RL Chemprop model.
 
-        :param use_rdkit_features: Whether to use RDKit fingerprints as features.
         :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
             'classification' = binary classification. 'regression' = regression.
         :param score_weights: The weights of the models for each property.
@@ -898,8 +919,6 @@ class RLModelChemprop(RLModel):
         :param extended_evaluation: Whether to perform extended evaluation of the RL models using all combinations
             of numbers of source/target building blocks.
         """
-        # Store whether to use RDKit features
-        self.use_rdkit_features = use_rdkit_features
 
         super().__init__(
             prediction_type=prediction_type,
@@ -907,12 +926,14 @@ class RLModelChemprop(RLModel):
             model_paths=model_paths,
             max_num_molecules=max_num_molecules,
             features_size=features_size,
+            features_type=features_type,
             num_workers=num_workers,
             num_epochs=num_epochs,
             batch_size=batch_size,
             learning_rate=learning_rate,
             device=device,
             extended_evaluation=extended_evaluation,
+            h2o_solvents=h2o_solvents,
         )
 
     def build_model(self) -> MoleculeModel:
@@ -922,8 +943,7 @@ class RLModelChemprop(RLModel):
         """
         return chemprop_build_model(
             dataset_type=self.prediction_type,
-            use_rdkit_features=self.use_rdkit_features,
-            rdkit_features_size=self.features_size,
+            features_type=self.features_type,
             property_name="rl_objective",
         ).to(self.device)
 
@@ -970,11 +990,11 @@ class RLModelChemprop(RLModel):
         :param shuffle: Whether to shuffle the data.
         :return: A dataloader.
         """
-        # Compute RDKit features if needed
-        if self.use_rdkit_features:
+        # Compute features if needed
+        if self.features_type is not None:
             # Compute features and average across molecules in a tuple for a tensor of shape (num_tuples, features_size)
-            features = self.compute_rdkit_features(
-                molecule_tuples=molecule_tuples, average_across_tuple=True
+            features = self.compute_features(
+                molecule_tuples=molecule_tuples, average_across_tuple=True, fingerprint_type=self.features_type
             )
         else:
             features = None
