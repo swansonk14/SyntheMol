@@ -28,7 +28,7 @@ class RLModel(ABC):
 
     def __init__(
         self,
-        prediction_type: RL_PREDICTION_TYPES,
+        prediction_types: tuple[RL_PREDICTION_TYPES],
         score_weights: ScoreWeights,
         model_paths: list[Path] | None = None,
         max_num_molecules: int = 3,
@@ -44,7 +44,7 @@ class RLModel(ABC):
     ) -> None:
         """Initializes the model.
 
-        :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
+        :param prediction_types: The types of predictions made by the RL models, which determines the loss functions.
             'classification' = binary classification. 'regression' = regression.
         :param score_weights: The weights of the scores.
         :param model_paths: A list of paths to PT files or directories of PT files containing models to load if using
@@ -66,7 +66,13 @@ class RLModel(ABC):
                 f"of model weights ({score_weights.num_weights:,})."
             )
 
-        self.prediction_type = prediction_type
+        if len(prediction_types) != score_weights.num_weights:
+            raise ValueError(
+                f"Number of prediction types ({len(prediction_types):,}) must match number "
+                f"of model weights ({score_weights.num_weights:,})."
+            )
+
+        self.prediction_types = prediction_types
         self.score_weights = score_weights
         self.model_paths = model_paths
         self.max_num_molecules = max_num_molecules
@@ -91,7 +97,10 @@ class RLModel(ABC):
         # Build or load models
         if model_paths is None:
             # Build models
-            self.models = [self.build_model() for _ in range(score_weights.num_weights)]
+            self.models = [
+                self.build_model(prediction_type=prediction_type)
+                for prediction_type in prediction_types
+            ]
         else:
             # Get model path or first model path from each ensemble
             model_paths = [
@@ -102,7 +111,10 @@ class RLModel(ABC):
             ]
 
             # Load models
-            self.models = [self.load_model(model_path) for model_path in model_paths]
+            self.models = [
+                self.load_model(model_path=model_path, prediction_type=prediction_type)
+                for model_path, prediction_type in zip(model_paths, prediction_types)
+            ]
 
         # Set optimizer
         self.optimizers = [
@@ -111,18 +123,24 @@ class RLModel(ABC):
         ]
 
         # Set loss function
-        if self.prediction_type == "classification":
-            self.loss_fn = nn.BCEWithLogitsLoss()
-            self.eval_loss_fn = nn.BCELoss()
-        elif self.prediction_type == "regression":
-            self.loss_fn = self.eval_loss_fn = nn.MSELoss()
-        else:
-            raise ValueError(
-                f"Prediction type {self.prediction_type} is not supported."
-            )
+        self.loss_fns = []
+        self.eval_loss_fns = []
+        for prediction_type in prediction_types:
+            if prediction_type == "classification":
+                self.loss_fns.append(nn.BCEWithLogitsLoss())
+                self.eval_loss_fns.append(nn.BCELoss())
+            elif prediction_type == "regression":
+                self.loss_fns.append(nn.MSELoss())
+                self.eval_loss_fns.append(nn.MSELoss())
+            else:
+                raise ValueError(f"Prediction type {prediction_type} is not supported.")
 
     def compute_features(
-        self, molecule_tuples: list[tuple[str]], average_across_tuple: bool = False, fingerprint_type: FINGERPRINT_TYPES = 'rdkit', h2o_solvents: bool = False,
+        self,
+        molecule_tuples: list[tuple[str]],
+        average_across_tuple: bool = False,
+        fingerprint_type: FINGERPRINT_TYPES = "rdkit",
+        h2o_solvents: bool = False,
     ) -> torch.Tensor:
         """Computes the features for molecules in each tuple of molecules.
 
@@ -163,7 +181,10 @@ class RLModel(ABC):
 
         if self.h2o_solvents:
             features_dim = (
-                self.features_size + len(H2O_FEATURES) if average_across_tuple else self.total_features_size + len(H2O_FEATURES) * self.max_num_molecules
+                self.features_size + len(H2O_FEATURES)
+                if average_across_tuple
+                else self.total_features_size
+                + len(H2O_FEATURES) * self.max_num_molecules
             )
         else:
             # Set up feature vectors for each combination of molecules
@@ -180,9 +201,13 @@ class RLModel(ABC):
 
             # Optionally add solvent features
             if h2o_solvents:
-                solvent_features = torch.tensor(H2O_FEATURES).repeat(features.shape[0], 1)  # (molecule_num, solvent_features_size)
-                molecules_features = torch.cat((molecules_features, solvent_features), dim=1)  # (molecule_num, features_size + solvent_features_size)
-            
+                solvent_features = torch.tensor(H2O_FEATURES).repeat(
+                    features.shape[0], 1
+                )  # (molecule_num, solvent_features_size)
+                molecules_features = torch.cat(
+                    (molecules_features, solvent_features), dim=1
+                )  # (molecule_num, features_size + solvent_features_size)
+
             # Cast molecules_features to float
             molecules_features = molecules_features.float()
 
@@ -246,7 +271,9 @@ class RLModel(ABC):
                     predictions = self.run_model(model=model, batch_data=batch_data)
 
                     # Compute loss
-                    loss = self.loss_fn(predictions, batch_rewards[:, model_index])
+                    loss = self.loss_fns[model_index](
+                        predictions, batch_rewards[:, model_index]
+                    )
 
                     # Backpropagate
                     model.zero_grad()
@@ -361,7 +388,9 @@ class RLModel(ABC):
 
                             # Evaluate predictions
                             results |= {
-                                f"RL {description} Loss": self.eval_loss_fn(
+                                f"RL {description} Loss": self.eval_loss_fns[
+                                    model_index
+                                ](
                                     torch.from_numpy(predictions_masked).float(),
                                     torch.from_numpy(rewards_masked).float(),
                                 ).item(),
@@ -469,18 +498,22 @@ class RLModel(ABC):
         return len(self.test_source_nodes)
 
     @abstractmethod
-    def build_model(self) -> nn.Module:
+    def build_model(self, prediction_type: RL_PREDICTION_TYPES) -> nn.Module:
         """Builds a model (for predicting an individual property) from scratch.
 
+        :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
         :return: A model with randomly initialized weights.
         """
         pass
 
     @abstractmethod
-    def load_model(self, model_path: Path) -> nn.Module:
+    def load_model(
+        self, model_path: Path, prediction_type: RL_PREDICTION_TYPES
+    ) -> nn.Module:
         """Loads a pretrained model (for predicting an individual property).
 
         :param model_path: The path to a PT file containing a model to load.
+        :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
         :return: A model with pretrained weights.
         """
         pass
@@ -568,7 +601,7 @@ def rl_mlp_collate_fn(
 class RLModelMLP(RLModel):
     def __init__(
         self,
-        prediction_type: RL_PREDICTION_TYPES,
+        prediction_types: tuple[RL_PREDICTION_TYPES],
         score_weights: ScoreWeights,
         model_paths: list[Path] | None = None,
         max_num_molecules: int = 3,
@@ -586,7 +619,7 @@ class RLModelMLP(RLModel):
     ) -> None:
         """Initializes the RL MLP model.
 
-        :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
+        :param prediction_types: The types of predictions made by the RL models, which determines the loss functions.
             'classification' = binary classification. 'regression' = regression.
         :param score_weights: The weights of the models for each property.
         :param model_paths: A list of paths to PT files or directories of PT files containing models to load if using
@@ -611,7 +644,7 @@ class RLModelMLP(RLModel):
         self.num_layers = num_layers
 
         super().__init__(
-            prediction_type=prediction_type,
+            prediction_types=prediction_types,
             score_weights=score_weights,
             model_paths=model_paths,
             max_num_molecules=max_num_molecules,
@@ -626,28 +659,31 @@ class RLModelMLP(RLModel):
             h2o_solvents=h2o_solvents,
         )
 
-    def build_model(self) -> MLP:
+    def build_model(self, prediction_type: RL_PREDICTION_TYPES) -> MLP:
         """Builds a model (for predicting an individual property) from scratch.
 
+        :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
         :return: A model with randomly initialized weights.
         """
         return MLP(
-            input_dim=self.max_num_molecules * (self.features_size + (len(H2O_FEATURES) if self.h2o_solvents else 0)) ,
+            input_dim=self.max_num_molecules
+            * (self.features_size + (len(H2O_FEATURES) if self.h2o_solvents else 0)),
             hidden_dim=self.hidden_dim,
             output_dim=1,
             num_layers=self.num_layers,
-            sigmoid=self.prediction_type == "classification",
+            sigmoid=prediction_type == "classification",
             device=self.device,
         )
 
-    def load_model(self, model_path: Path) -> MLP:
+    def load_model(self, model_path: Path, prediction_type: RL_PREDICTION_TYPES) -> MLP:
         """Loads a pretrained model (for predicting an individual property).
 
         :param model_path: The path to a PT file containing a model to load.
+        :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
         :return: A model with pretrained weights.
         """
         # Build model
-        model = self.build_model()
+        model = self.build_model(prediction_type=prediction_type)
         model_state_dict = model.state_dict()
 
         # Get layer names in model (layer names are <name>.<num>.<weight/bias>)
@@ -753,7 +789,9 @@ class RLModelMLP(RLModel):
         """
         # Compute features in bulk across all molecules
         features = self.compute_features(
-            molecule_tuples=molecule_tuples, average_across_tuple=False, fingerprint_type=self.features_type
+            molecule_tuples=molecule_tuples,
+            average_across_tuple=False,
+            fingerprint_type=self.features_type,
         )
 
         # Set up data based on presence of rewards
@@ -887,7 +925,7 @@ def rl_chemprop_collate_fn(
 class RLModelChemprop(RLModel):
     def __init__(
         self,
-        prediction_type: RL_PREDICTION_TYPES,
+        prediction_types: tuple[RL_PREDICTION_TYPES],
         score_weights: ScoreWeights,
         model_paths: list[Path] | None = None,
         max_num_molecules: int = 3,
@@ -903,7 +941,7 @@ class RLModelChemprop(RLModel):
     ) -> None:
         """Initializes the RL Chemprop model.
 
-        :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
+        :param prediction_types: The types of predictions made by the RL models, which determines the loss functions.
             'classification' = binary classification. 'regression' = regression.
         :param score_weights: The weights of the models for each property.
         :param model_paths: A list of paths to PT files or directories of PT files containing models to load if using
@@ -921,7 +959,7 @@ class RLModelChemprop(RLModel):
         """
 
         super().__init__(
-            prediction_type=prediction_type,
+            prediction_types=prediction_types,
             score_weights=score_weights,
             model_paths=model_paths,
             max_num_molecules=max_num_molecules,
@@ -936,21 +974,25 @@ class RLModelChemprop(RLModel):
             h2o_solvents=h2o_solvents,
         )
 
-    def build_model(self) -> MoleculeModel:
+    def build_model(self, prediction_type: RL_PREDICTION_TYPES) -> MoleculeModel:
         """Builds a model (for predicting an individual property) from scratch.
 
+        :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
         :return: A model with randomly initialized weights.
         """
         return chemprop_build_model(
-            dataset_type=self.prediction_type,
+            dataset_type=prediction_type,
             features_type=self.features_type,
             property_name="rl_objective",
         ).to(self.device)
 
-    def load_model(self, model_path: Path) -> nn.Module:
+    def load_model(
+        self, model_path: Path, prediction_type: RL_PREDICTION_TYPES
+    ) -> nn.Module:
         """Loads a pretrained model (for predicting an individual property).
 
         :param model_path: The path to a PT file containing a model to load.
+        :param prediction_type: The type of prediction made by the RL model, which determines the loss function.
         :return: A model with pretrained weights.
         """
         return chemprop_load(model_path=model_path, device=self.device)
@@ -994,7 +1036,9 @@ class RLModelChemprop(RLModel):
         if self.features_type is not None:
             # Compute features and average across molecules in a tuple for a tensor of shape (num_tuples, features_size)
             features = self.compute_features(
-                molecule_tuples=molecule_tuples, average_across_tuple=True, fingerprint_type=self.features_type
+                molecule_tuples=molecule_tuples,
+                average_across_tuple=True,
+                fingerprint_type=self.features_type,
             )
         else:
             features = None
