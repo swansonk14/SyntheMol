@@ -32,7 +32,7 @@ setup(
     },
     install_requires=[
         'chemfunc',
-        'chemprop',
+        'chemprop==1.6.1',
         'descriptastorus',
         'matplotlib',
         'numpy',
