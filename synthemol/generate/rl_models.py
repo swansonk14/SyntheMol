@@ -30,7 +30,7 @@ class RLModel(ABC):
         self,
         prediction_types: tuple[RL_PREDICTION_TYPES, ...],
         score_weights: ScoreWeights,
-        model_paths: list[Path] | None = None,
+        model_paths: list[str] | None = None,
         max_num_molecules: int = 3,
         features_size: int = 200,
         features_type: str | None = None,
@@ -102,17 +102,20 @@ class RLModel(ABC):
                 for prediction_type in prediction_types
             ]
         else:
-            # Get model path or first model path from each ensemble
+            # Get model path or first model path from each ensemble if the path is not None
             model_paths = [
-                model_path
-                if model_path.is_file()
-                else sorted(model_path.glob("**/*.pt"))[0]
+                None
+                if model_path in ("None", None)
+                else Path(model_path) if Path(model_path).is_file() 
+                else sorted(Path(model_path).glob("**/*.pt"))[0]
                 for model_path in model_paths
             ]
 
-            # Load models
+            # Load models or build models
             self.models = [
-                self.load_model(model_path=model_path, prediction_type=prediction_type)
+                self.build_model(prediction_type=prediction_type)
+                if model_path is None
+                else self.load_model(model_path=model_path, prediction_type=prediction_type)
                 for model_path, prediction_type in zip(model_paths, prediction_types)
             ]
 
@@ -603,7 +606,7 @@ class RLModelMLP(RLModel):
         self,
         prediction_types: tuple[RL_PREDICTION_TYPES, ...],
         score_weights: ScoreWeights,
-        model_paths: list[Path] | None = None,
+        model_paths: list[str] | None = None,
         max_num_molecules: int = 3,
         features_size: int = 200,
         features_type: str | None = None,
@@ -927,7 +930,7 @@ class RLModelChemprop(RLModel):
         self,
         prediction_types: tuple[RL_PREDICTION_TYPES, ...],
         score_weights: ScoreWeights,
-        model_paths: list[Path] | None = None,
+        model_paths: list[str] | None = None,
         max_num_molecules: int = 3,
         features_size: int = 200,
         features_type: str | None = None,
