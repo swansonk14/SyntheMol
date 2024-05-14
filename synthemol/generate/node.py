@@ -49,7 +49,7 @@ class Node:
         :param scoring_fn: A function that takes as input a SMILES representing a molecule and returns a score.
         :return: The score of the molecules.
         """
-        return sum(scoring_fn(molecule) for molecule in molecules) / len(molecules) if len(molecules) > 0 else 0.0
+        return sum(scoring_fn(molecules)) / len(molecules) if len(molecules) > 0 else 0.0
 
     @cached_property
     def P(self) -> float:

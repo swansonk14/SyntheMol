@@ -44,7 +44,7 @@ def generate(
         rng_seed: int = 0,
         no_building_block_diversity: bool = False,
         store_nodes: bool = False,
-        verbose: bool = False,
+        verbose: bool = True,
         replicate: bool = False
 ) -> None:
     """Generate molecules combinatorially using a Monte Carlo tree search guided by a molecular property predictor.

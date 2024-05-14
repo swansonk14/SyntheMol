@@ -15,8 +15,13 @@ from synthemol.models import (
     chemprop_load_scaler,
     chemprop_predict_on_molecule_ensemble,
     sklearn_load,
-    sklearn_predict_on_molecule_ensemble
+    sklearn_predict_on_molecule_ensemble,
 )
+
+from synthemol.models.quickvina import GPUDockingScoreProxy
+from synthemol.models.quickvina import Parameters as QVParameters
+from synthemol.models.seh import SEHProxy
+from synthemol.models.seh import Parameters as SEHParameters
 
 
 def create_model_scoring_fn(
@@ -33,6 +38,14 @@ def create_model_scoring_fn(
     :param smiles_to_score: An optional dictionary mapping SMILES to precomputed scores.
     :return: A function that scores a molecule using a model or ensemble of models.
     """
+    if model_type=="docking":
+        params = QVParameters()
+        return GPUDockingScoreProxy(params=params).__call__
+
+    if model_type=="seh":
+        params = SEHParameters()
+        return SEHProxy(params=params).__call__
+
     # Check compatibility of model and fingerprint type
     if model_type != 'chemprop' and fingerprint_type is None:
         raise ValueError('Must define fingerprint_type if using a scikit-learn model.')
