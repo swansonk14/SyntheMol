@@ -118,7 +118,7 @@ def generate(
     :param rolling_average_weight: The weight to use for the rolling average of similarity (dynamic temperature)
         and success (dynamic score weights).
     :param rl_model_type: The type of RL model to use. 'mlp' = MLP model. 'chemprop' = Chemprop model. 
-    :param rl_model_fingerprint_types: The corresponding fingerprint type for the RL model. MLP models require the fingerprint type to be defined, 
+    :param rl_model_fingerprint_type: The corresponding fingerprint type for the RL model. MLP models require the fingerprint type to be defined,
         but Chemprop RL models can have a fingerprint type of None. 
     :param rl_model_paths: List of paths with each path pointing to a PT file containing a trained model that will be
         used as the initial weights for the RL models. If None, RL models are trained from scratch.
