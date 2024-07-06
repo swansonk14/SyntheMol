@@ -13,7 +13,6 @@ from scipy.special import softmax
 from sklearn.metrics import pairwise_distances
 from tqdm import trange
 
-from synthemol.constants import OPTIMIZATION_TYPES
 from synthemol.generate.logs import ConstructionLog, ReactionLog
 from synthemol.generate.score_weights import ScoreWeights
 from synthemol.generate.node import Node
@@ -42,7 +41,6 @@ class Generator:
         rl_base_temperature: float,
         rl_temperature_similarity_target: float | None,
         rl_train_frequency: int,
-        optimization: OPTIMIZATION_TYPES,
         reactions: tuple[Reaction, ...],
         rng_seed: int,
         no_building_block_diversity: bool,
@@ -76,7 +74,6 @@ class Generator:
             that are at most this similar to previously generated molecules. Starts with
             the temperature provided by rl_base_temperature. If None, the temperature is not adjusted.
         :param rl_train_frequency: The number of rollouts between each training step of the RL model.
-        :param optimization: Whether to maximize or minimize the score.
         :param reactions: A tuple of reactions that combine molecular building blocks.
         :param rng_seed: Seed for the random number generator.
         :param no_building_block_diversity: Whether to turn off the score modification that encourages diverse building blocks.
@@ -107,7 +104,6 @@ class Generator:
         self.rl_temperature = rl_base_temperature
         self.rl_temperature_similarity_target = rl_temperature_similarity_target
         self.rl_train_frequency = rl_train_frequency
-        self.optimization = optimization
         self.reactions = reactions
         self.rng = np.random.default_rng(seed=rng_seed)
         self.building_block_diversity = not no_building_block_diversity
@@ -154,18 +150,6 @@ class Generator:
                     for reactant in reaction.reactants
                 )
             )
-
-        # Get the function to use for optimization
-        if self.optimization == "maximize":
-            self.optimization_fn = max
-            self.optimization_sign = 1
-            self.ascending_scores = False
-        elif self.optimization == "minimize":
-            self.optimization_fn = min
-            self.optimization_sign = -1
-            self.ascending_scores = True
-        else:
-            raise ValueError(f"Invalid optimization type: {self.optimization}")
 
         # Initialize the root node
         self.rollout_num = 0
@@ -472,7 +456,7 @@ class Generator:
         if self.search_type == "mcts":
             # Select node with the highest MCTS score
             total_visit_count = sum(child_node.num_visits for child_node in child_nodes)
-            selected_node = self.optimization_fn(
+            selected_node = max(
                 child_nodes,
                 key=partial(
                     self.compute_mcts_score, total_visit_count=total_visit_count
@@ -510,7 +494,7 @@ class Generator:
 
             # Convert RL scores to temperature-scaled probabilities
             child_node_probs = softmax(
-                self.optimization_sign * child_node_scores / self.rl_temperature
+                child_node_scores / self.rl_temperature
             )
 
             # Select node proportional to the temperature-scaled RL score
@@ -639,9 +623,9 @@ class Generator:
             nodes,
             key=lambda node: (
                 node.property_score,
-                (1 if self.ascending_scores else -1) * node.node_id,
+                -1 * node.node_id,
             ),
-            reverse=not self.ascending_scores,
+            reverse=True,
         )
 
         return nodes

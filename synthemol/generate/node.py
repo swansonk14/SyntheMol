@@ -84,9 +84,9 @@ class Node:
         :return: The average property score of the Node's molecules (weighted average of individual property scores).
         """
         return sum(
-            weight * score
-            for weight, score in zip(
-                self.scorer.score_weights.weights, self.individual_scores
+            signed_weight * score
+            for signed_weight, score in zip(
+                self.scorer.score_weights.signed_weights, self.individual_scores
             )
         )
 
@@ -103,11 +103,11 @@ class Node:
         )  # (num_scores,)
 
         # Get score weights
-        score_weights = np.array(self.scorer.score_weights.weights)  # (num_scores,)
+        signed_score_weights = np.array(self.scorer.score_weights.signed_weights)  # (num_scores,)
 
         # Compute weighted average of model scores
         weighted_average_best_molecule_scores = np.dot(
-            average_best_molecule_scores, score_weights
+            average_best_molecule_scores, signed_score_weights
         )
 
         return weighted_average_best_molecule_scores

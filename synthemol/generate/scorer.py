@@ -322,9 +322,9 @@ class MoleculeScorer:
 
         # Compute weighted average score
         score = sum(
-            individual_score * weight
-            for individual_score, weight in zip(
-                individual_scores, self.score_weights.weights
+            individual_score * signed_weight
+            for individual_score, signed_weight in zip(
+                individual_scores, self.score_weights.signed_weights
             )
         )
 
