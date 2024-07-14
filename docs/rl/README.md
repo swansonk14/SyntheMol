@@ -27,3 +27,5 @@ prediction models, generating molecules with SyntheMol-RL, and selecting candida
 
 [ablations.md](ablations.md): Instructions for reproducing the ablation experiments in the paper to determine the
 importance of various components of SyntheMol-RL.
+
+[gflownet.md](gflownet.md): Instructions for reproducing the GFlowNet experiments in the paper.
