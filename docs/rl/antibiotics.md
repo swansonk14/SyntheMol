@@ -342,7 +342,8 @@ synthemol \
     --save_dir rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi \
     --n_rollout 10000 \
     --search_type rl \
-    --rl_model_type chemprop_rdkit \
+    --rl_model_type chemprop \
+    --rl_model_fingerprint_type rdkit \
     --rl_model_paths rl/models/s_aureus_chemprop_rdkit/fold_0/model_0/model.pt rl/models/solubility_chemprop_rdkit/fold_0/model_0/model.pt \
     --rl_prediction_types regression regression \
     --use_gpu \
@@ -369,7 +370,8 @@ synthemol \
     --save_dir rl/generations/rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi \
     --n_rollout 10000 \
     --search_type rl \
-    --rl_model_type mlp_rdkit \
+    --rl_model_type mlp \
+    --rl_model_fingerprint_type rdkit \
     --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/fold_0/model_0/model.pt \
     --rl_prediction_types regression regression \
     --replicate_rl \

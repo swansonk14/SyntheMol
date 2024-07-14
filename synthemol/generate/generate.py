@@ -44,7 +44,7 @@ def generate(
     score_fingerprint_types: list[str] | None = None,
     score_names: list[str] | None = None,
     base_score_weights: list[float] | None = None,
-    score_signs: list[int] | None = None,
+    score_signs: list[Literal[1, -1]] | None = None,
     success_thresholds: list[str] | None = None,
     chemical_spaces: tuple[CHEMICAL_SPACES, ...] = ("real",),
     building_blocks_paths: tuple[Path, ...] = (BUILDING_BLOCKS_PATH,),

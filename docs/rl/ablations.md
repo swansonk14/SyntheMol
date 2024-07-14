@@ -32,7 +32,8 @@ synthemol \
     --save_dir rl/generations/rl_chemprop_rdkit_s_aureus_${S_AUREUS_WEIGHT}_solubility_${SOLUBILITY_WEIGHT}_real_wuxi \
     --n_rollout 10000 \
     --search_type rl \
-    --rl_model_type chemprop_rdkit \
+    --rl_model_type chemprop \
+    --rl_model_fingerprint_type rdkit \
     --rl_model_paths rl/models/s_aureus_chemprop_rdkit/fold_0/model_0/model.pt rl/models/solubility_chemprop_rdkit/fold_0/model_0/model.pt \
     --rl_prediction_type regression \
     --use_gpu \
@@ -62,7 +63,8 @@ synthemol \
     --save_dir rl/generations/rl_mlp_rdkit_s_aureus_${S_AUREUS_WEIGHT}_solubility_${SOLUBILITY_WEIGHT}_real_wuxi \
     --n_rollout 10000 \
     --search_type rl \
-    --rl_model_type mlp_rdkit \
+    --rl_model_type mlp \
+    --rl_model_fingerprint_type rdkit \
     --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/fold_0/model_0/model.pt \
     --rl_prediction_type regression \
     --wandb_project_name synthemol_rl \
@@ -93,7 +95,8 @@ synthemol \
     --save_dir rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_similarity_target_${SIMILARITY_TARGET} \
     --n_rollout 10000 \
     --search_type rl \
-    --rl_model_type chemprop_rdkit \
+    --rl_model_type chemprop \
+    --rl_model_fingerprint_type rdkit \
     --rl_model_paths rl/models/s_aureus_chemprop_rdkit/fold_0/model_0/model.pt rl/models/solubility_chemprop_rdkit/fold_0/model_0/model.pt \
     --rl_prediction_type regression \
     --rl_temperature_similarity_target ${SIMILARITY_TARGET} \
@@ -123,7 +126,8 @@ synthemol \
     --save_dir rl/generations/rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_similarity_target_${SIMILARITY_TARGET} \
     --n_rollout 10000 \
     --search_type rl \
-    --rl_model_type mlp_rdkit \
+    --rl_model_type mlp \
+    --rl_model_fingerprint_type rdkit \
     --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/fold_0/model_0/model.pt \
     --rl_prediction_type regression \
     --rl_temperature_similarity_target ${SIMILARITY_TARGET} \
@@ -156,7 +160,8 @@ synthemol \
     --save_dir rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_temperature_${TEMPERATURE} \
     --n_rollout 10000 \
     --search_type rl \
-    --rl_model_type chemprop_rdkit \
+    --rl_model_type chemprop \
+    --rl_model_fingerprint_type rdkit \
     --rl_model_paths rl/models/s_aureus_chemprop_rdkit/fold_0/model_0/model.pt rl/models/solubility_chemprop_rdkit/fold_0/model_0/model.pt \
     --rl_prediction_type regression \
     --rl_temperature_similarity_target -1 \
@@ -187,7 +192,8 @@ synthemol \
     --save_dir rl/generations/rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_temperature_${TEMPERATURE} \
     --n_rollout 10000 \
     --search_type rl \
-    --rl_model_type mlp_rdkit \
+    --rl_model_type mlp \
+    --rl_model_fingerprint_type rdkit \
     --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/fold_0/model_0/model.pt \
     --rl_prediction_type regression \
     --rl_temperature_similarity_target -1 \
@@ -241,7 +247,8 @@ synthemol \
     --save_dir rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_no_rl_training \
     --n_rollout 10000 \
     --search_type rl \
-    --rl_model_type chemprop_rdkit \
+    --rl_model_type chemprop \
+    --rl_model_fingerprint_type rdkit \
     --rl_model_paths rl/models/s_aureus_chemprop_rdkit/fold_0/model_0/model.pt rl/models/solubility_chemprop_rdkit/fold_0/model_0/model.pt \
     --rl_prediction_type regression \
     --rl_train_epochs 0 \
@@ -268,7 +275,8 @@ synthemol \
     --save_dir rl/generations/rl_chemprop_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_no_pretraining \
     --n_rollout 10000 \
     --search_type rl \
-    --rl_model_type chemprop_rdkit \
+    --rl_model_type chemprop \
+    --rl_model_fingerprint_type rdkit \
     --rl_prediction_type regression \
     --use_gpu \
     --num_workers 8 \
@@ -293,7 +301,8 @@ synthemol \
     --save_dir rl/generations/rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_no_rl_training \
     --n_rollout 10000 \
     --search_type rl \
-    --rl_model_type mlp_rdkit \
+    --rl_model_type mlp \
+    --rl_model_fingerprint_type rdkit \
     --rl_model_paths rl/models/s_aureus_mlp_rdkit/fold_0/model_0/model.pt rl/models/solubility_mlp_rdkit/fold_0/model_0/model.pt \
     --rl_prediction_type regression \
     --rl_train_epochs 0 \
@@ -318,7 +327,8 @@ synthemol \
     --save_dir rl/generations/rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_no_pretraining \
     --n_rollout 10000 \
     --search_type rl \
-    --rl_model_type mlp_rdkit \
+    --rl_model_type mlp \
+    --rl_model_fingerprint_type rdkit \
     --rl_prediction_type regression \
     --wandb_project_name synthemol_rl \
     --wandb_run_name rl_mlp_rdkit_s_aureus_solubility_dynamic_weights_real_wuxi_no_pretraining \
