@@ -1,14 +1,15 @@
 """Contains the Generator class, which generates molecules."""
 import itertools
+import pickle
 import time
 from collections import Counter
 from functools import partial
-from typing import Callable, Literal
+from pathlib import Path
+from typing import Any, Callable, Literal
 
 import numpy as np
 import wandb
 from chemfunc import get_fingerprint_generator
-from rdkit import Chem
 from scipy.special import softmax
 from sklearn.metrics import pairwise_distances
 from tqdm import trange
@@ -53,6 +54,7 @@ class Generator:
         min_score_weight: float = 0.001,
         replicate: bool = False,
         wandb_log: bool = False,
+        log_path: Path | None = None,
     ) -> None:
         """Creates the Generator.
 
@@ -90,6 +92,7 @@ class Generator:
         :param replicate: This is necessary to replicate the results from the paper, but otherwise should not be used
             since it limits the potential choices of building blocks.
         :param wandb_log: Whether to log results to Weights & Biases.
+        :param log_path: Path to a PKL file to save logs to. If None, logs are not saved locally.
         """
         self.search_type = search_type
         self.chemical_space_to_building_block_smiles_to_id = (
@@ -116,6 +119,7 @@ class Generator:
         self.max_temperature = max_temperature
         self.min_score_weight = min_score_weight
         self.wandb_log = wandb_log
+        self.log_path = log_path
 
         # Check that the search type is valid
         if (self.search_type == "rl") != (self.rl_model is not None):
@@ -493,9 +497,7 @@ class Generator:
             )
 
             # Convert RL scores to temperature-scaled probabilities
-            child_node_probs = softmax(
-                child_node_scores / self.rl_temperature
-            )
+            child_node_probs = softmax(child_node_scores / self.rl_temperature)
 
             # Select node proportional to the temperature-scaled RL score
             selected_node = self.rng.choice(child_nodes, p=child_node_probs)
@@ -621,10 +623,7 @@ class Generator:
         # Sort Nodes by score and break ties by using Node ID
         nodes = sorted(
             nodes,
-            key=lambda node: (
-                node.property_score,
-                -1 * node.node_id,
-            ),
+            key=lambda node: (node.property_score, -1 * node.node_id,),
             reverse=True,
         )
 
@@ -740,6 +739,9 @@ class Generator:
         rollout_start = self.rollout_num + 1
         rollout_end = rollout_start + n_rollout
 
+        # Set up list of rollout stats
+        rollout_stats_record: list[dict[str, Any]] = []
+
         # Run the generation algorithm for the specified number of rollouts
         for rollout_num in trange(rollout_start, rollout_end):
             # Record rollout number
@@ -810,11 +812,10 @@ class Generator:
                     self.molecules_to_rl_score = {}
 
                     # Evaluate model on test set
-                    if self.wandb_log:
-                        start_time = time.time()
-                        rollout_stats |= self.rl_model.evaluate(split="test")
-                        rollout_stats["RL Test Eval Time"] = time.time() - start_time
-                        rollout_stats["RL Test Examples"] = self.rl_model.test_size
+                    start_time = time.time()
+                    rollout_stats |= self.rl_model.evaluate(split="test")
+                    rollout_stats["RL Test Eval Time"] = time.time() - start_time
+                    rollout_stats["RL Test Examples"] = self.rl_model.test_size
 
                     # Move test set to train
                     self.rl_model.test_to_train()
@@ -825,13 +826,20 @@ class Generator:
                     rollout_stats["RL Train Time"] = time.time() - start_time
 
                     # Evaluate model on train set
-                    if self.wandb_log:
-                        start_time = time.time()
-                        rollout_stats |= self.rl_model.evaluate(split="train")
-                        rollout_stats["RL Train Eval Time"] = time.time() - start_time
-                        rollout_stats["RL Train Examples"] = self.rl_model.train_size
+                    start_time = time.time()
+                    rollout_stats |= self.rl_model.evaluate(split="train")
+                    rollout_stats["RL Train Eval Time"] = time.time() - start_time
+                    rollout_stats["RL Train Examples"] = self.rl_model.train_size
 
-            # Log rollout stats
+            # Add rollout stats to record
+            rollout_stats_record.append(rollout_stats)
+
+            # Log rollout stats to file
+            if self.log_path is not None:
+                with open(self.log_path, "wb") as f:
+                    pickle.dump(rollout_stats_record, f)
+
+            # Log rollout stats to W&B
             if self.wandb_log:
                 wandb.log(rollout_stats)
 

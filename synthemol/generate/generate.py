@@ -505,7 +505,7 @@ def generate(
             "extended_evaluation": rl_extended_evaluation,
             "features_type": rl_model_fingerprint_type,
             "features_size": FEATURES_SIZE_MAPPING[rl_model_fingerprint_type],
-            "h2o_solvents": h2o_solvents
+            "h2o_solvents": h2o_solvents,
         }
 
         # Select RL model class and update RL model args
@@ -547,6 +547,7 @@ def generate(
         rolling_average_weight=rolling_average_weight,
         replicate=replicate_mcts,
         wandb_log=wandb_log,
+        log_path=save_dir / "logs.pkl",
     )
 
     # Search for molecules
