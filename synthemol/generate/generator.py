@@ -834,14 +834,14 @@ class Generator:
             # Add rollout stats to record
             self.rollout_stats_record.append(rollout_stats)
 
-            # Log rollout stats to file
-            if self.log_path is not None:
-                with open(self.log_path, "wb") as f:
-                    pickle.dump(self.rollout_stats_record, f)
-
             # Log rollout stats to W&B
             if self.wandb_log:
                 wandb.log(rollout_stats)
+
+        # Log rollout stats to file
+        if self.log_path is not None:
+            with open(self.log_path, "wb") as f:
+                pickle.dump(self.rollout_stats_record, f)
 
         # Get all the Nodes representing fully constructed molecules within these rollouts sorted by score
         nodes = self.get_full_molecule_nodes(
