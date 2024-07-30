@@ -121,6 +121,9 @@ class Generator:
         self.wandb_log = wandb_log
         self.log_path = log_path
 
+        # Set up list of rollout stats
+        self.rollout_stats_record: list[dict[str, Any]] = []
+
         # Check that the search type is valid
         if (self.search_type == "rl") != (self.rl_model is not None):
             raise ValueError(
@@ -739,9 +742,6 @@ class Generator:
         rollout_start = self.rollout_num + 1
         rollout_end = rollout_start + n_rollout
 
-        # Set up list of rollout stats
-        rollout_stats_record: list[dict[str, Any]] = []
-
         # Run the generation algorithm for the specified number of rollouts
         for rollout_num in trange(rollout_start, rollout_end):
             # Record rollout number
@@ -832,12 +832,12 @@ class Generator:
                     rollout_stats["RL Train Examples"] = self.rl_model.train_size
 
             # Add rollout stats to record
-            rollout_stats_record.append(rollout_stats)
+            self.rollout_stats_record.append(rollout_stats)
 
             # Log rollout stats to file
             if self.log_path is not None:
                 with open(self.log_path, "wb") as f:
-                    pickle.dump(rollout_stats_record, f)
+                    pickle.dump(self.rollout_stats_record, f)
 
             # Log rollout stats to W&B
             if self.wandb_log:
