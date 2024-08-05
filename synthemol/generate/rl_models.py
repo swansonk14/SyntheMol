@@ -30,7 +30,8 @@ class RLModel(ABC):
         self,
         prediction_types: tuple[RL_PREDICTION_TYPES, ...],
         score_weights: ScoreWeights,
-        model_paths: list[str] | None = None,
+        model_paths: list[str | None] | None = None,
+        model_task_names: list[list[str] | None] | None = None,
         max_num_molecules: int = 3,
         features_size: int = 200,
         features_type: str | None = None,
@@ -50,6 +51,8 @@ class RLModel(ABC):
         :param model_paths: A list of paths to PT files or directories of PT files containing models to load if using
             pretrained models. For directories, the first PT file in the directory will be used.
             If None, models are initialized randomly.
+        :param model_task_names: For pretrained RL models that are multi-task Chemprop models, this argument specifies which
+            of the task output heads to use for scoring. If None, all task heads are used.
         :param max_num_molecules: The maximum number of molecules to process at a time.
         :param features_size: The size of the features for each molecule.
         :param num_workers: The number of workers to use for data loading.
@@ -60,21 +63,17 @@ class RLModel(ABC):
         :param extended_evaluation: Whether to perform extended evaluation of the RL models using all combinations
             of numbers of source/target building blocks.
         """
-        if model_paths is not None and len(model_paths) != score_weights.num_weights:
-            raise ValueError(
-                f"Number of model paths ({len(model_paths):,}) must match number "
-                f"of model weights ({score_weights.num_weights:,})."
-            )
-
-        if len(prediction_types) != score_weights.num_weights:
+        # Validate number of prediction types and model types
+        if len(prediction_types) != len(model_paths):
             raise ValueError(
                 f"Number of prediction types ({len(prediction_types):,}) must match number "
-                f"of model weights ({score_weights.num_weights:,})."
+                f"of model paths ({len(model_paths):,})."
             )
 
         self.prediction_types = prediction_types
         self.score_weights = score_weights
         self.model_paths = model_paths
+        self.model_task_names = model_task_names
         self.max_num_molecules = max_num_molecules
         self.features_type = features_type
         self.features_size = features_size
@@ -94,6 +93,12 @@ class RLModel(ABC):
 
         self.smiles_to_features: dict[str, torch.Tensor] = {}
 
+        # Get numbers of tasks
+        if model_task_names is not None:
+            self.task_nums = [len(model_task_names) for task_names in self.model_task_names]
+        else:
+            self.task_nums = [1] * len(prediction_types)
+
         # Build or load models
         if model_paths is None:
             # Build models
@@ -106,7 +111,8 @@ class RLModel(ABC):
             model_paths = [
                 None
                 if model_path in ("None", None)
-                else Path(model_path) if Path(model_path).is_file() 
+                else Path(model_path)
+                if Path(model_path).is_file()
                 else sorted(Path(model_path).glob("**/*.pt"))[0]
                 for model_path in model_paths
             ]
@@ -115,7 +121,9 @@ class RLModel(ABC):
             self.models = [
                 self.build_model(prediction_type=prediction_type)
                 if model_path is None
-                else self.load_model(model_path=model_path, prediction_type=prediction_type)
+                else self.load_model(
+                    model_path=model_path, prediction_type=prediction_type
+                )
                 for model_path, prediction_type in zip(model_paths, prediction_types)
             ]
 

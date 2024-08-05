@@ -45,7 +45,7 @@ def generate(
     score_fingerprint_types: list[str] | None = None,
     score_names: list[str] | None = None,
     base_score_weights: list[float] | None = None,
-    score_signs: list[Literal[1, -1]] | None = None,
+    score_signs: list[str] | None = None,
     success_thresholds: list[str] | None = None,
     chemical_spaces: tuple[CHEMICAL_SPACES, ...] = ("real",),
     building_blocks_paths: tuple[Path, ...] = (BUILDING_BLOCKS_PATH,),
@@ -63,6 +63,7 @@ def generate(
     rl_model_type: RL_MODEL_TYPES = "chemprop",
     rl_model_fingerprint_type: str | None = None,
     rl_model_paths: list[str] | None = None,
+    rl_model_task_names: list[str] | None = None,
     rl_prediction_types: tuple[RL_PREDICTION_TYPES, ...] = ("classification",),
     rl_base_temperature: float = 0.1,
     rl_temperature_similarity_target: float = 0.6,
@@ -106,7 +107,10 @@ def generate(
     :param score_names: List of names for each score. If None, scores will be named "Score 1", "Score 2", etc.
     :param base_score_weights: Initial weights for each score for defining the reward function.
         If None, defaults to equal weights for each score.
-    :param score_signs: Signs (+1 or -1) for each of the scores in order to match the score to the maximization optimization.
+    :param score_signs: Signs (1 or -1) for each of the scores in order to match the score to the maximization optimization.
+        If a score type is to be minimized, the corresponding sign should be -1. If None, all scores are maximized.
+        If a scorer contains multiple tasks, the sign should be a comma-separated list of signs (e.g., "1,-1 1,-1,1"
+        for one model with two tasks and one model with three tasks).
     :param success_thresholds: The threshold for each score for defining success of the form ">= 0.5".
         If provided, the score weights will be dynamically set to maximize joint success
         across all scores.
@@ -128,6 +132,11 @@ def generate(
         but Chemprop RL models can have a fingerprint type of None. 
     :param rl_model_paths: List of paths with each path pointing to a PT file containing a trained model that will be
         used as the initial weights for the RL models. If None, RL models are trained from scratch.
+    :param rl_model_task_names: For pretrained RL models that are multi-task Chemprop models, this argument specifies which
+        of the task output heads to use for scoring. If None, all task heads are used. For each Chemprop model, supply
+        a comma-separated list of task names. For example, "task1,task3 task1,task2" to get task1 and task3 from the
+        first model and task1 and task2 from the second model. If some scorers are Chemprop models and others are not,
+        put "None" for the non-Chemprop scorers.
     :param rl_prediction_types: The types of predictions made by the RL models, which determines the loss functions.
         'classification' = binary classification. 'regression' = regression.
     :param rl_base_temperature: The initial temperature parameter for the softmax function used to select building blocks.
@@ -186,31 +195,71 @@ def generate(
             for score_fingerprint_type in score_fingerprint_types
         ]
 
+    # Convert score_signs to list[list[int] | None]
+    if score_signs is not None:
+        score_signs: list[list[int]] = [
+            int(sign) for score_sign in score_signs for sign in score_sign.split(",")
+        ]
+
+        # Verify all score signs are +1 or -1
+        if not all(sign in (1, -1) for sign in score_signs):
+            raise ValueError("Score signs must be +1 or -1.")
+
+    # Convert rl_model_paths to Path/None
+    if rl_model_paths is not None:
+        rl_model_paths: list[Path | None] = [
+            Path(rl_model_path) if rl_model_path not in ("None", None) else None
+            for rl_model_path in rl_model_paths
+        ]
+
+    # Convert rl_model_task_names to list[list[str] | None]
+    if rl_model_task_names is not None:
+        rl_model_task_names: list[list[str] | None] = [
+            task_names.split(",") if task_names not in ("None", None) else None
+            for task_names in rl_model_task_names
+        ]
+
     # Change type of building blocks score columns for compatibility with Pandas
     building_blocks_score_columns = list(building_blocks_score_columns)
 
+    # Get number of scorers
+    num_scorers = len(score_types)
+
     # Get number of scores
-    num_scores = len(score_types)
+    if score_model_task_names is not None:
+        num_scores = sum(
+            len(task_names) if task_names is not None else 1
+            for task_names in score_model_task_names
+        )
+    else:
+        num_scores = num_scorers
 
     # Set up default score weights as equal weighting
     if base_score_weights is None:
         base_score_weights = [1 / num_scores] * num_scores
 
-    # Check lengths of model arguments match
+    # Check scorer-length arguments
     for arg in [
         score_types,
         score_model_paths,
         score_model_task_names,
-        rl_model_paths,
         score_fingerprint_types,
+        rl_model_paths,
+        rl_model_task_names,
+    ]:
+        if arg is not None and len(arg) != num_scorers:
+            raise ValueError("Scorer parameters have the same length.")
+
+    # Check scores-length arguments
+    for arg in [
+        score_signs,
         score_names,
         base_score_weights,
-        score_signs,
         building_blocks_score_columns,
         success_thresholds,
     ]:
         if arg is not None and len(arg) != num_scores:
-            raise ValueError("Model parameters have the same length.")
+            raise ValueError("Score parameters have the same length.")
 
     # Check lengths of chemical space arguments match
     if (
@@ -436,6 +485,7 @@ def generate(
                 "rl_model_type": rl_model_type,
                 "rl_fingerprint_type": rl_model_fingerprint_type,
                 "rl_model_paths": rl_model_paths,
+                "rl_model_task_names": rl_model_task_names,
                 "rl_prediction_types": rl_prediction_types,
                 "rl_base_temperature": rl_base_temperature,
                 "rl_temperature_similarity_target": rl_temperature_similarity_target,
@@ -515,6 +565,7 @@ def generate(
             "prediction_types": rl_prediction_types,
             "score_weights": score_weights,
             "model_paths": rl_model_paths,
+            "model_task_names": rl_model_task_names,
             "num_workers": num_workers,
             "num_epochs": rl_train_epochs,
             "device": device,
