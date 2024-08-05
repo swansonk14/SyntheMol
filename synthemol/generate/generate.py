@@ -41,6 +41,7 @@ def generate(
     save_dir: Path,
     score_types: list[SCORE_TYPES],
     score_model_paths: list[str] | None = None,
+    score_model_task_names: list[str] | None = None,
     score_fingerprint_types: list[str] | None = None,
     score_names: list[str] | None = None,
     base_score_weights: list[float] | None = None,
@@ -92,6 +93,11 @@ def generate(
         or to a specific PKL or PT file containing a trained model with a single output.
         For score types that are not model-based, the corresponding score model path must be "None".
         If all score types are not model-based, this argument can be None.
+    :param score_model_task_names: For score types that are multi-task Chemprop models, this argument specifies which
+        of the task output heads to use for scoring. If None, all task heads are used. For each Chemprop model, supply
+        a comma-separated list of task names. For example, "task1,task3 task1,task2" to get task1 and task3 from the
+        first model and task1 and task2 from the second model. If some scorers are Chemprop models and others are not,
+        put "None" for the non-Chemprop scorers.
     :param score_fingerprint_types: For score types that are model-based and require fingerprints as input, the corresponding
         fingerprint type should be the type of fingerprint (e.g., "rdkit").
         For model-based scores that don't require fingerprints or non-model-based scores,
@@ -163,6 +169,13 @@ def generate(
             for score_model_path in score_model_paths
         ]
 
+    # Convert score_model_task_names to list[list[str] | None]
+    if score_model_task_names is not None:
+        score_model_task_names: list[list[str] | None] = [
+            task_names.split(",") if task_names not in ("None", None) else None
+            for task_names in score_model_task_names
+        ]
+
     # Convert score_fingerprint_types to FINGERPRINT_TYPES/None
     # TODO: change tapify to allow list[FINGERPRINT_TYPES | Literal["None"] | None]
     if score_fingerprint_types is not None:
@@ -187,6 +200,7 @@ def generate(
     for arg in [
         score_types,
         score_model_paths,
+        score_model_task_names,
         rl_model_paths,
         score_fingerprint_types,
         score_names,
@@ -402,6 +416,7 @@ def generate(
                 "save_dir": save_dir,
                 "score_types": score_types,
                 "score_model_paths": score_model_paths,
+                "score_model_task_names": score_model_task_names,
                 "score_fingerprint_types": score_fingerprint_types,
                 "score_names": score_names,
                 "base_score_weights": base_score_weights,
@@ -483,6 +498,7 @@ def generate(
         score_types=score_types,
         score_weights=score_weights,
         model_paths=score_model_paths,
+        model_task_names=score_model_task_names,
         fingerprint_types=score_fingerprint_types,
         h2o_solvents=h2o_solvents,
         device=device,

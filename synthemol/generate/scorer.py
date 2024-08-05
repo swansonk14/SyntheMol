@@ -14,6 +14,7 @@ from synthemol.generate.score_weights import ScoreWeights
 from synthemol.models import (
     chemprop_load,
     chemprop_load_scaler,
+    chemprop_map_task_names_to_indices,
     chemprop_predict_on_molecule_ensemble,
     sklearn_load,
     sklearn_predict_on_molecule_ensemble,
@@ -24,11 +25,11 @@ class Scorer(ABC):
     """Base class for scoring molecules."""
 
     @abstractmethod
-    def __call__(self, smiles: str) -> float:
+    def __call__(self, smiles: str) -> np.ndarray:
         """Scores a molecule.
 
         :param smiles: A SMILES string.
-        :return: The score of the molecule.
+        :return: The scores of the molecule.
         """
         pass
 
@@ -36,25 +37,25 @@ class Scorer(ABC):
 class QEDScorer(Scorer):
     """Scores molecules using QED."""
 
-    def __call__(self, smiles: str) -> float:
+    def __call__(self, smiles: str) -> np.ndarray:
         """Scores a molecule using QED.
 
         :param smiles: A SMILES string.
-        :return: The score of the molecule.
+        :return: The scores of the molecule (1,).
         """
-        return qed(Chem.MolFromSmiles(smiles))
+        return np.ndarray([qed(Chem.MolFromSmiles(smiles))])
 
 
 class CLogPScorer(Scorer):
     """Scores molecules using CLogP."""
 
-    def __call__(self, smiles: str) -> float:
+    def __call__(self, smiles: str) -> np.ndarray:
         """Scores a molecule using CLogP.
 
         :param smiles: A SMILES string.
-        :return: The score of the molecule.
+        :return: The scores of the molecule.
         """
-        return MolLogP(Chem.MolFromSmiles(smiles))
+        return np.ndarray([MolLogP(Chem.MolFromSmiles(smiles))])
 
 
 class SKLearnScorer(Scorer):
@@ -85,11 +86,11 @@ class SKLearnScorer(Scorer):
             sklearn_load(model_path=model_path) for model_path in model_paths
         ]
 
-    def __call__(self, smiles: str) -> float:
+    def __call__(self, smiles: str) -> np.ndarray:
         """Scores a molecule using a scikit-learn model or ensemble of models.
 
         :param smiles: A SMILES string.
-        :return: The score of the molecule.
+        :return: The scores of the molecule (num_tasks,).
         """
         # Compute fingerprint
         fingerprint = compute_fingerprint(
@@ -97,9 +98,11 @@ class SKLearnScorer(Scorer):
         )
 
         # Make prediction
-        return sklearn_predict_on_molecule_ensemble(
+        pred = sklearn_predict_on_molecule_ensemble(
             models=self.models, fingerprint=fingerprint
-        )
+        )  # (num_tasks,)
+
+        return pred
 
 
 class ChempropScorer(Scorer):
@@ -108,6 +111,7 @@ class ChempropScorer(Scorer):
     def __init__(
         self,
         model_path: Path,
+        model_task_names: list[str] | None = None,
         fingerprint_type: FINGERPRINT_TYPES | None = None,
         device: torch.device = torch.device("cpu"),
         h2o_solvents: bool = False,
@@ -115,6 +119,7 @@ class ChempropScorer(Scorer):
         """Initialize the scorer.
 
         :param model_path: Path to a directory of model checkpoints (ensemble) or to a specific PT file.
+        :param model_task_names: The names of the tasks to use for scoring. If None, uses all tasks in the model.
         :param fingerprint_type: The type of fingerprint to use as input features for the model.
         :param device: The device on which to run the model.
         """
@@ -128,6 +133,17 @@ class ChempropScorer(Scorer):
                 )
         else:
             model_paths = [model_path]
+
+        # Save task names
+        self.task_names = model_task_names
+
+        # Map task names to indices
+        if model_task_names is not None:
+            self.task_indices = chemprop_map_task_names_to_indices(
+                model_path=model_path, task_names=model_task_names
+            )
+        else:
+            self.task_indices = None
 
         # Save fingerprint type
         self.fingerprint_type = fingerprint_type
@@ -150,11 +166,11 @@ class ChempropScorer(Scorer):
             chemprop_load_scaler(model_path=model_path) for model_path in model_paths
         ]
 
-    def __call__(self, smiles: str) -> float:
+    def __call__(self, smiles: str) -> np.ndarray:
         """Scores a molecule using a Chemprop model or ensemble of models.
 
         :param smiles: A SMILES string.
-        :return: The score of the molecule.
+        :return: The scores of the molecule (num_tasks,).
         """
         # Compute fingerprint
         if self.fingerprint_type is not None:
@@ -165,18 +181,25 @@ class ChempropScorer(Scorer):
             fingerprint = None
 
         # Make prediction
-        return chemprop_predict_on_molecule_ensemble(
+        preds = chemprop_predict_on_molecule_ensemble(
             models=self.models,
             smiles=smiles,
             fingerprint=fingerprint,
             scalers=self.scalers,
             h2o_solvents=self.h2o_solvents,
-        )
+        )  # (num_tasks,)
+
+        # Select corresponding tasks
+        if self.task_indices is not None:
+            preds = preds[self.task_indices]  # (num_selected_tasks,)
+
+        return preds
 
 
 def create_scorer(
     score_type: SCORE_TYPES,
     model_path: Path | None = None,
+    model_task_names: list[str] | None = None,
     fingerprint_type: FINGERPRINT_TYPES | None = None,
     device: torch.device = torch.device("cpu"),
     h2o_solvents: bool = False,
@@ -188,6 +211,8 @@ def create_scorer(
             model path should be a path to a directory of model checkpoints (ensemble)
             or to a specific PKL or PT file containing a trained model with a single output.
             For score types that are not model-based, the corresponding model path must be None.
+    :param model_task_names: For Chemprop models, the corresponding task names should be a list of task names to
+            use for scoring. If None, uses all tasks in the model.
     :param fingerprint_type: For score types that are model-based and require fingerprints as input, the corresponding
             fingerprint type should be the type of fingerprint (e.g., "rdkit").
             For model-based scores that don't require fingerprints or non-model-based scores,
@@ -215,7 +240,11 @@ def create_scorer(
             raise ValueError("Chemprop requires a model path.")
 
         scorer = ChempropScorer(
-            model_path=model_path, fingerprint_type=fingerprint_type, device=device, h2o_solvents=h2o_solvents
+            model_path=model_path,
+            model_task_names=model_task_names,
+            fingerprint_type=fingerprint_type,
+            device=device,
+            h2o_solvents=h2o_solvents,
         )
     elif score_type == "random_forest":
         if model_path is None:
@@ -237,6 +266,7 @@ class MoleculeScorer:
         score_types: list[SCORE_TYPES],
         score_weights: ScoreWeights,
         model_paths: list[Path | None] | None = None,
+        model_task_names: list[list[str] | None] = None,
         fingerprint_types: list[FINGERPRINT_TYPES | None] | None = None,
         h2o_solvents: bool = False,
         device: torch.device = torch.device("cpu"),
@@ -251,6 +281,9 @@ class MoleculeScorer:
             or to a specific PKL or PT file containing a trained model with a single output.
             For score types that are not model-based, the corresponding model path must be None.
             If all score types are not model-based, this argument can be None.
+        :param model_task_names: For Chemprop models, the corresponding task names should be a list of task names to
+            use for scoring. If None, uses all tasks in the model.
+            If all score types are not Chemprop models, this argument can be None.
         :param fingerprint_types: For score types that are model-based and require fingerprints as input, the corresponding
             fingerprint type should be the type of fingerprint (e.g., "rdkit").
             For model-based scores that don't require fingerprints or non-model-based scores,
@@ -264,9 +297,12 @@ class MoleculeScorer:
         self.score_weights = score_weights
         self.smiles_to_individual_scores = smiles_to_scores
 
-        # Handle None model_paths and fingerprint_types
+        # Handle None model_paths, model_task_names, and fingerprint_types
         if model_paths is None:
             model_paths = [None] * len(score_types)
+
+        if model_task_names is None:
+            model_task_names = [None] * len(score_types)
 
         if fingerprint_types is None:
             fingerprint_types = [None] * len(score_types)
@@ -276,12 +312,13 @@ class MoleculeScorer:
             create_scorer(
                 score_type=score_type,
                 model_path=model_path,
+                model_task_names=model_task_name_list,
                 fingerprint_type=fingerprint_type,
                 device=device,
                 h2o_solvents=h2o_solvents,
             )
-            for score_type, model_path, fingerprint_type in zip(
-                score_types, model_paths, fingerprint_types
+            for score_type, model_path, model_task_name_list, fingerprint_type in zip(
+                score_types, model_paths, model_task_names, fingerprint_types
             )
         ]
 
@@ -302,7 +339,9 @@ class MoleculeScorer:
         if smiles in self.smiles_to_individual_scores:
             individual_scores = self.smiles_to_individual_scores[smiles]
         else:
-            individual_scores = [scorer(smiles) for scorer in self.scorers]
+            individual_scores = [
+                score for scorer in self.scorers for score in scorer(smiles)
+            ]
             self.smiles_to_individual_scores[smiles] = individual_scores
 
         return individual_scores
