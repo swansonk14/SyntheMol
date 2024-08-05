@@ -1,18 +1,19 @@
 """Contains training and predictions functions for Chemprop models."""
 from pathlib import Path
-from typing import Iterable
 
 import numpy as np
 import torch
 from chemprop.args import TrainArgs
 from chemprop.models import MoleculeModel
-from chemprop.utils import load_args, load_checkpoint, load_scalers
+from chemprop.utils import load_checkpoint, load_scalers
 from sklearn.preprocessing import StandardScaler
 from synthemol.constants import FEATURES_SIZE_MAPPING, H2O_FEATURES
 
 
 def chemprop_build_model(
-    dataset_type: str, features_type: str | None = None, property_name: str = "task",
+    dataset_type: str,
+    features_type: str | None = None,
+    property_name: str = "task",
 ) -> MoleculeModel:
     """Builds a Chemprop model.
 
@@ -38,7 +39,7 @@ def chemprop_build_model(
             "rdkit_2d_normalized",
             "--no_features_scaling",
         ]
-
+    
     if features_type == "morgan":
         arg_list += [
             "--features_generator",
@@ -88,14 +89,14 @@ def chemprop_predict_on_molecule(
     fingerprint: np.ndarray | None = None,
     scaler: StandardScaler | None = None,
     h2o_solvents: bool = False,
-) -> np.ndarray:
+) -> float:
     """Predicts the property of a molecule using a Chemprop model.
 
     :param model: A Chemprop model.
     :param smiles: A SMILES string.
     :param fingerprint: A 1D array of molecular fingerprints (if applicable).
     :param scaler: A data scaler (if applicable).
-    :return: The prediction on the molecule (num_tasks,).
+    :return: The prediction on the molecule.
     """
     # Set up optional extra features
     extra_features = H2O_FEATURES if h2o_solvents else []
@@ -103,19 +104,14 @@ def chemprop_predict_on_molecule(
     # Make prediction
     pred = model(
         batch=[[smiles]],
-        features_batch=[np.concatenate((fingerprint, extra_features), axis=0)]
-        if fingerprint is not None
-        else None,
-    )  # (1, num_tasks)
+        features_batch=[np.concatenate((fingerprint, extra_features), axis=0)] if fingerprint is not None else None,
+    ).item()
 
     # Scale prediction if applicable
     if scaler is not None:
-        pred = scaler.inverse_transform(pred)
+        pred = scaler.inverse_transform([[pred]])[0][0]
 
-    # Extract prediction and convert to numpy
-    pred = pred[0].detach().numpy()  # (num_tasks,)
-
-    return pred
+    return float(pred)
 
 
 def chemprop_predict_on_molecule_ensemble(
@@ -131,36 +127,15 @@ def chemprop_predict_on_molecule_ensemble(
     :param smiles: A SMILES string.
     :param fingerprint: A 1D array of molecular fingerprints (if applicable).
     :param scalers: An ensemble of data scalers (if applicable).
-    :return: The ensemble prediction on the molecule (num_tasks,).
+    :return: The ensemble prediction on the molecule.
     """
-    return np.mean(
-        [
-            chemprop_predict_on_molecule(
-                model=model,
-                smiles=smiles,
-                fingerprint=fingerprint,
-                scaler=scaler,
-                h2o_solvents=h2o_solvents,
-            )
-            for model, scaler in zip(models, scalers)
-        ],
-        axis=0,
+    return float(
+        np.mean(
+            [
+                chemprop_predict_on_molecule(
+                    model=model, smiles=smiles, fingerprint=fingerprint, scaler=scaler, h2o_solvents=h2o_solvents,
+                )
+                for model, scaler in zip(models, scalers)
+            ]
+        )
     )
-
-
-def chemprop_map_task_names_to_indices(
-    model_path: Path, task_names: Iterable[str],
-) -> list[int]:
-    """Maps task names to indices in a Chemprop model.
-
-    :param model_path: A path to a Chemprop model.
-    :param task_names: The names of the tasks.
-    :return: A list of task indices.
-    """
-    args = load_args(path=model_path)
-    task_names_to_indices = {
-        task_name: index for index, task_name in enumerate(args.task_names)
-    }
-    task_indices = [task_names_to_indices[task_name] for task_name in task_names]
-
-    return task_indices

@@ -39,29 +39,30 @@ def sklearn_predict(model: SKLEARN_MODEL_TYPES, fingerprints: np.ndarray) -> np.
 
 def sklearn_predict_on_molecule(
     model: SKLEARN_MODEL_TYPES, fingerprint: np.ndarray | None = None
-) -> np.ndarray:
+) -> float:
     """Predicts the property of a molecule using a scikit-learn model.
 
     :param model: A scikit-learn model.
     :param fingerprint: A 1D array of molecular fingerprints (if applicable).
-    :return: The model prediction on the molecule (1,).
+    :return: The model prediction on the molecule.
     """
-    return sklearn_predict(model=model, fingerprints=fingerprint.reshape(1, -1))
+    return sklearn_predict(model=model, fingerprints=fingerprint.reshape(1, -1))[0]
 
 
 def sklearn_predict_on_molecule_ensemble(
     models: list[SKLEARN_MODEL_TYPES], fingerprint: np.ndarray | None = None
-) -> np.ndarray:
+) -> float:
     """Predicts the property of a molecule using an ensemble of scikit-learn models.
 
     :param models: An ensemble of scikit-learn models.
     :param fingerprint: A 1D array of molecular fingerprints (if applicable).
-    :return: The ensemble prediction on the molecule (1,).
+    :return: The ensemble prediction on the molecule.
     """
-    return np.mean(
-        [
-            sklearn_predict_on_molecule(model=model, fingerprint=fingerprint)
-            for model in models
-        ],
-        axis=0,
+    return float(
+        np.mean(
+            [
+                sklearn_predict_on_molecule(model=model, fingerprint=fingerprint)
+                for model in models
+            ]
+        )
     )
