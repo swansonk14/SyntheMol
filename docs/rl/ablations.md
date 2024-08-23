@@ -16,7 +16,7 @@ Final (dynamic weights) versus the fixed weights below.
 RL Chemprop-RDKit
 
 ```bash
-for S_AUREUS_WEIGHT in 0.00 0.86 0.90 0.92 0.94 0.96 1.00
+for S_AUREUS_WEIGHT in 0.00 0.86 0.90 0.92 0.94 0.96 0.98 1.00
 do
 SOLUBILITY_WEIGHT="0$(echo "1.0 - S_AUREUS_WEIGHT" | bc)"
 synthemol \
@@ -47,7 +47,7 @@ done
 RL MLP-RDKit
 
 ```bash
-for S_AUREUS_WEIGHT in 0.00 0.86 0.90 0.92 0.94 0.98 1.00
+for S_AUREUS_WEIGHT in 0.00 0.86 0.90 0.92 0.94 0.96 0.98 1.00
 do
 SOLUBILITY_WEIGHT="0$(echo "1.0 - S_AUREUS_WEIGHT" | bc)"
 synthemol \
