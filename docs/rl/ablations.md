@@ -3,11 +3,139 @@
 Instructions for reproducing the ablation experiments in the paper to determine the importance of various components of
 SyntheMol-RL.
 
-Note: All experiments should be run with five random seeds (0-4) using the `--rng_seed <seed>` flag to measure variability.
+Note: All SyntheMol experiments should be run with five random seeds (0-4) using the `--rng_seed <seed>` flag to measure variability.
+
+## Property predictors - scaffold split
+
+### Train models
+
+For each model type, train 10 models using 10-fold cross-validation.
+
+Chemprop for _S. aureus_
+
+```bash
+chemprop_train \
+    --data_path rl/data/s_aureus/s_aureus.csv \
+    --dataset_type classification \
+    --target_column s_aureus_activity \
+    --num_folds 10 \
+    --split_type scaffold_balanced \
+    --metric prc-auc \
+    --extra_metrics auc \
+    --save_dir rl/models/s_aureus_chemprop_scaffold \
+    --save_preds \
+    --quiet
+```
+
+Chemprop for solubility
+
+```bash
+chemprop_train \
+    --data_path rl/data/solubility/solubility.csv \
+    --dataset_type regression \
+    --target_column solubility \
+    --num_folds 10 \
+    --split_type scaffold_balanced \
+    --metric mae \
+    --extra_metrics r2 \
+    --save_dir rl/models/solubility_chemprop_scaffold \
+    --save_preds \
+    --quiet
+```
+
+Chemprop-RDKit for _S. aureus_
+
+```bash
+chemprop_train \
+    --data_path rl/data/s_aureus/s_aureus.csv \
+    --dataset_type classification \
+    --target_column s_aureus_activity \
+    --features_path rl/data/s_aureus/s_aureus.npz \
+    --no_features_scaling \
+    --num_folds 10 \
+    --split_type scaffold_balanced \
+    --metric prc-auc \
+    --extra_metrics auc \
+    --save_dir rl/models/s_aureus_chemprop_rdkit_scaffold \
+    --save_preds \
+    --quiet
+```
+
+Chemprop-RDKit for solubility
+
+```bash
+chemprop_train \
+    --data_path rl/data/solubility/solubility.csv \
+    --dataset_type regression \
+    --target_column solubility \
+    --features_path rl/data/solubility/solubility.npz \
+    --no_features_scaling \
+    --num_folds 10 \
+    --split_type scaffold_balanced \
+    --metric mae \
+    --extra_metrics r2 \
+    --save_dir rl/models/solubility_chemprop_rdkit_scaffold \
+    --save_preds \
+    --quiet
+```
+
+MLP-RDKit for _S. aureus_
+
+```bash
+chemprop_train \
+    --data_path rl/data/s_aureus/s_aureus.csv \
+    --dataset_type classification \
+    --target_column s_aureus_activity \
+    --features_path rl/data/s_aureus/s_aureus.npz \
+    --no_features_scaling \
+    --features_only \
+    --num_folds 10 \
+    --split_type scaffold_balanced \
+    --metric prc-auc \
+    --extra_metrics auc \
+    --save_dir rl/models/s_aureus_mlp_rdkit_scaffold \
+    --save_preds \
+    --quiet
+```
+
+MLP-RDKit for solubility
+
+```bash
+chemprop_train \
+    --data_path rl/data/solubility/solubility.csv \
+    --dataset_type regression \
+    --target_column solubility \
+    --features_path rl/data/solubility/solubility.npz \
+    --no_features_scaling \
+    --features_only \
+    --num_folds 10 \
+    --split_type scaffold_balanced \
+    --metric mae \
+    --extra_metrics r2 \
+    --save_dir rl/models/solubility_mlp_rdkit_scaffold \
+    --save_preds \
+    --quiet
+```
+
+Results for _S. aureus_ (10-fold cross-validation, 8-core, 1-GPU machine):
+
+| Model          | ROC-AUC | PRC-AUC | Time      |
+|----------------|---------|---------|-----------|
+| Chemprop       | TODO    | TODO    | TODOm, TODOs |
+| Chemprop-RDKit | TODO    | TODO    | TODOm, TODOs |
+| MLP-RDKit      | TODO    | TODO    | TODOm, TODOs |
+
+Results for solubility (10-fold cross-validation, 8-core, 1-GPU machine):
+
+| Model          | MAE  | R^2  | Time      |
+|----------------|------|------|-----------|
+| Chemprop       | TODO | TODO | TODOm, TODOs |
+| Chemprop-RDKit | TODO | TODO | TODOm, TODOs |
+| MLP-RDKit      | TODO | TODO | TODOm, TODOs |
 
 ## Chemical space
 
-Analyze REAL versus WuXi from final generations above.
+Analyze REAL versus WuXi from final SyntheMol generations.
 
 ## Multiparameter
 

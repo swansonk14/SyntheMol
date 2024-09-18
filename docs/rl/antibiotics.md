@@ -1,6 +1,6 @@
 # Generating Novel Antibiotics with SyntheMol-RL
 
-Instructions for generating antibiotic candidates for _Acinetobacter baumannii_ using SyntheMol-RL from the
+Instructions for generating antibiotic candidates for _Staphylococcus aureus_ using SyntheMol-RL from the
 paper [TODO](TODO).
 
 This includes instructions for processing antibiotics data, training antibacterial activity prediction models,
