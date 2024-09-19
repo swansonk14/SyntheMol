@@ -119,19 +119,19 @@ chemprop_train \
 
 Results for _S. aureus_ (10-fold cross-validation, 8-core, 1-GPU machine):
 
-| Model          | ROC-AUC | PRC-AUC | Time      |
-|----------------|---------|---------|-----------|
-| Chemprop       | TODO    | TODO    | TODOm, TODOs |
-| Chemprop-RDKit | TODO    | TODO    | TODOm, TODOs |
-| MLP-RDKit      | TODO    | TODO    | TODOm, TODOs |
+| Model          | ROC-AUC         | PRC-AUC         | Time     |
+|----------------|-----------------|-----------------|----------|
+| Chemprop       | 0.831 +/- 0.019 | 0.477 +/- 0.033 | 76m, 42s |
+| Chemprop-RDKit | 0.848 +/- 0.024 | 0.536 +/- 0.056 | 57m, 37s |
+| MLP-RDKit      | 0.836 +/- 0.027 | 0.527 +/- 0.058 | 44m, 13s |
 
 Results for solubility (10-fold cross-validation, 8-core, 1-GPU machine):
 
-| Model          | MAE  | R^2  | Time      |
-|----------------|------|------|-----------|
-| Chemprop       | TODO | TODO | TODOm, TODOs |
-| Chemprop-RDKit | TODO | TODO | TODOm, TODOs |
-| MLP-RDKit      | TODO | TODO | TODOm, TODOs |
+| Model          | MAE             | R^2             | Time     |
+|----------------|-----------------|-----------------|----------|
+| Chemprop       | 0.804 +/- 0.044 | 0.765 +/- 0.037 | 39m, 23s |
+| Chemprop-RDKit | 0.760 +/- 0.038 | 0.788 +/- 0.034 | 39, 05s  |
+| MLP-RDKit      | 0.800 +/- 0.041 | 0.768 +/- 0.032 | 31m, 32s |
 
 ## Chemical space
 
