@@ -31,7 +31,7 @@ def map_reactions_for_file(
     :param single_id_column: Whether the reaction and building blocks are in a single ID column (newer versions of REAL)
         or in separate columns (older versions of REAL).
     :return: A tuple containing the name of the file, the number of molecules in the file,
-        and a mapping from reaction ID to reactant index to reaction type to valid building block IDs.
+        and a mapping from reaction ID to reactant index to valid building block IDs.
     """
     # Create mapping from reaction ID to reactant index to valid building block IDs
     reaction_to_reactants_to_building_blocks: dict[
