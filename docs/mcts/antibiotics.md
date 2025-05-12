@@ -1,6 +1,6 @@
 # Generating Novel Antibiotics with SyntheMol-MCTS
 
-Instructions for generating antibiotic candidates for _Acinetobacter baumannii_ using SyntheMol-MCTS from the paper [TODO](TODO).
+Instructions for generating antibiotic candidates for _Acinetobacter baumannii_ using SyntheMol-MCTS from the paper [Generative AI for designing and validating easily synthesizable and structurally novel antibiotics](https://www.nature.com/articles/s42256-024-00809-7).
 
 This includes instructions for processing antibiotics data, training antibacterial activity prediction models, generating molecules with SyntheMol, and selecting candidates. Assumes relevant data has already been downloaded (see [docs/README.md](README.md)).
 

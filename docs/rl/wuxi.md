@@ -8,10 +8,10 @@ downloaded (see [docs/README.md](README.md)).
 Download the WuXi GalaXi data with the following command.
 
 ```bash
-gdown "https://drive.google.com/drive/folders/1BCM5P-tDjLFLkyiEJX9p4-6fw0w5-qRg?usp=drive_link" -O $(python -c "import synthemol; from pathlib import Path; print(Path(synthemol.__path__[0]).parent)")/rl/data/wuxi --folder
+DATA_PATH=$(python -c "import synthemol; from pathlib import Path; print(Path(synthemol.__path__[0]).parent)")/rl/data/wuxi
+mkdir $DATA_PATH
+gdown "https://drive.google.com/drive/folders/1BCM5P-tDjLFLkyiEJX9p4-6fw0w5-qRg?usp=drive_link" --folder -O $DATA_PATH
 ```
-
-TODO: convert to zip file on google drive
 
 ## Reactions
 

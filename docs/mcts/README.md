@@ -1,6 +1,6 @@
 # SyntheMol-MCTS
 
-This directory contains instructions for reproducing the results from the paper [TODO](TODO), which uses the Monte Carlo
+This directory contains instructions for reproducing the results from the paper [Generative AI for designing and validating easily synthesizable and structurally novel antibiotics](https://www.nature.com/articles/s42256-024-00809-7), which uses the Monte Carlo
 tree search (MCTS) version of SyntheMol.
 
 ## Data

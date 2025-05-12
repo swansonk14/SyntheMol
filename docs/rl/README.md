@@ -1,15 +1,17 @@
 # SyntheMol-RL
 
-Below are instruments for reproducing the results from the paper [TODO](TODO), which uses the reinforcement learning (
+Below are instruments for reproducing the results from our forthcoming paper, which uses the reinforcement learning (
 RL) version of SyntheMol.
+<!-- TODO: add link -->
 
 ## Data
 
-The relevant data should be downloaded from this Google Drive file (TODO: link) to `SyntheMol/data`. This can be done as
-follows:
+The relevant data should be downloaded to `SyntheMol/data`. This can be done as follows:
 
 ```bash
-gdown "https://drive.google.com/drive/folders/1ssJhy0ZZoh4P-ELG0xiG5iO53_Jts9du?usp=sharing" --folder -O $(python -c "import synthemol; from pathlib import Path; print(Path(synthemol.__path__[0]).parent)")/rl
+DATA_PATH=$(python -c "import synthemol; from pathlib import Path; print(Path(synthemol.__path__[0]).parent)")/rl
+mkdir $DATA_PATH
+gdown "https://drive.google.com/drive/folders/1Yex2UBjjmNFMZjBXA-ToVYMkpDFOorr0?usp=drive_link" --folder -O $DATA_PATH
 ```
 
 Note that here, we use the 2022 q1-2 version of the building blocks and the 2022 q1-2 version of the enumerated REAL

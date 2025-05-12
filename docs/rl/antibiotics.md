@@ -1,7 +1,8 @@
 # Generating Novel Antibiotics with SyntheMol-RL
 
-Instructions for generating antibiotic candidates for _Staphylococcus aureus_ using SyntheMol-RL from the
-paper [TODO](TODO).
+Instructions for generating antibiotic candidates for _Staphylococcus aureus_ using SyntheMol-RL from our forthcoming
+paper.
+<!-- [TODO]: add link -->
 
 This includes instructions for processing antibiotics data, training antibacterial activity prediction models,
 generating molecules with SyntheMol, and selecting candidates. Assumes relevant data has already been downloaded (
@@ -86,7 +87,7 @@ The file `chembl.csv` contains 1,007 molecules.
 
 ### Solubility data
 
-Aqueous solubility data was obtained from [ADMET-AI](TODO), which preprocessed data from
+Aqueous solubility data was obtained from [ADMET-AI](https://academic.oup.com/bioinformatics/article/40/7/btae416/7698030), which preprocessed data from
 the [Therapeutics Data Commons](https://tdcommons.ai/). This dataset contains 9,982 molecules with aqueous solubility
 measurements in units of log mol/L. The data is saved to `data/solubility/solubility.csv`.
 
