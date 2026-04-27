@@ -44,6 +44,12 @@ SyntheFluor-RL is an adaption of SyntheMol-RL for fluorescent small molecule des
 
 Sayana, R., Callon, K., Xu, J., Deutsch, J., Chu, S., Zou, J., Janetzko, J., Shivnaraine, R.V., Swanson, K. [Generating readily synthesizable small molecule fluorophore scaffolds with reinforcement learning](https://arxiv.org/abs/2601.07145). _The 2nd Workshop on Generative AI and Biology, ICML_, 2025.
 
+### SyntheMol-RL with Merck
+
+In collaboration with scientists at Merck & Co., Inc., we applied SyntheMol-RL to two internal drug discovery programs at Merck.
+
+Swanson, K., Zou, J., Chiriac, M., Cheng, A. [Generative AI to Design Small Molecule Therapeutics: Lessons from a Stanford/Merck collaboration](https://swansonkyle.com/blog/synthemol-merck), 2026.
+
 ### Reproducibility
 
 Full details for reproducing the results from these papers are provided in the [docs](docs) directory.
