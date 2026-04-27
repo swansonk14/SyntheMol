@@ -36,7 +36,7 @@ Swanson, K., Liu, G., Catacutan, D. B., Arnold, A., Zou, J., Stokes, J. M. [Gene
 
 SyntheMol-RL, which is the new default and replaces the MCTS with reinforcement learning (RL), is described in the following paper, where we applied SyntheMol-RL to design novel antibiotic candidates for the Gram-positive bacterium _Staphylococcus aureus_.
 
-Swanson, K., Liu, G., Catacutan, D. B., McLellan, S., Arnold, A., Tu, M., Brown, E. D., Zou, J., Stokes, J. M. [SyntheMol-RL: a flexible reinforcement learning framework for designing novel and synthesizable antibiotics](https://www.biorxiv.org/content/10.1101/2025.05.17.654017v1). _bioRxiv_, 2025.
+Swanson, K., Liu, G., Catacutan, D. B., McLellan, S., Arnold, A., Tu, M., Brown, E. D., Zou, J., Stokes, J. M. [SyntheMol-RL: a flexible reinforcement learning framework for designing easily synthesizable antibiotics](https://link.springer.com/article/10.1038/s44320-026-00206-9). _Molecular Systems Biology_, 2026.
 
 ### SyntheFluor-RL
 

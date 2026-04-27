@@ -4,7 +4,7 @@ This directory contains instructions for reproducing the results in our two anti
 
 ## SyntheMol-RL
 
-The instructions for reproducing the results from the paper [SyntheMol-RL: a flexible reinforcement learning framework for designing novel and synthesizable antibiotics](https://www.biorxiv.org/content/10.1101/2025.05.17.654017v1), which uses the reinforcement learning (RL)
+The instructions for reproducing the results from the paper [SyntheMol-RL: a flexible reinforcement learning framework for designing easily synthesizable antibiotics](https://link.springer.com/article/10.1038/s44320-026-00206-9), which uses the reinforcement learning (RL)
 version of SyntheMol, are in [rl](rl).
 
 ## SyntheMol-MCTS
